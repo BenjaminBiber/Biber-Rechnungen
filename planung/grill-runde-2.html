@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Biber-Rechnungen · Runde 2</title>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #ffffff; --ink: #1b1f24; --muted: #5b6573; --line: #e1e5ea;
+    --accent: #2f6fdb; --accent-soft: #e8f0fd; --rec: #1d8a5a; --rec-soft: #e6f5ee; --warn: #b5650d; --warn-soft: #fdf1e3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111418; --card: #1a1f25; --ink: #e7ebf0; --muted: #9aa4b2; --line: #2b323b;
+      --accent: #6c9ef0; --accent-soft: #1d2a40; --rec: #4cc08a; --rec-soft: #17302a; --warn: #e6a35a; --warn-soft: #33281b;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { position: sticky; top: 0; z-index: 5; background: var(--card); border-bottom: 1px solid var(--line); }
+  .bar { max-width: 920px; margin: 0 auto; padding: 12px 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .bar h1 { font-size: 17px; margin: 0; flex: 1 1 auto; }
+  .stat { color: var(--muted); font-size: 13px; }
+  button { font: inherit; border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 8px; padding: 7px 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button .material-icons { font-size: 18px; }
+  main { max-width: 920px; margin: 0 auto; padding: 16px; }
+  .intro { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin-bottom: 18px; }
+  .intro p { margin: 6px 0; }
+  h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 28px 0 10px; }
+  .q { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin-bottom: 12px; }
+  .q.changed { border-color: var(--warn); }
+  .qhead { display: flex; gap: 10px; align-items: baseline; }
+  .qid { font-weight: 700; color: var(--accent); min-width: 34px; }
+  .qtitle { font-weight: 650; }
+  .qbody { color: var(--muted); margin: 6px 0 10px 44px; }
+  .opts { margin-left: 44px; display: grid; gap: 6px; }
+  label.opt { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
+  label.opt:hover { border-color: var(--accent); }
+  label.opt.sel { border-color: var(--accent); background: var(--accent-soft); }
+  label.opt input { margin-top: 3px; }
+  .tag { font-size: 11px; font-weight: 700; color: var(--rec); background: var(--rec-soft); padding: 1px 7px; border-radius: 99px; margin-left: 6px; white-space: nowrap; }
+  .note { margin: 8px 0 0 44px; }
+  .note textarea { width: 100%; min-height: 34px; resize: vertical; font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; }
+  .assume label { display: flex; gap: 10px; padding: 6px 0; align-items: flex-start; }
+  .assume input { margin-top: 4px; }
+  textarea.free { width: 100%; min-height: 90px; font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+  #out { display: none; margin-top: 18px; }
+  #out pre { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; overflow: auto; max-height: 420px; font-size: 12.5px; }
+  .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 8px 14px; border-radius: 8px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+  .chk { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; color: var(--muted); }
+  @media (max-width: 600px) { .qbody, .opts, .note { margin-left: 0; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <h1>Biber-Rechnungen · Grilling Runde 2</h1>
+    <span class="stat" id="stat"></span>
+    <label class="chk"><input type="checkbox" id="compact"> nur Abweichungen</label>
+    <button onclick="toggleOut()"><span class="material-icons">data_object</span>Vorschau</button>
+    <button onclick="download()"><span class="material-icons">download</span>.json</button>
+    <button class="primary" onclick="copyJson()"><span class="material-icons">content_copy</span>JSON kopieren</button>
+  </div>
+</header>
+<main>
+  <div class="intro">
+    <p><strong>So funktioniert's:</strong> Bei jeder Frage ist meine Empfehlung schon ausgewählt (grün markiert). Wenn du einverstanden bist, musst du nichts tun. Ändere nur, was nicht passt, und schreib bei Bedarf eine Anmerkung.</p>
+    <p>Am Ende auf <em>JSON kopieren</em> klicken und das Ergebnis in den Chat einfügen. Mit <em>nur Abweichungen</em> wird das JSON kürzer. Deine Eingaben bleiben beim Neuladen in diesem Browser erhalten.</p>
+    <p><strong>Neu in Runde 2:</strong> Durch „voll geschäftlich mit GoBD“ (Q3) sind Fragen zu Unveränderbarkeit, Aufbewahrung, Backup und Verfahrensdokumentation dazugekommen. Außerdem geht es um den Widerspruch zwischen Q2 (Haushalt) und Q3, um deine Plausibilitätsprüfungen (Q16) und um alles, was jetzt freigeschaltet ist. Export, Dashboard-Details und der Zuschnitt der ersten Version folgen in Runde 3.</p>
+  </div>
+
+  <h2>Aus deinen Anforderungen abgeleitet: bitte bestätigen</h2>
+  <div class="q assume" id="assumptions"></div>
+
+  <div id="questions"></div>
+
+  <h2>Sonst noch etwas?</h2>
+  <div class="q">
+    <div class="qbody" style="margin-left:0">Fehlende Anforderungen, Prioritäten, Dinge, die dir wichtig sind, Fristen …</div>
+    <textarea class="free" id="extra" placeholder="Freitext"></textarea>
+  </div>
+
+  <div id="out"><pre id="json"></pre></div>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+const ASSUMPTIONS = [
+  ["B1", "Ohne OCR stammt der Volltext für die Suche aus dem Text, den Document Intelligence liefert, bzw. aus dem E-Rechnungs-XML."],
+  ["B2", "Bei E-Rechnungen ist das XML das steuerliche Original und wird unverändert archiviert. Eine reine XRechnung ohne PDF wird über die KoSIT-XSLT-Visualisierung als HTML angezeigt."],
+  ["B3", "„zu prüfen“ ist ein System-Tag. Er verschwindet erst, wenn ein Benutzer den Beleg bestätigt, und kann nicht einfach wie ein freier Tag gelöscht werden."],
+  ["B4", "Logo-Reihenfolge: manueller Upload, dann Ausschnitt aus dem PDF, dann Favicon der Domain. Die Domain kommt aus der Absenderadresse der Mail oder von der Website auf der Rechnung."],
+  ["B5", "Login über ASP.NET Core Identity (Passwort + TOTP) mit Google als externem Login. Microsoft, Apple und Passkeys sind vorerst nicht vorgesehen."],
+  ["B6", "Bei 100–1.000 Belegen pro Monat reichen eine API-Instanz und Hangfire. Document Intelligence kostet grob 2–20 € im Monat."],
+  ["B7", "Wegen GoBD gibt es ein lückenloses Änderungsprotokoll: Jede Änderung an Belegdaten wird mit Benutzer, Zeitpunkt sowie altem und neuem Wert gespeichert."]
+];
+
+const Q = [
+  // ---------- GoBD & Organisation
+  { s: "Privat vs. geschäftlich", id: "R2-1", t: "Wie hängen „Haushalt“ (Q2) und „voll geschäftlich“ (Q3) zusammen?",
+    b: "Du hast „wenige Benutzer, ein Datenbestand“ und „voll geschäftlich mit GoBD“ gewählt. Davon hängt ab, ob private Belege mit im System liegen und wie sie getrennt werden.",
+    o: [["a", "Ein Unternehmen (z. B. Einzelunternehmen/GmbH) mit wenigen Benutzern. Private Belege dürfen mit rein und bekommen das Kennzeichen privat/geschäftlich; GoBD-Regeln gelten für alle Belege", 1],
+        ["b", "Firma und Privathaushalt als zwei getrennte Bereiche (Mandanten); GoBD nur für den Firmenbereich"],
+        ["c", "Nur Firmenbelege, nichts Privates"]] },
+  { s: "Privat vs. geschäftlich", id: "R2-2", t: "Wer bucht heute, und womit?",
+    b: "Eine Frage zum Ist-Zustand. Davon hängt ab, wohin Belege später exportiert werden (Runde 3).",
+    o: [["stb_datev", "Der Steuerberater bucht mit DATEV", 1],
+        ["lex", "lexoffice / sevDesk / ähnliches Tool"],
+        ["selbst", "Ich buche selbst (EÜR/Excel/Elster)"],
+        ["noch_nicht", "Noch nicht festgelegt"]] },
+  { s: "Privat vs. geschäftlich", id: "R2-3", t: "Welche Rolle hat die App in der Buchhaltung?",
+    b: "",
+    o: [["a", "Belegsammler, Archiv und Auswertung. Gebucht und kontiert wird im Buchhaltungstool bzw. beim Steuerberater, die App liefert Belege und Daten dorthin", 1],
+        ["b", "Die App soll später selbst kontieren (SKR03/04, Vorsteuer, UStVA-Vorbereitung)"]] },
+  { s: "Privat vs. geschäftlich", id: "R2-4", t: "Ausgangsrechnungen (später) schon jetzt vorbereiten?",
+    b: "Laut Q1 kommt das Schreiben eigener Rechnungen später.",
+    o: [["a", "Ja, aber nur im Datenmodell: Belege bekommen eine Richtung (Eingang/Ausgang), und Korrespondenten können Lieferant und/oder Kunde sein. Erstellen, Nummernkreise und ZUGFeRD-Erzeugung kommen später", 1],
+        ["b", "Nein, das wird später gebaut"]] },
+
+  // ---------- GoBD-Technik
+  { s: "GoBD: Technik", id: "R2-5", t: "Wie wird die Ablage unveränderbar?",
+    b: "Die Ablage liegt laut Q10 im Dateisystem bzw. auf dem NAS. Wer Schreibrechte auf den Share hat, kann dort Dateien ändern oder löschen. Das widerspricht GoBD, wenn es nicht abgesichert ist.",
+    o: [["a", "Nur der App-Container darf in die Ablage schreiben, Benutzer haben nur Lesezugriff auf den Share. Jede Datei bekommt einen SHA-256-Hash in der DB, ein nächtlicher Job prüft die Integrität und meldet Abweichungen", 1],
+        ["b", "Wie (a), plus eine WORM-Kopie (S3/MinIO mit Object Lock) als revisionssicherer Zweitspeicher"],
+        ["c", "Primärspeicher ist MinIO mit Object Lock; der Ablage-Ordner ist nur ein lesbarer Spiegel"]] },
+  { s: "GoBD: Technik", id: "R2-6", t: "Wann und wie wird abgelegt?",
+    b: "Der Pfad enthält den Korrespondenten, und der ist erst nach der Extraktion bekannt. Unter GoBD sollte sich der Ablagepfad eines Belegs danach nicht mehr ändern.",
+    o: [["a", "Beim Import kommt das Original mit Hash sofort in einen internen Eingangsbereich. Nach der Extraktion wird es einmalig in die Ablage verschoben (auch wenn es „zu prüfen“ ist). Danach ist der Pfad fix: Umbenennen oder Zusammenführen von Korrespondenten ändert nur die DB", 1],
+        ["b", "Erst nach dem Bestätigen ablegen; bis dahin bleibt das Original im Eingangsbereich"],
+        ["c", "Pfad darf sich ändern (Umbenennen wird protokolliert)"]] },
+  { s: "GoBD: Technik", id: "R2-7", t: "Korrekturen und Festschreibung",
+    b: "GoBD verlangt, dass ursprüngliche Werte erkennbar bleiben. B7 (Änderungsprotokoll) ist schon gesetzt. Die Frage ist, ob Belege zusätzlich gesperrt werden.",
+    o: [["a", "Belege werden festgeschrieben (z. B. per Monatsabschluss oder nach dem Export an den Steuerberater). Danach sind sie gesperrt, und Korrekturen gehen nur noch per Storno/Korrekturbeleg", 1],
+        ["b", "Keine Festschreibung, nur das Änderungsprotokoll"]] },
+  { s: "GoBD: Technik", id: "R2-8", t: "Aufbewahrung und Löschung",
+    b: "Seit 2025 gilt für Buchungsbelege (dazu gehören Rechnungen) eine Aufbewahrungsfrist von 8 Jahren, für Bücher und Jahresabschlüsse 10 Jahre. Die Frist beginnt mit dem Ende des Kalenderjahres.",
+    o: [["a", "Löschsperre bis zum Fristende. Danach schlägt die App die Löschung vor, gelöscht wird nie automatisch", 1],
+        ["b", "Nie löschen"],
+        ["c", "Automatisch nach Fristende löschen"]] },
+  { s: "GoBD: Technik", id: "R2-9", t: "Backup",
+    b: "Self-hosted mit GoBD heißt: Ein Backup an einem zweiten Ort und ein dokumentierter Wiederherstellungstest gehören zur Verfahrensdokumentation.",
+    o: [["a", "Nächtlicher pg_dump und Ablage per restic, verschlüsselt, an ein externes Ziel (z. B. Hetzner Storage Box / Backblaze B2 / zweites NAS). Ein Restore-Test ist als Skript dokumentiert", 1],
+        ["b", "Das vorhandene NAS-Backup reicht, die App macht selbst nichts"],
+        ["c", "Wie (a), aber das Backup-Ziel ist schon vorhanden (bitte in der Anmerkung nennen)"]] },
+  { s: "GoBD: Technik", id: "R2-10", t: "Verfahrensdokumentation",
+    b: "Laut Q3 gehört sie dazu.",
+    o: [["a", "Wird als Markdown in /docs/verfahrensdokumentation gepflegt, mit der Software mitversioniert und als PDF exportierbar. Ich schreibe einen Entwurf, den du ergänzt (Organisation, Zuständigkeiten)", 1],
+        ["b", "Wird außerhalb des Projekts gepflegt"]] },
+
+  // ---------- Pipeline
+  { s: "Pipeline & Prüfung", id: "R2-11", t: "Welche Plausibilitätsprüfungen? (aus Q16)", multi: true,
+    b: "Schlägt eine Prüfung fehl, bekommt der Beleg den Tag „zu prüfen“, mit dem Grund. Mehrfachauswahl.",
+    o: [["summe_pos", "Summe der Positionen = Netto- bzw. Bruttobetrag (Toleranz für Rundung)", 1],
+        ["steuer", "Netto + USt = Brutto, je Steuersatz", 1],
+        ["pflicht", "Pflichtfelder vorhanden: Korrespondent, Datum, Rechnungsnr., Gesamtbetrag", 1],
+        ["datum", "Datum plausibel (nicht in der Zukunft, nicht älter als 2 Jahre)", 1],
+        ["ustg", "§14-UStG-Pflichtangaben für den Vorsteuerabzug (USt-IdNr./Steuernr., Leistungsdatum …); Kleinbetragsrechnung ≤ 250 € berücksichtigt", 1],
+        ["dublette", "Dublettenverdacht", 1],
+        ["neu_korr", "Neuer, bisher unbekannter Korrespondent", 1],
+        ["konfidenz", "Konfidenz von Document Intelligence unter einer Schwelle", 1],
+        ["xml_valid", "E-Rechnung ist laut KoSIT-Validator nicht valide", 1]] },
+  { s: "Pipeline & Prüfung", id: "R2-12", t: "Was passiert, wenn Document Intelligence fehlschlägt?",
+    b: "Es gibt keinen OCR-Fallback mehr (Q15).",
+    o: [["a", "Hangfire wiederholt mit Backoff (z. B. 5 Versuche über ca. 1 h). Danach wird der Beleg trotzdem angelegt, mit Status „Fehler“ und Tag „zu prüfen“; die Felder lassen sich manuell erfassen, und die Extraktion kann neu angestoßen werden", 1],
+        ["b", "Beleg bleibt im Eingang liegen, bis die Extraktion klappt"]] },
+  { s: "Pipeline & Prüfung", id: "R2-13", t: "Kostenschutz für Document Intelligence",
+    b: "",
+    o: [["a", "Konfigurierbares Seitenlimit pro Monat, Warnung bei 80 %, bei 100 % werden Jobs pausiert (keine Verluste)", 1],
+        ["b", "Kein Limit"]] },
+  { s: "Pipeline & Prüfung", id: "R2-14", t: "Kassenbons per Handy-Foto",
+    b: "",
+    o: [["a", "Einfacher Kamera-Upload; mehrere Fotos lassen sich zu einem Beleg zusammenfassen. Kein eigenes Zuschneiden, Document Intelligence kommt mit Fotos klar. HEIC wird serverseitig zusätzlich nach JPEG konvertiert, das Original bleibt", 1],
+        ["b", "Dokumentscanner im Browser mit Kantenerkennung und Perspektivkorrektur (OpenCV.js)"]] },
+  { s: "Pipeline & Prüfung", id: "R2-15", t: "Rechnungs-Postfach",
+    b: "Bestimmt, wie sich die App bei IMAP anmeldet: mit Passwort oder per OAuth (XOAUTH2).",
+    o: [["a", "Postfach bei einem klassischen Provider (eigene Domain, z. B. mailbox.org/IONOS/Hetzner), IMAP mit App-Passwort", 1],
+        ["b", "Gmail / Google Workspace (XOAUTH2 nötig)"],
+        ["c", "Microsoft 365 / Outlook.com (OAuth nötig)"]] },
+
+  // ---------- Benutzer & MCP
+  { s: "Benutzer & MCP", id: "R2-16", t: "Wie kommen Benutzer ins System?",
+    b: "Laut Q2 gibt es wenige Benutzer und einen gemeinsamen Datenbestand.",
+    o: [["a", "Keine Selbstregistrierung. Ein Admin lädt per E-Mail ein; Google-Login ist nur für eingeladene Adressen möglich. Der erste Admin wird beim ersten Start angelegt", 1],
+        ["b", "Offene Registrierung mit Freigabe durch den Admin"]] },
+  { s: "Benutzer & MCP", id: "R2-17", t: "Rollen",
+    b: "",
+    o: [["a", "Admin (Benutzer, Einstellungen, Festschreibung), Benutzer (alles bearbeiten) und Nur-Lesen (z. B. Steuerberater)", 1],
+        ["b", "Alle dürfen alles"],
+        ["c", "Feinere Rechte (z. B. pro Kategorie)"]] },
+  { s: "Benutzer & MCP", id: "R2-18", t: "Mit welchen Clients nutzt du den MCP-Server?",
+    b: "Claude Code und Claude Desktop kommen mit einem Token im Header aus. Ein Connector in claude.ai (auch in der Mobile-App) braucht einen vollständigen OAuth-Flow auf deinem Server.",
+    o: [["a", "Zuerst Claude Code/Desktop mit persönlichem API-Token (in der UI erzeugt, widerrufbar, nur Lesen/Upload). OAuth-Server (OpenIddict) für claude.ai-Connectoren in einer späteren Phase", 1],
+        ["b", "OAuth von Anfang an, damit es sofort als claude.ai-Connector läuft"],
+        ["c", "Nur lokal, kein Zugriff von außen"]] },
+
+  // ---------- PWA
+  { s: "PWA", id: "R2-19", t: "Offline-Fähigkeit",
+    b: "",
+    o: [["a", "Die App-Shell funktioniert offline, zuletzt geladene Listen sind gecacht. Fotos und Uploads landen offline in einer Warteschlange und werden später hochgeladen", 1],
+        ["b", "Nur online"]] },
+  { s: "PWA", id: "R2-20", t: "Erreichbarkeit von außen",
+    b: "Für das Handy unterwegs, die PWA und den MCP-Server.",
+    o: [["a", "Über einen Reverse Proxy mit HTTPS (Caddy/Traefik, Let's Encrypt) unter einer eigenen Domain", 1],
+        ["b", "Nur über VPN (WireGuard/Tailscale), nicht öffentlich"],
+        ["c", "Cloudflare Tunnel"]] },
+];
+
+const KEY = "biber-grill-r2";
+let state = load() || { assume: {}, ans: {}, extra: "" };
+
+function load() { try { return JSON.parse(localStorage.getItem(KEY)); } catch { return null; } }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} }
+const recOf = q => q.o.filter(o => o[2]).map(o => o[0]);
+const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function render() {
+  const A = document.getElementById("assumptions");
+  A.innerHTML = ASSUMPTIONS.map(([id, txt]) => {
+    const v = state.assume[id] !== false;
+    return `<label><input type="checkbox" data-a="${id}" ${v ? "checked" : ""}><span><strong>${id}</strong> ${esc(txt)}</span></label>`;
+  }).join("");
+
+  let html = "", sec = "";
+  for (const q of Q) {
+    if (q.s !== sec) { sec = q.s; html += `<h2>${esc(sec)}</h2>`; }
+    const sel = (state.ans[q.id]?.sel) ?? recOf(q);
+    const type = q.multi ? "checkbox" : "radio";
+    const opts = [...q.o, ["andere", "Andere Antwort (bitte in der Anmerkung beschreiben)"]];
+    html += `<div class="q" id="${q.id}"><div class="qhead"><span class="qid">${q.id}</span><span class="qtitle">${esc(q.t)}</span></div>`;
+    if (q.b) html += `<div class="qbody">${esc(q.b)}</div>`;
+    html += `<div class="opts">` + opts.map(([k, l, r]) =>
+      `<label class="opt ${sel.includes(k) ? "sel" : ""}"><input type="${type}" name="${q.id}" value="${k}" ${sel.includes(k) ? "checked" : ""}><span>${esc(l)}${r ? '<span class="tag">Empfehlung</span>' : ""}</span></label>`
+    ).join("") + `</div>`;
+    html += `<div class="note"><textarea data-n="${q.id}" placeholder="Anmerkung (optional)">${esc(state.ans[q.id]?.note || "")}</textarea></div></div>`;
+  }
+  document.getElementById("questions").innerHTML = html;
+  document.getElementById("extra").value = state.extra || "";
+  refresh();
+}
+
+function readQ(q) {
+  const sel = [...document.querySelectorAll(`input[name="${q.id}"]:checked`)].map(i => i.value);
+  const note = document.querySelector(`textarea[data-n="${q.id}"]`).value.trim();
+  return { sel, note };
+}
+
+function refresh() {
+  let changed = 0;
+  for (const q of Q) {
+    const { sel, note } = readQ(q);
+    state.ans[q.id] = { sel, note };
+    const isRec = JSON.stringify([...sel].sort()) === JSON.stringify([...recOf(q)].sort());
+    const el = document.getElementById(q.id);
+    el.classList.toggle("changed", !isRec || !!note);
+    el.querySelectorAll("label.opt").forEach(l => l.classList.toggle("sel", l.querySelector("input").checked));
+    if (!isRec || note) changed++;
+  }
+  document.querySelectorAll("[data-a]").forEach(c => state.assume[c.dataset.a] = c.checked);
+  state.extra = document.getElementById("extra").value;
+  save();
+  document.getElementById("stat").textContent = `${changed} von ${Q.length} angepasst`;
+  document.getElementById("json").textContent = buildJson();
+}
+
+function buildJson() {
+  const compact = document.getElementById("compact").checked;
+  const antworten = {};
+  for (const q of Q) {
+    const { sel, note } = state.ans[q.id];
+    const isRec = JSON.stringify([...sel].sort()) === JSON.stringify([...recOf(q)].sort());
+    if (compact && isRec && !note) continue;
+    const labels = sel.map(k => (q.o.find(o => o[0] === k) || [k, "Andere"])[1]);
+    const e = { frage: q.t, auswahl: q.multi ? sel : sel[0] ?? null, text: q.multi ? labels : labels[0] ?? null, empfehlung: isRec };
+    if (note) e.anmerkung = note;
+    antworten[q.id] = e;
+  }
+  const annahmen = {};
+  for (const [id] of ASSUMPTIONS) {
+    const v = state.assume[id] !== false;
+    if (!compact || !v) annahmen[id] = v;
+  }
+  const out = { runde: 2, modus: compact ? "nur_abweichungen" : "vollstaendig", annahmen, antworten };
+  if (compact) out.hinweis = "Nicht aufgeführte Fragen und Annahmen = Empfehlung übernommen";
+  if (state.extra.trim()) out.ergaenzungen = state.extra.trim();
+  return JSON.stringify(out, null, 2);
+}
+
+function toast(msg) { const t = document.getElementById("toast"); t.textContent = msg; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 1800); }
+function toggleOut() { const o = document.getElementById("out"); o.style.display = o.style.display === "block" ? "none" : "block"; if (o.style.display === "block") o.scrollIntoView({ behavior: "smooth" }); }
+async function copyJson() {
+  refresh(); const txt = buildJson();
+  try { await navigator.clipboard.writeText(txt); toast("JSON kopiert, jetzt in den Chat einfügen"); }
+  catch {
+    const ta = document.createElement("textarea"); ta.value = txt; document.body.appendChild(ta); ta.select();
+    const ok = document.execCommand("copy"); ta.remove();
+    toast(ok ? "JSON kopiert" : "Kopieren fehlgeschlagen, bitte Vorschau nutzen");
+    if (!ok) toggleOut();
+  }
+}
+function download() {
+  refresh(); const blob = new Blob([buildJson()], { type: "application/json" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "grill-runde-2-antworten.json"; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+document.addEventListener("change", refresh);
+document.addEventListener("input", e => { if (e.target.tagName === "TEXTAREA") refresh(); });
+render();
+</script>
+</body>
+</html>

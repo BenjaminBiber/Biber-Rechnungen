@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Biber-Rechnungen · Runde 3</title>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #ffffff; --ink: #1b1f24; --muted: #5b6573; --line: #e1e5ea;
+    --accent: #2f6fdb; --accent-soft: #e8f0fd; --rec: #1d8a5a; --rec-soft: #e6f5ee; --warn: #b5650d; --warn-soft: #fdf1e3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111418; --card: #1a1f25; --ink: #e7ebf0; --muted: #9aa4b2; --line: #2b323b;
+      --accent: #6c9ef0; --accent-soft: #1d2a40; --rec: #4cc08a; --rec-soft: #17302a; --warn: #e6a35a; --warn-soft: #33281b;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { position: sticky; top: 0; z-index: 5; background: var(--card); border-bottom: 1px solid var(--line); }
+  .bar { max-width: 920px; margin: 0 auto; padding: 12px 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .bar h1 { font-size: 17px; margin: 0; flex: 1 1 auto; }
+  .stat { color: var(--muted); font-size: 13px; }
+  button { font: inherit; border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 8px; padding: 7px 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button .material-icons { font-size: 18px; }
+  main { max-width: 920px; margin: 0 auto; padding: 16px; }
+  .intro { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin-bottom: 18px; }
+  .intro p { margin: 6px 0; }
+  h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 28px 0 10px; }
+  .q { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin-bottom: 12px; }
+  .q.changed { border-color: var(--warn); }
+  .qhead { display: flex; gap: 10px; align-items: baseline; }
+  .qid { font-weight: 700; color: var(--accent); min-width: 34px; }
+  .qtitle { font-weight: 650; }
+  .qbody { color: var(--muted); margin: 6px 0 10px 44px; }
+  .opts { margin-left: 44px; display: grid; gap: 6px; }
+  label.opt { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
+  label.opt:hover { border-color: var(--accent); }
+  label.opt.sel { border-color: var(--accent); background: var(--accent-soft); }
+  label.opt input { margin-top: 3px; }
+  .tag { font-size: 11px; font-weight: 700; color: var(--rec); background: var(--rec-soft); padding: 1px 7px; border-radius: 99px; margin-left: 6px; white-space: nowrap; }
+  .note { margin: 8px 0 0 44px; }
+  .note textarea { width: 100%; min-height: 34px; resize: vertical; font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; }
+  .assume label { display: flex; gap: 10px; padding: 6px 0; align-items: flex-start; }
+  .assume input { margin-top: 4px; }
+  textarea.free { width: 100%; min-height: 90px; font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+  #out { display: none; margin-top: 18px; }
+  #out pre { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; overflow: auto; max-height: 420px; font-size: 12.5px; }
+  .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 8px 14px; border-radius: 8px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+  .chk { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; color: var(--muted); }
+  @media (max-width: 600px) { .qbody, .opts, .note { margin-left: 0; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <h1>Biber-Rechnungen · Grilling Runde 3</h1>
+    <span class="stat" id="stat"></span>
+    <label class="chk"><input type="checkbox" id="compact"> nur Abweichungen</label>
+    <button onclick="toggleOut()"><span class="material-icons">data_object</span>Vorschau</button>
+    <button onclick="download()"><span class="material-icons">download</span>.json</button>
+    <button class="primary" onclick="copyJson()"><span class="material-icons">content_copy</span>JSON kopieren</button>
+  </div>
+</header>
+<main>
+  <div class="intro">
+    <p><strong>So funktioniert's:</strong> Bei jeder Frage ist meine Empfehlung schon ausgewählt (grün markiert). Wenn du einverstanden bist, musst du nichts tun. Ändere nur, was nicht passt, und schreib bei Bedarf eine Anmerkung.</p>
+    <p>Am Ende auf <em>JSON kopieren</em> klicken und das Ergebnis in den Chat einfügen. Mit <em>nur Abweichungen</em> wird das JSON kürzer. Deine Eingaben bleiben beim Neuladen in diesem Browser erhalten.</p>
+    <p><strong>Neu in Runde 3:</strong> Fragen, die sich aus deinen Antworten ergeben: nur LAN (→ HTTPS), NAS-Backup (→ Datenbank), EÜR selbst buchen (→ Zahlungsstatus, Kategorien, Export), Papier im Ordner (→ Scannen, Altbestand). Dazu kommen Dashboard, Ausbaustufen und drei <em>Fakt-Fragen</em> ohne Vorauswahl (orange), die du bitte beantwortest. Danach sollte der Baum fast leer sein.</p>
+  </div>
+
+  <h2>Aus deinen Anforderungen abgeleitet: bitte bestätigen</h2>
+  <div class="q assume" id="assumptions"></div>
+
+  <div id="questions"></div>
+
+  <h2>Sonst noch etwas?</h2>
+  <div class="q">
+    <div class="qbody" style="margin-left:0">Fehlende Anforderungen, Prioritäten, Dinge, die dir wichtig sind, Fristen …</div>
+    <textarea class="free" id="extra" placeholder="Freitext"></textarea>
+  </div>
+
+  <div id="out"><pre id="json"></pre></div>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+const ASSUMPTIONS = [
+  ["C1", "Nur geschäftliche Belege, 1–2 Benutzer. Ein Kennzeichen privat/geschäftlich oder Mandanten gibt es nicht."],
+  ["C2", "Der Ablage-Share ist WORM (Samba vfs_worm). Der interne Eingangsbereich ist ein separates, normales Volume. Die App schreibt jede Datei genau einmal in die Ablage; Löschen nach Fristende kann nur der NAS-Admin."],
+  ["C3", "Keine Festschreibung. Korrekturen sind jederzeit möglich, aber lückenlos protokolliert. Die Admin-Rolle umfasst Benutzer und Einstellungen."],
+  ["C4", "Kein Kamera-Scan. Die PWA dient zum Ansehen, für Datei-Upload, Share-Target (Android) und als Offline-Warteschlange für Uploads."],
+  ["C5", "Kein öffentlicher Zugang: PWA und MCP sind nur im LAN erreichbar. Ein VPN ließe sich später ohne Codeänderung ergänzen."],
+  ["C6", "Die Registrierung ist offen, neue Konten bleiben bis zur Freigabe durch den Admin gesperrt. Der erste Benutzer wird automatisch Admin."],
+  ["C7", "Alle 9 Plausibilitätsprüfungen sind aktiv, Schwellen und Toleranzen sind konfigurierbar. Jede fehlgeschlagene Prüfung wird als Grund am Beleg gespeichert."],
+  ["C8", "Die Belegliste hat Filter (Zeitraum, Korrespondent, Kategorie, Tag, Status, Betrag), ist nach jeder Spalte sortierbar und durchsucht den Volltext. Die Detailansicht zeigt PDF-Viewer und Daten nebeneinander."]
+];
+
+const Q = [
+  // ---------- Fakten
+  { s: "Fakten (keine Empfehlung möglich)", id: "R3-1", t: "Umsatzsteuer-Status der Firma", fact: true,
+    b: "Bestimmt, ob Vorsteuer-Auswertungen und §14-Prüfungen relevant sind.",
+    o: [["regel_monat", "Regelbesteuerung, UStVA monatlich"],
+        ["regel_quartal", "Regelbesteuerung, UStVA quartalsweise"],
+        ["regel_jahr", "Regelbesteuerung, nur Jahreserklärung"],
+        ["klein", "Kleinunternehmer (§19 UStG), keine Vorsteuer"]] },
+  { s: "Fakten (keine Empfehlung möglich)", id: "R3-2", t: "Wo läuft Docker?", fact: true,
+    b: "Wichtig für WORM-Share, Mounts und dafür, wie die Datenbank ins NAS-Backup kommt. Bitte Modell bzw. System in der Anmerkung nennen.",
+    o: [["nas", "Direkt auf dem NAS (Synology/QNAP/TrueNAS/Unraid/OMV …)"],
+        ["host", "Separater Server/Mini-PC, NAS-Shares per SMB gemountet"],
+        ["vm", "VM auf einem Hypervisor (Proxmox o. ä.)"]] },
+  { s: "Fakten (keine Empfehlung möglich)", id: "R3-3", t: "Eigene Domain mit DNS-API?", fact: true,
+    b: "Für HTTPS im LAN (siehe R3-4). Bitte Domain-Provider in der Anmerkung nennen (z. B. Cloudflare, Hetzner, IONOS, INWX).",
+    o: [["ja", "Ja, eigene Domain, DNS-Provider mit API"],
+        ["ja_ohne_api", "Eigene Domain, aber DNS-Provider ohne API"],
+        ["nein", "Keine eigene Domain"]] },
+
+  // ---------- Netzwerk & Betrieb
+  { s: "Netzwerk & Betrieb", id: "R3-4", t: "HTTPS im LAN",
+    b: "Service Worker, PWA-Installation und Offline-Modus funktionieren nur unter HTTPS. Google-Login verlangt eine Redirect-URL unter einer öffentlichen Domain. Der Server muss dafür nicht öffentlich erreichbar sein: Der Name muss nur im LAN auflösen.",
+    o: [["a", "Interner Hostname unter eigener Domain (z. B. rechnungen.intern.example.de), DNS-Eintrag nur im LAN. Let's-Encrypt-Zertifikat per DNS-01-Challenge über Caddy; kein Port nach außen offen", 1],
+        ["b", "Eigene CA bzw. self-signed, Zertifikat auf allen Geräten installieren. Google-Login fällt dann weg"],
+        ["c", "Nur HTTP im LAN. Dann fallen PWA-Installation, Offline-Modus und Google-Login weg"]] },
+  { s: "Netzwerk & Betrieb", id: "R3-5", t: "Wie kommt die Datenbank ins NAS-Backup?",
+    b: "Laut R2-9 reicht das NAS-Backup. Die Originale liegen auf dem NAS, die extrahierten Daten und das Änderungsprotokoll (GoBD-relevant) aber in Postgres. Ein Postgres-Datenverzeichnis, das im laufenden Betrieb kopiert wird, ist kein konsistentes Backup.",
+    o: [["a", "docker-compose enthält einen kleinen Backup-Container, der nachts per pg_dump in einen Ordner auf dem NAS schreibt (rotierend, z. B. 30 Tage). Das NAS-Backup sichert diesen Ordner mit", 1],
+        ["b", "Das NAS-Backup erstellt Snapshots des Docker-Volumes; ich nehme das Risiko in Kauf"],
+        ["c", "Postgres läuft als NAS-Paket und wird dort mit eigenen Mitteln gesichert"]] },
+  { s: "Netzwerk & Betrieb", id: "R3-6", t: "Benachrichtigungen",
+    b: "Nötig z. B. für neue Registrierungen (C6), Integritätsfehler der Ablage (R2-5), das DI-Limit (R2-13) und Belege „zu prüfen“.",
+    o: [["a", "E-Mail per SMTP über das Rechnungs-Postfach: sofort bei Registrierung, Integritätsfehler und DI-Limit; ein täglicher Digest für „zu prüfen“. Zusätzlich ein Zähler in der App", 1],
+        ["b", "Nur in der App (Glocke/Zähler), keine Mails"],
+        ["c", "Wie (a), plus Web-Push auf das Handy (braucht nur ausgehende Verbindungen)"]] },
+
+  // ---------- Papier
+  { s: "Papierbelege", id: "R3-7", t: "Neue Papierrechnungen (per Post)",
+    b: "Heute wird alles ausgedruckt und abgeheftet. Künftig kommen die meisten Rechnungen digital, ein Teil aber weiterhin auf Papier.",
+    o: [["a", "Scannen (Netzwerkscanner bzw. Scan-to-SMB) in den Eingangsordner. Das Papieroriginal wird zusätzlich aufbewahrt; kein ersetzendes Scannen", 1],
+        ["b", "Ersetzendes Scannen: Papier wird nach dem Scan vernichtet. Dafür braucht die Verfahrensdokumentation ein eigenes Kapitel nach TR-RESISCAN"],
+        ["c", "Papierbelege bleiben außerhalb der App"]] },
+  { s: "Papierbelege", id: "R3-8", t: "Mehrere Rechnungen in einem Scan",
+    b: "Ein Scannerstapel ergibt oft ein PDF mit mehreren Rechnungen.",
+    o: [["a", "Eine Datei ist ein Beleg. In der UI lässt sich ein PDF manuell aufteilen (Seiten auswählen → neuer Beleg); das ungeteilte Original bleibt erhalten", 1],
+        ["b", "Automatisches Aufteilen (Trennblatt mit Barcode oder Erkennung durch DI)"],
+        ["c", "Stapel werden schon beim Scannen getrennt, die App muss nichts tun"]] },
+  { s: "Papierbelege", id: "R3-9", t: "Altbestand in Ordnern",
+    b: "",
+    o: [["a", "Start zu einem Stichtag (z. B. Jahresbeginn 2027). Der Altbestand bleibt in Ordnern und wird nicht nachträglich erfasst", 1],
+        ["b", "Das laufende Jahr wird nachgescannt, damit Auswertungen vollständig sind"],
+        ["c", "Alles, was noch aufbewahrt werden muss, wird nachgescannt"]] },
+  { s: "Papierbelege", id: "R3-10", t: "Kassenbons",
+    b: "Q12 enthielt Kassenbons, R2-14 schließt den Kamera-Scan aus.",
+    o: [["a", "Kassenbons bleiben eine Belegart, kommen aber nur als Datei (Scanner, Upload, Mail). Document Intelligence nutzt dafür das Receipt-Modell", 1],
+        ["b", "Kassenbons werden gar nicht erfasst"]] },
+
+  // ---------- Buchhaltung
+  { s: "Buchhaltung & Auswertung", id: "R3-11", t: "Zahlungsstatus",
+    b: "Bei der EÜR zählt eine Ausgabe erst, wenn sie bezahlt ist (Abflussprinzip). Ohne Zahlungsdatum lassen sich Auswertungen und Exporte für die EÜR nur nach Rechnungsdatum erstellen.",
+    o: [["a", "Felder „fällig am“ (aus der Rechnung), „bezahlt am“ und Zahlungsart, manuell oder per Massenaktion setzbar. Lastschrift/Kreditkarte/„bereits bezahlt“-Vermerke werden erkannt und vorbelegt. Eine Liste zeigt offene und überfällige Rechnungen", 1],
+        ["b", "Wie (a), plus Abgleich mit Kontoauszügen (CSV-/CAMT-Import) in einer späteren Phase"],
+        ["c", "Kein Zahlungsstatus"]] },
+  { s: "Buchhaltung & Auswertung", id: "R3-12", t: "Kategorien",
+    b: "Du buchst selbst per EÜR. Kategorien, die zu den Zeilen der Anlage EÜR passen, sparen später das Umsortieren.",
+    o: [["a", "Vorbelegte Kategorien angelehnt an die Anlage EÜR (Waren/Material, Fremdleistungen, Miete, Telekommunikation, Software/Lizenzen, Bürobedarf, Reisekosten, Fortbildung, Versicherungen, GWG/AfA …). Jede Kategorie hat eine EÜR-Zeile und ist frei änderbar", 1],
+        ["b", "Freie Kategorien ohne Vorbelegung"]] },
+  { s: "Buchhaltung & Auswertung", id: "R3-13", t: "Export",
+    b: "Für deine eigene Buchhaltung (Excel/Elster), oder falls später ein Steuerberater dazukommt.",
+    o: [["a", "Export pro Zeitraum: Excel/CSV-Belegliste (Datum, Zahlungsdatum, Korrespondent, Rechnungsnr., Netto, USt je Satz, Brutto, Kategorie/EÜR-Zeile, Dateiname) plus ZIP der Originale. Dazu Summen je EÜR-Zeile und, bei Regelbesteuerung, die Vorsteuer je UStVA-Zeitraum", 1],
+        ["b", "Wie (a), plus DATEV-Format (Buchungsstapel + Belegbilder) für einen späteren Steuerberater"],
+        ["c", "Nur CSV, keine Summen"]] },
+  { s: "Buchhaltung & Auswertung", id: "R3-14", t: "Zeitbasis der Auswertungen",
+    b: "",
+    o: [["a", "Standard ist das Rechnungsdatum; im Dashboard und beim Export lässt sich auf das Zahlungsdatum (EÜR-Sicht) umschalten", 1],
+        ["b", "Immer Zahlungsdatum"],
+        ["c", "Immer Rechnungsdatum"]] },
+  { s: "Buchhaltung & Auswertung", id: "R3-15", t: "Dashboard-Inhalte", multi: true,
+    b: "Mehrfachauswahl. Dein Wunsch aus der ersten Anforderung: Kostenverlauf, Artikelvergleich, Korrespondenten.",
+    o: [["verlauf", "Kosten pro Monat, gestapelt nach Kategorie", 1],
+        ["vorjahr", "Vergleich mit dem Vorjahr (gleicher Zeitraum)", 1],
+        ["top_korr", "Top-Korrespondenten nach Kosten", 1],
+        ["preis", "Artikel mit der größten Preisänderung", 1],
+        ["offen", "Offene und überfällige Rechnungen", 1],
+        ["pruefen", "Inbox „zu prüfen“ mit Zähler und Gründen", 1],
+        ["vorsteuer", "Vorsteuer je UStVA-Zeitraum (nur bei Regelbesteuerung)", 1],
+        ["di", "Verbrauch von Document Intelligence (Seiten/Limit)"]] },
+
+  // ---------- Umsetzung
+  { s: "Umsetzung", id: "R3-16", t: "Ausbaustufen",
+    b: "Damit früh etwas Nutzbares entsteht. Jede Phase endet mit einer lauffähigen Version.",
+    o: [["a", "Phase 1 (MVP): Upload + Eingangsordner, E-Rechnung + DI, Plausibilitätsprüfungen, WORM-Ablage, Belegliste/Suche/Detail, Korrespondenten, Login (Passwort + TOTP), Änderungsprotokoll. Phase 2: Mail-Import, Zahlungsstatus, Kategorien, Export, Dashboard. Phase 3: Artikel und Preisverlauf, Logos, MCP-Server (Token). Phase 4: PWA (Offline, Share-Target), Google-Login, Registrierung mit Freigabe, Benachrichtigungen. Später: OAuth für MCP, Ausgangsrechnungen", 1],
+        ["b", "Wie (a), aber Mail-Import und Dashboard schon im MVP"],
+        ["c", "Eigene Reihenfolge (bitte in der Anmerkung beschreiben)"]] },
+  { s: "Umsetzung", id: "R3-17", t: "Planung und Tickets",
+    b: "Der fertige Plan muss irgendwo festgehalten werden.",
+    o: [["a", "Plan als Markdown in /docs/plan.md und Tickets als GitHub Issues im Repo, gegliedert nach Phasen (Milestones)", 1],
+        ["b", "Nur /docs/plan.md, keine Tickets"],
+        ["c", "Tickets auf dem AI-Harness-Board"]] },
+];
+
+const KEY = "biber-grill-r3";
+let state = load() || { assume: {}, ans: {}, extra: "" };
+
+function load() { try { return JSON.parse(localStorage.getItem(KEY)); } catch { return null; } }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} }
+const recOf = q => q.o.filter(o => o[2]).map(o => o[0]);
+const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function render() {
+  const A = document.getElementById("assumptions");
+  A.innerHTML = ASSUMPTIONS.map(([id, txt]) => {
+    const v = state.assume[id] !== false;
+    return `<label><input type="checkbox" data-a="${id}" ${v ? "checked" : ""}><span><strong>${id}</strong> ${esc(txt)}</span></label>`;
+  }).join("");
+
+  let html = "", sec = "";
+  for (const q of Q) {
+    if (q.s !== sec) { sec = q.s; html += `<h2>${esc(sec)}</h2>`; }
+    const sel = (state.ans[q.id]?.sel) ?? recOf(q);
+    const type = q.multi ? "checkbox" : "radio";
+    const opts = [...q.o, ["andere", "Andere Antwort (bitte in der Anmerkung beschreiben)"]];
+    html += `<div class="q" id="${q.id}"><div class="qhead"><span class="qid">${q.id}</span><span class="qtitle">${esc(q.t)}</span>${q.fact ? `<span class="tag" style="color:var(--warn);background:var(--warn-soft)">Fakt, bitte auswählen</span>` : ""}</div>`;
+    if (q.b) html += `<div class="qbody">${esc(q.b)}</div>`;
+    html += `<div class="opts">` + opts.map(([k, l, r]) =>
+      `<label class="opt ${sel.includes(k) ? "sel" : ""}"><input type="${type}" name="${q.id}" value="${k}" ${sel.includes(k) ? "checked" : ""}><span>${esc(l)}${r ? '<span class="tag">Empfehlung</span>' : ""}</span></label>`
+    ).join("") + `</div>`;
+    html += `<div class="note"><textarea data-n="${q.id}" placeholder="Anmerkung (optional)">${esc(state.ans[q.id]?.note || "")}</textarea></div></div>`;
+  }
+  document.getElementById("questions").innerHTML = html;
+  document.getElementById("extra").value = state.extra || "";
+  refresh();
+}
+
+function readQ(q) {
+  const sel = [...document.querySelectorAll(`input[name="${q.id}"]:checked`)].map(i => i.value);
+  const note = document.querySelector(`textarea[data-n="${q.id}"]`).value.trim();
+  return { sel, note };
+}
+
+function refresh() {
+  let changed = 0, open = 0;
+  for (const q of Q) {
+    const { sel, note } = readQ(q);
+    state.ans[q.id] = { sel, note };
+    const isRec = JSON.stringify([...sel].sort()) === JSON.stringify([...recOf(q)].sort());
+    const el = document.getElementById(q.id);
+    el.classList.toggle("changed", q.fact ? !sel.length : (!isRec || !!note));
+    el.querySelectorAll("label.opt").forEach(l => l.classList.toggle("sel", l.querySelector("input").checked));
+    if (q.fact) { if (!sel.length) open++; } else if (!isRec || note) changed++;
+  }
+  document.querySelectorAll("[data-a]").forEach(c => state.assume[c.dataset.a] = c.checked);
+  state.extra = document.getElementById("extra").value;
+  save();
+  document.getElementById("stat").textContent = `${changed} angepasst` + (open ? ` · ${open} offen` : "");
+  document.getElementById("json").textContent = buildJson();
+}
+
+function buildJson() {
+  const compact = document.getElementById("compact").checked;
+  const antworten = {};
+  for (const q of Q) {
+    const { sel, note } = state.ans[q.id];
+    const isRec = JSON.stringify([...sel].sort()) === JSON.stringify([...recOf(q)].sort());
+    if (compact && !q.fact && isRec && !note) continue;
+    const labels = sel.map(k => (q.o.find(o => o[0] === k) || [k, "Andere"])[1]);
+    const e = { frage: q.t, auswahl: q.multi ? sel : sel[0] ?? null, text: q.multi ? labels : labels[0] ?? null, empfehlung: q.fact ? null : isRec };
+    if (note) e.anmerkung = note;
+    antworten[q.id] = e;
+  }
+  const annahmen = {};
+  for (const [id] of ASSUMPTIONS) {
+    const v = state.assume[id] !== false;
+    if (!compact || !v) annahmen[id] = v;
+  }
+  const out = { runde: 3, modus: compact ? "nur_abweichungen" : "vollstaendig", annahmen, antworten };
+  if (compact) out.hinweis = "Nicht aufgeführte Fragen und Annahmen = Empfehlung übernommen";
+  if (state.extra.trim()) out.ergaenzungen = state.extra.trim();
+  return JSON.stringify(out, null, 2);
+}
+
+function toast(msg) { const t = document.getElementById("toast"); t.textContent = msg; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 1800); }
+function toggleOut() { const o = document.getElementById("out"); o.style.display = o.style.display === "block" ? "none" : "block"; if (o.style.display === "block") o.scrollIntoView({ behavior: "smooth" }); }
+async function copyJson() {
+  refresh(); const txt = buildJson();
+  try { await navigator.clipboard.writeText(txt); toast("JSON kopiert, jetzt in den Chat einfügen"); }
+  catch {
+    const ta = document.createElement("textarea"); ta.value = txt; document.body.appendChild(ta); ta.select();
+    const ok = document.execCommand("copy"); ta.remove();
+    toast(ok ? "JSON kopiert" : "Kopieren fehlgeschlagen, bitte Vorschau nutzen");
+    if (!ok) toggleOut();
+  }
+}
+function download() {
+  refresh(); const blob = new Blob([buildJson()], { type: "application/json" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "grill-runde-3-antworten.json"; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+document.addEventListener("change", refresh);
+document.addEventListener("input", e => { if (e.target.tagName === "TEXTAREA") refresh(); });
+render();
+</script>
+</body>
+</html>

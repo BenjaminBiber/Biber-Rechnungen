@@ -1,0 +1,27 @@
+# Secrets / lokale Konfiguration
+.env
+*.env.local
+appsettings.*.local.json
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.idea/
+TestResults/
+
+# Node / Frontend
+node_modules/
+dist/
+coverage/
+*.log
+
+# Laufzeitdaten (lokale Entwicklung)
+/data/
+
+# Tools
+graphify-out/
+.DS_Store
+Thumbs.db

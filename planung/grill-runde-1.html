@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Biber-Rechnungen · Runde 1</title>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #ffffff; --ink: #1b1f24; --muted: #5b6573; --line: #e1e5ea;
+    --accent: #2f6fdb; --accent-soft: #e8f0fd; --rec: #1d8a5a; --rec-soft: #e6f5ee; --warn: #b5650d; --warn-soft: #fdf1e3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111418; --card: #1a1f25; --ink: #e7ebf0; --muted: #9aa4b2; --line: #2b323b;
+      --accent: #6c9ef0; --accent-soft: #1d2a40; --rec: #4cc08a; --rec-soft: #17302a; --warn: #e6a35a; --warn-soft: #33281b;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { position: sticky; top: 0; z-index: 5; background: var(--card); border-bottom: 1px solid var(--line); }
+  .bar { max-width: 920px; margin: 0 auto; padding: 12px 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .bar h1 { font-size: 17px; margin: 0; flex: 1 1 auto; }
+  .stat { color: var(--muted); font-size: 13px; }
+  button { font: inherit; border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 8px; padding: 7px 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button .material-icons { font-size: 18px; }
+  main { max-width: 920px; margin: 0 auto; padding: 16px; }
+  .intro { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin-bottom: 18px; }
+  .intro p { margin: 6px 0; }
+  h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 28px 0 10px; }
+  .q { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin-bottom: 12px; }
+  .q.changed { border-color: var(--warn); }
+  .qhead { display: flex; gap: 10px; align-items: baseline; }
+  .qid { font-weight: 700; color: var(--accent); min-width: 34px; }
+  .qtitle { font-weight: 650; }
+  .qbody { color: var(--muted); margin: 6px 0 10px 44px; }
+  .opts { margin-left: 44px; display: grid; gap: 6px; }
+  label.opt { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
+  label.opt:hover { border-color: var(--accent); }
+  label.opt.sel { border-color: var(--accent); background: var(--accent-soft); }
+  label.opt input { margin-top: 3px; }
+  .tag { font-size: 11px; font-weight: 700; color: var(--rec); background: var(--rec-soft); padding: 1px 7px; border-radius: 99px; margin-left: 6px; white-space: nowrap; }
+  .note { margin: 8px 0 0 44px; }
+  .note textarea { width: 100%; min-height: 34px; resize: vertical; font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; }
+  .assume label { display: flex; gap: 10px; padding: 6px 0; align-items: flex-start; }
+  .assume input { margin-top: 4px; }
+  textarea.free { width: 100%; min-height: 90px; font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+  #out { display: none; margin-top: 18px; }
+  #out pre { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; overflow: auto; max-height: 420px; font-size: 12.5px; }
+  .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 8px 14px; border-radius: 8px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+  .chk { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; color: var(--muted); }
+  @media (max-width: 600px) { .qbody, .opts, .note { margin-left: 0; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <h1>Biber-Rechnungen · Grilling Runde 1</h1>
+    <span class="stat" id="stat"></span>
+    <label class="chk"><input type="checkbox" id="compact"> nur Abweichungen</label>
+    <button onclick="toggleOut()"><span class="material-icons">data_object</span>Vorschau</button>
+    <button onclick="download()"><span class="material-icons">download</span>.json</button>
+    <button class="primary" onclick="copyJson()"><span class="material-icons">content_copy</span>JSON kopieren</button>
+  </div>
+</header>
+<main>
+  <div class="intro">
+    <p><strong>So funktioniert's:</strong> Bei jeder Frage ist meine Empfehlung schon ausgewählt (grün markiert). Wenn du einverstanden bist, musst du nichts tun. Ändere nur, was nicht passt, und schreib bei Bedarf eine Anmerkung.</p>
+    <p>Am Ende auf <em>JSON kopieren</em> klicken und das Ergebnis in den Chat einfügen. Mit <em>nur Abweichungen</em> wird das JSON kürzer. Deine Eingaben bleiben beim Neuladen in diesem Browser erhalten.</p>
+    <p>In dieser Runde stehen nur Fragen, die nicht von anderen offenen Fragen abhängen. Abhängige Fragen (z. B. Registrierung, Offline-Modus, Export, MVP-Schnitt) kommen in Runde 2.</p>
+  </div>
+
+  <h2>Aus deinen Anforderungen abgeleitet: bitte bestätigen</h2>
+  <div class="q assume" id="assumptions"></div>
+
+  <div id="questions"></div>
+
+  <h2>Sonst noch etwas?</h2>
+  <div class="q">
+    <div class="qbody" style="margin-left:0">Fehlende Anforderungen, Prioritäten, Dinge, die dir wichtig sind, Fristen …</div>
+    <textarea class="free" id="extra" placeholder="Freitext"></textarea>
+  </div>
+
+  <div id="out"><pre id="json"></pre></div>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+const ASSUMPTIONS = [
+  ["A1", "Rechnungspositionen (Artikel, Menge, Einzelpreis) werden extrahiert. Ohne sie gibt es keine Artikelansicht und keinen Kostenvergleich."],
+  ["A2", "Alle Importwege (Mail, Ordner, Upload) laufen in eine gemeinsame Pipeline: Eingang → Formaterkennung → Extraktion → Prüfung → Ablage."],
+  ["A3", "Das Original wird immer unverändert aufbewahrt. Extrahierte Daten liegen getrennt in der Datenbank und lassen sich korrigieren."],
+  ["A4", "Desktop und Mobile sind eine einzige responsive React-App. Die PWA baut darauf auf, es gibt keine zweite Codebasis."],
+  ["A5", "Der MCP-Server nutzt dieselbe Domänenlogik und dieselben Berechtigungen wie die REST-API. Keine doppelte Geschäftslogik."]
+];
+
+// Jede Frage: id, section, title, body, multi?, options [key, label, rec?]
+const Q = [
+  // ---------- Grundsätzliches
+  { s: "Grundsätzliches", id: "Q1", t: "Zweck des Programms",
+    b: "Deine Anforderungen drehen sich alle um eingehende Rechnungen (Kosten). Unter „Rechnungsprogramm“ versteht man oft auch das Schreiben eigener Rechnungen.",
+    o: [["a", "Nur Eingangsrechnungen erfassen, archivieren und auswerten", 1],
+        ["b", "Erst Eingangsrechnungen, das Schreiben eigener Rechnungen kommt später"],
+        ["c", "Beides von Anfang an"]] },
+  { s: "Grundsätzliches", id: "Q2", t: "Wer nutzt es?",
+    b: "Davon hängen Datenmodell (Mandanten), Registrierung und Rechte ab.",
+    o: [["a", "Privat/Haushalt: wenige Benutzer, ein gemeinsamer Datenbestand", 1],
+        ["b", "Mehrere getrennte Mandanten (Haushalte/Firmen) in einer Instanz"],
+        ["c", "Öffentliches SaaS mit Selbstregistrierung"]] },
+  { s: "Grundsätzliches", id: "Q3", t: "Steuerliche / geschäftliche Relevanz",
+    b: "Bei geschäftlicher Nutzung gilt GoBD: Belege unveränderbar, 10 Jahre aufbewahren, Änderungen protokollieren.",
+    o: [["a", "Rein privat, keine GoBD-Pflicht. Trotzdem Originale unveränderlich speichern, mit Hash", 1],
+        ["b", "Teilweise geschäftlich (Freiberuf/Nebengewerbe): GoBD-nahe Archivierung mit Änderungsprotokoll"],
+        ["c", "Voll geschäftlich: GoBD inklusive Verfahrensdokumentation"]] },
+  { s: "Grundsätzliches", id: "Q4", t: "Mengengerüst",
+    b: "Bestimmt die Kosten für Document Intelligence (pro Seite abgerechnet) und ob eine einfache Architektur reicht.",
+    o: [["a", "Unter 100 Belege pro Monat", 1],
+        ["b", "100–1.000 Belege pro Monat"],
+        ["c", "Über 1.000 Belege pro Monat"]] },
+  { s: "Grundsätzliches", id: "Q5", t: "Hosting",
+    b: "Document Intelligence ist ein Azure-Dienst. Der Rest kann überall laufen.",
+    o: [["a", "Self-hosted mit Docker Compose (Homeserver/NAS/VPS); Azure nur für Document Intelligence", 1],
+        ["b", "Komplett Azure (Container Apps, Blob Storage, Azure DB for PostgreSQL)"],
+        ["c", "Andere Cloud oder Kubernetes"]] },
+  { s: "Grundsätzliches", id: "Q6", t: "Datenschutz bei der Extraktion",
+    b: "Rechnungen enthalten personenbezogene Daten. Darf ein Cloud-Dienst die Dokumente sehen?",
+    o: [["a", "Ja: Azure Document Intelligence in EU-Region (prebuilt-invoice / prebuilt-receipt)", 1],
+        ["b", "Ja, zusätzlich ein LLM (z. B. Claude) als Extraktor bzw. zum Nachbessern schwacher DI-Ergebnisse"],
+        ["c", "Nein, nur lokale Verarbeitung (Tesseract / lokales Modell)"]] },
+
+  // ---------- Import
+  { s: "Import", id: "Q7", t: "E-Mail-Anbindung",
+    b: "Wie kommen Mails ins System?",
+    o: [["a", "IMAP-Polling eines eigenen Postfachs (z. B. rechnungen@…); verarbeitete Mails wandern in einen IMAP-Ordner", 1],
+        ["b", "Microsoft Graph / Gmail-API per OAuth auf das bestehende Postfach (mit Filter/Label)"],
+        ["c", "Inbound-Webhook: Weiterleitung an Mailgun/Postmark, die die API aufrufen"]] },
+  { s: "Import", id: "Q8", t: "Was wird aus Mails übernommen?",
+    b: "Viele Händler schicken keinen Anhang, sondern einen Link oder eine HTML-Mail.",
+    o: [["a", "v1: nur Anhänge (PDF, XML, Bilder)", 1],
+        ["b", "Anhänge, und ohne Anhang wird der Mailtext als PDF gespeichert"],
+        ["c", "Zusätzlich Download-Links in der Mail folgen"]] },
+  { s: "Import", id: "Q9", t: "Quelle des Eingangsordners",
+    b: "Wo liegt der überwachte Ordner?",
+    o: [["a", "Lokal gemountetes Verzeichnis bzw. Docker-Volume (NAS-Share ggf. per SMB auf dem Host gemountet)", 1],
+        ["b", "SMB/CIFS direkt aus der App"],
+        ["c", "Cloud-Ordner (OneDrive / Google Drive / Nextcloud per WebDAV)"]] },
+  { s: "Import", id: "Q10", t: "Rolle des Ablage-Ordners",
+    b: "Wie verstehst du „Ablage“?",
+    o: [["a", "Die Ablage ist der primäre Speicher aller Originale, auch aus Mail und Upload. Die App sortiert und benennt: Ablage/{Jahr}/{Korrespondent}/{Datum}_{Rechnungsnr}.pdf", 1],
+        ["b", "Ablage nur für Ordner-Importe; alles andere liegt im internen Speicher"],
+        ["c", "Primär interner Speicher; die Ablage ist nur eine gespiegelte Archivkopie"]] },
+  { s: "Import", id: "Q11", t: "Dubletten",
+    b: "Dieselbe Rechnung kommt oft doppelt, z. B. per Mail und zusätzlich als Upload.",
+    o: [["a", "Exakter Hash und fachlicher Abgleich (Korrespondent + Rechnungsnr. + Betrag). Treffer als Dublette markieren und nicht doppelt zählen", 1],
+        ["b", "Nur exakter Datei-Hash"],
+        ["c", "Keine Erkennung"]] },
+  { s: "Import", id: "Q12", t: "Welche Belegarten?", multi: true,
+    b: "Mehrfachauswahl.",
+    o: [["rechnung", "Rechnungen", 1],
+        ["gutschrift", "Gutschriften/Stornos (negative Beträge)", 1],
+        ["bon", "Kassenbons (Foto per Handy)", 1],
+        ["abo", "Verträge/Abos mit wiederkehrenden Kosten"],
+        ["quittung", "Sonstige Quittungen/Belege"]] },
+
+  // ---------- Auslesen
+  { s: "Auslesen", id: "Q13", t: "E-Rechnungen „per Service“: wie umsetzen?",
+    b: "ZUGFeRD/Factur-X und XRechnung (CII) liest die .NET-Bibliothek ZUGFeRD-csharp. XRechnung im UBL-Format braucht einen eigenen Parser.",
+    o: [["a", "In-Process als eigener Service in der C#-API (ZUGFeRD-csharp + UBL-Parser); optional KoSIT-Validierung", 1],
+        ["b", "Separater Container (z. B. Mustang/KoSIT-Validator) als eigener Dienst"],
+        ["c", "Externe SaaS-API"]] },
+  { s: "Auslesen", id: "Q14", t: "Vorrang strukturierter Daten",
+    b: "Enthält ein PDF eingebettetes ZUGFeRD-XML oder kommt eine reine XRechnung …",
+    o: [["a", "… ist das XML maßgeblich und Document Intelligence wird übersprungen; das PDF dient nur der Ansicht", 1],
+        ["b", "… werden XML und DI-Ergebnis beide erzeugt und abgeglichen"]] },
+  { s: "Auslesen", id: "Q15", t: "Was heißt „OCR als Fallback“?",
+    b: "Document Intelligence macht selbst schon OCR. Der Fallback greift, wenn DI fehlschlägt, nicht erreichbar ist oder das Kontingent aufgebraucht ist.",
+    o: [["a", "Tesseract lokal liefert Volltext für die Suche; die Felder werden im Prüfschritt manuell ergänzt", 1],
+        ["b", "Tesseract plus LLM, das aus dem OCR-Text die Felder extrahiert"],
+        ["c", "DI-Layout/Read-Modell als Fallback, wenn das Invoice-Modell schlechte Ergebnisse liefert"]] },
+  { s: "Auslesen", id: "Q16", t: "Prüfschritt",
+    b: "Extraktion ist nie perfekt. Wann muss ein Mensch drüberschauen?",
+    o: [["a", "Automatisch übernehmen ab einer Konfidenz-Schwelle; darunter landet der Beleg in einer „Zu prüfen“-Inbox", 1],
+        ["b", "Jeder Beleg muss bestätigt werden"],
+        ["c", "Nie, Korrekturen nur bei Bedarf"]] },
+  { s: "Auslesen", id: "Q17", t: "Wann ist ein Artikel „derselbe“?",
+    b: "„H-Milch 1,5% 1L“ bei Rewe und „Milch haltbar 1L“ bei Edeka: Für den Kostenvergleich müssen solche Positionen zusammengeführt werden.",
+    o: [["a", "Positionstext wird pro Korrespondent normalisiert und ergibt einen Artikel. Artikel lassen sich manuell zu einem Stammartikel zusammenführen (Aliase), auch über Händler hinweg", 1],
+        ["b", "Automatisches Matching per LLM/Embeddings mit Vorschlag zur Bestätigung"],
+        ["c", "Nur exakt gleicher Text"]] },
+  { s: "Auslesen", id: "Q18", t: "Preisvergleich: welche Größe?",
+    b: "Packungsgrößen ändern sich (Shrinkflation).",
+    o: [["a", "Einzelpreis pro Stück, zusätzlich Grundpreis (€/kg, €/l), wenn Menge und Einheit erkannt werden", 1],
+        ["b", "Immer auf Grundpreis normalisieren (ggf. manuelle Eingabe der Packungsgröße)"],
+        ["c", "Nur Positionsbetrag"]] },
+  { s: "Auslesen", id: "Q19", t: "Korrespondenten erkennen",
+    b: "Derselbe Händler taucht mit unterschiedlichen Schreibweisen auf.",
+    o: [["a", "Automatisch über USt-IdNr., IBAN und normalisierten Namen; manuelles Zusammenführen in der UI", 1],
+        ["b", "Jeden neuen Korrespondenten manuell bestätigen"]] },
+  { s: "Auslesen", id: "Q20", t: "Woher kommt das Logo?",
+    b: "",
+    o: [["a", "Automatisch aus dem Kopfbereich von Seite 1 ausschneiden (DI liefert Bildbereiche); manueller Upload überschreibt", 1],
+        ["b", "Logo/Favicon über die Website-Domain des Korrespondenten laden"],
+        ["c", "Nur manueller Upload"]] },
+  { s: "Auslesen", id: "Q21", t: "Kategorien",
+    b: "„Verlauf der Kosten“ wird erst aussagekräftig, wenn man nach etwas gruppieren kann.",
+    o: [["a", "Kategorie am Korrespondenten als Default, pro Rechnung überschreibbar; dazu freie Tags", 1],
+        ["b", "Kategorie pro Position (z. B. Supermarkt-Bon aufteilen in Lebensmittel/Drogerie)"],
+        ["c", "Keine Kategorien"]] },
+  { s: "Auslesen", id: "Q22", t: "Beträge, Steuer, Währung",
+    b: "",
+    o: [["a", "Netto, USt-Satz und Brutto für Kopf und Positionen; Währung wird gespeichert, Auswertungen v1 nur in EUR", 1],
+        ["b", "Wie (a), plus Fremdwährungsumrechnung mit EZB-Kursen"],
+        ["c", "Nur Bruttobeträge"]] },
+
+  // ---------- Auth & MCP
+  { s: "Authentifizierung & MCP", id: "Q23", t: "Login-Methoden", multi: true,
+    b: "Mehrfachauswahl. Lokale Konten über ASP.NET Core Identity, externe Logins per OAuth/OIDC.",
+    o: [["pw", "Benutzer + Passwort", 1],
+        ["totp", "2FA per TOTP (Authenticator-App)", 1],
+        ["passkey", "Passkeys"],
+        ["google", "Google", 1],
+        ["microsoft", "Microsoft", 1],
+        ["apple", "Apple"],
+        ["idp", "Eigener IdP (Authentik/Keycloak/Entra) statt eingebauter Konten"]] },
+  { s: "Authentifizierung & MCP", id: "Q24", t: "Was darf der MCP-Server?",
+    b: "Z. B. „Was habe ich 2026 bei Rewe ausgegeben?“ in Claude.",
+    o: [["a", "Lesen + Upload: Suche, Rechnung abrufen, Statistiken, Artikel- und Korrespondenten-Abfragen, Beleg hochladen", 1],
+        ["b", "Nur lesen"],
+        ["c", "Voll inklusive Bearbeiten/Löschen"]] },
+  { s: "Authentifizierung & MCP", id: "Q25", t: "MCP-Transport",
+    b: "",
+    o: [["a", "Streamable HTTP als Teil der API; Auth per OAuth (MCP-Auth-Spec) oder persönlichem API-Token", 1],
+        ["b", "Lokaler stdio-Server, der die REST-API aufruft"],
+        ["c", "Beides"]] },
+
+  // ---------- Technik
+  { s: "Technik", id: "Q26", t: "Datenbank & Suche",
+    b: "",
+    o: [["a", "PostgreSQL mit eingebauter Volltextsuche (tsvector, Konfiguration „german“) und pg_trgm für unscharfe Suche", 1],
+        ["b", "SQL Server"],
+        ["c", "PostgreSQL + separate Suchmaschine (Meilisearch/Elasticsearch)"]] },
+  { s: "Technik", id: "Q27", t: "Backend-Aufbau",
+    b: "",
+    o: [["a", ".NET 10, ASP.NET Core Minimal APIs, EF Core (Npgsql), Hangfire mit Postgres für Import-/Extraktionsjobs", 1],
+        ["b", "Wie (a), plus .NET Aspire für lokale Orchestrierung und Telemetrie"],
+        ["c", "Controller + MediatR / Clean-Architecture-Schichten"]] },
+  { s: "Technik", id: "Q28", t: "Frontend-Stack",
+    b: "",
+    o: [["a", "Vite + React + TypeScript, TanStack Query/Router, shadcn/ui + Tailwind, Recharts, PDF.js-Viewer, Material Icons", 1],
+        ["b", "Next.js statt Vite"],
+        ["c", "MUI statt shadcn/ui"]] },
+  { s: "Technik", id: "Q29", t: "Mobile / App",
+    b: "Unter Android kann eine PWA als „Teilen“-Ziel für PDFs dienen, unter iOS nicht.",
+    o: [["a", "PWA: installierbar, Kamera-Upload, Share-Target (Android); native App erst bei Bedarf", 1],
+        ["b", "PWA jetzt, Capacitor-App fest eingeplant (iOS-Teilen, Push)"],
+        ["c", "Native App (React Native) von Anfang an"]] },
+  { s: "Technik", id: "Q30", t: "Repository",
+    b: "Der Projektordner ist noch leer und kein Git-Repo.",
+    o: [["a", "Monorepo: /backend, /frontend, /docs, docker-compose.yml; git init", 1],
+        ["b", "Getrennte Repos für Backend und Frontend"]] },
+];
+
+const KEY = "biber-grill-r1";
+let state = load() || { assume: {}, ans: {}, extra: "" };
+
+function load() { try { return JSON.parse(localStorage.getItem(KEY)); } catch { return null; } }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} }
+const recOf = q => q.o.filter(o => o[2]).map(o => o[0]);
+const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function render() {
+  const A = document.getElementById("assumptions");
+  A.innerHTML = ASSUMPTIONS.map(([id, txt]) => {
+    const v = state.assume[id] !== false;
+    return `<label><input type="checkbox" data-a="${id}" ${v ? "checked" : ""}><span><strong>${id}</strong> ${esc(txt)}</span></label>`;
+  }).join("");
+
+  let html = "", sec = "";
+  for (const q of Q) {
+    if (q.s !== sec) { sec = q.s; html += `<h2>${esc(sec)}</h2>`; }
+    const sel = (state.ans[q.id]?.sel) ?? recOf(q);
+    const type = q.multi ? "checkbox" : "radio";
+    const opts = [...q.o, ["andere", "Andere Antwort (bitte in der Anmerkung beschreiben)"]];
+    html += `<div class="q" id="${q.id}"><div class="qhead"><span class="qid">${q.id}</span><span class="qtitle">${esc(q.t)}</span></div>`;
+    if (q.b) html += `<div class="qbody">${esc(q.b)}</div>`;
+    html += `<div class="opts">` + opts.map(([k, l, r]) =>
+      `<label class="opt ${sel.includes(k) ? "sel" : ""}"><input type="${type}" name="${q.id}" value="${k}" ${sel.includes(k) ? "checked" : ""}><span>${esc(l)}${r ? '<span class="tag">Empfehlung</span>' : ""}</span></label>`
+    ).join("") + `</div>`;
+    html += `<div class="note"><textarea data-n="${q.id}" placeholder="Anmerkung (optional)">${esc(state.ans[q.id]?.note || "")}</textarea></div></div>`;
+  }
+  document.getElementById("questions").innerHTML = html;
+  document.getElementById("extra").value = state.extra || "";
+  refresh();
+}
+
+function readQ(q) {
+  const sel = [...document.querySelectorAll(`input[name="${q.id}"]:checked`)].map(i => i.value);
+  const note = document.querySelector(`textarea[data-n="${q.id}"]`).value.trim();
+  return { sel, note };
+}
+
+function refresh() {
+  let changed = 0;
+  for (const q of Q) {
+    const { sel, note } = readQ(q);
+    state.ans[q.id] = { sel, note };
+    const isRec = JSON.stringify([...sel].sort()) === JSON.stringify([...recOf(q)].sort());
+    const el = document.getElementById(q.id);
+    el.classList.toggle("changed", !isRec || !!note);
+    el.querySelectorAll("label.opt").forEach(l => l.classList.toggle("sel", l.querySelector("input").checked));
+    if (!isRec || note) changed++;
+  }
+  document.querySelectorAll("[data-a]").forEach(c => state.assume[c.dataset.a] = c.checked);
+  state.extra = document.getElementById("extra").value;
+  save();
+  document.getElementById("stat").textContent = `${changed} von ${Q.length} angepasst`;
+  document.getElementById("json").textContent = buildJson();
+}
+
+function buildJson() {
+  const compact = document.getElementById("compact").checked;
+  const antworten = {};
+  for (const q of Q) {
+    const { sel, note } = state.ans[q.id];
+    const isRec = JSON.stringify([...sel].sort()) === JSON.stringify([...recOf(q)].sort());
+    if (compact && isRec && !note) continue;
+    const labels = sel.map(k => (q.o.find(o => o[0] === k) || [k, "Andere"])[1]);
+    const e = { frage: q.t, auswahl: q.multi ? sel : sel[0] ?? null, text: q.multi ? labels : labels[0] ?? null, empfehlung: isRec };
+    if (note) e.anmerkung = note;
+    antworten[q.id] = e;
+  }
+  const annahmen = {};
+  for (const [id] of ASSUMPTIONS) {
+    const v = state.assume[id] !== false;
+    if (!compact || !v) annahmen[id] = v;
+  }
+  const out = { runde: 1, modus: compact ? "nur_abweichungen" : "vollstaendig", annahmen, antworten };
+  if (compact) out.hinweis = "Nicht aufgeführte Fragen und Annahmen = Empfehlung übernommen";
+  if (state.extra.trim()) out.ergaenzungen = state.extra.trim();
+  return JSON.stringify(out, null, 2);
+}
+
+function toast(msg) { const t = document.getElementById("toast"); t.textContent = msg; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 1800); }
+function toggleOut() { const o = document.getElementById("out"); o.style.display = o.style.display === "block" ? "none" : "block"; if (o.style.display === "block") o.scrollIntoView({ behavior: "smooth" }); }
+async function copyJson() {
+  refresh(); const txt = buildJson();
+  try { await navigator.clipboard.writeText(txt); toast("JSON kopiert, jetzt in den Chat einfügen"); }
+  catch {
+    const ta = document.createElement("textarea"); ta.value = txt; document.body.appendChild(ta); ta.select();
+    const ok = document.execCommand("copy"); ta.remove();
+    toast(ok ? "JSON kopiert" : "Kopieren fehlgeschlagen, bitte Vorschau nutzen");
+    if (!ok) toggleOut();
+  }
+}
+function download() {
+  refresh(); const blob = new Blob([buildJson()], { type: "application/json" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "grill-runde-1-antworten.json"; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+document.addEventListener("change", refresh);
+document.addEventListener("input", e => { if (e.target.tagName === "TEXTAREA") refresh(); });
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Biber-Rechnungen · Runde 4</title>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #ffffff; --ink: #1b1f24; --muted: #5b6573; --line: #e1e5ea;
+    --accent: #2f6fdb; --accent-soft: #e8f0fd; --rec: #1d8a5a; --rec-soft: #e6f5ee; --warn: #b5650d; --warn-soft: #fdf1e3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111418; --card: #1a1f25; --ink: #e7ebf0; --muted: #9aa4b2; --line: #2b323b;
+      --accent: #6c9ef0; --accent-soft: #1d2a40; --rec: #4cc08a; --rec-soft: #17302a; --warn: #e6a35a; --warn-soft: #33281b;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { position: sticky; top: 0; z-index: 5; background: var(--card); border-bottom: 1px solid var(--line); }
+  .bar { max-width: 920px; margin: 0 auto; padding: 12px 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .bar h1 { font-size: 17px; margin: 0; flex: 1 1 auto; }
+  .stat { color: var(--muted); font-size: 13px; }
+  button { font: inherit; border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 8px; padding: 7px 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button .material-icons { font-size: 18px; }
+  main { max-width: 920px; margin: 0 auto; padding: 16px; }
+  .intro { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin-bottom: 18px; }
+  .intro p { margin: 6px 0; }
+  h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 28px 0 10px; }
+  .q { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin-bottom: 12px; }
+  .q.changed { border-color: var(--warn); }
+  .qhead { display: flex; gap: 10px; align-items: baseline; }
+  .qid { font-weight: 700; color: var(--accent); min-width: 34px; }
+  .qtitle { font-weight: 650; }
+  .qbody { color: var(--muted); margin: 6px 0 10px 44px; }
+  .opts { margin-left: 44px; display: grid; gap: 6px; }
+  label.opt { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
+  label.opt:hover { border-color: var(--accent); }
+  label.opt.sel { border-color: var(--accent); background: var(--accent-soft); }
+  label.opt input { margin-top: 3px; }
+  .tag { font-size: 11px; font-weight: 700; color: var(--rec); background: var(--rec-soft); padding: 1px 7px; border-radius: 99px; margin-left: 6px; white-space: nowrap; }
+  .note { margin: 8px 0 0 44px; }
+  .note textarea { width: 100%; min-height: 34px; resize: vertical; font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; }
+  .assume label { display: flex; gap: 10px; padding: 6px 0; align-items: flex-start; }
+  .assume input { margin-top: 4px; }
+  textarea.free { width: 100%; min-height: 90px; font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+  #out { display: none; margin-top: 18px; }
+  #out pre { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; overflow: auto; max-height: 420px; font-size: 12.5px; }
+  .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 8px 14px; border-radius: 8px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+  .chk { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; color: var(--muted); }
+  @media (max-width: 600px) { .qbody, .opts, .note { margin-left: 0; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <h1>Biber-Rechnungen · Grilling Runde 4</h1>
+    <span class="stat" id="stat"></span>
+    <label class="chk"><input type="checkbox" id="compact"> nur Abweichungen</label>
+    <button onclick="toggleOut()"><span class="material-icons">data_object</span>Vorschau</button>
+    <button onclick="download()"><span class="material-icons">download</span>.json</button>
+    <button class="primary" onclick="copyJson()"><span class="material-icons">content_copy</span>JSON kopieren</button>
+  </div>
+</header>
+<main>
+  <div class="intro">
+    <p><strong>So funktioniert's:</strong> Bei jeder Frage ist meine Empfehlung schon ausgewählt (grün markiert). Wenn du einverstanden bist, musst du nichts tun. Ändere nur, was nicht passt, und schreib bei Bedarf eine Anmerkung.</p>
+    <p>Am Ende auf <em>JSON kopieren</em> klicken und das Ergebnis in den Chat einfügen. Mit <em>nur Abweichungen</em> wird das JSON kürzer. Deine Eingaben bleiben beim Neuladen in diesem Browser erhalten.</p>
+    <p><strong>Abschlussrunde:</strong> Hier werden nur noch die Widersprüche aus Runde 3 aufgelöst (Zahlungsstatus als Tag gegenüber Export und EÜR-Sicht; freie Kategorien gegenüber EÜR-Summen). Dazu kommen drei Fakten zu NAS und nginx, die Inbox im paperless-Stil und die Frage, wie es danach weitergeht. Zum unklaren USt-Status siehe Annahme D1.</p>
+  </div>
+
+  <h2>Aus deinen Anforderungen abgeleitet: bitte bestätigen</h2>
+  <div class="q assume" id="assumptions"></div>
+
+  <div id="questions"></div>
+
+  <h2>Sonst noch etwas?</h2>
+  <div class="q">
+    <div class="qbody" style="margin-left:0">Fehlende Anforderungen, Prioritäten, Dinge, die dir wichtig sind, Fristen …</div>
+    <textarea class="free" id="extra" placeholder="Freitext"></textarea>
+  </div>
+
+  <div id="out"><pre id="json"></pre></div>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+const ASSUMPTIONS = [
+  ["D1", "Der USt-Status ist eine Einstellung in der App (Regelbesteuerung monatlich/quartalsweise/jährlich, Kleinunternehmer, unbekannt). Vorsteuer-Kachel, Vorsteuer-Summen im Export und die §14-Prüfung erscheinen nur bei Regelbesteuerung bzw. „unbekannt“; bei Kleinunternehmer werden sie ausgeblendet."],
+  ["D2", "Kategorien sind frei. Jede Kategorie hat ein optionales Feld „EÜR-Zeile“. Der Export summiert je Kategorie und gibt die EÜR-Zeile mit aus, falls gepflegt."],
+  ["D3", "Ohne Kassenbons nutzt Document Intelligence nur das Modell prebuilt-invoice. Belegarten sind Rechnung, Gutschrift/Storno und sonstige Quittung."],
+  ["D4", "Das Fälligkeitsdatum kommt aus der Rechnung (Document Intelligence bzw. XML) und ist korrigierbar. Grundlage für „überfällig“."],
+  ["D5", "Benachrichtigungen gibt es nur in der App: Glocke mit Einträgen für neue Registrierungen, Integritätsfehler, DI-Limit und Importfehler."],
+  ["D6", "Die Ausbaustufen bleiben wie in R3-16, mit diesen Anpassungen: Phase 2 enthält Tags/Zahlungs-Tags, Inbox und Zuordnungsregeln statt „Zahlungsstatus“. Phase 4 enthält die Glocke statt Mails."]
+];
+
+const Q = [
+  // ---------- Fakten
+  { s: "Fakten", id: "R4-1", t: "Welches NAS-System?", fact: true,
+    b: "Bestimmt, wie die WORM-Ablage umgesetzt wird. Synology hat dafür eigene WriteOnce-Ordner (Btrfs); TrueNAS, OMV und Unraid nutzen das Samba-Modul vfs_worm. Bitte das Modell in der Anmerkung nennen.",
+    o: [["synology", "Synology (DSM 7.x, Container Manager)"],
+        ["qnap", "QNAP (QTS/QuTS, Container Station)"],
+        ["truenas", "TrueNAS SCALE"],
+        ["unraid", "Unraid"],
+        ["omv", "OpenMediaVault"]] },
+  { s: "Fakten", id: "R4-2", t: "Wie läuft dein vorhandener nginx?", fact: true,
+    b: "",
+    o: [["npm", "Nginx Proxy Manager (Web-Oberfläche)"],
+        ["syno_rp", "Reverse Proxy des NAS (z. B. DSM → Anmeldeportal → Reverse Proxy)"],
+        ["nginx", "Eigene nginx-Konfiguration + certbot"],
+        ["swag", "SWAG / ein anderer Container"]] },
+  { s: "Fakten", id: "R4-3", t: "Ist dieser nginx aus dem Internet erreichbar?", fact: true,
+    b: "Falls ja, braucht die Rechnungs-App eine IP-Sperre, damit sie trotz gemeinsamem Proxy nur im LAN erreichbar ist.",
+    o: [["ja", "Ja, die Ports 80/443 sind im Router freigegeben"],
+        ["nein", "Nein, nur im LAN"],
+        ["unklar", "Weiß ich nicht"]] },
+
+  // ---------- Entscheidungen
+  { s: "Netzwerk", id: "R4-4", t: "Reverse Proxy für die App",
+    b: "Du hast schon nginx mit Let's Encrypt und IONOS. Ein zweiter Proxy (Caddy) wäre überflüssig.",
+    o: [["a", "Den vorhandenen nginx weiterverwenden: neuer Host rechnungen.<domain>, Zugriff nur aus dem LAN (allow LAN-Subnetz, deny all). Zertifikat per DNS-01 über die IONOS-API, ein Wildcard-Zertifikat oder das vorhandene. Kein Caddy", 1],
+        ["b", "Doch Caddy als eigenen Proxy nur für diese App"]] },
+
+  { s: "Tags, Zahlung, Inbox (paperless-Stil)", id: "R4-5", t: "Zahlungsstatus als Tag: mit oder ohne Datum?",
+    b: "Du willst den Zahlungsstatus als Tag. Für die EÜR-Umschaltung (R3-14), die Spalte „Zahlungsdatum“ im Export (R3-13) und die Kachel „offene Rechnungen“ (R3-15) braucht es aber ein Datum. Vorschlag, der beides verbindet:",
+    o: [["a", "Tags sind generisch wie bei paperless (Name, Farbe). Ein Tag kann als „Zahlungs-Tag“ markiert sein (z. B. „bezahlt“, „bezahlt PayPal“, „Lastschrift“). Wird so ein Tag gesetzt, speichert die App das Datum als Zahlungsdatum (änderbar). „Offen“ heißt: kein Zahlungs-Tag", 1],
+        ["b", "Nur Tags, ohne Datum. Dafür entfallen die Umschaltung auf das Zahlungsdatum, die Export-Spalte „Zahlungsdatum“ und die Kachel „überfällig“ wird nur nach Tags berechnet"],
+        ["c", "Tags plus ein eigenes, separates Feld „bezahlt am“"]] },
+  { s: "Tags, Zahlung, Inbox (paperless-Stil)", id: "R4-6", t: "Inbox-Tag und „zu prüfen“",
+    b: "Bei paperless-ngx kann man Tags als Inbox-Tag markieren. Jedes neue Dokument bekommt ihn automatisch und behält ihn, bis man ihn entfernt.",
+    o: [["a", "Beides: Jeder neue Beleg bekommt den Inbox-Tag (frei wählbar, mehrere möglich). Belege mit fehlgeschlagener Prüfung bekommen zusätzlich den System-Tag „zu prüfen“ mit Grund. Das Dashboard zeigt beides getrennt", 1],
+        ["b", "Nur Inbox: Die Prüfgründe erscheinen als Hinweis am Beleg, einen eigenen Tag „zu prüfen“ gibt es nicht"]] },
+  { s: "Tags, Zahlung, Inbox (paperless-Stil)", id: "R4-7", t: "Automatische Zuordnung (wie paperless „Matching“)",
+    b: "Tags, Kategorien und Korrespondenten automatisch zuweisen.",
+    o: [["a", "Regeln an Tags und Kategorien: Treffer per „ein Wort“, „alle Wörter“, exakt, Regex oder unscharf auf den Volltext. Zusätzlich gilt die Default-Kategorie am Korrespondenten (Q21). Kein maschinelles Lernen", 1],
+        ["b", "Wie (a), plus lernendes Matching („Auto“ wie paperless) aus bisherigen Zuweisungen"],
+        ["c", "Keine Regeln, nur die Default-Kategorie am Korrespondenten"]] },
+
+  { s: "Abschluss", id: "R4-8", t: "Wie geht es nach dieser Runde weiter?",
+    b: "Laut Grilling-Regel setze ich nichts um, bevor du bestätigst, dass wir ein gemeinsames Verständnis haben.",
+    o: [["a", "Du schreibst /docs/plan.md (Architektur, Datenmodell, Pipeline, Phasen) und /docs/verfahrensdokumentation (Entwurf) und legst beides zur Prüfung vor. Erst nach meinem OK: git init, Remote auf GitHub setzen, ersten Commit pushen und Phase 1 beginnen", 1],
+        ["b", "Nur den Plan schreiben, um Git und Code kümmere ich mich selbst"]] },
+];
+
+const KEY = "biber-grill-r4";
+let state = load() || { assume: {}, ans: {}, extra: "" };
+
+function load() { try { return JSON.parse(localStorage.getItem(KEY)); } catch { return null; } }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} }
+const recOf = q => q.o.filter(o => o[2]).map(o => o[0]);
+const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function render() {
+  const A = document.getElementById("assumptions");
+  A.innerHTML = ASSUMPTIONS.map(([id, txt]) => {
+    const v = state.assume[id] !== false;
+    return `<label><input type="checkbox" data-a="${id}" ${v ? "checked" : ""}><span><strong>${id}</strong> ${esc(txt)}</span></label>`;
+  }).join("");
+
+  let html = "", sec = "";
+  for (const q of Q) {
+    if (q.s !== sec) { sec = q.s; html += `<h2>${esc(sec)}</h2>`; }
+    const sel = (state.ans[q.id]?.sel) ?? recOf(q);
+    const type = q.multi ? "checkbox" : "radio";
+    const opts = [...q.o, ["andere", "Andere Antwort (bitte in der Anmerkung beschreiben)"]];
+    html += `<div class="q" id="${q.id}"><div class="qhead"><span class="qid">${q.id}</span><span class="qtitle">${esc(q.t)}</span>${q.fact ? `<span class="tag" style="color:var(--warn);background:var(--warn-soft)">Fakt, bitte auswählen</span>` : ""}</div>`;
+    if (q.b) html += `<div class="qbody">${esc(q.b)}</div>`;
+    html += `<div class="opts">` + opts.map(([k, l, r]) =>
+      `<label class="opt ${sel.includes(k) ? "sel" : ""}"><input type="${type}" name="${q.id}" value="${k}" ${sel.includes(k) ? "checked" : ""}><span>${esc(l)}${r ? '<span class="tag">Empfehlung</span>' : ""}</span></label>`
+    ).join("") + `</div>`;
+    html += `<div class="note"><textarea data-n="${q.id}" placeholder="Anmerkung (optional)">${esc(state.ans[q.id]?.note || "")}</textarea></div></div>`;
+  }
+  document.getElementById("questions").innerHTML = html;
+  document.getElementById("extra").value = state.extra || "";
+  refresh();
+}
+
+function readQ(q) {
+  const sel = [...document.querySelectorAll(`input[name="${q.id}"]:checked`)].map(i => i.value);
+  const note = document.querySelector(`textarea[data-n="${q.id}"]`).value.trim();
+  return { sel, note };
+}
+
+function refresh() {
+  let changed = 0, open = 0;
+  for (const q of Q) {
+    const { sel, note } = readQ(q);
+    state.ans[q.id] = { sel, note };
+    const isRec = JSON.stringify([...sel].sort()) === JSON.stringify([...recOf(q)].sort());
+    const el = document.getElementById(q.id);
+    el.classList.toggle("changed", q.fact ? !sel.length : (!isRec || !!note));
+    el.querySelectorAll("label.opt").forEach(l => l.classList.toggle("sel", l.querySelector("input").checked));
+    if (q.fact) { if (!sel.length) open++; } else if (!isRec || note) changed++;
+  }
+  document.querySelectorAll("[data-a]").forEach(c => state.assume[c.dataset.a] = c.checked);
+  state.extra = document.getElementById("extra").value;
+  save();
+  document.getElementById("stat").textContent = `${changed} angepasst` + (open ? ` · ${open} offen` : "");
+  document.getElementById("json").textContent = buildJson();
+}
+
+function buildJson() {
+  const compact = document.getElementById("compact").checked;
+  const antworten = {};
+  for (const q of Q) {
+    const { sel, note } = state.ans[q.id];
+    const isRec = JSON.stringify([...sel].sort()) === JSON.stringify([...recOf(q)].sort());
+    if (compact && !q.fact && isRec && !note) continue;
+    const labels = sel.map(k => (q.o.find(o => o[0] === k) || [k, "Andere"])[1]);
+    const e = { frage: q.t, auswahl: q.multi ? sel : sel[0] ?? null, text: q.multi ? labels : labels[0] ?? null, empfehlung: q.fact ? null : isRec };
+    if (note) e.anmerkung = note;
+    antworten[q.id] = e;
+  }
+  const annahmen = {};
+  for (const [id] of ASSUMPTIONS) {
+    const v = state.assume[id] !== false;
+    if (!compact || !v) annahmen[id] = v;
+  }
+  const out = { runde: 4, modus: compact ? "nur_abweichungen" : "vollstaendig", annahmen, antworten };
+  if (compact) out.hinweis = "Nicht aufgeführte Fragen und Annahmen = Empfehlung übernommen";
+  if (state.extra.trim()) out.ergaenzungen = state.extra.trim();
+  return JSON.stringify(out, null, 2);
+}
+
+function toast(msg) { const t = document.getElementById("toast"); t.textContent = msg; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 1800); }
+function toggleOut() { const o = document.getElementById("out"); o.style.display = o.style.display === "block" ? "none" : "block"; if (o.style.display === "block") o.scrollIntoView({ behavior: "smooth" }); }
+async function copyJson() {
+  refresh(); const txt = buildJson();
+  try { await navigator.clipboard.writeText(txt); toast("JSON kopiert, jetzt in den Chat einfügen"); }
+  catch {
+    const ta = document.createElement("textarea"); ta.value = txt; document.body.appendChild(ta); ta.select();
+    const ok = document.execCommand("copy"); ta.remove();
+    toast(ok ? "JSON kopiert" : "Kopieren fehlgeschlagen, bitte Vorschau nutzen");
+    if (!ok) toggleOut();
+  }
+}
+function download() {
+  refresh(); const blob = new Blob([buildJson()], { type: "application/json" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "grill-runde-4-antworten.json"; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+document.addEventListener("change", refresh);
+document.addEventListener("input", e => { if (e.target.tagName === "TEXTAREA") refresh(); });
+render();
+</script>
+</body>
+</html>
