@@ -1,0 +1,292 @@
+@import 'tailwindcss';
+@import './tokens.css';
+
+/* Schrift und Icons lokal, kein CDN */
+@import '@fontsource/ibm-plex-sans/400.css';
+@import '@fontsource/ibm-plex-sans/500.css';
+@import '@fontsource/ibm-plex-sans/600.css';
+@import '@fontsource/ibm-plex-sans/700.css';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+@import 'material-symbols/outlined.css';
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+
+  body {
+    margin: 0;
+    background: var(--color-flaeche);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a {
+    color: var(--color-akzent-text);
+  }
+
+  a:hover {
+    color: var(--color-akzent-hover);
+  }
+
+  .material-symbols-outlined {
+    font-size: 20px;
+    line-height: 1;
+    vertical-align: -5px;
+  }
+}
+
+/* Hilfsklassen aus dem Design (Klassen der *.dc.html in deutscher Benennung) */
+@layer components {
+  .karte {
+    background: var(--color-karte);
+    border: 1px solid var(--color-rand);
+    border-radius: var(--radius-karte);
+    box-sizing: border-box;
+  }
+
+  /* Buttons: Standard, primär, klein, gefährlich */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 36px;
+    padding: 0 14px;
+    border-radius: var(--radius-button);
+    border: 1px solid var(--color-eingabe-rand);
+    background: var(--color-karte);
+    color: var(--color-text);
+    font: 500 14px var(--font-sans);
+    text-decoration: none;
+    cursor: pointer;
+    white-space: nowrap;
+    box-sizing: border-box;
+  }
+
+  .btn:hover {
+    background: var(--color-hover);
+    color: var(--color-text);
+  }
+
+  .btn:focus-visible {
+    outline: 2px solid var(--color-akzent);
+    outline-offset: 2px;
+  }
+
+  .btn:disabled,
+  .btn[aria-disabled='true'] {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .btn-primaer {
+    background: var(--color-akzent);
+    border-color: var(--color-akzent);
+    color: var(--color-auf-akzent);
+  }
+
+  .btn-primaer:hover {
+    background: var(--color-akzent-hover);
+    border-color: var(--color-akzent-hover);
+    color: var(--color-auf-akzent);
+  }
+
+  .btn-gefaehrlich {
+    background: var(--color-gefahr);
+    border-color: var(--color-gefahr);
+    color: #ffffff;
+  }
+
+  .btn-gefaehrlich:hover {
+    background: var(--color-gefahr-hover);
+    border-color: var(--color-gefahr-hover);
+    color: #ffffff;
+  }
+
+  .btn-klein {
+    height: 30px;
+    padding: 0 10px;
+    font-size: 13px;
+  }
+
+  /* Chips: Höhe 22 px, Radius 11 px, 12 px/500 */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 22px;
+    padding: 0 8px;
+    border-radius: var(--radius-chip);
+    font: 500 12px var(--font-sans);
+    white-space: nowrap;
+  }
+
+  .chip .material-symbols-outlined {
+    font-size: 15px;
+    vertical-align: 0;
+  }
+
+  .chip-blau {
+    background: var(--color-blau-flaeche);
+    color: var(--color-blau-text);
+  }
+
+  .chip-orange {
+    background: var(--color-orange-flaeche);
+    color: var(--color-orange-text);
+  }
+
+  .chip-gruen {
+    background: var(--color-gruen-flaeche);
+    color: var(--color-gruen-text);
+  }
+
+  .chip-rot {
+    background: var(--color-rot-flaeche);
+    color: var(--color-rot-text);
+  }
+
+  .chip-grau {
+    background: var(--color-grau-flaeche);
+    color: var(--color-grau-text);
+  }
+
+  .chip-petrol {
+    background: var(--color-petrol-flaeche);
+    color: var(--color-petrol-text);
+  }
+
+  .chip-lila {
+    background: var(--color-lila-flaeche);
+    color: var(--color-lila-text);
+  }
+
+  .chip-entfernen {
+    display: inline-flex;
+    align-items: center;
+    margin-right: -4px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  /* Tabelle */
+  .tabelle {
+    width: 100%;
+    border-collapse: collapse;
+    font: 400 14px var(--font-sans);
+  }
+
+  .tabelle th {
+    text-align: left;
+    font: 600 12px var(--font-sans);
+    color: var(--color-gedaempft-stark);
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--color-rand);
+    white-space: nowrap;
+    background: var(--color-tabellenkopf);
+  }
+
+  .tabelle td {
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--color-linie);
+    vertical-align: middle;
+  }
+
+  .mono {
+    font-family: var(--font-mono);
+    font-size: 13px;
+  }
+
+  /* Beträge: Tabellenziffern, rechtsbündig */
+  .num {
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .gedaempft {
+    color: var(--color-gedaempft);
+  }
+
+  /* Segment-Umschalter: aktiver Knopf mit aria-pressed="true" oder data-state="on"/"active" */
+  .segment {
+    display: inline-flex;
+    gap: 2px;
+    padding: 3px;
+    border-radius: var(--radius-segment);
+    background: var(--color-segment);
+  }
+
+  .segment > button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 30px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    font: 500 13px var(--font-sans);
+    color: var(--color-gedaempft-stark);
+    cursor: pointer;
+  }
+
+  .segment > button[aria-pressed='true'],
+  .segment > button[data-state='on'],
+  .segment > button[data-state='active'] {
+    background: var(--color-karte);
+    color: var(--color-text);
+    box-shadow: var(--shadow-segment);
+  }
+
+  /* Eingabefeld und Label */
+  .eingabe {
+    height: 36px;
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid var(--color-eingabe-rand);
+    border-radius: var(--radius-eingabe);
+    padding: 0 10px;
+    font: 400 14px var(--font-sans);
+    color: var(--color-text);
+    background: var(--color-karte);
+  }
+
+  .eingabe:focus-visible {
+    outline: 2px solid var(--color-akzent);
+    outline-offset: -1px;
+  }
+
+  .eingabe[readonly] {
+    background: var(--color-flaeche);
+    color: var(--color-gedaempft-stark);
+  }
+
+  textarea.eingabe {
+    height: auto;
+    min-height: 80px;
+    padding: 8px 10px;
+  }
+
+  .label {
+    display: block;
+    font: 500 12px var(--font-sans);
+    color: var(--color-gedaempft-stark);
+    margin-bottom: 4px;
+  }
+
+  .hinweis {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--color-gedaempft);
+  }
+}
