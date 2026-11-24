@@ -1,8 +1,7 @@
 import { expect, test } from '@playwright/test'
 
-/** Jede Platzhalter-Route mit der Überschrift, die sie zeigt. */
+/** Jede Platzhalter-Route mit der Überschrift, die sie zeigt (`/anmelden` prüft anmeldung.spec.ts). */
 const routen: Array<[pfad: string, titel: string]> = [
-  ['/anmelden', 'Anmelden'],
   ['/', 'Dashboard'],
   ['/benachrichtigungen', 'Benachrichtigungen'],
   ['/belege', 'Belege'],
