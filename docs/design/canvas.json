@@ -1,0 +1,348 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "Artikel.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "is_interactive": true,
+      "page": "app",
+      "title": "Artikel",
+      "w": 1920,
+      "x": 2000,
+      "y": 3200
+    },
+    "ArtikelDetail.dc.html": {
+      "expand": "fill",
+      "h": 1300,
+      "is_interactive": true,
+      "page": "app",
+      "title": "Artikel-Detail (Stammartikel)",
+      "w": 1920,
+      "x": 4000,
+      "y": 3200
+    },
+    "BelegDetail.dc.html": {
+      "expand": "fill",
+      "h": 1400,
+      "is_interactive": true,
+      "page": "app",
+      "title": "Beleg-Detail",
+      "w": 1920,
+      "x": 0,
+      "y": 1680
+    },
+    "Belege.dc.html": {
+      "expand": "fill",
+      "h": 1200,
+      "is_interactive": true,
+      "page": "app",
+      "title": "Belege · Tabelle",
+      "w": 1920,
+      "x": 4000,
+      "y": 0
+    },
+    "BelegeGrosseKarten.dc.html": {
+      "expand": "fill",
+      "h": 3100,
+      "is_interactive": true,
+      "page": "app",
+      "title": "Belege · Große Karten",
+      "w": 1920,
+      "x": 8000,
+      "y": 0
+    },
+    "BelegeKleineKarten.dc.html": {
+      "expand": "fill",
+      "h": 1300,
+      "is_interactive": true,
+      "page": "app",
+      "title": "Belege · Kleine Karten",
+      "w": 1920,
+      "x": 6000,
+      "y": 0
+    },
+    "Dialoge.dc.html": {
+      "h": 2200,
+      "page": "overlays",
+      "title": "Alle Dialoge & Meldungen",
+      "w": 1920,
+      "x": 2000,
+      "y": 0
+    },
+    "Einstellungen.dc.html": {
+      "expand": "fill",
+      "h": 1400,
+      "is_interactive": true,
+      "page": "app",
+      "title": "Einstellungen",
+      "w": 1920,
+      "x": 4000,
+      "y": 4820
+    },
+    "Export.dc.html": {
+      "expand": "fill",
+      "h": 1200,
+      "is_interactive": true,
+      "page": "app",
+      "title": "Export",
+      "w": 1920,
+      "x": 2000,
+      "y": 4820
+    },
+    "KorrespondentDetail.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "is_interactive": true,
+      "page": "app",
+      "title": "Korrespondent-Detail",
+      "w": 1920,
+      "x": 0,
+      "y": 3200
+    },
+    "Korrespondenten.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "is_interactive": true,
+      "page": "app",
+      "title": "Korrespondenten",
+      "w": 1920,
+      "x": 4000,
+      "y": 1680
+    },
+    "Login.dc.html": {
+      "expand": "fill",
+      "h": 1080,
+      "is_interactive": true,
+      "page": "app",
+      "title": "Anmeldung",
+      "w": 1920,
+      "x": 0,
+      "y": 0
+    },
+    "Main.dc.html": {
+      "expand": "fill",
+      "h": 1200,
+      "is_interactive": true,
+      "page": "app",
+      "title": "Dashboard",
+      "w": 1920,
+      "x": 2000,
+      "y": 0
+    },
+    "Menues.dc.html": {
+      "h": 1640,
+      "page": "overlays",
+      "title": "Alle Menüs & Popover",
+      "w": 1920,
+      "x": 0,
+      "y": 0
+    },
+    "MobilBelegDetail.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "mobil",
+      "title": "Mobil · Beleg",
+      "w": 390,
+      "x": 940,
+      "y": 0
+    },
+    "MobilBelege.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "mobil",
+      "title": "Mobil · Belege",
+      "w": 390,
+      "x": 470,
+      "y": 0
+    },
+    "MobilDashboard.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "mobil",
+      "title": "Mobil · Übersicht",
+      "w": 390,
+      "x": 0,
+      "y": 0
+    },
+    "MobilNav.dc.html": {
+      "h": 84,
+      "is_interactive": true,
+      "page": "bausteine",
+      "title": "Mobile Bottom-Navigation",
+      "w": 390,
+      "x": 320,
+      "y": 184
+    },
+    "MobilUpload.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "mobil",
+      "title": "Mobil · Hochladen & Warteschlange",
+      "w": 390,
+      "x": 1410,
+      "y": 0
+    },
+    "Sidebar.dc.html": {
+      "h": 940,
+      "is_interactive": true,
+      "page": "bausteine",
+      "title": "Seitenleiste",
+      "w": 240,
+      "x": 0,
+      "y": 0
+    },
+    "TagsKategorien.dc.html": {
+      "expand": "fill",
+      "h": 1200,
+      "is_interactive": true,
+      "page": "app",
+      "title": "Tags & Kategorien",
+      "w": 1920,
+      "x": 0,
+      "y": 4820
+    },
+    "Topbar.dc.html": {
+      "h": 64,
+      "is_interactive": true,
+      "page": "bausteine",
+      "title": "Kopfleiste (Glocke & Benutzermenü klickbar)",
+      "w": 1200,
+      "x": 320,
+      "y": 0
+    },
+    "Upload.dc.html": {
+      "expand": "fill",
+      "h": 1200,
+      "is_interactive": true,
+      "page": "app",
+      "title": "Hochladen & Import",
+      "w": 1920,
+      "x": 2000,
+      "y": 1680
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-11-23T10:00:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "page": "app",
+    "view": "canvas"
+  },
+  "noteOrder": [
+    "t_app",
+    "n_app",
+    "n_belege",
+    "t_ov",
+    "t_mob",
+    "n_mob",
+    "t_bau"
+  ],
+  "notes": {
+    "n_app": {
+      "fill": "blue",
+      "page": "app",
+      "text": "Look „Paperless-Indigo“: Seitenleiste und Akzent im Indigo #2F2D86 wie bei paperless-ngx, weiße Arbeitsfläche. Orange = zu prüfen, Grün = ok/bezahlt, Rot = überfällig/Fehler – immer mit Text, nie nur Farbe.\n\nSchrift: IBM Plex Sans, Beträge mit Tabellenziffern; IBM Plex Mono für Rechnungsnummern, Pfade, Hashes.\n\nIcons: Google Material Symbols.\n\nAlles ist klickbar: Seitenleiste, Tabs, Auswahl, Glocke und Benutzermenü (Play-Taste).",
+      "w": 420,
+      "x": -520,
+      "y": 0
+    },
+    "n_belege": {
+      "page": "app",
+      "text": "Belege in drei Darstellungen wie bei paperless-ngx – umschaltbar oben rechts (Tabelle · Kleine Karten · Große Karten). Es ist dieselbe Seite; die zwei rechten Artboards zeigen sie nur mit anderer Startansicht.",
+      "w": 2000,
+      "x": 6000,
+      "y": -180
+    },
+    "n_mob": {
+      "fill": "teal",
+      "page": "mobil",
+      "text": "Bottom-Navigation statt Seitenleiste. Kein Kamera-Scan (nicht im Umfang) – Hochladen aus Dateien oder per Teilen (Android-Share-Target). Offline wartende Uploads laufen per Background Sync nach.",
+      "w": 380,
+      "x": 1880,
+      "y": 0
+    },
+    "t_app": {
+      "kind": "title1",
+      "maxW": 8000,
+      "page": "app",
+      "text": "Biber-Rechnungen · Desktop-Seiten",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "t_bau": {
+      "kind": "title1",
+      "maxW": 1520,
+      "page": "bausteine",
+      "text": "Bausteine",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "t_mob": {
+      "kind": "title1",
+      "maxW": 1800,
+      "page": "mobil",
+      "text": "Mobil (PWA)",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "t_ov": {
+      "kind": "title1",
+      "maxW": 3920,
+      "page": "overlays",
+      "text": "Menüs, Popover & Dialoge",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "Login.dc.html",
+    "Belege.dc.html",
+    "BelegeKleineKarten.dc.html",
+    "BelegeGrosseKarten.dc.html",
+    "BelegDetail.dc.html",
+    "Upload.dc.html",
+    "Korrespondenten.dc.html",
+    "KorrespondentDetail.dc.html",
+    "Artikel.dc.html",
+    "ArtikelDetail.dc.html",
+    "TagsKategorien.dc.html",
+    "Export.dc.html",
+    "Einstellungen.dc.html",
+    "Menues.dc.html",
+    "Dialoge.dc.html",
+    "MobilDashboard.dc.html",
+    "MobilBelege.dc.html",
+    "MobilBelegDetail.dc.html",
+    "MobilUpload.dc.html",
+    "Sidebar.dc.html",
+    "Topbar.dc.html",
+    "MobilNav.dc.html"
+  ],
+  "pages": [
+    {
+      "id": "app",
+      "name": "Desktop-Seiten"
+    },
+    {
+      "id": "overlays",
+      "name": "Menüs & Dialoge"
+    },
+    {
+      "id": "mobil",
+      "name": "Mobil (PWA)"
+    },
+    {
+      "id": "bausteine",
+      "name": "Bausteine"
+    }
+  ],
+  "title": "Biber-Rechnungen – UI-Design"
+}

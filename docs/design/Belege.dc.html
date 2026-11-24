@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Belege</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Material+Symbols+Outlined&display=block">
+<style>
+body{margin:0;background:#F4F5F7}
+a{color:#2F2D86}a:hover{color:#24226B}
+.material-symbols-outlined{font-size:20px;line-height:1;vertical-align:-5px}
+.card{background:#FFFFFF;border:1px solid #E3E6EB;border-radius:10px;box-sizing:border-box}
+.btn{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:7px;border:1px solid #2F2D86;background:#FFFFFF;color:#2F2D86;font:500 14px 'IBM Plex Sans',sans-serif;text-decoration:none;cursor:pointer;white-space:nowrap;box-sizing:border-box}
+.btn:hover{background:#F1F1F9}
+.btn-s{height:30px;padding:0 10px;font-size:13px}
+.grp{display:inline-flex;border:1px solid #2F2D86;border-radius:7px;overflow:hidden;background:#FFFFFF}
+.grp > button,.grp > a{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:32px;padding:0 11px;border:0;border-left:1px solid #2F2D86;background:#FFFFFF;color:#2F2D86;font:500 14px 'IBM Plex Sans',sans-serif;cursor:pointer;text-decoration:none;white-space:nowrap}
+.grp > :first-child{border-left:0}
+.grp > button:hover,.grp > a:hover{background:#F1F1F9}
+.grp-g{border-color:#D5D9E0}.grp-g > button,.grp-g > a{border-left-color:#D5D9E0;color:#4A5262;font-size:13px;height:30px}
+.dd{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 8px 0 10px;border-radius:7px;border:1px solid #2F2D86;background:#FFFFFF;color:#2F2D86;font:500 14px 'IBM Plex Sans',sans-serif;cursor:pointer;white-space:nowrap;position:relative}
+.dd-on{background:#2F2D86;color:#FFFFFF}
+.dd .cnt{position:absolute;top:-8px;right:-8px;min-width:18px;height:18px;padding:0 4px;box-sizing:border-box;border-radius:9px;background:#5E6676;color:#FFFFFF;font:600 11px 'IBM Plex Sans',sans-serif;display:flex;align-items:center;justify-content:center;border:2px solid #FFFFFF}
+.chip{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border-radius:5px;font:600 12px 'IBM Plex Sans',sans-serif;white-space:nowrap}
+.t-blue{background:#E7E7F4;color:#2F2D86}.t-orange{background:#FDF0E3;color:#A44A06}.t-green{background:#E5F4EC;color:#17703F}.t-red{background:#FDECEA;color:#B42318}.t-gray{background:#EEF0F3;color:#4A5262}.t-teal{background:#E1F3F4;color:#0E6168}.t-purple{background:#F0EAFB;color:#5B2EA6}
+.tbl{width:100%;border-collapse:collapse;font:400 14px 'IBM Plex Sans',sans-serif}
+.tbl th{text-align:left;font:600 13px 'IBM Plex Sans',sans-serif;color:#151922;padding:10px 12px;border-bottom:1px solid #E3E6EB;white-space:nowrap;background:#FAFBFC}
+.tbl td{padding:9px 12px;border-bottom:1px solid #EEF0F3;vertical-align:middle}
+.mono{font-family:'IBM Plex Mono',monospace;font-size:13px}
+.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.muted{color:#5E6676}
+.thumb{position:relative;display:flex;align-items:center;justify-content:center;background:#E9ECF1;overflow:hidden}
+.pg{background:#FFFFFF;box-shadow:0 1px 4px rgba(21,25,34,0.18);box-sizing:border-box;display:flex;flex-direction:column;gap:4px}
+.ln{height:3px;border-radius:1px;background:#DDE1E7}
+.meta{display:flex;align-items:center;gap:6px;font-size:13px;color:#4A5262;white-space:nowrap}
+.meta .material-symbols-outlined{font-size:17px;vertical-align:0;color:#5E6676}
+.sel-box{position:absolute;left:8px;top:8px;width:22px;height:22px;border-radius:5px;background:rgba(255,255,255,0.92);display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 1px #C9CED6}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 100vh; font-family: 'IBM Plex Sans', sans-serif; color: #151922; background: #F4F5F7">
+  <div style="flex: 1 1 232px; background: #2F2D86"><dc-import name="Sidebar" active="belege" hint-size="100%,900px"></dc-import></div>
+  <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <dc-import name="Topbar" hint-size="100%,64px"></dc-import>
+    <main style="width: 100%; box-sizing: border-box; padding: 24px 28px 56px; display: flex; flex-direction: column; gap: 14px">
+
+      <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 16px">
+        <h1 style="margin: 0; font-size: 26px; font-weight: 500">{{ title }}</h1>
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+          <span style="font-size: 14px; color: #4A5262">Auswählen:</span>
+          <div class="grp">
+            <button type="button" onClick="{{ selectPage }}"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px">description</span>Seite</button>
+            <button type="button" onClick="{{ selectPage }}"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px">done_all</span>Alle</button>
+          </div>
+          <button type="button" class="dd" aria-haspopup="menu"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px">view_column</span>Anzeigen<span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px">arrow_drop_down</span></button>
+          <div class="grp" role="radiogroup" aria-label="Darstellung">
+            <sc-for list="{{ modes }}" as="m" hint-placeholder-count="3">
+              <button type="button" role="radio" aria-checked="{{ m.on }}" aria-label="{{ m.label }}" title="{{ m.label }}" onClick="{{ m.pick }}" style="width: 38px; padding: 0; background: {{ m.bg }}; color: {{ m.fg }}"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 20px; vertical-align: 0">{{ m.icon }}</span></button>
+            </sc-for>
+          </div>
+          <button type="button" class="dd" aria-haspopup="menu"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px">swap_vert</span>Rechnungsdatum<span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px">arrow_drop_down</span></button>
+          <button type="button" class="dd" aria-haspopup="menu"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px">bookmark</span>Ansicht<span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px">arrow_drop_down</span></button>
+        </div>
+      </div>
+
+
+      <sc-if value="{{ noSel }}" hint-placeholder-val="{{ false }}">
+      <div class="card" style="padding: 12px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+        <div style="flex: 1 1 340px; max-width: 460px; display: flex; height: 34px; border: 1px solid #2F2D86; border-radius: 7px; overflow: hidden; box-sizing: border-box">
+          <button type="button" aria-haspopup="menu" style="display: inline-flex; align-items: center; gap: 2px; padding: 0 6px 0 10px; border: 0; border-right: 1px solid #2F2D86; background: #FFFFFF; color: #2F2D86; font: 500 14px 'IBM Plex Sans', sans-serif; white-space: nowrap; cursor: pointer">Titel &amp; Inhalt<span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px">arrow_drop_down</span></button>
+          <input type="search" aria-label="Titel und Inhalt durchsuchen" placeholder="z. B. Toner, Rechnungsnr. oder Betrag" style="flex: 1; min-width: 0; border: 0; outline: none; padding: 0 10px; font: 400 14px 'IBM Plex Sans', sans-serif">
+        </div>
+        <span style="flex: 1"></span>
+        <sc-for list="{{ filters }}" as="f" hint-placeholder-count="7">
+          <button type="button" class="dd {{ f.cls }}" aria-haspopup="menu"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px">{{ f.icon }}</span>{{ f.label }}<span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px">arrow_drop_down</span><sc-if value="{{ f.hasCnt }}" hint-placeholder-val="{{ false }}"><span class="cnt">{{ f.cnt }}</span></sc-if></button>
+        </sc-for>
+        <button type="button" onClick="{{ resetView }}" style="display: inline-flex; align-items: center; gap: 4px; height: 32px; padding: 0 10px; border-radius: 7px; border: 1px solid #D5D9E0; background: #FFFFFF; color: #5E6676; font: 500 13px 'IBM Plex Sans', sans-serif; cursor: pointer"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 16px">close</span>Filter zurücksetzen</button>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ hasSel }}" hint-placeholder-val="{{ true }}">
+        <div role="toolbar" aria-label="Massenaktionen" style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 60px; box-sizing: border-box; padding: 12px 12px 12px 16px; border-radius: 10px; background: #2F2D86; color: #FFFFFF">
+          <span style="font-size: 14px; font-weight: 600; margin-right: 8px">{{ selLabel }}</span>
+          <button type="button" class="btn btn-s" style="background: #3E3C93; border-color: #5654A8; color: #FFFFFF"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px">sell</span>Tags</button>
+          <button type="button" class="btn btn-s" style="background: #3E3C93; border-color: #5654A8; color: #FFFFFF"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px">category</span>Kategorie</button>
+          <button type="button" class="btn btn-s" style="background: #3E3C93; border-color: #5654A8; color: #FFFFFF"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px">paid</span>Als bezahlt markieren</button>
+          <button type="button" class="btn btn-s" style="background: #3E3C93; border-color: #5654A8; color: #FFFFFF"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px">task_alt</span>Bestätigen</button>
+          <button type="button" class="btn btn-s" style="background: #3E3C93; border-color: #5654A8; color: #FFFFFF"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px">download</span>Exportieren</button>
+          <span style="flex: 1"></span>
+          <button type="button" onClick="{{ clearSel }}" style="border: 0; background: transparent; color: #D7D6EE; font: 500 13px 'IBM Plex Sans', sans-serif; cursor: pointer">Auswahl aufheben</button>
+        </div>
+      </sc-if>
+
+      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; font-size: 14px">
+        <span>{{ countLabel }}<span class="muted"> · Summe {{ sumLabel }}</span></span>
+        <div class="grp grp-g" aria-label="Seiten">
+          <button type="button" aria-label="Vorherige Seite" style="width: 32px; padding: 0"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px; vertical-align: 0">keyboard_double_arrow_left</span></button>
+          <button type="button" aria-current="page" style="width: 32px; padding: 0; background: #2F2D86; color: #FFFFFF; font-weight: 600">1</button>
+          <sc-if value="{{ multiPage }}" hint-placeholder-val="{{ true }}"><button type="button" style="width: 32px; padding: 0">2</button><button type="button" style="width: 32px; padding: 0">3</button><button type="button" disabled style="width: 32px; padding: 0">…</button><button type="button" style="width: 32px; padding: 0">21</button></sc-if>
+          <button type="button" aria-label="Nächste Seite" style="width: 32px; padding: 0"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px; vertical-align: 0">keyboard_double_arrow_right</span></button>
+        </div>
+      </div>
+
+      <!-- Ansicht 1: Tabelle -->
+      <sc-if value="{{ isTabelle }}" hint-placeholder-val="{{ true }}">
+        <div class="card" style="overflow-x: auto">
+          <table class="tbl" style="min-width: 1080px">
+            <thead>
+              <tr>
+                <th scope="col" style="width: 36px"><input type="checkbox" aria-label="Alle auswählen" checked="{{ allSel }}" onChange="{{ toggleAll }}" style="width: 16px; height: 16px"></th>
+                <th scope="col">Rechnungsnr.</th>
+                <th scope="col">Korrespondent</th>
+                <th scope="col">Titel</th>
+                <th scope="col">Kategorie</th>
+                <th scope="col">Rechnungsdatum <span class="material-symbols-outlined" aria-hidden="true" style="font-size: 16px">arrow_downward</span></th>
+                <th scope="col">Fällig</th>
+                <th scope="col" class="num">Brutto</th>
+                <th scope="col">Seiten</th>
+                <th scope="col">Herkunft</th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{ rows }}" as="r" hint-placeholder-count="12">
+                <tr style="background: {{ r.bg }}">
+                  <td><input type="checkbox" aria-label="{{ r.ariaSel }}" checked="{{ r.checked }}" onChange="{{ r.toggle }}" style="width: 16px; height: 16px"></td>
+                  <td class="mono" style="color: #4A5262; white-space: nowrap">{{ r.nr }}</td>
+                  <td style="white-space: nowrap">{{ r.korr }}</td>
+                  <td>
+                    <span style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap">
+                      <span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px; color: #5E6676">visibility</span>
+                      <a href="BelegDetail.dc.html" style="text-decoration: underline; font-weight: 500">{{ r.titel }}</a>
+                      <sc-for list="{{ r.tags }}" as="t" hint-placeholder-count="1"><span class="chip {{ t.cls }}">{{ t.label }}</span></sc-for>
+                    </span>
+                  </td>
+                  <td style="white-space: nowrap">{{ r.kat }}</td>
+                  <td class="num" style="text-align: left">{{ r.datum }}</td>
+                  <td class="num" style="text-align: left; color: {{ r.dueFg }}; font-weight: {{ r.dueW }}">{{ r.faellig }}</td>
+                  <td class="num" style="font-weight: 600">{{ r.brutto }}</td>
+                  <td class="num" style="text-align: left">{{ r.seiten }}</td>
+                  <td><span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: #4A5262"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px">{{ r.qIcon }}</span><span class="chip t-gray" style="height: 20px; font-weight: 500">{{ r.fmt }}</span></span></td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </sc-if>
+
+      <!-- Ansicht 2: Kleine Karten -->
+      <sc-if value="{{ isKlein }}" hint-placeholder-val="{{ false }}">
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 14px">
+          <sc-for list="{{ rows }}" as="r" hint-placeholder-count="12">
+            <article class="card" style="display: flex; flex-direction: column; overflow: hidden; border: {{ r.cardBd }}">
+              <div class="thumb" style="height: 196px">
+                <div class="pg" style="width: 132px; height: 178px; padding: 10px 9px; transform: rotate({{ r.rot }}); background: {{ r.paper }}">
+                  <div style="display: flex; align-items: center; gap: 4px"><span style="width: 14px; height: 14px; border-radius: 3px; background: {{ r.lf }}"></span><span class="ln" style="width: 44px; background: {{ r.lf }}; opacity: 0.55"></span><span style="flex: 1"></span><span style="font: 700 5px 'IBM Plex Sans', sans-serif; letter-spacing: 0.06em; color: #4A5262">RECHNUNG</span></div>
+                  <span class="ln" style="width: 52%; margin-top: 4px"></span><span class="ln" style="width: 40%"></span><span class="ln" style="width: 46%"></span>
+                  <div style="margin-top: 5px; border-top: 2px solid {{ r.lf }}; display: flex; flex-direction: column; gap: 4px; padding-top: 4px"><sc-for list="{{ r.lines }}" as="l" hint-placeholder-count="4"><div style="display: flex; gap: 6px"><span class="ln" style="flex: 1"></span><span class="ln" style="width: 18px"></span></div></sc-for></div>
+                  <span style="flex: 1"></span>
+                  <div style="display: flex; justify-content: flex-end; gap: 6px; align-items: center"><span class="ln" style="width: 26px"></span><span class="ln" style="width: 24px; height: 5px; background: #151922"></span></div>
+                </div>
+                <label class="sel-box" title="Auswählen"><input type="checkbox" aria-label="{{ r.ariaSel }}" checked="{{ r.checked }}" onChange="{{ r.toggle }}" style="width: 15px; height: 15px; margin: 0"></label>
+                <div style="position: absolute; top: 8px; right: 8px; display: flex; flex-direction: column; align-items: flex-end; gap: 4px"><sc-for list="{{ r.tags }}" as="t" hint-placeholder-count="1"><span class="chip {{ t.cls }}" style="box-shadow: 0 1px 2px rgba(21,25,34,0.15)">{{ t.label }}</span></sc-for></div>
+                <span class="chip t-gray" style="position: absolute; left: 8px; bottom: 8px; height: 20px; font-weight: 500; box-shadow: 0 1px 2px rgba(21,25,34,0.15)">{{ r.fmt }}</span>
+              </div>
+              <div style="padding: 10px 12px 4px; flex: 1; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid #E3E6EB">
+                <a href="BelegDetail.dc.html" style="font-size: 14px; line-height: 1.35; text-decoration: none; color: #151922"><strong style="color: #2F2D86; font-weight: 600">{{ r.korr }}:</strong> {{ r.titel }}</a>
+                <span style="flex: 1"></span>
+                <span class="meta"><span class="material-symbols-outlined" aria-hidden="true">category</span>{{ r.kat }}</span>
+                <span class="meta"><span class="material-symbols-outlined" aria-hidden="true">calendar_today</span>{{ r.datum }}</span>
+                <span class="meta" style="color: {{ r.dueFg }}; font-weight: {{ r.dueW }}"><span class="material-symbols-outlined" aria-hidden="true" style="color: {{ r.dueFg }}">euro</span>{{ r.brutto }}<sc-if value="{{ r.overdue }}" hint-placeholder-val="{{ false }}"> · überfällig</sc-if></span>
+              </div>
+              <div style="padding: 10px 12px 12px">
+                <div class="grp grp-g" style="display: flex">
+                  <a href="BelegDetail.dc.html" aria-label="Beleg öffnen" title="Öffnen" style="flex: 1"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px; vertical-align: 0">edit_document</span></a>
+                  <button type="button" aria-label="Vorschau" title="Vorschau" style="flex: 1"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px; vertical-align: 0">visibility</span></button>
+                  <button type="button" aria-label="Original herunterladen" title="Herunterladen" style="flex: 1"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px; vertical-align: 0">download</span></button>
+                </div>
+              </div>
+            </article>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <!-- Ansicht 3: Große Karten -->
+      <sc-if value="{{ isGross }}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; gap: 14px">
+          <sc-for list="{{ rows }}" as="r" hint-placeholder-count="12">
+            <article class="card" style="display: flex; flex-wrap: wrap; overflow: hidden; border: {{ r.cardBd }}">
+              <div class="thumb" style="flex: 0 0 248px; height: 196px; border-right: 1px solid #E3E6EB">
+                <div class="pg" style="width: 212px; height: 290px; margin-top: 104px; padding: 14px 14px; transform: rotate({{ r.rot }}); background: {{ r.paper }}">
+                  <div style="display: flex; align-items: center; gap: 6px"><span style="width: 20px; height: 20px; border-radius: 4px; background: {{ r.lf }}"></span><span class="ln" style="width: 64px; height: 4px; background: {{ r.lf }}; opacity: 0.55"></span><span style="flex: 1"></span><span style="font: 700 7px 'IBM Plex Sans', sans-serif; letter-spacing: 0.06em; color: #4A5262">RECHNUNG</span></div>
+                  <div style="display: flex; gap: 10px; margin-top: 6px"><div style="flex: 1; display: flex; flex-direction: column; gap: 4px"><span class="ln" style="width: 80%"></span><span class="ln" style="width: 60%"></span><span class="ln" style="width: 70%"></span></div><div style="width: 62px; border: 1px solid #DDE1E7; padding: 4px; display: flex; flex-direction: column; gap: 3px"><span class="ln"></span><span class="ln"></span><span class="ln" style="width: 70%"></span></div></div>
+                  <div style="margin-top: 8px; border-top: 2px solid {{ r.lf }}; display: flex; flex-direction: column; gap: 5px; padding-top: 5px"><sc-for list="{{ r.lines }}" as="l" hint-placeholder-count="4"><div style="display: flex; gap: 8px"><span class="ln" style="width: 14px"></span><span class="ln" style="flex: 1"></span><span class="ln" style="width: 26px"></span></div></sc-for></div>
+                </div>
+                <label class="sel-box" title="Auswählen"><input type="checkbox" aria-label="{{ r.ariaSel }}" checked="{{ r.checked }}" onChange="{{ r.toggle }}" style="width: 15px; height: 15px; margin: 0"></label>
+              </div>
+              <div style="flex: 1 1 420px; min-width: 0; padding: 16px 20px; display: flex; flex-direction: column; gap: 10px">
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
+                  <a href="BelegDetail.dc.html" style="font-size: 19px; font-weight: 500; text-decoration: none; color: #151922"><span style="color: #2F2D86; font-weight: 600">{{ r.korr }}:</span> {{ r.titel }}</a>
+                  <sc-for list="{{ r.tags }}" as="t" hint-placeholder-count="1"><span class="chip {{ t.cls }}" style="height: 24px; font-size: 13px">{{ t.label }}</span></sc-for>
+                </div>
+                <p style="margin: 0; font-size: 14px; line-height: 1.55; color: #4A5262; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden">{{ r.excerpt }}</p>
+                <span style="flex: 1"></span>
+                <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 20px">
+                  <div class="grp grp-g">
+                    <button type="button"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px">account_tree</span>Ähnliche</button>
+                    <a href="BelegDetail.dc.html"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px">edit_document</span>Öffnen</a>
+                    <button type="button"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px">visibility</span>Vorschau</button>
+                    <button type="button"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px">download</span>Herunterladen</button>
+                  </div>
+                  <div style="display: flex; flex-wrap: wrap; gap: 6px 18px">
+                    <span class="meta"><span class="material-symbols-outlined" aria-hidden="true">category</span>{{ r.kat }}</span>
+                    <span class="meta"><span class="material-symbols-outlined" aria-hidden="true">calendar_today</span>{{ r.datum }}</span>
+                    <span class="meta" style="color: {{ r.dueFg }}; font-weight: {{ r.dueW }}"><span class="material-symbols-outlined" aria-hidden="true" style="color: {{ r.dueFg }}">event</span>fällig {{ r.faellig }}</span>
+                    <span class="meta"><span class="material-symbols-outlined" aria-hidden="true">description</span>{{ r.seitenLabel }}</span>
+                    <span class="meta" style="color: #151922; font-weight: 600"><span class="material-symbols-outlined" aria-hidden="true">euro</span>{{ r.brutto }}</span>
+                  </div>
+                </div>
+              </div>
+            </article>
+          </sc-for>
+        </div>
+      </sc-if>
+
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"ansicht":{"editor":"enum","options":["tabelle","klein","gross"],"default":"tabelle"},"$preview":{"width":1920,"height":1200}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { view: 'alle', mode: null, sel: ['b2', 'b6'] }; }
+  renderVals() {
+    const T = { inbox: { label: 'Inbox', cls: 't-blue' }, pruef: { label: 'zu prüfen', cls: 't-orange' }, bez: { label: 'bezahlt', cls: 't-green' }, pp: { label: 'bezahlt PayPal', cls: 't-teal' }, ls: { label: 'Lastschrift', cls: 't-purple' } };
+    const C = { AB: '#145C4B', HS: '#2F2D86', HN: '#4A5262', BK: '#C2410C', NT: '#0E6168', DW: '#5B2EA6', KH: '#4A5262', SL: '#2F2D86', EH: '#B42318' };
+    // id, Kürzel, Korrespondent, Nr, Datum, Fällig, überfällig, Kategorie, Tags, Brutto, Quelle, Format, Titel, Seiten, Positionen, Inhaltsauszug
+    const raw = [
+      ['b1', 'HS', 'Hostwerk Süd GmbH', 'HW-2026-11-0381', '20.11.2026', '04.12.2026', 0, 'Software & Hosting', ['inbox'], '489,00 €', 'mail', 'XRechnung', 'Hosting & Domains November', 1, 3, 'Hostwerk Süd GmbH · Rechnung HW-2026-11-0381 · Leistungszeitraum 01.11.–30.11.2026 · Managed Server M2 349,00 € · Domains (4) 48,00 € · Backup-Speicher 500 GB 13,92 € · Netto 410,92 € · USt 19 % 78,08 € · Gesamtbetrag 489,00 € · zahlbar bis 04.12.2026'],
+      ['b2', 'BK', 'Bürowelt Krämer KG', '2026-48817', '19.11.2026', '03.12.2026', 0, 'Bürobedarf', ['inbox', 'pruef'], '264,00 €', 'folder_open', 'Scan', 'Büromaterial Bestellung', 1, 6, 'Bürowelt Krämer KG · Rechnung Nr. 2026-48817 · Kundennr. 10442 · Kopierpapier A4 80 g · Toner HP 59A schwarz · Ordner breit · Haftnotizen · Kugelschreiber · Versand · Nettobetrag 221,85 € · MwSt. 19 % 42,15 € · Rechnungsbetrag 264,00 € · zahlbar bis 03.12.2026 ohne Abzug'],
+      ['b3', 'AB', 'Autohaus Brenner GmbH', 'R-118342', '18.11.2026', '02.12.2026', 0, 'Fahrzeug', ['bez'], '534,00 €', 'mail', 'ZUGFeRD', 'Inspektion & Ölwechsel', 2, 5, 'Autohaus Brenner GmbH · Werkstattrechnung R-118342 · Kennzeichen LI-MK 482 · Inspektion nach Herstellervorgabe · Motoröl 5W-30 5,2 l · Ölfilter · Arbeitswerte 14 AW · Netto 448,74 € · USt 85,26 € · Gesamt 534,00 € · Betrag dankend erhalten'],
+      ['b4', 'NT', 'Netzfunk Telekom AG', '7004 1182 3391', '15.11.2026', '30.11.2026', 0, 'Telekommunikation', ['ls'], '186,00 €', 'mail', 'ZUGFeRD', 'Mobilfunk & Internet November', 3, 4, 'Netzfunk Telekom AG · Ihre Rechnung November 2026 · Kundenkonto 7004 1182 3391 · Business Mobil L (2 Karten) · Festnetz & Internet 250 · Netto 156,30 € · USt 29,70 € · Der Betrag von 186,00 € wird am 30.11.2026 per Lastschrift eingezogen'],
+      ['b5', 'SL', 'Stadtwerke Lindenau', '2026-1187', '14.11.2026', '28.11.2026', 0, 'Sonstiges', ['inbox', 'pruef'], '118,40 €', 'mail', 'XRechnung', 'Strom-Abschlag November', 1, 2, 'Stadtwerke Lindenau · Abschlagsrechnung 2026-1187 · Strom Gewerbe · Abschlag November 2026 · Netto 99,50 € · USt 18,90 € · Gesamt 118,40 €'],
+      ['b6', 'DW', 'Druckerei Weller', '26-0912', '12.11.2026', '26.11.2026', 0, 'Sonstiges', ['inbox', 'pruef'], '231,00 €', 'upload', 'PDF', 'Visitenkarten & Flyer', 1, 3, 'Druckerei Weller · Rechnung 26-0912 · Visitenkarten 350 g, 500 Stück · Flyer DIN lang, 1.000 Stück · Gestaltungspauschale · Netto 194,12 € · USt 19 % 36,88 € · Summe 231,00 € · Vielen Dank für Ihren Auftrag'],
+      ['b7', 'KH', 'Kanzlei Hofmann & Partner', 'HP-2026-342', '10.11.2026', '24.11.2026', 0, 'Sonstiges', ['pruef'], '452,20 €', 'mail', 'PDF', 'Steuerberatung Q3', 2, 3, 'Kanzlei Hofmann & Partner · Honorarrechnung HP-2026-342 · Umsatzsteuer-Voranmeldung Q3 2026 · Finanzbuchhaltung Juli–September · Netto 380,00 € · USt 72,20 € · Gesamt 452,20 €'],
+      ['b8', 'EH', 'Elektro Haas e.K.', 'EH-4471', '14.10.2026', '28.10.2026', 1, 'Hardware', ['pruef'], '178,50 €', 'folder_open', 'Scan', 'Netzwerkverkabelung Büro', 1, 4, 'Elektro Haas e.K. · Rechnung EH-4471 · Netzwerkdose Cat. 6A · Patchkabel 2 m · Montage 1,5 Std. · Anfahrt · Netto 150,00 € · USt 28,50 € · Gesamt 178,50 € · zahlbar bis 28.10.2026'],
+      ['b9', 'SL', 'Stadtwerke Lindenau', '2026-1102', '01.11.2026', '15.11.2026', 1, 'Sonstiges', [], '233,80 €', 'mail', 'XRechnung', 'Jahresabrechnung Strom', 2, 3, 'Stadtwerke Lindenau · Rechnung 2026-1102 · Jahresverbrauchsabrechnung Strom Gewerbe · Nachzahlung · Netto 196,47 € · USt 37,33 € · Gesamt 233,80 € · fällig 15.11.2026'],
+      ['b10', 'HN', 'Hardwareversand Nord GmbH', 'HVN-552190', '21.10.2026', '04.11.2026', 0, 'Hardware', ['pp'], '214,00 €', 'mail', 'ZUGFeRD', 'Dockingstation & Zubehör', 1, 3, 'Hardwareversand Nord GmbH · Rechnung HVN-552190 · USB-C-Dockingstation · HDMI-Kabel 2 m · Versand kostenlos · Netto 179,83 € · USt 34,17 € · Gesamt 214,00 € · bezahlt per PayPal'],
+      ['b11', 'HS', 'Hostwerk Süd GmbH', 'HW-2026-10-0377', '20.10.2026', '03.11.2026', 0, 'Software & Hosting', ['ls'], '489,00 €', 'mail', 'XRechnung', 'Hosting & Domains Oktober', 1, 3, 'Hostwerk Süd GmbH · Rechnung HW-2026-10-0377 · Leistungszeitraum 01.10.–31.10.2026 · Managed Server M2 349,00 € · Domains (4) 48,00 € · Backup-Speicher 500 GB 13,92 € · Netto 410,92 € · USt 78,08 € · Gesamtbetrag 489,00 € · Lastschrift'],
+      ['b12', 'BK', 'Bürowelt Krämer KG', '2026-47102', '16.10.2026', '30.10.2026', 0, 'Bürobedarf', ['bez'], '142,00 €', 'folder_open', 'Scan', 'Toner & Kopierpapier', 1, 3, 'Bürowelt Krämer KG · Rechnung Nr. 2026-47102 · Kopierpapier A4 80 g · Toner HP 59A schwarz · Ordner breit · Nettobetrag 119,33 € · MwSt. 19 % 22,67 € · Rechnungsbetrag 142,00 €']
+    ];
+    const sel = this.state.sel, v = this.state.view;
+    const mode = this.state.mode || this.props.ansicht || 'tabelle';
+    const paid = (tags) => tags.some((t) => t === 'bez' || t === 'pp' || t === 'ls');
+    const filt = raw.filter((r) => v === 'alle' || (v === 'inbox' && r[8].includes('inbox')) || (v === 'pruef' && r[8].includes('pruef')) || (v === 'offen' && !paid(r[8])) || (v === 'ueber' && r[6] === 1 && !paid(r[8])));
+    const toggle = (id) => () => this.setState({ sel: sel.includes(id) ? sel.filter((x) => x !== id) : sel.concat([id]) });
+    const eur = (n) => n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' €';
+    const rows = filt.map((r) => {
+      const on = sel.includes(r[0]);
+      const overdue = r[6] === 1 && !paid(r[8]);
+      const scan = r[11] === 'Scan';
+      return {
+        checked: on, toggle: toggle(r[0]), ariaSel: r[2] + ' ' + r[3] + ' auswählen', bg: on ? '#F1F1F9' : '#FFFFFF',
+        cardBd: on ? '2px solid #2F2D86' : '1px solid #E3E6EB',
+        korr: r[2], nr: r[3], datum: r[4], titel: r[12], excerpt: r[15],
+        faellig: overdue ? r[5] + ' · überfällig' : r[5],
+        dueFg: overdue ? '#B42318' : '#4A5262', dueW: overdue ? 600 : 400, overdue,
+        kat: r[7], tags: r[8].map((t) => T[t]), brutto: r[9], qIcon: r[10], fmt: r[11],
+        seiten: r[13], seitenLabel: r[13] === 1 ? '1 Seite' : r[13] + ' Seiten',
+        lf: C[r[1]], lines: Array.from({ length: r[14] }, (_, i) => i),
+        rot: scan ? (r[0] === 'b8' ? '1.2deg' : '-1deg') : '0deg', paper: scan ? '#FBFAF4' : '#FFFFFF'
+      };
+    });
+    const sum = filt.reduce((s, r) => s + parseFloat(r[9].replace(/\./g, '').replace(',', '.')), 0);
+    const md = (id, icon, label) => ({ icon, label, on: mode === id ? 'true' : 'false', pick: () => this.setState({ mode: id }), bg: mode === id ? '#2F2D86' : '#FFFFFF', fg: mode === id ? '#FFFFFF' : '#2F2D86' });
+    const VW = { alle: 'Alle Belege', inbox: 'Inbox', pruef: 'Zu prüfen', offen: 'Offen', ueber: 'Überfällig' };
+    const vw = (id, icon, count, cbg, cfg) => ({ label: VW[id], icon, count, sel: v === id ? 'true' : 'false', pick: () => this.setState({ view: id }),
+      bg: v === id ? '#E7E7F4' : '#FFFFFF', bd: v === id ? '#2F2D86' : '#D5D9E0', fg: v === id ? '#2F2D86' : '#4A5262', cbg, cfg });
+    const allSel = filt.length > 0 && filt.every((r) => sel.includes(r[0]));
+    const vf = { inbox: ['tags', 1], pruef: ['tags', 1], offen: ['zahl', 1], ueber: ['zahl', 2] }[v];
+    const flt = (key, icon, label, def) => { const cnt = vf && vf[0] === key ? vf[1] : (def || 0); return { icon, label, cnt: String(cnt), hasCnt: cnt > 0, cls: cnt > 0 ? 'dd-on' : '' }; };
+    return {
+      title: VW[v],
+      modes: [md('tabelle', 'table_rows', 'Tabelle'), md('klein', 'grid_view', 'Kleine Karten'), md('gross', 'view_agenda', 'Große Karten')],
+      isTabelle: mode === 'tabelle', isKlein: mode === 'klein', isGross: mode === 'gross',
+      views: [vw('alle', 'receipt_long', '248', '#EEF0F3', '#4A5262'), vw('inbox', 'inbox', '12', '#E7E7F4', '#2F2D86'), vw('pruef', 'report', '5', '#FDF0E3', '#A44A06'), vw('offen', 'schedule', '9', '#EEF0F3', '#4A5262'), vw('ueber', 'event_busy', '2', '#FDECEA', '#B42318')],
+      filters: [flt('tags', 'sell', 'Tags'), flt('korr', 'storefront', 'Korrespondent'), flt('kat', 'category', 'Kategorie'), flt('datum', 'calendar_month', 'Rechnungsdatum', 1), flt('betrag', 'euro', 'Betrag'), flt('zahl', 'paid', 'Zahlstatus'), flt('quelle', 'input', 'Herkunft')],
+      resetView: () => this.setState({ view: 'alle' }),
+      rows, hasSel: sel.length > 0, noSel: sel.length === 0, selLabel: sel.length === 1 ? '1 Beleg ausgewählt' : sel.length + ' Belege ausgewählt',
+      clearSel: () => this.setState({ sel: [] }), allSel,
+      toggleAll: () => this.setState({ sel: allSel ? [] : filt.map((r) => r[0]) }),
+      selectPage: () => this.setState({ sel: filt.map((r) => r[0]) }),
+      countLabel: v === 'alle' ? '248 Belege · Seite 1 von 21' : rows.length + (rows.length === 1 ? ' Beleg' : ' Belege'),
+      sumLabel: v === 'alle' ? '20.845,00 € (2026)' : eur(sum),
+      multiPage: v === 'alle'
+    };
+  }
+}
+</script>
+</body>
+</html>

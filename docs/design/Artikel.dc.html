@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Artikel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Material+Symbols+Outlined&display=block">
+<style>
+body{margin:0;background:#F4F5F7}
+a{color:#2F2D86}a:hover{color:#24226B}
+.material-symbols-outlined{font-size:20px;line-height:1;vertical-align:-5px}
+.card{background:#FFFFFF;border:1px solid #E3E6EB;border-radius:12px;box-sizing:border-box}
+.btn{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:8px;border:1px solid #D5D9E0;background:#FFFFFF;color:#151922;font:500 14px 'IBM Plex Sans',sans-serif;text-decoration:none;cursor:pointer;white-space:nowrap;box-sizing:border-box}
+.btn:hover{background:#F0F2F5;color:#151922}
+.btn-p{background:#2F2D86;border-color:#2F2D86;color:#FFFFFF}.btn-p:hover{background:#24226B;color:#FFFFFF}
+.btn:disabled{opacity:0.5;cursor:default}
+.chip{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border-radius:11px;font:500 12px 'IBM Plex Sans',sans-serif;white-space:nowrap}
+.t-blue{background:#E7E7F4;color:#2F2D86}.t-orange{background:#FDF0E3;color:#A44A06}.t-green{background:#E5F4EC;color:#17703F}.t-gray{background:#EEF0F3;color:#4A5262}
+.flt{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 10px 0 12px;border-radius:8px;border:1px dashed #B9C0CC;background:#FFFFFF;color:#4A5262;font:500 13px 'IBM Plex Sans',sans-serif;cursor:pointer;white-space:nowrap}
+.tbl{width:100%;border-collapse:collapse;font:400 14px 'IBM Plex Sans',sans-serif}
+.tbl th{text-align:left;font:600 12px 'IBM Plex Sans',sans-serif;color:#4A5262;padding:10px 12px;border-bottom:1px solid #E3E6EB;white-space:nowrap;background:#FAFBFC}
+.tbl td{padding:10px 12px;border-bottom:1px solid #EEF0F3;vertical-align:middle}
+.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.muted{color:#5E6676}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 100vh; font-family: 'IBM Plex Sans', sans-serif; color: #151922; background: #F4F5F7">
+  <div style="flex: 1 1 232px; background: #2F2D86"><dc-import name="Sidebar" active="artikel" hint-size="100%,900px"></dc-import></div>
+  <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <dc-import name="Topbar" hint-size="100%,64px"></dc-import>
+    <main style="width: 100%; box-sizing: border-box; padding: 28px 32px 56px; display: flex; flex-direction: column; gap: 16px">
+      <div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+        <div>
+          <h1 style="margin: 0; font-size: 26px; font-weight: 600">Artikel</h1>
+          <p class="muted" style="margin: 4px 0 0; font-size: 14px">Aus Rechnungspositionen erkannt, pro Korrespondent normalisiert. Stammartikel fassen gleiche Artikel über Händler hinweg zusammen.</p>
+        </div>
+        <button type="button" class="btn btn-p" disabled="{{ noMerge }}"><span class="material-symbols-outlined" aria-hidden="true">join</span>{{ mergeLabel }}</button>
+      </div>
+
+      <div role="tablist" aria-label="Artikelansicht" style="display: flex; gap: 4px; border-bottom: 1px solid #E3E6EB">
+        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="2">
+          <button type="button" role="tab" aria-selected="{{ t.sel }}" onClick="{{ t.pick }}" style="height: 40px; padding: 0 12px; border: 0; border-bottom: 2px solid {{ t.line }}; margin-bottom: -1px; background: transparent; font: 500 14px 'IBM Plex Sans', sans-serif; color: {{ t.fg }}; cursor: pointer">{{ t.label }}</button>
+        </sc-for>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+        <label style="flex: 1 1 260px; max-width: 360px; display: flex; align-items: center; gap: 6px; height: 34px; padding: 0 10px; border: 1px solid #D5D9E0; border-radius: 8px; background: #FFFFFF; box-sizing: border-box">
+          <span class="material-symbols-outlined" aria-hidden="true" style="color: #5E6676; font-size: 18px">search</span>
+          <input type="search" aria-label="Artikel suchen" placeholder="Artikel suchen" style="flex: 1; min-width: 0; border: 0; outline: none; font: 400 14px 'IBM Plex Sans', sans-serif">
+        </label>
+        <button type="button" class="flt"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px">storefront</span>Korrespondent</button>
+        <button type="button" class="flt"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px">trending_up</span>Preisänderung</button>
+        <button type="button" class="flt"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px">link_off</span>Ohne Stammartikel</button>
+      </div>
+
+      <sc-if value="{{ isArt }}" hint-placeholder-val="{{ true }}">
+        <div class="card" style="overflow-x: auto">
+          <table class="tbl" style="min-width: 1000px">
+            <thead><tr><th scope="col" style="width: 36px"><span style="position: absolute; left: -9999px">Auswahl</span></th><th scope="col">Artikel</th><th scope="col">Korrespondent</th><th scope="col">Stammartikel</th><th scope="col" class="num">Käufe</th><th scope="col" class="num">Letzter Einzelpreis</th><th scope="col" class="num">Grundpreis</th><th scope="col" class="num">Seit 1. Kauf</th><th scope="col">Zuletzt</th></tr></thead>
+            <tbody>
+              <sc-for list="{{ rows }}" as="r" hint-placeholder-count="9">
+                <tr style="background: {{ r.bg }}">
+                  <td><input type="checkbox" aria-label="{{ r.aria }}" checked="{{ r.checked }}" onChange="{{ r.toggle }}" style="width: 16px; height: 16px"></td>
+                  <td><a href="ArtikelDetail.dc.html" style="font-weight: 500; text-decoration: none">{{ r.name }}</a></td>
+                  <td>{{ r.korr }}</td>
+                  <td style="color: {{ r.stFg }}">{{ r.stamm }}</td>
+                  <td class="num">{{ r.n }}</td>
+                  <td class="num">{{ r.ep }}</td>
+                  <td class="num muted">{{ r.gp }}</td>
+                  <td class="num"><span class="chip {{ r.cls }}">{{ r.delta }}</span></td>
+                  <td>{{ r.last }}</td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isStamm }}" hint-placeholder-val="{{ false }}">
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px">
+          <sc-for list="{{ stamm }}" as="s" hint-placeholder-count="4">
+            <a href="ArtikelDetail.dc.html" class="card" style="padding: 18px; display: flex; flex-direction: column; gap: 10px; text-decoration: none; color: #151922">
+              <span style="display: flex; justify-content: space-between; gap: 8px"><strong style="font-size: 15px">{{ s.name }}</strong><span class="chip t-gray">je {{ s.einheit }}</span></span>
+              <span class="muted" style="font-size: 13px">{{ s.artikel }}</span>
+              <span style="display: flex; align-items: flex-end; gap: 3px; height: 36px">
+                <sc-for list="{{ s.spark }}" as="p" hint-placeholder-count="8"><span style="flex: 1; height: {{ p.h }}px; background: #BDBCE0; border-radius: 2px 2px 0 0"></span></sc-for>
+              </span>
+              <span style="display: flex; justify-content: space-between; font-size: 13px"><span>Günstigster: <strong>{{ s.best }}</strong></span><span class="chip {{ s.cls }}">{{ s.delta }}</span></span>
+            </a>
+          </sc-for>
+        </div>
+      </sc-if>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":1100}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { tab: 'art', sel: ['a1', 'a7'] }; }
+  renderVals() {
+    const raw = [
+      ['a1', 'Kopierpapier A4 80 g', 'Bürowelt Krämer KG', 'Kopierpapier A4 80 g', 9, '24,90 € / Karton', '1,00 € / 100 Bl.', '+8,3 %', 't-orange', '19.11.2026'],
+      ['a2', 'Ordner breit 8 cm, blau', 'Bürowelt Krämer KG', '', 4, '2,49 € / Stück', '2,49 € / Stück', '+11,2 %', 't-orange', '19.11.2026'],
+      ['a3', 'Managed Server M', 'Hostwerk Süd GmbH', 'Managed Server', 11, '309,00 € / Monat', '—', '+6,9 %', 't-orange', '20.11.2026'],
+      ['a4', 'Business Mobil L', 'Netzfunk Telekom AG', 'Mobilfunkvertrag', 11, '39,95 € / Monat', '—', '−12,5 %', 't-green', '15.11.2026'],
+      ['a5', 'Lasertoner schwarz', 'Bürowelt Krämer KG', 'Toner schwarz', 6, '64,90 € / Stück', '2,16 € / 100 S.', '±0 %', 't-gray', '19.11.2026'],
+      ['a6', 'Leasingrate Transporter', 'Autohaus Brenner GmbH', '', 11, '412,00 € / Monat', '—', '±0 %', 't-gray', '18.11.2026'],
+      ['a7', 'Papier Kopier A4 80g/m² 500 Bl.', 'Druckerei Weller', '', 2, '5,49 € / Pack', '1,10 € / 100 Bl.', '+4,8 %', 't-orange', '12.11.2026'],
+      ['a8', 'Toner TN-schwarz kompatibel', 'Hardwareversand Nord GmbH', 'Toner schwarz', 2, '39,90 € / Stück', '1,33 € / 100 S.', '−5,0 %', 't-green', '21.10.2026'],
+      ['a9', 'Kugelschreiber blau', 'Bürowelt Krämer KG', '', 3, '0,89 € / Stück', '0,89 € / Stück', '−3,3 %', 't-green', '19.11.2026']
+    ];
+    const sel = this.state.sel, t = this.state.tab;
+    const tog = (id) => () => this.setState({ sel: sel.includes(id) ? sel.filter((x) => x !== id) : sel.concat([id]) });
+    const tb = (id, label) => ({ label, sel: t === id ? 'true' : 'false', pick: () => this.setState({ tab: id }), line: t === id ? '#2F2D86' : 'transparent', fg: t === id ? '#151922' : '#4A5262' });
+    const sp = (arr) => arr.map((v) => ({ h: v }));
+    return {
+      isArt: t === 'art', isStamm: t === 'stamm',
+      tabs: [tb('art', 'Artikel (148)'), tb('stamm', 'Stammartikel (12)')],
+      noMerge: sel.length < 2,
+      mergeLabel: sel.length < 2 ? 'Zu Stammartikel zusammenführen' : sel.length + ' zu Stammartikel zusammenführen',
+      rows: raw.map((r) => ({ checked: sel.includes(r[0]), toggle: tog(r[0]), aria: r[1] + ' auswählen', bg: sel.includes(r[0]) ? '#F1F1F9' : '#FFFFFF', name: r[1], korr: r[2], stamm: r[3] || 'nicht zugeordnet', stFg: r[3] ? '#151922' : '#5E6676', n: r[4], ep: r[5], gp: r[6], delta: r[7], cls: r[8], last: r[9] })),
+      stamm: [
+        { name: 'Kopierpapier A4 80 g', einheit: '100 Blatt', artikel: '2 Artikel · Bürowelt Krämer KG, Druckerei Weller', spark: sp([24, 24, 30, 26, 26, 28, 28, 28]), best: '1,00 € (Bürowelt)', delta: '+8,3 %', cls: 't-orange' },
+        { name: 'Toner schwarz', einheit: '100 Seiten', artikel: '2 Artikel · Bürowelt Krämer KG, Hardwareversand Nord', spark: sp([30, 30, 28, 22, 22, 21, 21, 21]), best: '1,33 € (Hardwareversand)', delta: '−5,0 %', cls: 't-green' },
+        { name: 'Managed Server', einheit: 'Monat', artikel: '1 Artikel · Hostwerk Süd GmbH', spark: sp([28, 28, 30, 30, 30, 31, 31, 32]), best: '309,00 € (Hostwerk)', delta: '+6,9 %', cls: 't-orange' },
+        { name: 'Mobilfunkvertrag', einheit: 'Monat', artikel: '1 Artikel · Netzfunk Telekom AG', spark: sp([34, 34, 34, 34, 30, 30, 30, 30]), best: '39,95 € (Netzfunk)', delta: '−12,5 %', cls: 't-green' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

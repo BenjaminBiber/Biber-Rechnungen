@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Mobil Übersicht</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Material+Symbols+Outlined&display=block">
+<style>
+body{margin:0}
+.material-symbols-outlined{font-size:20px;line-height:1;vertical-align:-5px}
+.card{background:#FFFFFF;border:1px solid #E3E6EB;border-radius:14px;box-sizing:border-box}
+.muted{color:#5E6676}
+.num{font-variant-numeric:tabular-nums}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; display: flex; flex-direction: column; background: #F4F5F7; font-family: 'IBM Plex Sans', sans-serif; color: #151922; overflow: hidden">
+  <header style="display: flex; align-items: center; gap: 10px; padding: 18px 16px 12px; background: #FFFFFF; border-bottom: 1px solid #E3E6EB">
+    <span style="width: 34px; height: 34px; border-radius: 9px; background: #2F2D86; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700">B</span>
+    <span style="flex: 1; font-weight: 600; font-size: 17px">Übersicht</span>
+    <a href="MobilBelege.dc.html" aria-label="Suchen" style="width: 44px; height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center; color: #151922; text-decoration: none"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 24px">search</span></a>
+    <span style="width: 36px; height: 36px; border-radius: 18px; background: #DEDDF0; color: #2F2D86; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 13px">MK</span>
+  </header>
+  <main style="flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+      <a href="MobilBelege.dc.html" class="card" style="padding: 14px; text-decoration: none; color: #151922"><div style="font-size: 12px; color: #2F2D86; display: flex; gap: 4px; align-items: center"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 16px">inbox</span>Inbox</div><div class="num" style="font-size: 26px; font-weight: 600">12</div></a>
+      <a href="MobilBelege.dc.html" class="card" style="padding: 14px; text-decoration: none; color: #151922"><div style="font-size: 12px; color: #A44A06; display: flex; gap: 4px; align-items: center"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 16px">report</span>Zu prüfen</div><div class="num" style="font-size: 26px; font-weight: 600">5</div></a>
+      <div class="card" style="padding: 14px"><div class="muted" style="font-size: 12px">Offen</div><div class="num" style="font-size: 18px; font-weight: 600">2.418,40 €</div><div class="muted" style="font-size: 12px">9 Belege</div></div>
+      <div class="card" style="padding: 14px; background: #FDECEA; border-color: #F5C2BD"><div style="font-size: 12px; color: #B42318">Überfällig</div><div class="num" style="font-size: 18px; font-weight: 600; color: #8F1B12">412,30 €</div><div style="font-size: 12px; color: #B42318">2 Belege</div></div>
+    </div>
+
+    <section class="card" style="padding: 16px">
+      <div style="display: flex; justify-content: space-between; align-items: baseline"><strong style="font-size: 15px">Gesamtkosten pro Monat</strong><span class="muted" style="font-size: 12px">2026 · brutto</span></div>
+      <div class="num" style="font-size: 24px; font-weight: 600; margin-top: 4px">20.845,00 €</div>
+      <div class="muted" style="font-size: 12px">+9,7 % ggü. Jan–Nov 2025</div>
+      <div style="display: flex; align-items: flex-end; gap: 4px; height: 90px; margin-top: 12px">
+        <sc-for list="{{ bars }}" as="b" hint-placeholder-count="11"><div title="{{ b.t }}" style="flex: 1; height: {{ b.h }}px; border-radius: 3px 3px 0 0; background: {{ b.c }}"></div></sc-for>
+      </div>
+      <div style="display: flex; gap: 4px; margin-top: 4px"><sc-for list="{{ bars }}" as="b" hint-placeholder-count="11"><span class="muted" style="flex: 1; text-align: center; font-size: 10px">{{ b.m }}</span></sc-for></div>
+    </section>
+
+    <section class="card" style="padding: 6px 16px">
+      <div style="padding: 10px 0 4px; display: flex; justify-content: space-between"><strong style="font-size: 15px">Zu prüfen</strong><a href="MobilBelege.dc.html" style="font-size: 13px; color: #2F2D86">Alle</a></div>
+      <a href="MobilBelegDetail.dc.html" style="display: flex; gap: 10px; padding: 12px 0; border-top: 1px solid #EEF0F3; text-decoration: none; color: #151922"><span class="material-symbols-outlined" aria-hidden="true" style="color: #A44A06">report</span><span style="flex: 1; font-size: 14px">Bürowelt Krämer KG<br><span style="font-size: 12px; color: #A44A06">Konfidenz 0,74 · Summe −2,00 €</span></span><span class="num" style="font-size: 14px; font-weight: 600">264,00 €</span></a>
+      <a href="MobilBelegDetail.dc.html" style="display: flex; gap: 10px; padding: 12px 0; border-top: 1px solid #EEF0F3; text-decoration: none; color: #151922"><span class="material-symbols-outlined" aria-hidden="true" style="color: #A44A06">report</span><span style="flex: 1; font-size: 14px">Stadtwerke Lindenau<br><span style="font-size: 12px; color: #A44A06">KoSIT: BR-DE-15</span></span><span class="num" style="font-size: 14px; font-weight: 600">118,40 €</span></a>
+      <a href="MobilBelegDetail.dc.html" style="display: flex; gap: 10px; padding: 12px 0; border-top: 1px solid #EEF0F3; text-decoration: none; color: #151922"><span class="material-symbols-outlined" aria-hidden="true" style="color: #A44A06">report</span><span style="flex: 1; font-size: 14px">Druckerei Weller<br><span style="font-size: 12px; color: #A44A06">§ 14: Leistungsdatum fehlt</span></span><span class="num" style="font-size: 14px; font-weight: 600">231,00 €</span></a>
+    </section>
+  </main>
+  <dc-import name="MobilNav" active="start" hint-size="390px,84px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const v = [1706, 2719, 1526, 1624, 1924, 1496, 1592, 3301, 1589, 1664, 1704];
+    const m = ['J','F','M','A','M','J','J','A','S','O','N'];
+    return { bars: v.map((x, i) => ({ h: Math.round(x / 3400 * 90), c: '#2F2D86', m: m[i], t: x.toLocaleString('de-DE') + ' €' })) };
+  }
+}
+</script>
+</body>
+</html>

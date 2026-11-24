@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Dashboard</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Material+Symbols+Outlined&display=block">
+<style>
+body{margin:0;background:#F4F5F7}
+a{color:#2F2D86}a:hover{color:#24226B}
+.material-symbols-outlined{font-size:20px;line-height:1;vertical-align:-5px}
+.card{background:#FFFFFF;border:1px solid #E3E6EB;border-radius:12px;box-sizing:border-box}
+.btn{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:8px;border:1px solid #D5D9E0;background:#FFFFFF;color:#151922;font:500 14px 'IBM Plex Sans',sans-serif;text-decoration:none;cursor:pointer;white-space:nowrap;box-sizing:border-box}
+.btn:hover{background:#F0F2F5;color:#151922}
+.btn-p{background:#2F2D86;border-color:#2F2D86;color:#FFFFFF}.btn-p:hover{background:#24226B;color:#FFFFFF}
+.btn-s{height:30px;padding:0 10px;font-size:13px}
+.chip{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border-radius:11px;font:500 12px 'IBM Plex Sans',sans-serif;white-space:nowrap}
+.t-blue{background:#E7E7F4;color:#2F2D86}.t-orange{background:#FDF0E3;color:#A44A06}.t-green{background:#E5F4EC;color:#17703F}.t-red{background:#FDECEA;color:#B42318}.t-gray{background:#EEF0F3;color:#4A5262}.t-teal{background:#E1F3F4;color:#0E6168}.t-purple{background:#F0EAFB;color:#5B2EA6}
+.tbl{width:100%;border-collapse:collapse;font:400 14px 'IBM Plex Sans',sans-serif}
+.tbl th{text-align:left;font:600 12px 'IBM Plex Sans',sans-serif;color:#4A5262;padding:10px 12px;border-bottom:1px solid #E3E6EB;white-space:nowrap}
+.tbl td{padding:10px 12px;border-bottom:1px solid #EEF0F3;vertical-align:middle}
+.mono{font-family:'IBM Plex Mono',monospace;font-size:13px}
+.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.muted{color:#5E6676}
+.h2{margin:0;font:600 16px 'IBM Plex Sans',sans-serif;color:#151922}
+.seg{display:inline-flex;gap:2px;padding:3px;border-radius:9px;background:#E9ECF1}
+.seg button{height:30px;padding:0 12px;border:0;border-radius:7px;background:transparent;font:500 13px 'IBM Plex Sans',sans-serif;color:#4A5262;cursor:pointer}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 100vh; font-family: 'IBM Plex Sans', sans-serif; color: #151922; background: #F4F5F7">
+  <div style="flex: 1 1 232px; background: #2F2D86"><dc-import name="Sidebar" active="dashboard" hint-size="100%,900px"></dc-import></div>
+  <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <dc-import name="Topbar" hint-size="100%,64px"></dc-import>
+    <main style="width: 100%; box-sizing: border-box; padding: 28px 32px 56px; display: flex; flex-direction: column; gap: 20px">
+
+      <div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+        <div>
+          <h1 style="margin: 0; font-size: 26px; font-weight: 600">Dashboard</h1>
+          <p class="muted" style="margin: 4px 0 0; font-size: 14px">Stand 23.11.2026 · Zeitbasis: Rechnungsdatum · alle Beträge brutto in EUR</p>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
+          <div class="seg" role="group" aria-label="Zeitraum">
+            <sc-for list="{{ ranges }}" as="r" hint-placeholder-count="3">
+              <button type="button" onClick="{{ r.pick }}" style="background: {{ r.bg }}; color: {{ r.fg }}; box-shadow: {{ r.shadow }}">{{ r.label }}</button>
+            </sc-for>
+          </div>
+          <button type="button" class="btn"><span class="material-symbols-outlined" aria-hidden="true">calendar_month</span>2026<span class="material-symbols-outlined" aria-hidden="true">expand_more</span></button>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px">
+        <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="6">
+          <a href="{{ k.href }}" class="card" style="display: flex; flex-direction: column; gap: 6px; padding: 16px; text-decoration: none; color: #151922">
+            <span style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #4A5262"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px; color: {{ k.iconFg }}">{{ k.icon }}</span>{{ k.label }}</span>
+            <span class="num" style="text-align: left; font-size: 24px; font-weight: 600">{{ k.value }}</span>
+            <span style="font-size: 12px; color: {{ k.subFg }}">{{ k.sub }}</span>
+          </a>
+        </sc-for>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 20px">
+        <section class="card" style="flex: 2 1 560px; min-width: 0; padding: 20px">
+          <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 16px">
+            <h2 class="h2">Gesamtkosten pro Monat</h2>
+            <span class="muted" style="font-size: 13px">2026 · brutto</span>
+          </div>
+          <div style="display: flex; gap: 10px">
+            <div class="muted" style="display: flex; flex-direction: column; justify-content: space-between; height: 220px; font-size: 11px; text-align: right; padding-bottom: 0">
+              <span>4.000</span><span>3.000</span><span>2.000</span><span>1.000</span><span>0</span>
+            </div>
+            <div style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+              <div style="position: relative; height: 220px; display: flex; align-items: flex-end; gap: 10px; border-bottom: 1px solid #C9CED6; background-image: linear-gradient(#EEF0F3 1px, transparent 1px); background-size: 100% 55px">
+                <sc-for list="{{ months }}" as="m" hint-placeholder-count="12">
+                  <div title="{{ m.title }}" style="flex: 1; height: 220px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px">
+                    <span class="num" style="text-align: center; font-size: 11px; color: #4A5262">{{ m.value }}</span>
+                    <div style="width: 100%; max-width: 56px; height: {{ m.h }}px; border-radius: 4px 4px 0 0; background: {{ m.c }}"></div>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="display: flex; gap: 10px; margin-top: 6px">
+                <sc-for list="{{ months }}" as="m" hint-placeholder-count="12">
+                  <span class="muted" style="flex: 1; text-align: center; font-size: 11px">{{ m.label }}</span>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card" style="flex: 1 1 320px; min-width: 0; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+          <div style="display: flex; justify-content: space-between; align-items: baseline"><h2 class="h2">Top-Korrespondenten 2026</h2><a href="Korrespondenten.dc.html" style="font-size: 13px">Alle</a></div>
+          <sc-for list="{{ top }}" as="t" hint-placeholder-count="5">
+            <a href="KorrespondentDetail.dc.html" style="display: flex; flex-direction: column; gap: 6px; text-decoration: none; color: #151922">
+              <span style="display: flex; align-items: center; gap: 10px">
+                <span style="flex: none; width: 30px; height: 30px; border-radius: 7px; background: {{ t.bg }}; color: {{ t.fg }}; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700">{{ t.ini }}</span>
+                <span style="flex: 1; min-width: 0; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ t.name }}</span>
+                <span class="num" style="font-size: 14px; font-weight: 600">{{ t.sum }}</span>
+              </span>
+              <span style="height: 6px; border-radius: 3px; background: #EEF0F3; margin-left: 40px"><span style="display: block; height: 6px; border-radius: 3px; width: {{ t.pct }}%; background: #2F2D86"></span></span>
+            </a>
+          </sc-for>
+        </section>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 20px">
+        <section class="card" style="padding: 20px; display: flex; flex-direction: column; gap: 12px">
+          <div style="display: flex; justify-content: space-between; align-items: baseline"><h2 class="h2">Zu prüfen <span class="chip t-orange" style="margin-left: 6px">5</span></h2><a href="Belege.dc.html" style="font-size: 13px">Liste öffnen</a></div>
+          <sc-for list="{{ pruefen }}" as="p" hint-placeholder-count="5">
+            <a href="BelegDetail.dc.html" style="display: flex; gap: 10px; padding: 10px 0; border-top: 1px solid #EEF0F3; text-decoration: none; color: #151922">
+              <span class="material-symbols-outlined" aria-hidden="true" style="color: #A44A06">report</span>
+              <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+                <span style="font-size: 14px; font-weight: 500">{{ p.korr }} <span class="mono muted">{{ p.nr }}</span></span>
+                <span style="font-size: 13px; color: #A44A06">{{ p.grund }}</span>
+              </span>
+            </a>
+          </sc-for>
+        </section>
+
+        <section class="card" style="padding: 20px; display: flex; flex-direction: column; gap: 12px">
+          <div style="display: flex; justify-content: space-between; align-items: baseline"><h2 class="h2">Offen &amp; überfällig</h2><a href="Belege.dc.html" style="font-size: 13px">Alle offenen</a></div>
+          <div style="display: flex; gap: 10px">
+            <div style="flex: 1; padding: 12px; border-radius: 10px; background: #F4F5F7"><div class="muted" style="font-size: 12px">Offen</div><div class="num" style="text-align: left; font-size: 18px; font-weight: 600">9 · 2.418,40 €</div></div>
+            <div style="flex: 1; padding: 12px; border-radius: 10px; background: #FDECEA"><div style="font-size: 12px; color: #B42318">Überfällig</div><div class="num" style="text-align: left; font-size: 18px; font-weight: 600; color: #8F1B12">2 · 412,30 €</div></div>
+          </div>
+          <sc-for list="{{ offen }}" as="o" hint-placeholder-count="4">
+            <a href="BelegDetail.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid #EEF0F3; text-decoration: none; color: #151922; font-size: 14px">
+              <span style="flex: 1; min-width: 0"><span style="display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ o.korr }}</span><span style="font-size: 12px; color: {{ o.fg }}">{{ o.due }}</span></span>
+              <span class="num" style="font-weight: 500">{{ o.sum }}</span>
+            </a>
+          </sc-for>
+          <p class="muted" style="margin: 0; font-size: 12px">„Offen“ = kein Zahlungs-Tag gesetzt. „Überfällig“ = offen und Fälligkeit überschritten.</p>
+        </section>
+
+
+        <section class="card" style="padding: 20px; display: flex; flex-direction: column; gap: 12px">
+          <h2 class="h2">Ablage &amp; Sicherung</h2>
+          <div style="display: flex; gap: 10px; align-items: flex-start"><span class="material-symbols-outlined" aria-hidden="true" style="color: #17703F">verified_user</span><span style="font-size: 14px"><strong>Integritätsprüfung ohne Befund</strong><br><span class="muted" style="font-size: 13px">2.184 Dateien, SHA-256 geprüft · heute 03:00</span></span></div>
+          <div style="display: flex; gap: 10px; align-items: flex-start"><span class="material-symbols-outlined" aria-hidden="true" style="color: #17703F">database</span><span style="font-size: 14px"><strong>Datenbank-Backup erstellt</strong><br><span class="muted" style="font-size: 13px">pg_dump heute 02:00 · 30 Dumps vorhanden</span></span></div>
+          <div style="display: flex; gap: 10px; align-items: flex-start"><span class="material-symbols-outlined" aria-hidden="true" style="color: #2F2D86">mail</span><span style="font-size: 14px"><strong>Postfach abgerufen</strong><br><span class="muted" style="font-size: 13px">vor 3 Min. · 2 neue Anhänge</span></span></div>
+          <div style="display: flex; gap: 10px; align-items: flex-start"><span class="material-symbols-outlined" aria-hidden="true" style="color: #2F2D86">folder_open</span><span style="font-size: 14px"><strong>Eingangsordner überwacht</strong><br><span class="muted" style="font-size: 13px">Rechnungen-Eingang · 0 Dateien wartend</span></span></div>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":1200}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { range: 'jahr' }; }
+  renderVals() {
+    const data = [
+      [452,452,468,468,468,471,471,471,489,489,489,0],
+      [184,179,184,192,184,184,188,184,184,184,186,0],
+      [312,96,148,402,88,126,233,94,318,142,264,0],
+      [540,610,420,388,702,455,512,620,388,470,534,0],
+      [0,1240,0,0,386,0,0,1790,0,214,0,0],
+      [218,142,306,174,96,260,188,142,210,165,231,0]
+    ];
+    const names = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+    const scale = 220 / 4000;
+    const fmt = (v) => v.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+    const totals = names.map((_, i) => data.reduce((a, row) => a + row[i], 0));
+    const months = names.map((label, i) => ({
+      label, h: Math.round(totals[i] * scale), c: '#2F2D86',
+      value: totals[i] ? totals[i].toLocaleString('de-DE') : '',
+      title: label + ' 2026: ' + fmt(totals[i])
+    }));
+    const r = this.state.range;
+    const rg = (id, label) => ({ label, pick: () => this.setState({ range: id }), bg: r === id ? '#FFFFFF' : 'transparent', fg: r === id ? '#151922' : '#4A5262', shadow: r === id ? '0 1px 2px rgba(0,0,0,0.12)' : 'none' });
+    return {
+      months,
+      ranges: [rg('monat', 'Monat'), rg('quartal', 'Quartal'), rg('jahr', 'Jahr')],
+      kpis: [
+        { icon: 'payments', iconFg: '#2F2D86', label: 'Kosten November', value: '1.704,00 €', sub: '+5,8 % ggü. Nov 2025', subFg: '#4A5262', href: 'Belege.dc.html' },
+        { icon: 'calendar_today', iconFg: '#2F2D86', label: 'Kosten 2026', value: '20.845,00 €', sub: '+9,7 % ggü. Jan–Nov 2025', subFg: '#4A5262', href: 'Export.dc.html' },
+        { icon: 'schedule', iconFg: '#4A5262', label: 'Offen', value: '9', sub: '2.418,40 € ohne Zahlungs-Tag', subFg: '#4A5262', href: 'Belege.dc.html' },
+        { icon: 'event_busy', iconFg: '#B42318', label: 'Überfällig', value: '2', sub: '412,30 € · älteste seit 26 Tagen', subFg: '#B42318', href: 'Belege.dc.html' },
+        { icon: 'inbox', iconFg: '#2F2D86', label: 'Inbox', value: '12', sub: 'neu, noch nicht gesichtet', subFg: '#4A5262', href: 'Belege.dc.html' },
+        { icon: 'report', iconFg: '#A44A06', label: 'Zu prüfen', value: '5', sub: 'Prüfung fehlgeschlagen', subFg: '#A44A06', href: 'Belege.dc.html' }
+      ],
+      top: [
+        { ini: 'AB', name: 'Autohaus Brenner GmbH', sum: '5.639,00 €', pct: 100, bg: '#DDF0EA', fg: '#145C4B' },
+        { ini: 'HS', name: 'Hostwerk Süd GmbH', sum: '5.188,00 €', pct: 92, bg: '#E7E7F4', fg: '#2F2D86' },
+        { ini: 'HN', name: 'Hardwareversand Nord GmbH', sum: '3.630,00 €', pct: 64, bg: '#EEF0F3', fg: '#4A5262' },
+        { ini: 'BK', name: 'Bürowelt Krämer KG', sum: '2.223,00 €', pct: 39, bg: '#FDF0E3', fg: '#A44A06' },
+        { ini: 'NT', name: 'Netzfunk Telekom AG', sum: '2.033,00 €', pct: 36, bg: '#E1F3F4', fg: '#0E6168' }
+      ],
+      pruefen: [
+        { korr: 'Bürowelt Krämer KG', nr: '2026-48817', grund: 'Konfidenz 0,74 unter 0,80 · Positionssumme weicht um 2,00 € ab' },
+        { korr: 'Stadtwerke Lindenau', nr: '2026-1187', grund: 'KoSIT: BR-DE-15 Käuferreferenz fehlt' },
+        { korr: 'Druckerei Weller', nr: '26-0912', grund: '§ 14 UStG: Leistungsdatum fehlt' },
+        { korr: 'Kanzlei Hofmann & Partner', nr: 'HP-2026-342', grund: 'Dublettenverdacht zu HP-2026-311' },
+        { korr: 'Elektro Haas e.K.', nr: 'EH-4471', grund: 'Neuer Korrespondent' }
+      ],
+      offen: [
+        { korr: 'Elektro Haas e.K.', due: 'überfällig seit 28.10.2026', fg: '#B42318', sum: '178,50 €' },
+        { korr: 'Stadtwerke Lindenau', due: 'überfällig seit 15.11.2026', fg: '#B42318', sum: '233,80 €' },
+        { korr: 'Kanzlei Hofmann & Partner', due: 'fällig 24.11.2026', fg: '#4A5262', sum: '452,20 €' },
+        { korr: 'Druckerei Weller', due: 'fällig 26.11.2026', fg: '#4A5262', sum: '231,00 €' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

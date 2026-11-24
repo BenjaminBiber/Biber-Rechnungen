@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Korrespondenten</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=Material+Symbols+Outlined&amp;display=block">
+<style>
+body{margin:0;background:#F4F5F7}
+a{color:#2F2D86}a:hover{color:#24226B}
+.material-symbols-outlined{font-size:20px;line-height:1;vertical-align:-5px}
+.card{background:#FFFFFF;border:1px solid #E3E6EB;border-radius:12px;box-sizing:border-box}
+.btn{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:8px;border:1px solid #D5D9E0;background:#FFFFFF;color:#151922;font:500 14px 'IBM Plex Sans',sans-serif;text-decoration:none;cursor:pointer;white-space:nowrap;box-sizing:border-box}
+.btn:hover{background:#F0F2F5;color:#151922}
+.btn-p{background:#2F2D86;border-color:#2F2D86;color:#FFFFFF}.btn-p:hover{background:#24226B;color:#FFFFFF}
+.btn:disabled{opacity:0.5;cursor:default}
+.chip{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border-radius:11px;font:500 12px 'IBM Plex Sans',sans-serif;white-space:nowrap}
+.t-blue{background:#E7E7F4;color:#2F2D86}.t-orange{background:#FDF0E3;color:#A44A06}.t-green{background:#E5F4EC;color:#17703F}.t-red{background:#FDECEA;color:#B42318}.t-gray{background:#EEF0F3;color:#4A5262}
+.tbl{width:100%;border-collapse:collapse;font:400 14px 'IBM Plex Sans',sans-serif}
+.tbl th{text-align:left;font:600 12px 'IBM Plex Sans',sans-serif;color:#4A5262;padding:10px 12px;border-bottom:1px solid #E3E6EB;white-space:nowrap;background:#FAFBFC}
+.tbl td{padding:10px 12px;border-bottom:1px solid #EEF0F3;vertical-align:middle}
+.mono{font-family:'IBM Plex Mono',monospace;font-size:12px}
+.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.muted{color:#5E6676}
+.seg{display:inline-flex;gap:2px;padding:3px;border-radius:9px;background:#E9ECF1}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 100vh; font-family: 'IBM Plex Sans', sans-serif; color: #151922; background: #F4F5F7">
+  <div style="flex: 1 1 232px; background: #2F2D86"><dc-import name="Sidebar" active="korrespondenten" hint-size="100%,900px"></dc-import></div>
+  <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <dc-import name="Topbar" hint-size="100%,64px"></dc-import>
+    <main style="width: 100%; box-sizing: border-box; padding: 28px 32px 56px; display: flex; flex-direction: column; gap: 16px">
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px">
+        <h1 style="margin: 0 8px 0 0; font-size: 26px; font-weight: 600">Korrespondenten</h1>
+        <label style="flex: 1 1 260px; max-width: 360px; display: flex; align-items: center; gap: 6px; height: 36px; padding: 0 10px; border: 1px solid #D5D9E0; border-radius: 8px; background: #FFFFFF; box-sizing: border-box">
+          <span class="material-symbols-outlined" aria-hidden="true" style="color: #5E6676; font-size: 18px">search</span>
+          <input type="search" aria-label="Korrespondenten suchen" placeholder="Name, Alias, USt-IdNr. oder IBAN" style="flex: 1; min-width: 0; border: 0; outline: none; font: 400 14px 'IBM Plex Sans', sans-serif">
+        </label>
+        <div class="seg" role="group" aria-label="Typ">
+          <sc-for list="{{ types }}" as="t" hint-placeholder-count="3">
+            <button type="button" onClick="{{ t.pick }}" style="height: 30px; padding: 0 12px; border: 0; border-radius: 7px; font: 500 13px 'IBM Plex Sans', sans-serif; cursor: pointer; background: {{ t.bg }}; color: {{ t.fg }}">{{ t.label }}</button>
+          </sc-for>
+        </div>
+        <span style="flex: 1"></span>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap">
+          <button type="button" class="btn" disabled="{{ noMerge }}"><span class="material-symbols-outlined" aria-hidden="true">merge</span>{{ mergeLabel }}</button>
+          <button type="button" class="btn btn-p"><span class="material-symbols-outlined" aria-hidden="true">add</span>Neu anlegen</button>
+        </div>
+      </div>
+      <div class="card" style="overflow-x: auto">
+        <table class="tbl" style="min-width: 980px">
+          <thead><tr>
+            <th scope="col" style="width: 36px"><span style="position: absolute; left: -9999px">Auswahl</span></th>
+            <th scope="col">Korrespondent</th><th scope="col">USt-IdNr.</th><th scope="col">Default-Kategorie</th><th scope="col">Matching</th><th scope="col" class="num">Belege</th><th scope="col" class="num">Kosten 2026</th><th scope="col">Letzter Beleg</th>
+          </tr></thead>
+          <tbody>
+            <sc-for list="{{ rows }}" as="r" hint-placeholder-count="10">
+              <tr style="background: {{ r.bg }}">
+                <td><input type="checkbox" aria-label="{{ r.aria }}" checked="{{ r.checked }}" onChange="{{ r.toggle }}" style="width: 16px; height: 16px"></td>
+                <td><a href="KorrespondentDetail.dc.html" style="display: flex; align-items: center; gap: 12px; text-decoration: none; color: #151922">
+                  <span style="flex: none; width: 36px; height: 36px; border-radius: 8px; background: {{ r.lb }}; color: {{ r.lf }}; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700">{{ r.ini }}</span>
+                  <span style="display: flex; flex-direction: column"><span style="font-weight: 500">{{ r.name }} <sc-if value="{{ r.isNew }}" hint-placeholder-val="{{ false }}"><span class="chip t-orange" style="margin-left: 4px">neu</span></sc-if></span><span class="muted" style="font-size: 12px">{{ r.sub }}</span></span>
+                </a></td>
+                <td class="mono">{{ r.ust }}</td>
+                <td>{{ r.kat }}</td>
+                <td style="font-size: 13px; color: #4A5262">{{ r.match }}</td>
+                <td class="num">{{ r.n }}</td>
+                <td class="num" style="font-weight: 600">{{ r.sum }}</td>
+                <td style="white-space: nowrap">{{ r.last }}</td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+        <sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}">
+          <div style="padding: 48px 24px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px">
+            <span class="material-symbols-outlined" aria-hidden="true" style="font-size: 40px; color: #9AA4B5">group</span>
+            <strong>Noch keine Kunden</strong>
+            <span class="muted" style="font-size: 14px">Kunden kommen mit den Ausgangsrechnungen in einer späteren Ausbaustufe.</span>
+          </div>
+        </sc-if>
+      </div>
+      
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":1100}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { type: 'lief', sel: [] }; }
+  renderVals() {
+    const raw = [
+      ['k1', 'AB', '#DDF0EA', '#145C4B', 'Autohaus Brenner GmbH', 'Logo: PDF-Ausschnitt', 'DE 811 402 377', 'Fahrzeug', 'Auto', 22, '5.639,00 €', '18.11.2026', 0],
+      ['k2', 'HS', '#E7E7F4', '#2F2D86', 'Hostwerk Süd GmbH', 'Logo: Favicon · Alias „Hostwerk“', 'DE 296 118 004', 'Software & Hosting', 'Ein Wort: hostwerk', 11, '5.188,00 €', '20.11.2026', 0],
+      ['k3', 'HN', '#EEF0F3', '#4A5262', 'Hardwareversand Nord GmbH', 'Logo: Favicon', 'DE 301 550 912', 'Hardware', 'Auto', 4, '3.630,00 €', '21.10.2026', 0],
+      ['k4', 'BK', '#FDF0E3', '#A44A06', 'Bürowelt Krämer KG', 'Logo: PDF-Ausschnitt · 2 IBANs', 'DE 284 117 560', 'Bürobedarf', 'Auto', 31, '2.223,00 €', '19.11.2026', 0],
+      ['k5', 'NT', '#E1F3F4', '#0E6168', 'Netzfunk Telekom AG', 'Logo: Upload', 'DE 122 900 418', 'Telekommunikation', 'Exakt: Netzfunk Telekom', 11, '2.033,00 €', '15.11.2026', 0],
+      ['k6', 'KH', '#EEF0F3', '#4A5262', 'Kanzlei Hofmann & Partner', 'kein Logo', 'DE 270 334 189', 'Sonstiges', 'Keiner', 6, '1.894,40 €', '10.11.2026', 0],
+      ['k7', 'DW', '#F0EAFB', '#5B2EA6', 'Druckerei Weller', 'Logo: PDF-Ausschnitt', 'Steuernr. 06/123/45678', 'Sonstiges', 'Auto', 9, '1.402,10 €', '23.11.2026', 0],
+      ['k8', 'SL', '#E7E7F4', '#2F2D86', 'Stadtwerke Lindenau', 'Logo: Favicon · XRechnung', 'DE 139 027 655', 'Sonstiges', 'Auto', 11, '1.288,60 €', '14.11.2026', 0],
+      ['k9', 'EH', '#FDECEA', '#B42318', 'Elektro Haas e.K.', 'noch nicht geprüft', 'DE 318 442 071', '—', 'Keiner', 1, '178,50 €', '14.10.2026', 1],
+      ['k10', 'BW', '#FDF0E3', '#A44A06', 'Buerowelt Kraemer', 'vermutlich Dublette von „Bürowelt Krämer KG“', '—', 'Bürobedarf', 'Keiner', 2, '96,20 €', '02.03.2026', 0]
+    ];
+    const sel = this.state.sel, ty = this.state.type;
+    const tog = (id) => () => this.setState({ sel: sel.includes(id) ? sel.filter((x) => x !== id) : sel.concat([id]) });
+    const tp = (id, label) => ({ label, pick: () => this.setState({ type: id }), bg: ty === id ? '#FFFFFF' : 'transparent', fg: ty === id ? '#151922' : '#4A5262' });
+    return {
+      types: [tp('lief', 'Lieferanten'), tp('kund', 'Kunden'), tp('alle', 'Alle')],
+      noMerge: sel.length < 2, empty: ty === 'kund',
+      mergeLabel: sel.length < 2 ? 'Zusammenführen' : sel.length + ' zusammenführen',
+      rows: ty === 'kund' ? [] : raw.map((r) => ({
+        checked: sel.includes(r[0]), toggle: tog(r[0]), aria: r[4] + ' auswählen', bg: sel.includes(r[0]) ? '#F1F1F9' : '#FFFFFF',
+        ini: r[1], lb: r[2], lf: r[3], name: r[4], sub: r[5], ust: r[6], kat: r[7], match: r[8], n: r[9], sum: r[10], last: r[11], isNew: r[12] === 1
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

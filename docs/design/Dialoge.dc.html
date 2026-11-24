@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Dialoge und Meldungen</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Material+Symbols+Outlined&display=block">
+<style>
+body{margin:0}
+.material-symbols-outlined{font-size:20px;line-height:1;vertical-align:-5px}
+.cap{font:600 12px 'IBM Plex Sans',sans-serif;letter-spacing:0.08em;text-transform:uppercase;color:#D7D6EE;margin:0 0 4px}
+.where{font:400 13px 'IBM Plex Sans',sans-serif;color:#D0CFEA;margin:0 0 12px}
+.dlg{background:#FFFFFF;border-radius:14px;box-shadow:0 24px 60px rgba(0,0,0,0.35);box-sizing:border-box;display:flex;flex-direction:column}
+.dh{display:flex;align-items:flex-start;gap:12px;padding:20px 22px 0}
+.dh h2{margin:0;font:600 18px 'IBM Plex Sans',sans-serif;flex:1}
+.db{padding:16px 22px;display:flex;flex-direction:column;gap:14px;font-size:14px;line-height:1.5}
+.df{display:flex;justify-content:flex-end;gap:8px;padding:14px 22px;border-top:1px solid #EEF0F3}
+.x{width:32px;height:32px;border:0;border-radius:6px;background:transparent;color:#4A5262;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.btn{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:8px;border:1px solid #D5D9E0;background:#FFFFFF;color:#151922;font:500 14px 'IBM Plex Sans',sans-serif;cursor:pointer;white-space:nowrap}
+.btn-p{background:#2F2D86;border-color:#2F2D86;color:#FFFFFF}
+.btn-d{background:#B42318;border-color:#B42318;color:#FFFFFF}
+.inp{height:36px;box-sizing:border-box;border:1px solid #D5D9E0;border-radius:8px;padding:0 10px;font:400 14px 'IBM Plex Sans',sans-serif;color:#151922;width:100%}
+.lbl{display:block;font:500 12px 'IBM Plex Sans',sans-serif;color:#4A5262;margin-bottom:4px}
+.muted{color:#5E6676}
+.chip{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border-radius:11px;font:500 12px 'IBM Plex Sans',sans-serif;white-space:nowrap}
+.t-blue{background:#E7E7F4;color:#2F2D86}.t-orange{background:#FDF0E3;color:#A44A06}.t-green{background:#E5F4EC;color:#17703F}.t-gray{background:#EEF0F3;color:#4A5262}
+.mono{font-family:'IBM Plex Mono',monospace;font-size:13px}
+.info{display:flex;gap:10px;padding:12px 14px;border-radius:10px;font-size:13px}
+.pg{position:relative;flex:1;aspect-ratio:1/1.414;border-radius:6px;background:#FFFFFF;border:2px solid #D5D9E0;display:flex;flex-direction:column;gap:5px;padding:10px;box-sizing:border-box}
+.ln{height:4px;border-radius:2px;background:#E3E6EB}
+.rad{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid #E3E6EB;border-radius:8px;font-size:13px}
+</style>
+</helmet>
+<div style="width: 1920px; min-height: 2200px; box-sizing: border-box; padding: 56px; background: #2B3245; font-family: 'IBM Plex Sans', sans-serif; color: #151922; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 56px; align-content: start">
+
+  <div>
+    <p class="cap">Beleg aufteilen</p>
+    <p class="where">Beleg-Detail · „Aufteilen“ · mehrere Rechnungen in einem Scan</p>
+    <div class="dlg" role="dialog" aria-label="Beleg aufteilen">
+      <div class="dh"><h2>Beleg aufteilen</h2><button type="button" class="x" aria-label="Schließen"><span class="material-symbols-outlined" aria-hidden="true">close</span></button></div>
+      <div class="db">
+        <span class="muted">Scan_20261122_1629.pdf · 4 Seiten. Klicke zwischen zwei Seiten, um einen Schnitt zu setzen.</span>
+        <div style="display: flex; align-items: stretch; gap: 8px">
+          <div class="pg" style="border-color: #2F2D86"><span class="chip t-blue" style="position: absolute; top: -11px; left: 6px">A</span><div class="ln" style="width: 50%; height: 8px; background: #CFCEEA"></div><div class="ln"></div><div class="ln"></div><div class="ln" style="width: 70%"></div><span class="muted" style="margin-top: auto; font-size: 11px; text-align: center">1</span></div>
+          <div class="pg" style="border-color: #2F2D86"><div class="ln"></div><div class="ln"></div><div class="ln" style="width: 60%"></div><span class="muted" style="margin-top: auto; font-size: 11px; text-align: center">2</span></div>
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #B42318"><span class="material-symbols-outlined" aria-hidden="true">content_cut</span><span style="flex: 1; width: 2px; background: #B42318"></span></div>
+          <div class="pg" style="border-color: #C2410C"><span class="chip t-orange" style="position: absolute; top: -11px; left: 6px">B</span><div class="ln" style="width: 40%; height: 8px; background: #F3D9BD"></div><div class="ln"></div><div class="ln"></div><span class="muted" style="margin-top: auto; font-size: 11px; text-align: center">3</span></div>
+          <div class="pg" style="border-color: #C2410C"><div class="ln"></div><div class="ln" style="width: 80%"></div><span class="muted" style="margin-top: auto; font-size: 11px; text-align: center">4</span></div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px; font-size: 13px">
+          <span><span class="chip t-blue">A</span> Seiten 1–2 → neuer Beleg</span>
+          <span><span class="chip t-orange">B</span> Seiten 3–4 → neuer Beleg</span>
+        </div>
+        <div class="info" style="background: #F4F5F7; color: #4A5262"><span class="material-symbols-outlined" aria-hidden="true">lock</span><span>Das ungeteilte Original bleibt unverändert und wird mit beiden neuen Belegen verknüpft. Die Teile laufen erneut durch die Pipeline.</span></div>
+      </div>
+      <div class="df"><button type="button" class="btn">Abbrechen</button><button type="button" class="btn btn-p">In 2 Belege aufteilen</button></div>
+    </div>
+  </div>
+
+  <div>
+    <p class="cap">Bestätigen trotz Befund</p>
+    <p class="where">Beleg-Detail · „Bestätigen“, wenn noch Prüfungen fehlschlagen</p>
+    <div class="dlg" role="alertdialog" aria-label="Beleg bestätigen">
+      <div class="dh"><span style="width: 40px; height: 40px; border-radius: 20px; background: #FDF0E3; color: #A44A06; display: flex; align-items: center; justify-content: center; flex: none"><span class="material-symbols-outlined" aria-hidden="true" style="vertical-align: 0">report</span></span><h2 style="padding-top: 8px">Beleg mit 2 offenen Befunden bestätigen?</h2></div>
+      <div class="db">
+        <ul style="margin: 0; padding-left: 20px; color: #4A5262">
+          <li>Summe der Positionen weicht um 2,00 € vom Netto ab</li>
+          <li>Konfidenz 0,74 liegt unter 0,80</li>
+        </ul>
+        <span>„Zu prüfen“ wird entfernt. Befunde und deine Bestätigung bleiben in der Historie.</span>
+        <div><label class="lbl" for="bk">Begründung (optional, wird protokolliert)</label><textarea id="bk" class="inp" style="height: 72px; padding: 8px 10px; resize: none">Versandkostenpauschale 2,00 € fehlt in den Positionen – gegen Original geprüft.</textarea></div>
+      </div>
+      <div class="df"><button type="button" class="btn">Zurück zum Beleg</button><button type="button" class="btn btn-p">Trotzdem bestätigen</button></div>
+    </div>
+  </div>
+
+  <div>
+    <p class="cap">Korrespondenten zusammenführen</p>
+    <p class="where">Korrespondenten · 2 markiert · „Zusammenführen“</p>
+    <div class="dlg" role="dialog" aria-label="Korrespondenten zusammenführen">
+      <div class="dh"><h2>2 Korrespondenten zusammenführen</h2><button type="button" class="x" aria-label="Schließen"><span class="material-symbols-outlined" aria-hidden="true">close</span></button></div>
+      <div class="db">
+        <span class="lbl" style="margin: 0">Behalten wird</span>
+        <label class="rad" style="border-color: #A9A8D6; background: #F7F7FC"><input type="radio" name="mk" checked><span><strong>Bürowelt Krämer KG</strong> · 31 Belege<br><span class="mono muted">DE 284117560 · 2 IBANs · Logo</span></span></label>
+        <label class="rad"><input type="radio" name="mk"><span><strong>Buerowelt Kraemer</strong> · 2 Belege<br><span class="muted">keine USt-IdNr.</span></span></label>
+        <div class="info" style="background: #F4F5F7; color: #4A5262"><span class="material-symbols-outlined" aria-hidden="true">merge</span><span>Die 2 Belege werden umgehängt, „Buerowelt Kraemer“ wird als Alias übernommen. Ablagepfade der Dateien bleiben, wo sie sind.</span></div>
+      </div>
+      <div class="df"><button type="button" class="btn">Abbrechen</button><button type="button" class="btn btn-p">Zusammenführen</button></div>
+    </div>
+  </div>
+
+  <div>
+    <p class="cap">Zu Stammartikel zusammenführen</p>
+    <p class="where">Artikel · 2 markiert</p>
+    <div class="dlg" role="dialog" aria-label="Stammartikel bilden">
+      <div class="dh"><h2>Stammartikel bilden</h2><button type="button" class="x" aria-label="Schließen"><span class="material-symbols-outlined" aria-hidden="true">close</span></button></div>
+      <div class="db">
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+          <div><label class="lbl" for="sa">Name</label><input id="sa" class="inp" value="Kopierpapier A4 80 g"></div>
+          <div><label class="lbl" for="sb">Basiseinheit</label><select id="sb" class="inp"><option>Blatt</option></select></div>
+        </div>
+        <span class="lbl" style="margin: 0">Umrechnung je Artikel</span>
+        <div style="display: flex; align-items: center; gap: 10px; font-size: 13px"><span style="flex: 1">Kopierpapier A4 80 g <span class="muted">· Bürowelt</span></span>1 Karton =<input class="inp" aria-label="Blatt je Karton" value="2500" style="width: 80px">Blatt</div>
+        <div style="display: flex; align-items: center; gap: 10px; font-size: 13px"><span style="flex: 1">Papier Kopier A4 80g/m² <span class="muted">· Weller</span></span>1 Pack =<input class="inp" aria-label="Blatt je Pack" value="500" style="width: 80px">Blatt</div>
+        <div class="info" style="background: #E5F4EC; color: #0F4F2C"><span class="material-symbols-outlined" aria-hidden="true">calculate</span><span>Grundpreis je 100 Blatt: Bürowelt 1,00 € · Weller 1,10 €</span></div>
+      </div>
+      <div class="df"><button type="button" class="btn">Abbrechen</button><button type="button" class="btn btn-p">Stammartikel anlegen</button></div>
+    </div>
+  </div>
+
+  <div>
+    <p class="cap">API-Token erstellt</p>
+    <p class="where">Einstellungen › API-Tokens · nach „Token erstellen“</p>
+    <div class="dlg" role="dialog" aria-label="Token erstellt">
+      <div class="dh"><h2>Token „Claude Desktop“ erstellt</h2><button type="button" class="x" aria-label="Schließen"><span class="material-symbols-outlined" aria-hidden="true">close</span></button></div>
+      <div class="db">
+        <div style="display: flex; gap: 6px"><span class="chip t-blue">lesen</span><span class="chip t-blue">upload</span></div>
+        <div class="info" style="background: #FDF0E3; color: #7A3705"><span class="material-symbols-outlined" aria-hidden="true">visibility</span><span><strong>Nur jetzt sichtbar.</strong> Gespeichert wird nur ein Hash – kopiere den Token sofort.</span></div>
+        <div style="display: flex; gap: 8px"><input class="inp mono" readonly aria-label="Token" value="brk_••••••••••••••••••••••••7f3a" style="background: #F4F5F7"><button type="button" class="btn"><span class="material-symbols-outlined" aria-hidden="true">content_copy</span>Kopieren</button></div>
+        <pre style="margin: 0; background: #2F2D86; color: #DEDDF0; border-radius: 8px; padding: 12px; font: 400 12px/1.6 'IBM Plex Mono', monospace; white-space: pre-wrap">claude mcp add --transport http biber-rechnungen https://rechnungen.&lt;domain&gt;/mcp --header "Authorization: Bearer &lt;Token&gt;"</pre>
+      </div>
+      <div class="df"><button type="button" class="btn btn-p">Fertig</button></div>
+    </div>
+  </div>
+
+  <div>
+    <p class="cap">Logo festlegen</p>
+    <p class="where">Korrespondent · Kamera-Symbol am Logo</p>
+    <div class="dlg" role="dialog" aria-label="Logo festlegen">
+      <div class="dh"><h2>Logo festlegen</h2><button type="button" class="x" aria-label="Schließen"><span class="material-symbols-outlined" aria-hidden="true">close</span></button></div>
+      <div class="db">
+        <div style="display: flex; gap: 4px; padding: 3px; border-radius: 8px; background: #F0F2F5"><span style="flex: 1; height: 30px; border-radius: 6px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(0,0,0,0.12); font-size: 13px; display: flex; align-items: center; justify-content: center; font-weight: 500">Aus Beleg ausschneiden</span><span style="flex: 1; font-size: 13px; color: #4A5262; display: flex; align-items: center; justify-content: center">Datei hochladen</span><span style="flex: 1; font-size: 13px; color: #4A5262; display: flex; align-items: center; justify-content: center">Favicon</span></div>
+        <div style="display: flex; gap: 16px; align-items: flex-start">
+          <div style="position: relative; flex: 1; height: 180px; border-radius: 8px; background: #DDE1E7; padding: 12px; box-sizing: border-box">
+            <div style="height: 100%; background: #FFFFFF; padding: 14px; box-sizing: border-box; display: flex; flex-direction: column; gap: 6px">
+              <div style="display: flex; align-items: center; gap: 6px"><span style="width: 22px; height: 22px; background: #C2410C"></span><span style="font: 700 12px sans-serif">Bürowelt Krämer</span></div>
+              <div class="ln" style="height: 4px; background: #E3E6EB"></div><div style="height: 4px; background: #E3E6EB; width: 70%"></div><div style="height: 4px; background: #E3E6EB"></div>
+            </div>
+            <div style="position: absolute; left: 22px; top: 22px; width: 132px; height: 34px; border: 2px solid #2F2D86; background: rgba(47,45,134,0.08)"><span style="position: absolute; right: -5px; bottom: -5px; width: 10px; height: 10px; background: #2F2D86"></span></div>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 12px; color: #5E6676"><span style="width: 72px; height: 72px; border-radius: 16px; border: 1px solid #E3E6EB; display: flex; align-items: center; justify-content: center; gap: 3px"><span style="width: 14px; height: 14px; background: #C2410C"></span><span style="font: 700 8px sans-serif; color: #151922">Bürowelt</span></span>Vorschau</div>
+        </div>
+        <span class="muted" style="font-size: 13px">Reihenfolge: Upload › Ausschnitt aus Seite 1 › Favicon der Website</span>
+      </div>
+      <div class="df"><button type="button" class="btn">Abbrechen</button><button type="button" class="btn btn-p">Als Logo speichern</button></div>
+    </div>
+  </div>
+
+  <div>
+    <p class="cap">Löschung freigeben (Admin)</p>
+    <p class="where">Einstellungen › Aufbewahrung · ab 2035 relevant</p>
+    <div class="dlg" role="alertdialog" aria-label="Löschung freigeben">
+      <div class="dh"><span style="width: 40px; height: 40px; border-radius: 20px; background: #FDECEA; color: #B42318; display: flex; align-items: center; justify-content: center; flex: none"><span class="material-symbols-outlined" aria-hidden="true" style="vertical-align: 0">delete_forever</span></span><h2 style="padding-top: 8px">14 Belege aus 2026 endgültig löschen?</h2></div>
+      <div class="db">
+        <span>Die Aufbewahrungsfrist endete am 31.12.2034. Gelöscht werden die Daten in der App (Belegdaten, Positionen, Vorschaubilder). Das Änderungsprotokoll behält einen Eintrag zur Löschung.</span>
+        <div class="info" style="background: #F4F5F7; color: #4A5262"><span class="material-symbols-outlined" aria-hidden="true">dns</span><span>Die Originale auf dem WORM-Share löschst du anschließend selbst auf dem Host. Die App zeigt dir die Pfadliste.</span></div>
+        <div><label class="lbl" for="lc">Zur Bestätigung „LÖSCHEN“ eingeben</label><input id="lc" class="inp" value=""></div>
+      </div>
+      <div class="df"><button type="button" class="btn">Abbrechen</button><button type="button" class="btn btn-d">Endgültig löschen</button></div>
+    </div>
+  </div>
+
+  <div>
+    <p class="cap">Matching-Regel testen</p>
+    <p class="where">Tags, Kategorien, Korrespondenten · „Testen“ im Matching-Editor</p>
+    <div class="dlg" role="dialog" aria-label="Matching testen">
+      <div class="dh"><h2>Regel testen: „bezahlt PayPal“</h2><button type="button" class="x" aria-label="Schließen"><span class="material-symbols-outlined" aria-hidden="true">close</span></button></div>
+      <div class="db">
+        <div style="display: flex; gap: 8px"><span class="chip t-gray">Ein Wort</span><span class="mono">paypal</span></div>
+        <div style="padding: 12px; border: 1px solid #E3E6EB; border-radius: 8px; font-size: 13px; color: #4A5262; line-height: 1.6">… Betrag 214,00 EUR wurde per <mark style="background: #FDE7C6; color: #151922; padding: 0 2px">PayPal</mark> beglichen. Vielen Dank für Ihren Einkauf bei Hardwareversand Nord …</div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px"><span><strong>37</strong> Treffer in 248 Belegen</span><span class="muted">davon 2 ohne den Tag</span></div>
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px"><input type="checkbox" style="width: 16px; height: 16px">Tag jetzt auch auf die 2 bestehenden Belege anwenden</label>
+      </div>
+      <div class="df"><button type="button" class="btn">Schließen</button><button type="button" class="btn btn-p">Regel speichern</button></div>
+    </div>
+  </div>
+
+  <div style="grid-column: span 2">
+    <p class="cap">Meldungen (Toasts)</p>
+    <p class="where">unten rechts · verschwinden nach 6 s, Fehler bleiben stehen</p>
+    <div style="display: flex; flex-wrap: wrap; gap: 16px">
+      <div role="status" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 10px; background: #2F2D86; color: #FFFFFF; font-size: 14px; box-shadow: 0 12px 30px rgba(0,0,0,0.3)"><span class="material-symbols-outlined" aria-hidden="true" style="color: #9FD8B8">check_circle</span>3 Belege bestätigt<span style="color: #B3B1F0; font-weight: 600; margin-left: 8px">Rückgängig</span></div>
+      <div role="status" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 10px; background: #2F2D86; color: #FFFFFF; font-size: 14px; box-shadow: 0 12px 30px rgba(0,0,0,0.3)"><span class="material-symbols-outlined" aria-hidden="true" style="color: #B3B1F0">hourglass_top</span>Export Q3 2026 wird erstellt …</div>
+      <div role="alert" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 10px; background: #FDECEA; color: #8F1B12; font-size: 14px; border: 1px solid #F5C2BD"><span class="material-symbols-outlined" aria-hidden="true">error</span>Speichern fehlgeschlagen: Server nicht erreichbar<span style="font-weight: 600; margin-left: 8px">Erneut</span></div>
+      <div role="status" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 10px; background: #FDF0E3; color: #7A3705; font-size: 14px; border: 1px solid #F3D9BD"><span class="material-symbols-outlined" aria-hidden="true">content_copy</span>Dublette erkannt – mit Beleg 26-0912 verknüpft</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":2200}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

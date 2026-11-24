@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Kopfleiste</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Material+Symbols+Outlined&display=block">
+<style>body{margin:0}</style>
+</helmet>
+<header style="position: relative; z-index: 30; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; min-height: 64px; box-sizing: border-box; padding: 12px 32px; background: #FFFFFF; border-bottom: 1px solid #E3E6EB; font-family: 'IBM Plex Sans', sans-serif; color: #151922">
+  <label style="flex: 1 1 280px; max-width: 520px; display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; box-sizing: border-box; border: 1px solid #D5D9E0; border-radius: 8px; background: #F7F8FA">
+    <span class="material-symbols-outlined" aria-hidden="true" style="font-size: 20px; color: #5E6676">search</span>
+    <input type="search" placeholder="Belege, Korrespondenten, Artikel durchsuchen …" aria-label="Volltextsuche" style="flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font: 400 14px 'IBM Plex Sans', sans-serif; color: #151922">
+    <span style="font: 500 11px 'IBM Plex Mono', monospace; color: #4A5262; border: 1px solid #D5D9E0; border-radius: 4px; padding: 2px 5px; background: #FFFFFF">Strg K</span>
+  </label>
+  <div style="flex: 1 1 0"></div>
+  <a href="Upload.dc.html" style="display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 16px; border-radius: 8px; background: #2F2D86; color: #FFFFFF; text-decoration: none; font-weight: 500; font-size: 14px">
+    <span class="material-symbols-outlined" aria-hidden="true" style="font-size: 20px">add</span>Beleg hochladen
+  </a>
+  <div style="position: relative">
+    <button type="button" onClick="{{ toggleBell }}" aria-label="Benachrichtigungen, 3 ungelesen" style="position: relative; width: 44px; height: 44px; border-radius: 22px; border: 0; background: {{ bellBg }}; color: #151922; cursor: pointer; display: flex; align-items: center; justify-content: center">
+      <span class="material-symbols-outlined" aria-hidden="true" style="font-size: 24px">notifications</span>
+      <span style="position: absolute; top: 6px; right: 6px; min-width: 18px; height: 18px; border-radius: 9px; background: #B42318; color: #FFFFFF; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; border: 2px solid #FFFFFF">3</span>
+    </button>
+    <sc-if value="{{ bell }}" hint-placeholder-val="{{ false }}">
+      <div role="dialog" aria-label="Benachrichtigungen" style="position: absolute; right: -8px; top: 52px; width: 400px; max-width: calc(100vw - 32px); background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 12px; box-shadow: 0 16px 40px rgba(20, 26, 42, 0.18); overflow: hidden">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid #EEF0F3">
+          <span style="font-weight: 600; font-size: 15px">Benachrichtigungen</span>
+          <button type="button" style="border: 0; background: transparent; color: #2F2D86; font: 500 13px 'IBM Plex Sans', sans-serif; cursor: pointer">Alle gelesen</button>
+        </div>
+        <sc-for list="{{ notes }}" as="n" hint-placeholder-count="5">
+          <a href="{{ n.href }}" style="display: flex; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #EEF0F3; text-decoration: none; color: #151922; background: {{ n.bg }}">
+            <span style="flex: none; width: 32px; height: 32px; border-radius: 16px; display: flex; align-items: center; justify-content: center; background: {{ n.iconBg }}; color: {{ n.iconFg }}"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px">{{ n.icon }}</span></span>
+            <span style="display: flex; flex-direction: column; gap: 2px; font-size: 13px; line-height: 1.4">
+              <span style="font-weight: 600">{{ n.title }}</span>
+              <span style="color: #4A5262">{{ n.text }}</span>
+              <span style="color: #5E6676; font-size: 12px">{{ n.time }}</span>
+            </span>
+          </a>
+        </sc-for>
+        <a href="Einstellungen.dc.html" style="display: block; padding: 12px 16px; text-align: center; font-size: 13px; font-weight: 500; color: #2F2D86; text-decoration: none">Alle Benachrichtigungen</a>
+      </div>
+    </sc-if>
+  </div>
+  <div style="position: relative">
+    <button type="button" onClick="{{ toggleUser }}" aria-label="Benutzermenü" style="display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 8px 0 4px; border-radius: 22px; border: 1px solid #E3E6EB; background: {{ userBg }}; cursor: pointer; font: 500 14px 'IBM Plex Sans', sans-serif; color: #151922">
+      <span style="width: 34px; height: 34px; border-radius: 17px; background: #DEDDF0; color: #2F2D86; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 13px">MK</span>
+      <span>M. Keller</span>
+      <span class="material-symbols-outlined" aria-hidden="true" style="font-size: 20px; color: #5E6676">expand_more</span>
+    </button>
+    <sc-if value="{{ user }}" hint-placeholder-val="{{ false }}">
+      <div role="menu" aria-label="Benutzermenü" style="position: absolute; right: 0; top: 52px; width: 280px; background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 12px; box-shadow: 0 16px 40px rgba(20, 26, 42, 0.18); padding: 6px; box-sizing: border-box">
+        <div style="padding: 10px 12px 12px; border-bottom: 1px solid #EEF0F3; margin-bottom: 6px">
+          <div style="font-weight: 600; font-size: 14px">Martin Keller</div>
+          <div style="font-size: 12px; color: #5E6676">Rolle: Admin · 2FA aktiv</div>
+        </div>
+        <sc-for list="{{ menu }}" as="m" hint-placeholder-count="5">
+          <a role="menuitem" href="{{ m.href }}" style="display: flex; align-items: center; gap: 10px; height: 38px; padding: 0 10px; border-radius: 6px; text-decoration: none; color: {{ m.fg }}; font-size: 14px">
+            <span class="material-symbols-outlined" aria-hidden="true" style="font-size: 20px">{{ m.icon }}</span>{{ m.label }}
+          </a>
+        </sc-for>
+        <div style="padding: 8px 10px 6px; border-top: 1px solid #EEF0F3; margin-top: 6px">
+          <div style="font-size: 12px; color: #5E6676; margin-bottom: 6px">Darstellung</div>
+          <div style="display: flex; gap: 4px; padding: 3px; border-radius: 8px; background: #F0F2F5">
+            <button type="button" style="flex: 1; height: 30px; border: 0; border-radius: 6px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(0,0,0,0.12); font: 500 13px 'IBM Plex Sans', sans-serif; color: #151922">Hell</button>
+            <button type="button" style="flex: 1; height: 30px; border: 0; border-radius: 6px; background: transparent; font: 500 13px 'IBM Plex Sans', sans-serif; color: #4A5262">Dunkel</button>
+            <button type="button" style="flex: 1; height: 30px; border: 0; border-radius: 6px; background: transparent; font: 500 13px 'IBM Plex Sans', sans-serif; color: #4A5262">System</button>
+          </div>
+        </div>
+        <a role="menuitem" href="Login.dc.html" style="display: flex; align-items: center; gap: 10px; height: 38px; padding: 0 10px; margin-top: 4px; border-top: 1px solid #EEF0F3; text-decoration: none; color: #B42318; font-size: 14px">
+          <span class="material-symbols-outlined" aria-hidden="true" style="font-size: 20px">logout</span>Abmelden
+        </a>
+      </div>
+    </sc-if>
+  </div>
+</header>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1200,"height":64}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { bell: false, user: false }; }
+  renderVals() {
+    const s = this.state;
+    const n = (icon, kind, title, text, time, href, unread) => {
+      const c = { warn: ['#FDF0E3', '#A44A06'], err: ['#FDECEA', '#B42318'], ok: ['#E5F4EC', '#17703F'], info: ['#E7E7F4', '#2F2D86'] }[kind];
+      return { icon, title, text, time, href, iconBg: c[0], iconFg: c[1], bg: unread ? '#F7F7FC' : '#FFFFFF' };
+    };
+    return {
+      bell: s.bell, user: s.user,
+      bellBg: s.bell ? '#EEF0F3' : 'transparent',
+      userBg: s.user ? '#F0F2F5' : '#FFFFFF',
+      toggleBell: () => this.setState({ bell: !s.bell, user: false }),
+      toggleUser: () => this.setState({ user: !s.user, bell: false }),
+      notes: [
+        n('speed', 'warn', 'Document Intelligence bei 82 %', '412 von 500 Seiten im November verbraucht. Ab 100 % warten neue Belege in der Warteschlange.', 'vor 2 Std.', 'Einstellungen.dc.html', true),
+        n('person_add', 'info', 'Neues Konto wartet auf Freigabe', 'Jonas Wagner hat sich registriert.', 'gestern, 18:42', 'Einstellungen.dc.html', true),
+        n('error', 'err', 'Import fehlgeschlagen', '„foto_beleg.heic“: Format nicht unterstützt.', 'gestern, 11:05', 'Upload.dc.html', true),
+        n('rule', 'warn', 'KoSIT-Validierung fehlgeschlagen', 'XRechnung 2026-1187 (Stadtwerke Lindenau): BR-DE-15 Käuferreferenz fehlt.', '14.11.2026', 'BelegDetail.dc.html', false),
+        n('verified_user', 'ok', 'Integritätsprüfung ohne Befund', '2.184 Dateien geprüft, alle Prüfsummen stimmen.', 'heute, 03:00', 'Einstellungen.dc.html', false)
+      ],
+      menu: [
+        { icon: 'person', label: 'Mein Konto', href: 'Einstellungen.dc.html', fg: '#151922' },
+        { icon: 'phonelink_lock', label: 'Zwei-Faktor-Anmeldung', href: 'Einstellungen.dc.html', fg: '#151922' },
+        { icon: 'key', label: 'API-Tokens (MCP)', href: 'Einstellungen.dc.html', fg: '#151922' },
+        { icon: 'description', label: 'Verfahrensdokumentation', href: 'Einstellungen.dc.html', fg: '#151922' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

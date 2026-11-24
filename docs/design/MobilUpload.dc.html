@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Mobil Hochladen</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=Material+Symbols+Outlined&amp;display=block">
+<style>
+body{margin:0}
+.material-symbols-outlined{font-size:20px;line-height:1;vertical-align:-5px}
+.chip{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border-radius:11px;font:500 12px 'IBM Plex Sans',sans-serif;white-space:nowrap}
+.t-blue{background:#E7E7F4;color:#2F2D86}.t-orange{background:#FDF0E3;color:#A44A06}.t-green{background:#E5F4EC;color:#17703F}.t-gray{background:#EEF0F3;color:#4A5262}
+.card{background:#FFFFFF;border:1px solid #E3E6EB;border-radius:14px;box-sizing:border-box}
+.muted{color:#5E6676}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; display: flex; flex-direction: column; background: #F4F5F7; font-family: 'IBM Plex Sans', sans-serif; color: #151922; overflow: hidden">
+  <header style="padding: 18px 16px 12px; background: #FFFFFF; border-bottom: 1px solid #E3E6EB"><span style="font-weight: 600; font-size: 17px">Hochladen</span></header>
+  <sc-if value="{{ offline }}" hint-placeholder-val="{{ true }}">
+    <div role="status" style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: #2F2D86; color: #FFFFFF; font-size: 13px"><span class="material-symbols-outlined" aria-hidden="true" style="color: #F3B27A">cloud_off</span><span style="flex: 1">Offline – Uploads werden gesendet, sobald du wieder im LAN bist.</span></div>
+  </sc-if>
+  <main style="flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px">
+    <label style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 28px 16px; border: 2px dashed #A9A8D6; border-radius: 16px; background: #F7F7FC; text-align: center">
+      <span style="width: 56px; height: 56px; border-radius: 28px; color: #2F2D86; display: flex; align-items: center; justify-content: center; opacity: 1; background-color: #E7E7F400"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 30px; vertical-align: 0">cloud_upload</span></span>
+      <strong style="font-size: 16px">Dateien auswählen</strong>
+      <span class="muted" style="font-size: 13px">mehrere gleichzeitig möglich</span>
+      <span style="display: flex; gap: 6px; flex-wrap: wrap; justify-content: center"><span class="chip t-gray">PDF</span><span class="chip t-gray">ZUGFeRD / Factur-X</span><span class="chip t-gray">XRechnung (XML)</span><span class="chip t-gray">PNG · JPG · TIFF</span></span>
+      <input type="file" multiple="" style="position: absolute; width: 1px; height: 1px; opacity: 0">
+    </label>
+
+    <section class="card" style="padding: 6px 14px">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0 6px"><strong style="font-size: 15px">Warteschlange</strong><span class="muted" style="font-size: 13px">{{ waitLabel }}</span></div>
+      <sc-for list="{{ queue }}" as="q" hint-placeholder-count="4">
+        <div style="display: flex; gap: 12px; align-items: center; padding: 12px 0; border-top: 1px solid #EEF0F3">
+          <span role="img" aria-label="{{ q.status }}" title="{{ q.status }}" style="flex: none; width: 24px; height: 24px; color: {{ q.fg }}; display: flex; align-items: center; justify-content: center"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 24px; vertical-align: 0">{{ q.icon }}</span></span>
+          <span style="flex: 1; min-width: 0; font-size: 13px"><span style="display: block; font-family: 'IBM Plex Mono', monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ q.name }}</span><span class="muted">{{ q.note }}</span></span>
+        </div>
+      </sc-for>
+    </section>
+    <button type="button" onClick="{{ toggle }}" style="height: 44px; border-radius: 10px; border: 1px solid #D5D9E0; background: #FFFFFF; font: 500 14px 'IBM Plex Sans', sans-serif; color: #151922">{{ toggleLabel }}</button>
+  </main>
+  <dc-import name="MobilNav" active="upload" hint-size="390px,84px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { offline: true }; }
+  renderVals() {
+    const off = this.state.offline;
+    const wait = { icon: 'schedule', bg: '#FDF0E3', fg: '#A44A06', status: 'wartet', cls: 't-orange' };
+    const up = { icon: 'progress_activity', bg: '#E7E7F4', fg: '#2F2D86', status: 'sendet', cls: 't-blue' };
+    const done = { icon: 'task_alt', bg: '#E5F4EC', fg: '#17703F', status: 'übertragen', cls: 't-green' };
+    const q = (s, name, note) => Object.assign({ name, note }, s);
+    return {
+      offline: off,
+      toggle: () => this.setState({ offline: !off }),
+      toggleLabel: off ? 'Vorschau: wieder online' : 'Vorschau: offline',
+      waitLabel: off ? '3 warten' : '1 sendet',
+      queue: off
+        ? [q(wait, 'Rechnung_Hostwerk_11.pdf', 'geteilt aus Mail · 284 KB'), q(wait, 'Parkhaus_Quittung.pdf', 'aus Dateien · 96 KB'), q(wait, 'xrechnung_1194.xml', 'geteilt aus Mail · 41 KB'), q(done, 'Rechnung_Weller.pdf', 'gestern · Beleg angelegt')]
+        : [q(done, 'Rechnung_Hostwerk_11.pdf', 'in Verarbeitung'), q(done, 'Parkhaus_Quittung.pdf', 'in Verarbeitung'), q(up, 'xrechnung_1194.xml', '68 %'), q(done, 'Rechnung_Weller.pdf', 'gestern · Beleg angelegt')]
+    };
+  }
+}
+</script>
+</body>
+</html>

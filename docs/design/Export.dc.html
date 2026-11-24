@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Export</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=Material+Symbols+Outlined&amp;display=block">
+<style>
+body{margin:0;background:#F4F5F7}
+a{color:#2F2D86}a:hover{color:#24226B}
+.material-symbols-outlined{font-size:20px;line-height:1;vertical-align:-5px}
+.card{background:#FFFFFF;border:1px solid #E3E6EB;border-radius:12px;box-sizing:border-box}
+.btn{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:8px;border:1px solid #D5D9E0;background:#FFFFFF;color:#151922;font:500 14px 'IBM Plex Sans',sans-serif;text-decoration:none;cursor:pointer;white-space:nowrap;box-sizing:border-box}
+.btn:hover{background:#F0F2F5;color:#151922}
+.btn-p{background:#2F2D86;border-color:#2F2D86;color:#FFFFFF}.btn-p:hover{background:#24226B;color:#FFFFFF}
+.btn-s{height:30px;padding:0 10px;font-size:13px}
+.chip{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border-radius:11px;font:500 12px 'IBM Plex Sans',sans-serif;white-space:nowrap}
+.t-green{background:#E5F4EC;color:#17703F}.t-gray{background:#EEF0F3;color:#4A5262}.t-orange{background:#FDF0E3;color:#A44A06}
+.inp{height:36px;box-sizing:border-box;border:1px solid #D5D9E0;border-radius:8px;padding:0 10px;font:400 14px 'IBM Plex Sans',sans-serif;color:#151922;background:#FFFFFF;width:100%}
+.lbl{display:block;font:500 12px 'IBM Plex Sans',sans-serif;color:#4A5262;margin-bottom:4px}
+.tbl{width:100%;border-collapse:collapse;font:400 14px 'IBM Plex Sans',sans-serif}
+.tbl th{text-align:left;font:600 12px 'IBM Plex Sans',sans-serif;color:#4A5262;padding:9px 12px;border-bottom:1px solid #E3E6EB;white-space:nowrap;background:#FAFBFC}
+.tbl td{padding:9px 12px;border-bottom:1px solid #EEF0F3;vertical-align:middle}
+.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.muted{color:#5E6676}
+.h2{margin:0;font:600 16px 'IBM Plex Sans',sans-serif;color:#151922}
+.opt{display:flex;gap:12px;align-items:flex-start;padding:14px;border:1px solid #E3E6EB;border-radius:10px;cursor:pointer}
+.pill{height:34px;padding:0 14px;border-radius:17px;border:1px solid #D5D9E0;background:#FFFFFF;font:500 13px 'IBM Plex Sans',sans-serif;cursor:pointer}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 100vh; font-family: 'IBM Plex Sans', sans-serif; color: #151922; background: #F4F5F7">
+  <div style="flex: 1 1 232px; background: #2F2D86"><dc-import name="Sidebar" active="export" hint-size="100%,900px"></dc-import></div>
+  <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <dc-import name="Topbar" hint-size="100%,64px"></dc-import>
+    <main style="width: 100%; box-sizing: border-box; padding: 28px 32px 56px; display: flex; flex-direction: column; gap: 20px">
+      <div>
+        <h1 style="margin: 0; font-size: 26px; font-weight: 600">Export</h1>
+        
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+        <div style="flex: 3 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+          <section class="card" style="padding: 20px; display: flex; flex-direction: column; gap: 14px">
+            <h2 class="h2">1. Zeitraum</h2>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px">
+              <sc-for list="{{ presets }}" as="p" hint-placeholder-count="7">
+                <button type="button" class="pill" onClick="{{ p.pick }}" style="background: {{ p.bg }}; color: {{ p.fg }}; border-color: {{ p.bd }}">{{ p.label }}</button>
+              </sc-for>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px">
+              <div><label class="lbl" for="von">Von</label><input id="von" class="inp" value="{{ von }}"></div>
+              <div><label class="lbl" for="bis">Bis</label><input id="bis" class="inp" value="{{ bis }}"></div>
+            </div>
+          </section>
+
+          <section class="card" style="padding: 20px; display: flex; flex-direction: column; gap: 10px">
+            <h2 class="h2">2. Inhalt</h2>
+            <label class="opt"><input type="checkbox" checked="" style="width: 18px; height: 18px; margin-top: 2px"><span style="flex: 1"><strong style="font-size: 14px">Belegliste</strong><br><span class="muted" style="font-size: 13px">Eine Zeile je Beleg: Datum, Korrespondent, Nr., Kategorie, EÜR-Zeile, Netto/USt/Brutto je Steuersatz, Tags, Ablagepfad</span></span>
+              <select aria-label="Format der Belegliste" style="height: 32px; border: 1px solid #D5D9E0; border-radius: 6px; font: 400 13px 'IBM Plex Sans', sans-serif"><option>Excel (.xlsx)</option><option>CSV (Semikolon)</option></select></label>
+            <label class="opt"><input type="checkbox" checked="" style="width: 18px; height: 18px; margin-top: 2px"><span><strong style="font-size: 14px">Summen je Kategorie</strong><br><span class="muted" style="font-size: 13px">inkl. EÜR-Zeile, sofern an der Kategorie gepflegt</span></span></label>
+            <label class="opt"><input type="checkbox" checked="" style="width: 18px; height: 18px; margin-top: 2px"><span><strong style="font-size: 14px">Vorsteuer je UStVA-Zeitraum</strong><br><span class="muted" style="font-size: 13px">quartalsweise laut Einstellung · ausgeblendet bei Kleinunternehmer</span></span></label>
+            <label class="opt"><input type="checkbox" style="width: 18px; height: 18px; margin-top: 2px"><span><strong style="font-size: 14px">ZIP der Originale</strong><br><span class="muted" style="font-size: 13px">unveränderte Originaldateien (bei E-Rechnungen das XML) mit Prüfsummenliste · ca. 24 MB</span></span></label>
+          </section>
+
+          <section class="card" style="padding: 20px; display: flex; flex-direction: column; gap: 12px">
+            <h2 class="h2">3. Filter</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px">
+              <div><label class="lbl" for="x1">Kategorien</label><select id="x1" class="inp"><option>Alle Kategorien</option></select></div>
+              <div><label class="lbl" for="x2">Korrespondenten</label><select id="x2" class="inp"><option>Alle</option></select></div>
+              <div><label class="lbl" for="x3">Tags</label><select id="x3" class="inp"><option>Beliebig</option></select></div>
+            </div>
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 14px"><input type="checkbox" checked="" style="width: 16px; height: 16px">Dubletten ausschließen</label>
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 14px"><input type="checkbox" style="width: 16px; height: 16px">Belege mit „zu prüfen“ ausschließen</label>
+          </section>
+        </div>
+
+        <aside class="card" style="flex: 2 1 340px; min-width: 0; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+          <h2 class="h2">Vorschau · {{ label }}</h2>
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+            <div style="padding: 12px; border-radius: 10px; background: #F4F5F7"><div class="muted" style="font-size: 12px">Belege</div><div class="num" style="text-align: left; font-size: 20px; font-weight: 600">{{ n }}</div></div>
+            <div style="padding: 12px; border-radius: 10px; background: #F4F5F7"><div class="muted" style="font-size: 12px">Summe brutto</div><div class="num" style="text-align: left; font-size: 20px; font-weight: 600">{{ sum }}</div></div>
+            <div style="padding: 12px; border-radius: 10px; background: #F4F5F7"><div class="muted" style="font-size: 12px">Vorsteuer</div><div class="num" style="text-align: left; font-size: 20px; font-weight: 600">{{ vst }}</div></div>
+            <div style="padding: 12px; border-radius: 10px; background: #F4F5F7"><div class="muted" style="font-size: 12px">Dubletten ausgeschlossen</div><div class="num" style="text-align: left; font-size: 20px; font-weight: 600">{{ dup }}</div></div>
+          </div>
+          <sc-if value="{{ warn }}" hint-placeholder-val="{{ false }}">
+            <div role="alert" style="display: flex; gap: 10px; padding: 12px; border-radius: 10px; background: #FDF0E3; color: #7A3705; font-size: 13px"><span class="material-symbols-outlined" aria-hidden="true">report</span><span><strong>{{ warnText }}</strong> Diese sind noch nicht bestätigt. <a href="Belege.dc.html" style="color: #7A3705">Jetzt prüfen</a></span></div>
+          </sc-if>
+          <table class="tbl">
+            <thead><tr><th scope="col">Kategorie</th><th scope="col">EÜR-Zeile</th><th scope="col" class="num">Brutto</th></tr></thead>
+            <tbody>
+              <sc-for list="{{ rows }}" as="r" hint-placeholder-count="6"><tr><td>{{ r.k }}</td><td class="muted" style="font-size: 12px">{{ r.e }}</td><td class="num">{{ r.v }}</td></tr></sc-for>
+            </tbody>
+          </table>
+          <button type="button" class="btn btn-p" style="height: 44px; justify-content: center"><span class="material-symbols-outlined" aria-hidden="true">download</span>Export erstellen</button>
+          <span class="muted" style="font-size: 12px">Jeder Export wird im Änderungsprotokoll vermerkt.</span>
+        </aside>
+      </div>
+
+      <section class="card" style="overflow-x: auto">
+        <div style="padding: 16px 20px"><h2 class="h2">Letzte Exporte</h2></div>
+        <table class="tbl" style="min-width: 720px">
+          <thead><tr><th scope="col">Erstellt</th><th scope="col">Zeitraum</th><th scope="col">Inhalt</th><th scope="col" class="num">Belege</th><th scope="col">Von</th><th scope="col"><span style="position: absolute; left: -9999px">Herunterladen</span></th></tr></thead>
+          <tbody>
+            <tr><td>05.10.2026 10:12</td><td>Q3 2026</td><td>Belegliste (xlsx), Summen, Vorsteuer, ZIP</td><td class="num">61</td><td>M. Keller</td><td><button type="button" class="btn btn-s">Herunterladen</button></td></tr>
+            <tr><td>06.07.2026 09:40</td><td>Q2 2026</td><td>Belegliste (xlsx), Summen, Vorsteuer</td><td class="num">54</td><td>M. Keller</td><td><button type="button" class="btn btn-s">Herunterladen</button></td></tr>
+            <tr><td>08.04.2026 16:05</td><td>Q1 2026</td><td>Belegliste (csv), Summen, Vorsteuer, ZIP</td><td class="num">58</td><td>A. Lehmann</td><td><button type="button" class="btn btn-s">Herunterladen</button></td></tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":1200}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { p: 'q3' }; }
+  renderVals() {
+    const P = {
+      okt: ['Oktober 2026', '01.10.2026', '31.10.2026', '19', '1.664,00 €', '258,90 €', '0', 0, [['Software & Hosting', 'Übrige Betriebsausgaben', '489,00 €'], ['Telekommunikation', 'Telekommunikation', '184,00 €'], ['Bürobedarf', 'Bürobedarf', '142,00 €'], ['Fahrzeug', 'Kfz-Kosten (Leasing)', '470,00 €'], ['Hardware', 'GWG / AfA prüfen', '214,00 €'], ['Sonstiges', '—', '165,00 €']]],
+      nov: ['November 2026', '01.11.2026', '30.11.2026', '20', '1.704,00 €', '265,44 €', '1', 5, [['Software & Hosting', 'Übrige Betriebsausgaben', '489,00 €'], ['Telekommunikation', 'Telekommunikation', '186,00 €'], ['Bürobedarf', 'Bürobedarf', '264,00 €'], ['Fahrzeug', 'Kfz-Kosten (Leasing)', '534,00 €'], ['Hardware', 'GWG / AfA prüfen', '0,00 €'], ['Sonstiges', '—', '231,00 €']]],
+      q3: ['Q3 2026', '01.07.2026', '30.09.2026', '61', '6.482,00 €', '1.012,37 €', '2', 0, [['Software & Hosting', 'Übrige Betriebsausgaben', '1.431,00 €'], ['Telekommunikation', 'Telekommunikation', '556,00 €'], ['Bürobedarf', 'Bürobedarf', '645,00 €'], ['Fahrzeug', 'Kfz-Kosten (Leasing)', '1.520,00 €'], ['Hardware', 'GWG / AfA prüfen', '1.790,00 €'], ['Sonstiges', '—', '540,00 €']]],
+      q4: ['Q4 2026 (bis heute)', '01.10.2026', '23.11.2026', '39', '3.368,00 €', '537,04 €', '1', 5, [['Software & Hosting', 'Übrige Betriebsausgaben', '978,00 €'], ['Telekommunikation', 'Telekommunikation', '370,00 €'], ['Bürobedarf', 'Bürobedarf', '406,00 €'], ['Fahrzeug', 'Kfz-Kosten (Leasing)', '1.004,00 €'], ['Hardware', 'GWG / AfA prüfen', '214,00 €'], ['Sonstiges', '—', '396,00 €']]],
+      jahr: ['Jahr 2026 (bis heute)', '01.01.2026', '23.11.2026', '212', '20.845,00 €', '3.301,54 €', '3', 5, [['Software & Hosting', 'Übrige Betriebsausgaben', '5.188,00 €'], ['Telekommunikation', 'Telekommunikation', '2.033,00 €'], ['Bürobedarf', 'Bürobedarf', '2.223,00 €'], ['Fahrzeug', 'Kfz-Kosten (Leasing)', '5.639,00 €'], ['Hardware', 'GWG / AfA prüfen', '3.630,00 €'], ['Sonstiges', '—', '2.132,00 €']]],
+      vj: ['Jahr 2025', '01.01.2025', '31.12.2025', '231', '20.980,00 €', '3.318,20 €', '4', 0, [['Software & Hosting', 'Übrige Betriebsausgaben', '5.010,00 €'], ['Telekommunikation', 'Telekommunikation', '2.390,00 €'], ['Bürobedarf', 'Bürobedarf', '1.950,00 €'], ['Fahrzeug', 'Kfz-Kosten (Leasing)', '5.880,00 €'], ['Hardware', 'GWG / AfA prüfen', '3.420,00 €'], ['Sonstiges', '—', '2.330,00 €']]]
+    };
+    const sel = this.state.p, d = P[sel];
+    const pr = (id, label) => ({ label, pick: () => this.setState({ p: id }), bg: sel === id ? '#E7E7F4' : '#FFFFFF', fg: sel === id ? '#2F2D86' : '#151922', bd: sel === id ? '#A9A8D6' : '#D5D9E0' });
+    return {
+      presets: [pr('okt', 'Oktober'), pr('nov', 'November'), pr('q3', 'Q3 2026'), pr('q4', 'Q4 2026'), pr('jahr', 'Jahr 2026'), pr('vj', 'Vorjahr')],
+      label: d[0], von: d[1], bis: d[2], n: d[3], sum: d[4], vst: d[5], dup: d[6],
+      warn: d[7] > 0, warnText: d[7] + ' Belege im Zeitraum sind „zu prüfen“.',
+      rows: d[8].map((r) => ({ k: r[0], e: r[1], v: r[2] }))
+    };
+  }
+}
+</script>
+</body>
+</html>

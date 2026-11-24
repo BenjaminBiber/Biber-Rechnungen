@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Menüs und Popover</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Material+Symbols+Outlined&display=block">
+<style>
+body{margin:0}
+.material-symbols-outlined{font-size:20px;line-height:1;vertical-align:-5px}
+.cap{font:600 12px 'IBM Plex Sans',sans-serif;letter-spacing:0.08em;text-transform:uppercase;color:#4A5262;margin:0 0 4px}
+.where{font:400 13px 'IBM Plex Sans',sans-serif;color:#5E6676;margin:0 0 12px}
+.pop{background:#FFFFFF;border:1px solid #E3E6EB;border-radius:12px;box-shadow:0 16px 40px rgba(20,26,42,0.16);padding:6px;box-sizing:border-box}
+.mi{display:flex;align-items:center;gap:10px;height:38px;padding:0 10px;border-radius:6px;font:400 14px 'IBM Plex Sans',sans-serif;color:#151922}
+.mi-h{background:#F0F2F5}
+.mi-d{color:#8A93A3}
+.kb{margin-left:auto;font:500 11px 'IBM Plex Mono',monospace;color:#5E6676}
+.sep{height:1px;background:#EEF0F3;margin:6px 4px}
+.sec{padding:8px 10px 4px;font:600 11px 'IBM Plex Sans',sans-serif;letter-spacing:0.06em;text-transform:uppercase;color:#5E6676}
+.chip{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border-radius:11px;font:500 12px 'IBM Plex Sans',sans-serif;white-space:nowrap}
+.t-blue{background:#E7E7F4;color:#2F2D86}.t-orange{background:#FDF0E3;color:#A44A06}.t-green{background:#E5F4EC;color:#17703F}.t-gray{background:#EEF0F3;color:#4A5262}.t-teal{background:#E1F3F4;color:#0E6168}.t-purple{background:#F0EAFB;color:#5B2EA6}.t-red{background:#FDECEA;color:#B42318}
+.srch{display:flex;align-items:center;gap:8px;height:40px;padding:0 10px;border-bottom:1px solid #EEF0F3;margin:-6px -6px 6px;font:400 14px 'IBM Plex Sans',sans-serif}
+.inp{height:34px;box-sizing:border-box;border:1px solid #D5D9E0;border-radius:8px;padding:0 10px;font:400 14px 'IBM Plex Sans',sans-serif;width:100%}
+.lbl{display:block;font:500 12px 'IBM Plex Sans',sans-serif;color:#4A5262;margin-bottom:4px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:32px;padding:0 12px;border-radius:8px;border:1px solid #D5D9E0;background:#FFFFFF;color:#151922;font:500 13px 'IBM Plex Sans',sans-serif;cursor:pointer}
+.btn-p{background:#2F2D86;border-color:#2F2D86;color:#FFFFFF}
+.logo{flex:none;width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font:700 10px 'IBM Plex Sans',sans-serif}
+</style>
+</helmet>
+<div style="width: 1920px; min-height: 1640px; box-sizing: border-box; padding: 56px; background: #E9ECF1; font-family: 'IBM Plex Sans', sans-serif; color: #151922; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 48px 48px; align-content: start">
+
+  <div style="grid-column: span 2">
+    <p class="cap">Befehlspalette / globale Suche</p>
+    <p class="where">Kopfleiste · Strg K · Volltext über Belege, Korrespondenten, Artikel plus Befehle</p>
+    <div class="pop" role="dialog" aria-label="Befehlspalette" style="max-width: 720px; padding: 0">
+      <div style="display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 16px; border-bottom: 1px solid #EEF0F3; font-size: 16px"><span class="material-symbols-outlined" aria-hidden="true" style="color: #5E6676">search</span>toner<span style="width: 2px; height: 20px; background: #2F2D86"></span><span class="kb">Esc</span></div>
+      <div style="padding: 6px">
+        <div class="sec">Belege</div>
+        <div class="mi mi-h"><span class="material-symbols-outlined" aria-hidden="true">receipt_long</span><span>Bürowelt Krämer KG · <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px">2026-48817</span> · „Lasertoner schwarz“</span><span class="kb">264,00 €</span></div>
+        <div class="mi"><span class="material-symbols-outlined" aria-hidden="true">receipt_long</span><span>Hardwareversand Nord · <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px">HVN-552190</span> · „Toner TN-schwarz“</span><span class="kb">214,00 €</span></div>
+        <div class="sec">Artikel</div>
+        <div class="mi"><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span>Toner schwarz <span class="chip t-gray">Stammartikel · 2 Händler</span></div>
+        <div class="sec">Befehle</div>
+        <div class="mi"><span class="material-symbols-outlined" aria-hidden="true">upload_file</span>Beleg hochladen<span class="kb">U</span></div>
+        <div class="mi"><span class="material-symbols-outlined" aria-hidden="true">report</span>Zu prüfen öffnen<span class="kb">G P</span></div>
+        <div class="mi"><span class="material-symbols-outlined" aria-hidden="true">download</span>Export Q4 2026 erstellen</div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <p class="cap">Benutzermenü</p>
+    <p class="where">Kopfleiste · Avatar</p>
+    <div class="pop" role="menu" aria-label="Benutzermenü" style="width: 280px">
+      <div style="padding: 10px 12px 12px; border-bottom: 1px solid #EEF0F3; margin-bottom: 6px"><div style="font-weight: 600; font-size: 14px">Martin Keller</div><div style="font-size: 12px; color: #5E6676">Rolle: Admin · 2FA aktiv</div></div>
+      <div class="mi"><span class="material-symbols-outlined" aria-hidden="true">person</span>Mein Konto</div>
+      <div class="mi mi-h"><span class="material-symbols-outlined" aria-hidden="true">phonelink_lock</span>Zwei-Faktor-Anmeldung</div>
+      <div class="mi"><span class="material-symbols-outlined" aria-hidden="true">key</span>API-Tokens (MCP)</div>
+      <div class="mi"><span class="material-symbols-outlined" aria-hidden="true">description</span>Verfahrensdokumentation</div>
+      <div class="sep"></div>
+      <div style="padding: 4px 10px 8px"><div style="font-size: 12px; color: #5E6676; margin-bottom: 6px">Darstellung</div><div style="display: flex; gap: 4px; padding: 3px; border-radius: 8px; background: #F0F2F5"><span style="flex: 1; height: 28px; border-radius: 6px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(0,0,0,0.12); font-size: 13px; display: flex; align-items: center; justify-content: center">Hell</span><span style="flex: 1; font-size: 13px; color: #4A5262; display: flex; align-items: center; justify-content: center">Dunkel</span><span style="flex: 1; font-size: 13px; color: #4A5262; display: flex; align-items: center; justify-content: center">System</span></div></div>
+      <div class="sep"></div>
+      <div class="mi" style="color: #B42318"><span class="material-symbols-outlined" aria-hidden="true">logout</span>Abmelden</div>
+    </div>
+  </div>
+
+  <div>
+    <p class="cap">Glocke · Benachrichtigungen</p>
+    <p class="where">Kopfleiste · In-App, keine Mails</p>
+    <div class="pop" role="dialog" aria-label="Benachrichtigungen" style="width: 380px; padding: 0">
+      <div style="display: flex; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid #EEF0F3"><strong style="font-size: 15px">Benachrichtigungen</strong><span style="font-size: 13px; color: #2F2D86; font-weight: 500">Alle gelesen</span></div>
+      <div style="display: flex; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #EEF0F3; background: #F7F7FC"><span style="flex: none; width: 32px; height: 32px; border-radius: 16px; background: #FDECEA; color: #B42318; display: flex; align-items: center; justify-content: center"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px; vertical-align: 0">gpp_bad</span></span><span style="font-size: 13px; line-height: 1.4"><strong>Integritätsfehler in der Ablage</strong><br><span style="color: #4A5262">1 Datei weicht von ihrer Prüfsumme ab: 2026/Hostwerk_Sued_GmbH/2026-03-20_HW-2026-03-0329.xml</span><br><span style="color: #5E6676; font-size: 12px">Beispiel · heute 03:04</span></span></div>
+      <div style="display: flex; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #EEF0F3; background: #F7F7FC"><span style="flex: none; width: 32px; height: 32px; border-radius: 16px; background: #FDF0E3; color: #A44A06; display: flex; align-items: center; justify-content: center"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px; vertical-align: 0">pause_circle</span></span><span style="font-size: 13px; line-height: 1.4"><strong>DI-Limit erreicht – Warteschlange pausiert</strong><br><span style="color: #4A5262">3 Belege warten bis 01.12. oder bis zur Limit-Erhöhung.</span><br><span style="color: #5E6676; font-size: 12px">Beispiel</span></span></div>
+      <div style="display: flex; gap: 12px; padding: 12px 16px"><span style="flex: none; width: 32px; height: 32px; border-radius: 16px; background: #E7E7F4; color: #2F2D86; display: flex; align-items: center; justify-content: center"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px; vertical-align: 0">person_add</span></span><span style="font-size: 13px; line-height: 1.4"><strong>Neues Konto wartet auf Freigabe</strong><br><span style="color: #4A5262">Jonas Wagner hat sich registriert.</span><br><span style="color: #5E6676; font-size: 12px">gestern, 18:42</span></span></div>
+    </div>
+  </div>
+
+  <div>
+    <p class="cap">Beleg-Aktionen „Mehr“</p>
+    <p class="where">Beleg-Detail · ⋯ neben „Bestätigen“</p>
+    <div class="pop" role="menu" aria-label="Beleg-Aktionen" style="width: 290px">
+      <div class="mi"><span class="material-symbols-outlined" aria-hidden="true">download</span>Original herunterladen</div>
+      <div class="mi"><span class="material-symbols-outlined" aria-hidden="true">code</span>XML herunterladen <span class="kb">E-Rechnung</span></div>
+      <div class="mi"><span class="material-symbols-outlined" aria-hidden="true">folder_copy</span>Ablagepfad kopieren</div>
+      <div class="mi mi-h"><span class="material-symbols-outlined" aria-hidden="true">link</span>Link kopieren</div>
+      <div class="sep"></div>
+      <div class="mi"><span class="material-symbols-outlined" aria-hidden="true">content_copy</span>Als Dublette markieren …</div>
+      <div class="mi"><span class="material-symbols-outlined" aria-hidden="true">crop</span>Logo aus diesem Beleg übernehmen</div>
+      <div class="mi"><span class="material-symbols-outlined" aria-hidden="true">swap_horiz</span>Belegart ändern</div>
+      <div class="sep"></div>
+      <div class="mi mi-d"><span class="material-symbols-outlined" aria-hidden="true">lock</span><span>Löschen<br><span style="font-size: 12px">gesperrt bis 31.12.2034</span></span></div>
+    </div>
+  </div>
+
+  <div>
+    <p class="cap">Zeilenmenü Belegliste</p>
+    <p class="where">Belege · ⋮ am Zeilenende oder Rechtsklick</p>
+    <div style="position: relative; height: 380px">
+      <div class="pop" role="menu" aria-label="Zeilenmenü" style="position: absolute; left: 0; top: 0; width: 250px">
+        <div class="mi"><span class="material-symbols-outlined" aria-hidden="true">open_in_full</span>Öffnen<span class="kb">Enter</span></div>
+        <div class="mi"><span class="material-symbols-outlined" aria-hidden="true">open_in_new</span>In neuem Tab</div>
+        <div class="sep"></div>
+        <div class="mi"><span class="material-symbols-outlined" aria-hidden="true">sell</span>Tags …<span class="kb">T</span></div>
+        <div class="mi"><span class="material-symbols-outlined" aria-hidden="true">category</span>Kategorie …<span class="kb">K</span></div>
+        <div class="mi mi-h"><span class="material-symbols-outlined" aria-hidden="true">paid</span>Als bezahlt markieren<span class="material-symbols-outlined kb" aria-hidden="true" style="font-size: 18px">chevron_right</span></div>
+        <div class="mi"><span class="material-symbols-outlined" aria-hidden="true">task_alt</span>Bestätigen</div>
+        <div class="mi"><span class="material-symbols-outlined" aria-hidden="true">refresh</span>Erneut auslesen</div>
+        <div class="sep"></div>
+        <div class="mi"><span class="material-symbols-outlined" aria-hidden="true">download</span>Original herunterladen</div>
+      </div>
+      <div class="pop" role="menu" aria-label="Zahlungs-Tag wählen" style="position: absolute; left: 236px; top: 150px; width: 190px">
+        <div class="mi"><span class="chip t-green">bezahlt</span></div>
+        <div class="mi mi-h"><span class="chip t-teal">bezahlt PayPal</span></div>
+        <div class="mi"><span class="chip t-purple">Lastschrift</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <p class="cap">Tag-Auswahl</p>
+    <p class="where">Beleg-Detail, Massenaktion, Filter</p>
+    <div class="pop" role="listbox" aria-label="Tags wählen" style="width: 300px">
+      <div class="srch"><span class="material-symbols-outlined" aria-hidden="true" style="color: #5E6676">search</span>bez</div>
+      <div class="mi mi-h"><input type="checkbox" checked aria-label="bezahlt" style="width: 16px; height: 16px"><span class="chip t-green">bezahlt</span><span class="kb">Zahlung</span></div>
+      <div class="mi"><input type="checkbox" aria-label="bezahlt PayPal" style="width: 16px; height: 16px"><span class="chip t-teal">bezahlt PayPal</span><span class="kb">Zahlung</span></div>
+      <div class="mi mi-d"><input type="checkbox" disabled aria-label="zu prüfen" style="width: 16px; height: 16px"><span class="chip t-orange">zu prüfen</span><span class="kb">System</span></div>
+      <div class="sep"></div>
+      <div class="mi" style="color: #2F2D86"><span class="material-symbols-outlined" aria-hidden="true">add</span>„bez“ als neuen Tag anlegen</div>
+    </div>
+  </div>
+
+  <div>
+    <p class="cap">Korrespondent-Auswahl</p>
+    <p class="where">Beleg-Detail · Feld „Korrespondent“</p>
+    <div class="pop" role="listbox" aria-label="Korrespondent wählen" style="width: 320px">
+      <div class="srch"><span class="material-symbols-outlined" aria-hidden="true" style="color: #5E6676">search</span>krä</div>
+      <div class="mi mi-h" style="height: 48px"><span class="logo" style="background: #FDF0E3; color: #A44A06">BK</span><span style="line-height: 1.3">Bürowelt Krämer KG<br><span style="font: 400 12px 'IBM Plex Mono', monospace; color: #5E6676">DE 284117560</span></span><span class="material-symbols-outlined kb" aria-hidden="true" style="color: #2F2D86">check</span></div>
+      <div class="mi" style="height: 48px"><span class="logo" style="background: #FDF0E3; color: #A44A06">BW</span><span style="line-height: 1.3">Buerowelt Kraemer<br><span style="font-size: 12px; color: #A44A06">mögliche Dublette</span></span></div>
+      <div class="sep"></div>
+      <div class="mi" style="color: #2F2D86"><span class="material-symbols-outlined" aria-hidden="true">add_business</span>Neu aus Belegdaten anlegen</div>
+    </div>
+  </div>
+
+  <div>
+    <p class="cap">Zeitraum-Filter</p>
+    <p class="where">Belege, Dashboard · Basis Rechnungsdatum</p>
+    <div class="pop" role="dialog" aria-label="Zeitraum wählen" style="width: 340px; padding: 0; display: flex">
+      <div style="width: 130px; border-right: 1px solid #EEF0F3; padding: 6px">
+        <div class="mi" style="font-size: 13px">Dieser Monat</div><div class="mi" style="font-size: 13px">Letzter Monat</div><div class="mi" style="font-size: 13px">Dieses Quartal</div><div class="mi" style="font-size: 13px">Letztes Quartal</div><div class="mi mi-h" style="font-size: 13px; font-weight: 600">Dieses Jahr</div><div class="mi" style="font-size: 13px">Vorjahr</div>
+      </div>
+      <div style="flex: 1; padding: 12px; display: flex; flex-direction: column; gap: 10px">
+        <div><label class="lbl" for="zv">Von</label><input id="zv" class="inp" value="01.01.2026"></div>
+        <div><label class="lbl" for="zb">Bis</label><input id="zb" class="inp" value="31.12.2026"></div>
+        <div style="display: flex; gap: 6px; justify-content: flex-end; margin-top: auto"><button type="button" class="btn">Leeren</button><button type="button" class="btn btn-p">Anwenden</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <p class="cap">Betrag-Filter</p>
+    <p class="where">Belege · Filterleiste</p>
+    <div class="pop" role="dialog" aria-label="Betrag filtern" style="width: 280px; padding: 14px; display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; gap: 4px; padding: 3px; border-radius: 8px; background: #F0F2F5"><span style="flex: 1; height: 28px; border-radius: 6px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(0,0,0,0.12); font-size: 13px; display: flex; align-items: center; justify-content: center">Brutto</span><span style="flex: 1; font-size: 13px; color: #4A5262; display: flex; align-items: center; justify-content: center">Netto</span></div>
+      <div style="display: flex; gap: 8px"><div style="flex: 1"><label class="lbl" for="bv">Von (€)</label><input id="bv" class="inp" value="100"></div><div style="flex: 1"><label class="lbl" for="bb">Bis (€)</label><input id="bb" class="inp" value="500"></div></div>
+      <div style="display: flex; gap: 6px; justify-content: flex-end"><button type="button" class="btn">Leeren</button><button type="button" class="btn btn-p">Anwenden</button></div>
+    </div>
+  </div>
+
+  <div>
+    <p class="cap">Spalten anpassen</p>
+    <p class="where">Belege · „Spalten“</p>
+    <div class="pop" role="dialog" aria-label="Spalten" style="width: 260px">
+      <div class="mi"><span class="material-symbols-outlined" aria-hidden="true" style="color: #9AA4B5">drag_indicator</span><input type="checkbox" checked disabled aria-label="Korrespondent" style="width: 16px; height: 16px">Korrespondent</div>
+      <div class="mi"><span class="material-symbols-outlined" aria-hidden="true" style="color: #9AA4B5">drag_indicator</span><input type="checkbox" checked aria-label="Rechnungsnr." style="width: 16px; height: 16px">Rechnungsnr.</div>
+      <div class="mi"><span class="material-symbols-outlined" aria-hidden="true" style="color: #9AA4B5">drag_indicator</span><input type="checkbox" checked aria-label="Fällig" style="width: 16px; height: 16px">Fällig</div>
+      <div class="mi mi-h"><span class="material-symbols-outlined" aria-hidden="true" style="color: #9AA4B5">drag_indicator</span><input type="checkbox" aria-label="Netto" style="width: 16px; height: 16px">Netto</div>
+      <div class="mi"><span class="material-symbols-outlined" aria-hidden="true" style="color: #9AA4B5">drag_indicator</span><input type="checkbox" aria-label="Leistungsdatum" style="width: 16px; height: 16px">Leistungsdatum</div>
+      <div class="mi"><span class="material-symbols-outlined" aria-hidden="true" style="color: #9AA4B5">drag_indicator</span><input type="checkbox" aria-label="Konfidenz" style="width: 16px; height: 16px">Konfidenz</div>
+    </div>
+  </div>
+
+  <div>
+    <p class="cap">Kategorie setzen</p>
+    <p class="where">Massenaktion · Beleg-Detail</p>
+    <div class="pop" role="listbox" aria-label="Kategorie wählen" style="width: 280px">
+      <div class="srch"><span class="material-symbols-outlined" aria-hidden="true" style="color: #5E6676">search</span><span style="color: #5E6676">Kategorie suchen</span></div>
+      <div class="mi"><span style="width: 10px; height: 10px; border-radius: 2px; background: #2F2D86"></span>Software &amp; Hosting</div>
+      <div class="mi"><span style="width: 10px; height: 10px; border-radius: 2px; background: #5B8DEF"></span>Telekommunikation</div>
+      <div class="mi mi-h"><span style="width: 10px; height: 10px; border-radius: 2px; background: #E3893B"></span>Bürobedarf<span class="material-symbols-outlined kb" aria-hidden="true" style="color: #2F2D86">check</span></div>
+      <div class="mi"><span style="width: 10px; height: 10px; border-radius: 2px; background: #1F8A70"></span>Fahrzeug</div>
+      <div class="mi"><span style="width: 10px; height: 10px; border-radius: 2px; background: #9AA4B5"></span>Hardware</div>
+      <div class="sep"></div>
+      <div class="mi" style="font-size: 13px; color: #5E6676">Leer lassen = Default des Korrespondenten</div>
+    </div>
+  </div>
+
+  <div style="grid-column: span 3">
+    <p class="cap">Massenaktionen-Leiste</p>
+    <p class="where">Belege · erscheint, sobald mindestens ein Beleg markiert ist</p>
+    <div role="toolbar" aria-label="Massenaktionen" style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 10px 8px 16px; border-radius: 10px; background: #2F2D86; color: #FFFFFF; box-shadow: 0 16px 40px rgba(20,26,42,0.2)">
+      <span style="font-size: 14px; font-weight: 600; margin-right: 8px">3 Belege ausgewählt · 1.002,40 €</span>
+      <span class="btn" style="background: #3E3C93; border-color: #5654A8; color: #FFFFFF"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px">sell</span>Tags</span>
+      <span class="btn" style="background: #3E3C93; border-color: #5654A8; color: #FFFFFF"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px">category</span>Kategorie</span>
+      <span class="btn" style="background: #3E3C93; border-color: #5654A8; color: #FFFFFF"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px">paid</span>Als bezahlt markieren</span>
+      <span class="btn" style="background: #3E3C93; border-color: #5654A8; color: #FFFFFF"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px">task_alt</span>Bestätigen</span>
+      <span class="btn" style="background: #3E3C93; border-color: #5654A8; color: #FFFFFF"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px">download</span>Exportieren</span>
+      <span style="flex: 1"></span>
+      <span style="font-size: 13px; color: #D7D6EE">Auswahl aufheben</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":1640}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

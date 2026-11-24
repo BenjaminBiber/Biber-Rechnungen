@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Hochladen und Import</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=Material+Symbols+Outlined&amp;display=block">
+<style>
+body{margin:0;background:#F4F5F7}
+a{color:#2F2D86}a:hover{color:#24226B}
+.material-symbols-outlined{font-size:20px;line-height:1;vertical-align:-5px}
+.card{background:#FFFFFF;border:1px solid #E3E6EB;border-radius:12px;box-sizing:border-box}
+.btn{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:8px;border:1px solid #D5D9E0;background:#FFFFFF;color:#151922;font:500 14px 'IBM Plex Sans',sans-serif;text-decoration:none;cursor:pointer;white-space:nowrap;box-sizing:border-box}
+.btn:hover{background:#F0F2F5;color:#151922}
+.btn-p{background:#2F2D86;border-color:#2F2D86;color:#FFFFFF}.btn-p:hover{background:#24226B;color:#FFFFFF}
+.btn-s{height:30px;padding:0 10px;font-size:13px}
+.chip{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border-radius:11px;font:500 12px 'IBM Plex Sans',sans-serif;white-space:nowrap}
+.t-blue{background:#E7E7F4;color:#2F2D86}.t-orange{background:#FDF0E3;color:#A44A06}.t-green{background:#E5F4EC;color:#17703F}.t-red{background:#FDECEA;color:#B42318}.t-gray{background:#EEF0F3;color:#4A5262}
+.tbl{width:100%;border-collapse:collapse;font:400 14px 'IBM Plex Sans',sans-serif}
+.tbl th{text-align:left;font:600 12px 'IBM Plex Sans',sans-serif;color:#4A5262;padding:10px 12px;border-bottom:1px solid #E3E6EB;white-space:nowrap;background:#FAFBFC}
+.tbl td{padding:10px 12px;border-bottom:1px solid #EEF0F3;vertical-align:middle}
+.mono{font-family:'IBM Plex Mono',monospace;font-size:13px}
+.muted{color:#5E6676}
+.h2{margin:0;font:600 16px 'IBM Plex Sans',sans-serif;color:#151922}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 100vh; font-family: 'IBM Plex Sans', sans-serif; color: #151922; background: #F4F5F7">
+  <div style="flex: 1 1 232px; background: #2F2D86"><dc-import name="Sidebar" active="upload" hint-size="100%,900px"></dc-import></div>
+  <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <dc-import name="Topbar" hint-size="100%,64px"></dc-import>
+    <main style="width: 100%; box-sizing: border-box; padding: 28px 32px 56px; display: flex; flex-direction: column; gap: 20px">
+      <div>
+        <h1 style="margin: 0; font-size: 26px; font-weight: 600">Hochladen &amp; Import</h1>
+        
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 20px">
+        <label style="flex: 2 1 480px; min-height: 240px; border: 2px dashed #A9A8D6; border-radius: 14px; background: #F7F7FC; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 32px; box-sizing: border-box; text-align: center; cursor: pointer">
+          <span style="width: 60px; height: 60px; border-radius: 30px; background: #E7E7F4; color: #2F2D86; display: flex; align-items: center; justify-content: center"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 32px; vertical-align: 0">cloud_upload</span></span>
+          <span style="font-size: 18px; font-weight: 600">Dateien hierher ziehen</span>
+          <span class="muted" style="font-size: 14px">oder <span style="color: #2F2D86; font-weight: 500">Dateien auswählen</span> · mehrere gleichzeitig möglich</span>
+          <span style="display: flex; gap: 6px; flex-wrap: wrap; justify-content: center"><span class="chip t-gray">PDF</span><span class="chip t-gray">ZUGFeRD / Factur-X</span><span class="chip t-gray">XRechnung (XML)</span><span class="chip t-gray">PNG · JPG · TIFF</span></span>
+          <input type="file" multiple="" style="position: absolute; width: 1px; height: 1px; opacity: 0">
+        </label>
+        
+      </div>
+
+      
+
+      <section class="card" style="overflow-x: auto">
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; padding: 16px 20px"><h2 class="h2">Import-Vorgänge</h2>
+          <div style="display: flex; gap: 6px"><span class="chip t-gray">Alle Quellen</span><span class="chip t-gray">Letzte 7 Tage</span></div></div>
+        <table class="tbl" style="min-width: 860px">
+          <thead><tr><th scope="col">Zeitpunkt</th><th scope="col">Quelle</th><th scope="col">Herkunft</th><th scope="col">Status</th><th scope="col">Versuche</th><th scope="col">Ergebnis</th></tr></thead>
+          <tbody>
+            <sc-for list="{{ runs }}" as="r" hint-placeholder-count="7">
+              <tr>
+                <td style="white-space: nowrap">{{ r.when }}</td>
+                <td><span style="display: inline-flex; align-items: center; gap: 6px"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px; color: #4A5262">{{ r.icon }}</span>{{ r.src }}</span></td>
+                <td style="max-width: 360px"><div style="font-size: 13px">{{ r.her1 }}</div><div class="muted" style="font-size: 12px">{{ r.her2 }}</div></td>
+                <td><span class="chip {{ r.cls }}">{{ r.status }}</span></td>
+                <td>{{ r.tries }}</td>
+                <td style="font-size: 13px">{{ r.res }}</td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":1200}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const S = (label, st) => ({ label, icon: st === 'ok' ? 'check' : st === 'run' ? 'progress_activity' : 'radio_button_unchecked', bg: st === 'ok' ? '#E5F4EC' : st === 'run' ? '#E7E7F4' : '#F4F5F7', fg: st === 'ok' ? '#17703F' : st === 'run' ? '#2F2D86' : '#5E6676' });
+    const base = { hasBar: false, hasSteps: false, steps: [], hasLink: false, link: '', href: '', pct: 0, noteFg: '#5E6676' };
+    return {
+      items: [
+        Object.assign({}, base, { icon: 'upload', bg: '#E7E7F4', fg: '#2F2D86', name: 'Rechnung_Okt_Hosting.pdf', size: '284 KB', status: 'Hochladen 64 %', cls: 't-blue', hasBar: true, pct: 64, note: 'Wird in den Staging-Bereich übertragen …' }),
+        Object.assign({}, base, { icon: 'settings', bg: '#E7E7F4', fg: '#2F2D86', name: 'xrechnung_2026_1194.xml', size: '41 KB', status: 'In Verarbeitung', cls: 't-blue', hasSteps: true, note: 'E-Rechnung erkannt: XML ist maßgeblich, kein Document Intelligence nötig.',
+          steps: [S('Dubletten-Check', 'ok'), S('Format: XRechnung', 'ok'), S('KoSIT-Validierung', 'run'), S('Korrespondent', ''), S('Positionen', ''), S('Zuordnung', ''), S('Prüfungen', ''), S('Ablage', '')] }),
+        Object.assign({}, base, { icon: 'task_alt', bg: '#E5F4EC', fg: '#17703F', name: 'Scan_20261123_0915.pdf', size: '388 KB', status: 'Fertig', cls: 't-green', hasLink: true, link: 'Beleg öffnen', href: 'BelegDetail.dc.html', note: 'Druckerei Weller · 26-0931 · 96,40 € · Inbox' }),
+        Object.assign({}, base, { icon: 'content_copy', bg: '#FDF0E3', fg: '#A44A06', name: 'rechnung_weller_kopie.pdf', size: '371 KB', status: 'Dublette', cls: 't-orange', hasLink: true, link: 'Original ansehen', href: 'BelegDetail.dc.html', note: 'Identische Datei (SHA-256) wie Beleg 26-0912 vom 12.11.2026 – als Dublette verknüpft, nicht doppelt gezählt.', noteFg: '#A44A06' }),
+        Object.assign({}, base, { icon: 'error', bg: '#FDECEA', fg: '#B42318', name: 'foto_beleg.heic', size: '2,1 MB', status: 'Abgelehnt', cls: 't-red', note: 'Format nicht unterstützt. Erlaubt sind PDF, XML, PNG, JPG und TIFF.', noteFg: '#B42318' })
+      ],
+      runs: [
+        { when: '23.11.2026 09:48', icon: 'upload', src: 'Upload', her1: 'Rechnung_Okt_Hosting.pdf', her2: 'M. Keller', status: 'läuft', cls: 't-blue', tries: '1', res: '—' },
+        { when: '23.11.2026 09:46', icon: 'mail', src: 'E-Mail', her1: '„Ihre Rechnung 2026-1194“', her2: 'von rechnung@stadtwerke-lindenau.de · 1 Anhang', status: 'läuft', cls: 't-blue', tries: '1', res: 'Mail → Verarbeitet' },
+        { when: '23.11.2026 09:15', icon: 'folder_open', src: 'Ordner', her1: 'Scan_20261123_0915.pdf', her2: 'Rechnungen-Eingang', status: 'fertig', cls: 't-green', tries: '1', res: '1 Beleg angelegt' },
+        { when: '23.11.2026 08:02', icon: 'mail', src: 'E-Mail', her1: '„Newsletter November“', her2: 'von info@hostwerk-sued.de · kein Anhang', status: 'ohne Beleg', cls: 't-gray', tries: '1', res: 'Mail → Ohne Beleg' },
+        { when: '22.11.2026 16:30', icon: 'folder_open', src: 'Ordner', her1: 'Scan_20261122_1629.pdf', her2: 'Rechnungen-Eingang · 3 Seiten', status: 'wartet', cls: 't-orange', tries: '3 / 5', res: 'Document Intelligence nicht erreichbar · nächster Versuch 10:12' },
+        { when: '22.11.2026 11:05', icon: 'upload', src: 'Upload', her1: 'foto_beleg.heic', her2: 'A. Lehmann', status: 'Fehler', cls: 't-red', tries: '1', res: 'Format nicht unterstützt' },
+        { when: '21.11.2026 14:20', icon: 'smart_toy', src: 'MCP', her1: 'hardware_rechnung.pdf', her2: 'Token „Claude Desktop“', status: 'fertig', cls: 't-green', tries: '1', res: '1 Beleg angelegt' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

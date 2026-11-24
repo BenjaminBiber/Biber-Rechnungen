@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Tags und Kategorien</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Material+Symbols+Outlined&display=block">
+<style>
+body{margin:0;background:#F4F5F7}
+a{color:#2F2D86}a:hover{color:#24226B}
+.material-symbols-outlined{font-size:20px;line-height:1;vertical-align:-5px}
+.card{background:#FFFFFF;border:1px solid #E3E6EB;border-radius:12px;box-sizing:border-box}
+.btn{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:8px;border:1px solid #D5D9E0;background:#FFFFFF;color:#151922;font:500 14px 'IBM Plex Sans',sans-serif;text-decoration:none;cursor:pointer;white-space:nowrap;box-sizing:border-box}
+.btn:hover{background:#F0F2F5;color:#151922}
+.btn-p{background:#2F2D86;border-color:#2F2D86;color:#FFFFFF}.btn-p:hover{background:#24226B;color:#FFFFFF}
+.chip{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border-radius:11px;font:500 12px 'IBM Plex Sans',sans-serif;white-space:nowrap}
+.t-blue{background:#E7E7F4;color:#2F2D86}.t-orange{background:#FDF0E3;color:#A44A06}.t-green{background:#E5F4EC;color:#17703F}.t-red{background:#FDECEA;color:#B42318}.t-gray{background:#EEF0F3;color:#4A5262}.t-teal{background:#E1F3F4;color:#0E6168}.t-purple{background:#F0EAFB;color:#5B2EA6}
+.inp{height:36px;box-sizing:border-box;border:1px solid #D5D9E0;border-radius:8px;padding:0 10px;font:400 14px 'IBM Plex Sans',sans-serif;color:#151922;background:#FFFFFF;width:100%}
+.lbl{display:block;font:500 12px 'IBM Plex Sans',sans-serif;color:#4A5262;margin-bottom:4px}
+.tbl{width:100%;border-collapse:collapse;font:400 14px 'IBM Plex Sans',sans-serif}
+.tbl th{text-align:left;font:600 12px 'IBM Plex Sans',sans-serif;color:#4A5262;padding:10px 12px;border-bottom:1px solid #E3E6EB;white-space:nowrap;background:#FAFBFC}
+.tbl td{padding:10px 12px;border-bottom:1px solid #EEF0F3;vertical-align:middle}
+.mono{font-family:'IBM Plex Mono',monospace;font-size:13px}
+.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.muted{color:#5E6676}
+.h2{margin:0;font:600 16px 'IBM Plex Sans',sans-serif;color:#151922}
+.rad{display:flex;gap:10px;align-items:flex-start;padding:9px 10px;border:1px solid #E3E6EB;border-radius:8px;font-size:13px;cursor:pointer}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 100vh; font-family: 'IBM Plex Sans', sans-serif; color: #151922; background: #F4F5F7">
+  <div style="flex: 1 1 232px; background: #2F2D86"><dc-import name="Sidebar" active="tags" hint-size="100%,900px"></dc-import></div>
+  <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <dc-import name="Topbar" hint-size="100%,64px"></dc-import>
+    <main style="width: 100%; box-sizing: border-box; padding: 28px 32px 56px; display: flex; flex-direction: column; gap: 16px">
+      <div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+        <div>
+          <h1 style="margin: 0; font-size: 26px; font-weight: 600">Tags &amp; Kategorien</h1>
+          <p class="muted" style="margin: 4px 0 0; font-size: 14px">Tags sind frei und mehrfach je Beleg. Jeder Beleg hat höchstens eine Kategorie, optional mit EÜR-Zeile für den Export.</p>
+        </div>
+        <button type="button" class="btn btn-p" onClick="{{ openNew }}"><span class="material-symbols-outlined" aria-hidden="true">add</span>{{ addLabel }}</button>
+      </div>
+      <div role="tablist" aria-label="Verwaltung" style="display: flex; gap: 4px; border-bottom: 1px solid #E3E6EB">
+        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="2">
+          <button type="button" role="tab" aria-selected="{{ t.sel }}" onClick="{{ t.pick }}" style="height: 40px; padding: 0 12px; border: 0; border-bottom: 2px solid {{ t.line }}; margin-bottom: -1px; background: transparent; font: 500 14px 'IBM Plex Sans', sans-serif; color: {{ t.fg }}; cursor: pointer">{{ t.label }}</button>
+        </sc-for>
+      </div>
+
+      <div class="card" style="overflow-x: auto">
+          <sc-if value="{{ isTags }}" hint-placeholder-val="{{ true }}">
+            <table class="tbl" style="min-width: 600px">
+              <thead><tr><th scope="col">Tag</th><th scope="col">Sonderform</th><th scope="col">Matching</th><th scope="col" class="num">Belege</th><th scope="col"><span style="position: absolute; left: -9999px">Bearbeiten</span></th></tr></thead>
+              <tbody>
+                <sc-for list="{{ tags }}" as="r" hint-placeholder-count="7">
+                  <tr style="background: {{ r.bg }}">
+                    <td><span class="chip {{ r.cls }}">{{ r.name }}</span></td>
+                    <td style="font-size: 13px">{{ r.typ }}</td>
+                    <td style="font-size: 13px; color: #4A5262">{{ r.match }}</td>
+                    <td class="num">{{ r.n }}</td>
+                    <td style="text-align: right"><button type="button" onClick="{{ r.pick }}" class="btn" style="height: 30px; padding: 0 10px; font-size: 13px">Bearbeiten</button></td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </sc-if>
+          <sc-if value="{{ isKat }}" hint-placeholder-val="{{ false }}">
+            <table class="tbl" style="min-width: 640px">
+              <thead><tr><th scope="col">Kategorie</th><th scope="col">EÜR-Zeile</th><th scope="col">Matching</th><th scope="col" class="num">Belege 2026</th><th scope="col" class="num">Summe 2026</th><th scope="col"><span style="position: absolute; left: -9999px">Bearbeiten</span></th></tr></thead>
+              <tbody>
+                <sc-for list="{{ kats }}" as="r" hint-placeholder-count="6">
+                  <tr style="background: {{ r.bg }}">
+                    <td><span style="display: inline-flex; align-items: center; gap: 8px; font-weight: 500"><span style="width: 10px; height: 10px; border-radius: 2px; background: {{ r.c }}"></span>{{ r.name }}</span></td>
+                    <td style="font-size: 13px; color: {{ r.euFg }}">{{ r.eur }}</td>
+                    <td style="font-size: 13px; color: #4A5262">{{ r.match }}</td>
+                    <td class="num">{{ r.n }}</td>
+                    <td class="num" style="font-weight: 600">{{ r.sum }}</td>
+                    <td style="text-align: right"><button type="button" onClick="{{ r.pick }}" class="btn" style="height: 30px; padding: 0 10px; font-size: 13px">Bearbeiten</button></td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </sc-if>
+      </div>
+
+      <sc-if value="{{ open }}" hint-placeholder-val="{{ true }}">
+      <div style="position: fixed; inset: 0; z-index: 10; background: rgba(21,25,34,0.45); display: flex; align-items: center; justify-content: center; padding: 24px; box-sizing: border-box">
+        <div role="dialog" aria-modal="true" aria-labelledby="dlg-title" class="card" style="width: 100%; max-width: 560px; max-height: calc(100vh - 48px); overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 16px; border: 0; box-shadow: 0 24px 60px rgba(21,25,34,0.35)">
+          <div style="display: flex; justify-content: space-between; align-items: center"><h2 id="dlg-title" class="h2" style="font-size: 18px">{{ ed.title }}</h2><button type="button" onClick="{{ close }}" aria-label="Schließen" style="width: 32px; height: 32px; border: 0; border-radius: 6px; background: transparent; cursor: pointer; color: #4A5262"><span class="material-symbols-outlined" aria-hidden="true">close</span></button></div>
+          <div><label class="lbl" for="en">Name</label><input id="en" class="inp" value="{{ ed.name }}"></div>
+          <sc-if value="{{ isTags }}" hint-placeholder-val="{{ true }}">
+            <div style="display: flex; flex-direction: column; gap: 16px">
+              <div><span class="lbl">Farbe</span>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap">
+                  <sc-for list="{{ colors }}" as="c" hint-placeholder-count="7"><button type="button" aria-label="{{ c.name }}" style="width: 30px; height: 30px; border-radius: 15px; background: {{ c.bg }}; border: 2px solid {{ c.ring }}; cursor: pointer"></button></sc-for>
+                </div></div>
+              <div><span class="lbl">Sonderform</span>
+                <div style="display: flex; flex-direction: column; gap: 6px">
+                  <label class="rad"><input type="radio" name="sf" checked="{{ ed.sfNone }}">Keine</label>
+                  <label class="rad"><input type="radio" name="sf" checked="{{ ed.sfInbox }}"><span><strong>Inbox-Tag</strong><br><span class="muted">wird jedem neuen Beleg automatisch gesetzt</span></span></label>
+                  <label class="rad"><input type="radio" name="sf" checked="{{ ed.sfPay }}"><span><strong>Zahlungs-Tag</strong><br><span class="muted">markiert als bezahlt – ohne Datum; offen = kein Zahlungs-Tag</span></span></label>
+                </div></div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ isKat }}" hint-placeholder-val="{{ false }}">
+            <div><label class="lbl" for="eu">EÜR-Zeile (optional)</label><input id="eu" class="inp" value="{{ ed.eur }}"><span class="muted" style="font-size: 12px">Wird in „Summen je Kategorie“ im Export mit ausgegeben.</span></div>
+          </sc-if>
+          <div style="border-top: 1px solid #EEF0F3; padding-top: 16px; display: flex; flex-direction: column; gap: 10px">
+            <span class="lbl" style="margin: 0">Matching – automatisch zuweisen, wenn …</span>
+            <select class="inp" aria-label="Algorithmus">
+              <option>Ein Wort trifft zu</option><option>Alle Wörter treffen zu</option><option>Exakte Zeichenfolge</option><option>Regulärer Ausdruck</option><option>Unscharf (ähnlich)</option><option>Auto (ML.NET, aus bisherigen Zuweisungen)</option><option>Keiner</option>
+            </select>
+            <input class="inp mono" aria-label="Muster" value="{{ ed.muster }}">
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #4A5262"><input type="checkbox" style="width: 16px; height: 16px">Groß-/Kleinschreibung beachten</label>
+            <div style="display: flex; gap: 10px; padding: 10px 12px; border-radius: 8px; background: #F4F5F7; font-size: 13px; color: #4A5262"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px">science</span><span>{{ ed.test }}</span></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap">
+            <sc-if value="{{ ed.canDelete }}" hint-placeholder-val="{{ true }}"><button type="button" class="btn" style="color: #B42318">Löschen</button></sc-if>
+            <span style="display: flex; gap: 8px; margin-left: auto"><button type="button" class="btn" onClick="{{ close }}">Abbrechen</button><button type="button" class="btn btn-p" onClick="{{ close }}">Speichern</button></span>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+      <p class="muted" style="margin: 0; font-size: 12px; display: flex; gap: 6px; align-items: center"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 16px">lock</span>„zu prüfen“ ist ein System-Tag: Ihn setzt nur die Pipeline, entfernt wird er nur durch „Bestätigen“. Er kann nicht bearbeitet oder gelöscht werden.</p>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":1200}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { tab: 'tags', tag: 'pp', kat: 'k2', open: true, neu: false }; }
+  renderVals() {
+    const s = this.state, t = s.tab;
+    const tb = (id, label) => ({ label, sel: t === id ? 'true' : 'false', pick: () => this.setState({ tab: id, open: false }), line: t === id ? '#2F2D86' : 'transparent', fg: t === id ? '#151922' : '#4A5262' });
+    const tagRaw = [
+      ['inbox', 'Inbox', 't-blue', 'Inbox-Tag', '—', 12, 'Keiner', '', 'Wird automatisch gesetzt.'],
+      ['pruef', 'zu prüfen', 't-orange', 'System', '—', 5, 'Keiner', '', 'Nur durch die Pipeline.'],
+      ['bez', 'bezahlt', 't-green', 'Zahlungs-Tag', 'Keiner', 214, 'Keiner', '', 'Manuell oder per Massenaktion.'],
+      ['pp', 'bezahlt PayPal', 't-teal', 'Zahlungs-Tag', 'Ein Wort: paypal', 37, 'Ein Wort trifft zu', 'paypal', 'Trifft auf 37 von 248 Belegen zu – zuletzt HVN-552190.'],
+      ['ls', 'Lastschrift', 't-purple', 'Zahlungs-Tag', 'Regex', 58, 'Regulärer Ausdruck', 'lastschrift|sepa-mandat|wird .* abgebucht', 'Trifft auf 58 von 248 Belegen zu.'],
+      ['afa', 'Anlage / AfA', 't-gray', '—', 'Keiner', 6, 'Keiner', '', 'Kein Matching aktiv.'],
+      ['reise', 'Reisekosten', 't-red', '—', 'Alle Wörter: hotel übernachtung', 14, 'Alle Wörter treffen zu', 'hotel übernachtung', 'Trifft auf 14 von 248 Belegen zu.']
+    ];
+    const katRaw = [
+      ['k1', 'Software & Hosting', '#2F2D86', 'Übrige Betriebsausgaben', 'Auto', 23, '5.188,00 €', 'Auto: 23 Zuweisungen gelernt, Trefferquote 96 %'],
+      ['k2', 'Telekommunikation', '#5B8DEF', 'Telekommunikation', 'Ein Wort: mobilfunk', 11, '2.033,00 €', 'Trifft auf 11 Belege zu.'],
+      ['k3', 'Bürobedarf', '#E3893B', 'Bürobedarf', 'Auto', 31, '2.223,00 €', 'Auto: 31 Zuweisungen gelernt.'],
+      ['k4', 'Fahrzeug', '#1F8A70', 'Kfz-Kosten (Leasing)', 'Exakt: Leasingrate', 22, '5.639,00 €', 'Trifft auf 22 Belege zu.'],
+      ['k5', 'Hardware', '#9AA4B5', 'GWG / AfA prüfen', 'Keiner', 8, '3.808,50 €', 'Kein Matching aktiv.'],
+      ['k6', 'Sonstiges', '#CFCEEA', '', 'Keiner', 41, '2.132,90 €', 'Kein Matching aktiv.']
+    ];
+    const tags = tagRaw.map((r) => ({ name: r[1], cls: r[2], typ: r[3], match: r[4], n: r[5], bg: s.tag === r[0] && t === 'tags' ? '#F1F1F9' : '#FFFFFF', pick: () => this.setState({ tag: r[0], open: true, neu: false }) }));
+    const kats = katRaw.map((r) => ({ name: r[1], c: r[2], eur: r[3] || 'nicht gesetzt', euFg: r[3] ? '#151922' : '#5E6676', match: r[4], n: r[5], sum: r[6], bg: s.kat === r[0] && t === 'kat' ? '#F1F1F9' : '#FFFFFF', pick: () => this.setState({ kat: r[0], open: true, neu: false }) }));
+    const tg = tagRaw.find((r) => r[0] === s.tag), kt = katRaw.find((r) => r[0] === s.kat);
+    const ed = t === 'tags'
+      ? { title: 'Tag bearbeiten', name: tg[1], muster: tg[7], test: tg[8], eur: '', sfNone: tg[3] === '—', sfInbox: tg[3] === 'Inbox-Tag', sfPay: tg[3] === 'Zahlungs-Tag' }
+      : { title: 'Kategorie bearbeiten', name: kt[1], muster: kt[4].indexOf(':') > 0 ? kt[4].split(': ')[1] : '', test: kt[7], eur: kt[3], sfNone: true, sfInbox: false, sfPay: false };
+    if (s.neu) Object.assign(ed, { title: t === 'tags' ? 'Neuer Tag' : 'Neue Kategorie', name: '', muster: '', eur: '', test: 'Noch kein Muster – nach dem Speichern wird gegen alle Belege getestet.', sfNone: true, sfInbox: false, sfPay: false });
+    ed.canDelete = !s.neu;
+    const cl = [['Blau', '#5B8DEF'], ['Petrol', '#1F8A70'], ['Grün', '#3BA55C'], ['Orange', '#E3893B'], ['Rot', '#D64541'], ['Lila', '#8B5CF6'], ['Grau', '#9AA4B5']];
+    return {
+      isTags: t === 'tags', isKat: t === 'kat', tabs: [tb('tags', 'Tags (7)'), tb('kat', 'Kategorien (6)')],
+      addLabel: t === 'tags' ? 'Neuer Tag' : 'Neue Kategorie', tags, kats, ed,
+      open: !!s.open, close: () => this.setState({ open: false, neu: false }), openNew: () => this.setState({ open: true, neu: true }),
+      colors: cl.map((c, i) => ({ name: c[0], bg: c[1], ring: i === 1 ? '#151922' : '#FFFFFF' }))
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Mobile Navigation</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Material+Symbols+Outlined&display=block">
+<style>body{margin:0}</style>
+</helmet>
+<nav aria-label="Hauptnavigation" style="width: 100%; height: 84px; box-sizing: border-box; padding: 6px 8px 22px; display: flex; align-items: stretch; background: #FFFFFF; border-top: 1px solid #E3E6EB; font-family: 'IBM Plex Sans', sans-serif">
+  <sc-for list="{{ items }}" as="i" hint-placeholder-count="5">
+    <a href="{{ i.href }}" aria-label="{{ i.aria }}" title="{{ i.label }}" aria-current="{{ i.cur }}" style="flex: 1; display: flex; align-items: center; justify-content: center; text-decoration: none">
+      <span style="position: relative; display: flex; align-items: center; justify-content: center; box-sizing: border-box; width: {{ i.size }}px; height: {{ i.hh }}px; border-radius: {{ i.rad }}; border: {{ i.bd }}; background: {{ i.bg }}; color: {{ i.icFg }}">
+        <span class="material-symbols-outlined" aria-hidden="true" style="font-size: {{ i.fs }}px; line-height: 1; transition: font-size 150ms ease-out">{{ i.icon }}</span>
+        <sc-if value="{{ i.hasBadge }}" hint-placeholder-val="{{ false }}"><span style="position: absolute; top: -2px; right: 8px; min-width: 16px; height: 16px; border-radius: 8px; background: #B42318; color: #FFFFFF; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; border: 2px solid #FFFFFF">{{ i.badge }}</span></sc-if>
+      </span>
+    </a>
+  </sc-for>
+</nav>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"active":{"editor":"enum","options":["start","belege","upload","glocke","mehr"],"default":"start"},"$preview":{"width":390,"height":84}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const a = this.props.active ?? 'start';
+    const it = (id, icon, label, href, badge) => {
+      const on = id === a, up = id === 'upload';
+      return { icon, label, href, aria: label + (badge ? ', ' + badge + ' neu' : ''), badge: badge || '', hasBadge: !!badge,
+        cur: on ? 'page' : 'false',
+        size: up ? 44 : 56, hh: up ? 44 : 36,
+        rad: up ? '50%' : '18px',
+        bd: up ? '2px solid ' + (on ? '#2F2D86' : '#4A5262') : '0',
+        bg: 'transparent',
+        fs: on ? 32 : 26,
+        icFg: on ? '#2F2D86' : '#4A5262' };
+    };
+    return { items: [
+      it('start', 'space_dashboard', 'Übersicht', 'MobilDashboard.dc.html'),
+      it('belege', 'receipt_long', 'Belege', 'MobilBelege.dc.html'),
+      it('upload', 'add', 'Hochladen', 'MobilUpload.dc.html'),
+      it('glocke', 'notifications', 'Meldungen', 'MobilDashboard.dc.html', '3'),
+      it('mehr', 'menu', 'Mehr', 'MobilDashboard.dc.html')
+    ] };
+  }
+}
+</script>
+</body>
+</html>

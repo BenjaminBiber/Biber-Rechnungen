@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Seitenleiste</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=Material+Symbols+Outlined&amp;display=block">
+<style>body{margin:0}</style>
+</helmet>
+<nav aria-label="Hauptnavigation" style="width: 100%; min-height: 100%; box-sizing: border-box; padding: 20px 14px; display: flex; flex-direction: column; gap: 22px; background: #2F2D86; font-family: 'IBM Plex Sans', sans-serif; color: #FFFFFF">
+  <a href="Main.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 4px 8px; text-decoration: none">
+    <span style="display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 9px; background: #FFFFFF; color: #2F2D86; font-weight: 700; font-size: 17px">B</span>
+    <span style="display: flex; flex-direction: column">
+      <span style="font-weight: 600; font-size: 15px; color: #FFFFFF; line-height: 1.2">Biber-Rechnungen</span>
+      <span style="font-size: 12px; color: #FFFFFF">Belegarchiv</span>
+    </span>
+  </a>
+  <sc-for list="{{ groups }}" as="g" hint-placeholder-count="4">
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <div style="padding: 0 12px 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #A9A8D6">{{ g.label }}</div>
+      <sc-for list="{{ g.items }}" as="item" hint-placeholder-count="3">
+        <a href="{{ item.href }}" style="display: flex; align-items: center; gap: 12px; height: 40px; padding: 0 12px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 500; background: {{ item.bg }}; color: {{ item.fg }}">
+          <span class="material-symbols-outlined" aria-hidden="true" style="font-size: 20px">{{ item.icon }}</span>
+          <span style="flex: 1; color: #FFFFFF">{{ item.label }}</span>
+          <sc-if value="{{ item.hasBadge }}" hint-placeholder-val="{{ false }}">
+            <span style="min-width: 22px; height: 20px; padding: 0 6px; box-sizing: border-box; border-radius: 10px; background: #5654A8; color: #FFFFFF; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">{{ item.badge }}</span>
+          </sc-if>
+        </a>
+      </sc-for>
+    </div>
+  </sc-for>
+</nav>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"active":{"editor":"enum","options":["dashboard","belege","upload","korrespondenten","artikel","tags","export","einstellungen"],"default":"dashboard"},"$preview":{"width":240,"height":940}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const a = this.props.active ?? 'dashboard';
+    const it = (id, icon, label, href, badge) => ({
+      id, icon, label, href, badge: badge || '', hasBadge: !!badge,
+      bg: id === a ? '#45439A' : 'transparent',
+      fg: id === a ? '#FFFFFF' : '#FFFFFF'
+    });
+    return {
+      groups: [
+        { label: 'Übersicht', items: [
+          it('dashboard', 'space_dashboard', 'Dashboard', 'Main.dc.html'),
+          it('belege', 'receipt_long', 'Belege', 'Belege.dc.html', '12'),
+          it('upload', 'upload_file', 'Hochladen', 'Upload.dc.html')
+        ]},
+        { label: 'Stammdaten', items: [
+          it('korrespondenten', 'storefront', 'Korrespondenten', 'Korrespondenten.dc.html'),
+          it('artikel', 'inventory_2', 'Artikel', 'Artikel.dc.html'),
+          it('tags', 'sell', 'Tags & Kategorien', 'TagsKategorien.dc.html')
+        ]},
+        { label: 'Auswertung', items: [
+          it('export', 'download', 'Export', 'Export.dc.html')
+        ]},
+        { label: 'System', items: [
+          it('einstellungen', 'settings', 'Einstellungen', 'Einstellungen.dc.html')
+        ]}
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

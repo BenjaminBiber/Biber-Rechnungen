@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Einstellungen</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=Material+Symbols+Outlined&amp;display=block">
+<style>
+body{margin:0;background:#F4F5F7}
+a{color:#2F2D86}a:hover{color:#24226B}
+.material-symbols-outlined{font-size:20px;line-height:1;vertical-align:-5px}
+.card{background:#FFFFFF;border:1px solid #E3E6EB;border-radius:12px;box-sizing:border-box}
+.btn{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:8px;border:1px solid #D5D9E0;background:#FFFFFF;color:#151922;font:500 14px 'IBM Plex Sans',sans-serif;text-decoration:none;cursor:pointer;white-space:nowrap;box-sizing:border-box}
+.btn:hover{background:#F0F2F5;color:#151922}
+.btn-p{background:#2F2D86;border-color:#2F2D86;color:#FFFFFF}.btn-p:hover{background:#24226B;color:#FFFFFF}
+.btn-s{height:30px;padding:0 10px;font-size:13px}
+.chip{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border-radius:11px;font:500 12px 'IBM Plex Sans',sans-serif;white-space:nowrap}
+.t-blue{background:#E7E7F4;color:#2F2D86}.t-orange{background:#FDF0E3;color:#A44A06}.t-green{background:#E5F4EC;color:#17703F}.t-red{background:#FDECEA;color:#B42318}.t-gray{background:#EEF0F3;color:#4A5262}
+.inp{height:36px;box-sizing:border-box;border:1px solid #D5D9E0;border-radius:8px;padding:0 10px;font:400 14px 'IBM Plex Sans',sans-serif;color:#151922;background:#FFFFFF;width:100%}
+.inp[readonly]{background:#F4F5F7;color:#4A5262}
+.lbl{display:block;font:500 12px 'IBM Plex Sans',sans-serif;color:#4A5262;margin-bottom:4px}
+.hint{font-size:12px;color:#5E6676;margin-top:4px;display:block}
+.tbl{width:100%;border-collapse:collapse;font:400 14px 'IBM Plex Sans',sans-serif}
+.tbl th{text-align:left;font:600 12px 'IBM Plex Sans',sans-serif;color:#4A5262;padding:9px 12px;border-bottom:1px solid #E3E6EB;white-space:nowrap;background:#FAFBFC}
+.tbl td{padding:9px 12px;border-bottom:1px solid #EEF0F3;vertical-align:middle}
+.mono{font-family:'IBM Plex Mono',monospace;font-size:13px}
+.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.muted{color:#5E6676}
+.h2{margin:0;font:600 18px 'IBM Plex Sans',sans-serif;color:#151922}
+.h3{margin:0;font:600 15px 'IBM Plex Sans',sans-serif;color:#151922}
+.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:14px 0;border-top:1px solid #EEF0F3}
+.sw{position:relative;display:inline-block;width:40px;height:24px;border-radius:12px;flex:none}
+.sw span{position:absolute;top:3px;width:18px;height:18px;border-radius:9px;background:#FFFFFF;box-shadow:0 1px 2px rgba(0,0,0,0.2)}
+.on{background:#2F2D86}.on span{left:19px}.off{background:#C9CED6}.off span{left:3px}
+.rad{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border:1px solid #E3E6EB;border-radius:10px;font-size:14px;cursor:pointer}
+.code{background:#2F2D86;color:#DEDDF0;border-radius:8px;padding:12px 14px;font:400 12px/1.6 'IBM Plex Mono',monospace;white-space:pre;overflow-x:auto;margin:0}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 100vh; font-family: 'IBM Plex Sans', sans-serif; color: #151922; background: #F4F5F7">
+  <div style="flex: 1 1 232px; background: #2F2D86"><dc-import name="Sidebar" active="einstellungen" hint-size="100%,900px"></dc-import></div>
+  <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <dc-import name="Topbar" hint-size="100%,64px"></dc-import>
+    <main style="width: 100%; box-sizing: border-box; padding: 28px 32px 56px; display: flex; flex-direction: column; gap: 20px">
+      <div><h1 style="margin: 0; font-size: 26px; font-weight: 600">Einstellungen</h1></div>
+      <div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+        <nav aria-label="Einstellungsbereiche" style="flex: 1 1 220px; max-width: 100%; display: flex; flex-direction: column; gap: 14px">
+          <sc-for list="{{ groups }}" as="g" hint-placeholder-count="3">
+            <div style="display: flex; flex-direction: column; gap: 2px">
+              <span style="padding: 0 10px 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #5E6676">{{ g.label }}</span>
+              <sc-for list="{{ g.items }}" as="i" hint-placeholder-count="4">
+                <button type="button" onClick="{{ i.pick }}" aria-current="{{ i.cur }}" style="display: flex; align-items: center; gap: 10px; height: 38px; padding: 0 10px; border: 0; border-radius: 8px; background: {{ i.bg }}; color: {{ i.fg }}; font: 500 14px 'IBM Plex Sans', sans-serif; text-align: left; cursor: pointer">
+                  <span class="material-symbols-outlined" aria-hidden="true">{{ i.icon }}</span><span style="flex: 1">{{ i.label }}</span>
+                  <sc-if value="{{ i.hasBadge }}" hint-placeholder-val="{{ false }}"><span class="chip {{ i.cls }}" style="height: 20px">{{ i.badge }}</span></sc-if>
+                </button>
+              </sc-for>
+            </div>
+          </sc-for>
+        </nav>
+
+        <section class="card" style="flex: 999 1 560px; min-width: 0; padding: 24px; display: flex; flex-direction: column; gap: 18px">
+
+          <sc-if value="{{ s.allgemein }}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; gap: 18px">
+              <h2 class="h2">Allgemein</h2>
+              <div class="g2">
+                <div><label class="lbl" for="a1">Firmenname (für Exporte)</label><input id="a1" class="inp" value="Musterfirma GmbH"></div>
+                <div><label class="lbl" for="a2">Standardwährung</label><select id="a2" class="inp"><option>EUR</option></select><span class="hint">Fremdwährungen werden gespeichert, ausgewertet wird nur EUR.</span></div>
+                <div><label class="lbl" for="a3">Zeitzone</label><select id="a3" class="inp"><option>Europe/Berlin</option></select></div>
+                <div><label class="lbl" for="a4">Inbox-Tag</label><select id="a4" class="inp"><option>Inbox</option></select></div>
+                <div><label class="lbl" for="a5">Ablage</label><input id="a5" class="inp mono" readonly="" value="/srv/rechnungen/ablage"><span class="hint">Muster: {Jahr}/{Korrespondent}/{Datum}_{Rechnungsnr}.{ext}</span></div>
+                <div><label class="lbl" for="a6">Adresse im LAN</label><input id="a6" class="inp mono" readonly="" value="https://rechnungen.&lt;domain&gt;"></div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ s.ust }}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; gap: 14px">
+              <h2 class="h2">Umsatzsteuer</h2>
+              <p class="muted" style="margin: 0; font-size: 14px">Steuert die §-14-Prüfung, die Vorsteuer-Kachel im Dashboard und den Vorsteuer-Export.</p>
+              <label class="rad"><input type="radio" name="u"><span><strong>Regelbesteuerung</strong><br><span class="muted" style="font-size: 13px">Vorsteuer-Ansichten sichtbar, volle § 14-Prüfung</span></span></label>
+              <label class="rad"><input type="radio" name="u"><span><strong>Kleinunternehmer (§ 19 UStG)</strong><br><span class="muted" style="font-size: 13px">Vorsteuer-Ansichten ausgeblendet, § 14-Prüfung aus</span></span></label>
+              <label class="rad" style="border-color: #A9A8D6; background: #F7F7FC"><input type="radio" name="u" checked=""><span><strong>Unbekannt</strong> <span class="chip t-gray">Standard</span><br><span class="muted" style="font-size: 13px">wie Regelbesteuerung, bis der Status geklärt ist</span></span></label>
+              <div style="max-width: 320px"><label class="lbl" for="u2">UStVA-Zeitraum</label><select id="u2" class="inp"><option>Quartalsweise</option><option>Monatlich</option><option>Jährlich</option></select></div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ s.pruef }}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column">
+              <h2 class="h2" style="margin-bottom: 4px">Prüfungen &amp; Schwellen</h2>
+              <p class="muted" style="margin: 0 0 10px; font-size: 14px">Schlägt eine aktive Prüfung fehl, bekommt der Beleg „zu prüfen“ mit Begründung.</p>
+              <sc-for list="{{ checks }}" as="c" hint-placeholder-count="9">
+                <div class="row">
+                  <span style="flex: 1 1 280px"><strong style="font-size: 14px">{{ c.name }}</strong><br><span class="muted" style="font-size: 13px">{{ c.detail }}</span></span>
+                  <sc-if value="{{ c.hasVal }}" hint-placeholder-val="{{ false }}"><span style="display: flex; align-items: center; gap: 6px; font-size: 13px"><input class="inp num" aria-label="{{ c.valLabel }}" value="{{ c.val }}" style="width: 90px"><span class="muted">{{ c.unit }}</span></span></sc-if>
+                  <span class="sw {{ c.sw }}" role="switch" aria-checked="{{ c.on }}" aria-label="{{ c.name }}"><span></span></span>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ s.di }}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; gap: 18px">
+              <h2 class="h2">Document Intelligence</h2>
+              <div style="padding: 16px; border-radius: 10px; background: #F4F5F7; display: flex; flex-direction: column; gap: 8px">
+                <div style="display: flex; justify-content: space-between; font-size: 14px"><strong>November 2026</strong><span>412 / 500 Seiten · 82 %</span></div>
+                <div style="height: 10px; border-radius: 5px; background: #E3E6EB"><div style="width: 82%; height: 10px; border-radius: 5px; background: #E3893B"></div></div>
+                <span class="muted" style="font-size: 13px">Warteschlange: aktiv · 0 wartend · bei 100 % pausiert sie bis zum Monatswechsel oder bis zur Limit-Erhöhung</span>
+              </div>
+              <div class="g2">
+                <div><label class="lbl" for="d1">Monatslimit (Seiten)</label><input id="d1" class="inp num" value="500"></div>
+                <div><label class="lbl" for="d2">Benachrichtigen ab</label><input id="d2" class="inp num" value="80 %"></div>
+                <div><label class="lbl" for="d3">Max. Seiten je Beleg</label><input id="d3" class="inp num" value="10"><span class="hint">Längere Dokumente werden nicht ausgelesen, sondern „zu prüfen“.</span></div>
+                <div><label class="lbl" for="d4">Wiederholungen bei Fehler</label><input id="d4" class="inp num" readonly="" value="5 Versuche über ca. 1 Std."></div>
+                <div><label class="lbl" for="d5">Endpunkt (.env)</label><input id="d5" class="inp mono" readonly="" value="https://…westeurope.cognitiveservices.azure.com"></div>
+                <div><label class="lbl" for="d6">Modell</label><input id="d6" class="inp mono" readonly="" value="prebuilt-invoice"></div>
+              </div>
+              <div style="display: flex; gap: 8px"><button type="button" class="btn">Verbindung testen</button><button type="button" class="btn">Warteschlange jetzt fortsetzen</button></div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ s.mail }}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; gap: 18px">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap"><h2 class="h2">E-Mail-Import</h2><span class="chip t-green">verbunden · vor 3 Min.</span></div>
+              <div class="g2">
+                <div><label class="lbl" for="m1">IMAP-Server (.env)</label><input id="m1" class="inp mono" readonly="" value="imap.example-mail.de:993"></div>
+                <div><label class="lbl" for="m2">Benutzer (.env)</label><input id="m2" class="inp mono" readonly="" value="rechnungen@firma.de"></div>
+                <div><label class="lbl" for="m3">Abrufintervall</label><select id="m3" class="inp"><option>alle 5 Minuten</option><option>alle 15 Minuten</option></select></div>
+                <div><label class="lbl" for="m4">Eingangsordner</label><input id="m4" class="inp" value="INBOX"></div>
+                <div><label class="lbl" for="m5">Nach Verarbeitung verschieben nach</label><input id="m5" class="inp" value="Verarbeitet"></div>
+                <div><label class="lbl" for="m6">Mails ohne verwertbaren Anhang nach</label><input id="m6" class="inp" value="Ohne Beleg"></div>
+              </div>
+              <p class="muted" style="margin: 0; font-size: 13px">Übernommen werden nur Anhänge (PDF, XML, Bilder). Mails werden nie gelöscht. Die Absender-Domain wird für das Favicon gemerkt.</p>
+              <div style="display: flex; gap: 8px"><button type="button" class="btn">Verbindung testen</button><button type="button" class="btn">Jetzt abrufen</button></div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ s.ordner }}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; gap: 18px">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap"><h2 class="h2">Eingangsordner</h2><span class="chip t-green">überwacht</span></div>
+              <div class="g2">
+                <div><label class="lbl" for="o1">Pfad im Container</label><input id="o1" class="inp mono" readonly="" value="/srv/rechnungen/eingang"></div>
+                <div><label class="lbl" for="o2">Samba-Freigabe</label><input id="o2" class="inp mono" readonly="" value="\\nas\Rechnungen-Eingang"></div>
+                <div><label class="lbl" for="o3">Polling zusätzlich alle</label><input id="o3" class="inp num" value="30 s"></div>
+                <div><label class="lbl" for="o4">Übernahme, wenn Größe stabil seit</label><input id="o4" class="inp num" value="10 s"></div>
+              </div>
+              <div><span class="lbl">Akzeptierte Formate</span><div style="display: flex; gap: 6px; flex-wrap: wrap"><span class="chip t-gray">PDF</span><span class="chip t-gray">XML</span><span class="chip t-gray">PNG</span><span class="chip t-gray">JPG</span><span class="chip t-gray">TIFF</span></div></div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ s.aufbewahrung }}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; gap: 18px">
+              <h2 class="h2">Aufbewahrung &amp; Löschung</h2>
+              <div class="g2">
+                <div><label class="lbl" for="r1">Löschsperre</label><input id="r1" class="inp num" value="8 Jahre"><span class="hint">ab Ende des Belegjahres (§ 147 AO)</span></div>
+                <div><label class="lbl" for="r2">Belege 2026 gesperrt bis</label><input id="r2" class="inp" readonly="" value="31.12.2034"></div>
+              </div>
+              <div>
+                <h3 class="h3" style="margin-bottom: 8px">Löschung möglich</h3>
+                <div style="padding: 32px 20px; border: 1px dashed #C9CED6; border-radius: 10px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px">
+                  <span class="material-symbols-outlined" aria-hidden="true" style="font-size: 36px; color: #9AA4B5">lock_clock</span>
+                  <strong>Keine Belege mit abgelaufener Frist</strong>
+                  <span class="muted" style="font-size: 14px">Die ersten Belege werden frühestens am 01.01.2035 löschbar. Danach gibt der Admin sie hier frei; die App entfernt die Daten, die Datei auf dem WORM-Share löscht der Admin auf dem Host.</span>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ s.benutzer }}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; gap: 14px">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap"><h2 class="h2">Benutzer &amp; Freigaben</h2><button type="button" class="btn btn-p"><span class="material-symbols-outlined" aria-hidden="true">person_add</span>Benutzer anlegen</button></div>
+              <div role="alert" style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 10px; background: #E7E7F4; color: #2F2D86; font-size: 14px">
+                <span class="material-symbols-outlined" aria-hidden="true">person_add</span>
+                <span style="flex: 1 1 240px"><strong>Jonas Wagner</strong> hat sich gestern registriert und wartet auf Freigabe.</span>
+                <select aria-label="Rolle für Jonas Wagner" style="height: 32px; border: 1px solid #A9A8D6; border-radius: 6px; font: 400 13px 'IBM Plex Sans', sans-serif"><option>Benutzer</option><option>Nur-Lesen</option><option>Admin</option></select>
+                <button type="button" class="btn btn-s">Ablehnen</button><button type="button" class="btn btn-s btn-p">Freigeben</button>
+              </div>
+              <div style="overflow-x: auto">
+                <table class="tbl" style="min-width: 640px">
+                  <thead><tr><th scope="col">Name</th><th scope="col">Anmeldung</th><th scope="col">Rolle</th><th scope="col">2FA</th><th scope="col">Status</th><th scope="col">Zuletzt aktiv</th></tr></thead>
+                  <tbody>
+                    <tr><td><strong>Martin Keller</strong><br><span class="muted" style="font-size: 12px">m.keller@firma.de</span></td><td>Passwort</td><td>Admin</td><td><span class="chip t-green">TOTP</span></td><td><span class="chip t-green">aktiv</span></td><td>jetzt</td></tr>
+                    <tr><td><strong>Anna Lehmann</strong><br><span class="muted" style="font-size: 12px">a.lehmann@firma.de</span></td><td>Google</td><td>Benutzer</td><td><span class="chip t-gray">über Google</span></td><td><span class="chip t-green">aktiv</span></td><td>20.11.2026</td></tr>
+                    <tr><td><strong>Steuerbüro</strong><br><span class="muted" style="font-size: 12px">kanzlei@hofmann-partner.de</span></td><td>Passwort</td><td>Nur-Lesen</td><td><span class="chip t-green">TOTP</span></td><td><span class="chip t-green">aktiv</span></td><td>05.10.2026</td></tr>
+                    <tr><td><strong>Jonas Wagner</strong><br><span class="muted" style="font-size: 12px">j.wagner@firma.de</span></td><td>Passwort</td><td class="muted">—</td><td><span class="chip t-gray">nicht eingerichtet</span></td><td><span class="chip t-orange">wartet auf Freigabe</span></td><td>—</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="row"><span><strong style="font-size: 14px">Offene Registrierung</strong><br><span class="muted" style="font-size: 13px">Jeder im LAN kann ein Konto anlegen; es bleibt bis zur Freigabe gesperrt.</span></span><span class="sw on" role="switch" aria-checked="true" aria-label="Offene Registrierung"><span></span></span></div>
+              <div class="row"><span><strong style="font-size: 14px">Google-Anmeldung</strong><br><span class="muted" style="font-size: 13px">OIDC-Client aus der .env · Redirect unter der LAN-Domain</span></span><span class="sw on" role="switch" aria-checked="true" aria-label="Google-Anmeldung"><span></span></span></div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ s.tokens }}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; gap: 14px">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap"><h2 class="h2">API-Tokens (MCP)</h2><button type="button" class="btn btn-p"><span class="material-symbols-outlined" aria-hidden="true">add</span>Token erstellen</button></div>
+              <p class="muted" style="margin: 0; font-size: 14px">Für Claude Code und Claude Desktop. Tokens werden nur als Hash gespeichert und einmalig angezeigt.</p>
+              <div style="overflow-x: auto">
+                <table class="tbl" style="min-width: 620px">
+                  <thead><tr><th scope="col">Name</th><th scope="col">Scopes</th><th scope="col">Erstellt</th><th scope="col">Zuletzt genutzt</th><th scope="col"><span style="position: absolute; left: -9999px">Aktion</span></th></tr></thead>
+                  <tbody>
+                    <tr><td><strong>Claude Desktop</strong><br><span class="mono muted" style="font-size: 12px">brk_…7f3a</span></td><td><span class="chip t-blue">lesen</span> <span class="chip t-blue">upload</span></td><td>02.09.2026</td><td>21.11.2026 14:20</td><td><button type="button" class="btn btn-s" style="color: #B42318">Widerrufen</button></td></tr>
+                    <tr><td><strong>Claude Code (Laptop)</strong><br><span class="mono muted" style="font-size: 12px">brk_…c019</span></td><td><span class="chip t-blue">lesen</span></td><td>15.10.2026</td><td>22.11.2026 17:02</td><td><button type="button" class="btn btn-s" style="color: #B42318">Widerrufen</button></td></tr>
+                    <tr style="color: #5E6676"><td><strong>Test</strong><br><span class="mono" style="font-size: 12px">brk_…9921</span></td><td><span class="chip t-gray">lesen</span></td><td>01.08.2026</td><td>03.08.2026</td><td><span class="chip t-gray">widerrufen</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <h3 class="h3">Verbinden</h3>
+              <pre class="code">claude mcp add --transport http biber-rechnungen \
+  https://rechnungen.&lt;domain&gt;/mcp \
+  --header "Authorization: Bearer &lt;API-Token&gt;"</pre>
+              <span class="muted" style="font-size: 13px">Tools: belege_suchen, beleg_abrufen, kosten_auswerten, korrespondent_abrufen, artikel_suchen, artikel_preisverlauf, beleg_hochladen</span>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ s.integritaet }}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; gap: 16px">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap"><h2 class="h2">Integrität &amp; Sicherung</h2><button type="button" class="btn"><span class="material-symbols-outlined" aria-hidden="true">play_arrow</span>Prüfung jetzt starten</button></div>
+              <div class="g2">
+                <div style="padding: 16px; border-radius: 10px; background: #E5F4EC; color: #0F4F2C"><strong>Letzte Integritätsprüfung</strong><br>heute 03:00 · 2.184 Dateien · 0 Abweichungen · Dauer 4 Min.</div>
+                <div style="padding: 16px; border-radius: 10px; background: #E5F4EC; color: #0F4F2C"><strong>Letztes DB-Backup</strong><br>heute 02:00 · pg_dump 48 MB · 30 Tage rotierend</div>
+              </div>
+              <table class="tbl">
+                <thead><tr><th scope="col">Lauf</th><th scope="col" class="num">Dateien</th><th scope="col" class="num">Abweichungen</th><th scope="col">Ergebnis</th></tr></thead>
+                <tbody>
+                  <tr><td>23.11.2026 03:00</td><td class="num">2.184</td><td class="num">0</td><td><span class="chip t-green">ok</span></td></tr>
+                  <tr><td>22.11.2026 03:00</td><td class="num">2.179</td><td class="num">0</td><td><span class="chip t-green">ok</span></td></tr>
+                  <tr><td>21.11.2026 03:00</td><td class="num">2.171</td><td class="num">0</td><td><span class="chip t-green">ok</span></td></tr>
+                </tbody>
+              </table>
+              <div style="display: flex; gap: 10px; padding: 12px 14px; border-radius: 10px; background: #F4F5F7; font-size: 13px; color: #4A5262"><span class="material-symbols-outlined" aria-hidden="true">info</span><span>Ablage- und Backup-Ordner werden vom vorhandenen Host-Backup gesichert. Ziel: [ERGÄNZEN laut Verfahrensdokumentation 4.1]</span></div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ s.konto }}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; gap: 18px">
+              <h2 class="h2">Mein Konto</h2>
+              <div class="g2">
+                <div><label class="lbl" for="k1">Name</label><input id="k1" class="inp" value="Martin Keller"></div>
+                <div><label class="lbl" for="k2">E-Mail-Adresse</label><input id="k2" class="inp" value="m.keller@firma.de"></div>
+              </div>
+              <div class="row"><span><strong style="font-size: 14px">Passwort</strong><br><span class="muted" style="font-size: 13px">zuletzt geändert am 02.09.2026</span></span><button type="button" class="btn btn-s">Ändern</button></div>
+              <div class="row"><span><strong style="font-size: 14px">Zwei-Faktor-Anmeldung (TOTP)</strong><br><span class="muted" style="font-size: 13px">aktiv · 8 Wiederherstellungscodes übrig</span></span><span style="display: flex; gap: 8px"><button type="button" class="btn btn-s">Codes neu erzeugen</button><button type="button" class="btn btn-s" style="color: #B42318">Deaktivieren</button></span></div>
+              <div class="row"><span><strong style="font-size: 14px">Google-Konto verknüpfen</strong><br><span class="muted" style="font-size: 13px">nicht verknüpft</span></span><button type="button" class="btn btn-s">Verknüpfen</button></div>
+              <div class="row"><span><strong style="font-size: 14px">Aktive Sitzungen</strong><br><span class="muted" style="font-size: 13px">2 Geräte · dieses Gerät, Android-PWA</span></span><button type="button" class="btn btn-s">Andere abmelden</button></div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ s.doku }}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; gap: 14px">
+              <h2 class="h2">Verfahrensdokumentation</h2>
+              <p class="muted" style="margin: 0; font-size: 14px">Liegt versioniert im Repository unter docs/verfahrensdokumentation/. Technische Abschnitte werden mit jeder Version aktualisiert.</p>
+              <div class="row"><span><strong style="font-size: 14px">Version 0.1 · Entwurf</strong><br><span class="muted" style="font-size: 13px">Stand 23.11.2026 · enthält noch offene [ERGÄNZEN]-Stellen</span></span><button type="button" class="btn btn-s">Als PDF anzeigen</button></div>
+              <div class="row"><span><strong style="font-size: 14px">Software-Version</strong><br><span class="muted" style="font-size: 13px">v0.4.0 (Git-Tag) · .NET 10 · PostgreSQL 17 · KoSIT-Validator</span></span><span class="chip t-gray">aktuell</span></div>
+            </div>
+          </sc-if>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"bereich":{"editor":"enum","options":["allgemein","ust","pruef","di","mail","ordner","aufbewahrung","benutzer","tokens","integritaet","konto","doku"],"default":"pruef"},"$preview":{"width":1920,"height":1400}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { sec: null }; }
+  renderVals() {
+    const cur = this.state.sec ?? this.props.bereich ?? 'pruef';
+    const it = (id, icon, label, badge, cls) => ({ icon, label, badge: badge || '', hasBadge: !!badge, cls: cls || 't-gray', cur: cur === id ? 'page' : 'false', pick: () => this.setState({ sec: id }), bg: cur === id ? '#E7E7F4' : 'transparent', fg: cur === id ? '#2F2D86' : '#151922' });
+    const ids = ['allgemein', 'ust', 'pruef', 'di', 'mail', 'ordner', 'aufbewahrung', 'benutzer', 'tokens', 'integritaet', 'konto', 'doku'];
+    const s = {}; ids.forEach((i) => { s[i] = cur === i; });
+    const ck = (name, detail, on, val, unit) => ({ name, detail, on: on ? 'true' : 'false', sw: on ? 'on' : 'off', hasVal: val !== undefined, val: val || '', unit: unit || '', valLabel: name + ' Schwelle' });
+    return {
+      s,
+      groups: [
+        { label: 'Fachlich', items: [it('allgemein', 'tune', 'Allgemein'), it('ust', 'percent', 'Umsatzsteuer', 'unbekannt'), it('pruef', 'fact_check', 'Prüfungen'), it('aufbewahrung', 'lock_clock', 'Aufbewahrung')] },
+        { label: 'Eingang', items: [it('di', 'document_scanner', 'Document Intelligence', '82 %', 't-orange'), it('mail', 'mail', 'E-Mail-Import'), it('ordner', 'folder_open', 'Eingangsordner')] },
+        { label: 'Zugriff & Betrieb', items: [it('benutzer', 'group', 'Benutzer & Freigaben', '1', 't-blue'), it('tokens', 'key', 'API-Tokens (MCP)'), it('integritaet', 'verified_user', 'Integrität & Sicherung'), it('konto', 'person', 'Mein Konto'), it('doku', 'description', 'Verfahrensdoku')] }
+      ],
+      checks: [
+        ck('Summe der Positionen = Netto/Brutto', 'Abweichung erlaubt bis', true, '0,02', '€'),
+        ck('Netto + USt = Brutto je Steuersatz', 'Abweichung erlaubt bis', true, '0,02', '€'),
+        ck('Pflichtfelder', 'Korrespondent, Datum, Rechnungsnummer, Gesamtbetrag', true),
+        ck('Datum plausibel', 'nicht in der Zukunft und nicht älter als', true, '2', 'Jahre'),
+        ck('Angaben nach § 14 UStG', 'reduziert bei Kleinbetragsrechnungen bis', true, '250', '€'),
+        ck('Dublettenverdacht', 'Korrespondent + Rechnungsnr. + Betrag', true),
+        ck('Neuer Korrespondent', 'beim ersten Beleg eines Lieferanten', true),
+        ck('Erkennungssicherheit (Konfidenz)', 'Document Intelligence unter', true, '0,80', ''),
+        ck('KoSIT-Validierung', 'nur für XRechnung / ZUGFeRD', true)
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

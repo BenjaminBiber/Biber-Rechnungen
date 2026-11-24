@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Korrespondent Bürowelt Krämer KG</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Material+Symbols+Outlined&display=block">
+<style>
+body{margin:0;background:#F4F5F7}
+a{color:#2F2D86}a:hover{color:#24226B}
+.material-symbols-outlined{font-size:20px;line-height:1;vertical-align:-5px}
+.card{background:#FFFFFF;border:1px solid #E3E6EB;border-radius:12px;box-sizing:border-box}
+.btn{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:8px;border:1px solid #D5D9E0;background:#FFFFFF;color:#151922;font:500 14px 'IBM Plex Sans',sans-serif;text-decoration:none;cursor:pointer;white-space:nowrap;box-sizing:border-box}
+.btn:hover{background:#F0F2F5;color:#151922}
+.btn-p{background:#2F2D86;border-color:#2F2D86;color:#FFFFFF}.btn-p:hover{background:#24226B;color:#FFFFFF}
+.btn-s{height:30px;padding:0 10px;font-size:13px}
+.chip{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border-radius:11px;font:500 12px 'IBM Plex Sans',sans-serif;white-space:nowrap}
+.t-blue{background:#E7E7F4;color:#2F2D86}.t-orange{background:#FDF0E3;color:#A44A06}.t-green{background:#E5F4EC;color:#17703F}.t-gray{background:#EEF0F3;color:#4A5262}
+.tbl{width:100%;border-collapse:collapse;font:400 14px 'IBM Plex Sans',sans-serif}
+.tbl th{text-align:left;font:600 12px 'IBM Plex Sans',sans-serif;color:#4A5262;padding:9px 12px;border-bottom:1px solid #E3E6EB;white-space:nowrap;background:#FAFBFC}
+.tbl td{padding:9px 12px;border-bottom:1px solid #EEF0F3;vertical-align:middle}
+.mono{font-family:'IBM Plex Mono',monospace;font-size:13px}
+.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.muted{color:#5E6676}
+.h2{margin:0;font:600 16px 'IBM Plex Sans',sans-serif;color:#151922}
+.dl{display:grid;grid-template-columns:140px minmax(0,1fr);gap:10px 12px;margin:0;font-size:14px}
+.dl dt{color:#5E6676}.dl dd{margin:0}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 100vh; font-family: 'IBM Plex Sans', sans-serif; color: #151922; background: #F4F5F7">
+  <div style="flex: 1 1 232px; background: #2F2D86"><dc-import name="Sidebar" active="korrespondenten" hint-size="100%,900px"></dc-import></div>
+  <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <dc-import name="Topbar" hint-size="100%,64px"></dc-import>
+    <main style="width: 100%; box-sizing: border-box; padding: 20px 32px 56px; display: flex; flex-direction: column; gap: 20px">
+      <nav aria-label="Brotkrumen" style="font-size: 13px"><a href="Korrespondenten.dc.html" style="text-decoration: none">Korrespondenten</a> <span class="muted">/ Bürowelt Krämer KG</span></nav>
+
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 18px">
+        <div style="position: relative">
+          <span style="width: 72px; height: 72px; border-radius: 16px; background: #FDF0E3; color: #A44A06; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 24px; border: 1px solid #F3D9BD">BK</span>
+          <button type="button" aria-label="Logo ändern" style="position: absolute; right: -6px; bottom: -6px; width: 30px; height: 30px; border-radius: 15px; border: 1px solid #D5D9E0; background: #FFFFFF; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #4A5262"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 16px; vertical-align: 0">photo_camera</span></button>
+        </div>
+        <div style="flex: 1 1 320px">
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px"><h1 style="margin: 0; font-size: 24px; font-weight: 600">Bürowelt Krämer KG</h1><span class="chip t-blue">Lieferant</span></div>
+          <div class="muted" style="font-size: 14px; margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center">Aliase: <span class="chip t-gray">Bürowelt Krämer</span><span class="chip t-gray">Buerowelt Kraemer KG</span><button type="button" style="border: 0; background: transparent; color: #2F2D86; font: 500 13px 'IBM Plex Sans', sans-serif; cursor: pointer">+ Alias</button></div>
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap">
+          <button type="button" class="btn"><span class="material-symbols-outlined" aria-hidden="true">merge</span>Zusammenführen …</button>
+          <button type="button" class="btn btn-p"><span class="material-symbols-outlined" aria-hidden="true">edit</span>Bearbeiten</button>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px">
+        <div class="card" style="padding: 16px"><div class="muted" style="font-size: 13px">Kosten 2026</div><div class="num" style="text-align: left; font-size: 22px; font-weight: 600">2.223,00 €</div><div class="muted" style="font-size: 12px">+14 % ggü. 2025</div></div>
+        <div class="card" style="padding: 16px"><div class="muted" style="font-size: 13px">Belege gesamt</div><div class="num" style="text-align: left; font-size: 22px; font-weight: 600">31</div><div class="muted" style="font-size: 12px">seit 03/2024</div></div>
+        <div class="card" style="padding: 16px"><div class="muted" style="font-size: 13px">Ø je Beleg</div><div class="num" style="text-align: left; font-size: 22px; font-weight: 600">202,09 €</div><div class="muted" style="font-size: 12px">2026</div></div>
+        <div class="card" style="padding: 16px"><div class="muted" style="font-size: 13px">Offen</div><div class="num" style="text-align: left; font-size: 22px; font-weight: 600">1</div><div class="muted" style="font-size: 12px">264,00 € · fällig 03.12.</div></div>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+        <div style="flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+          <section class="card" style="padding: 20px; display: flex; flex-direction: column; gap: 14px">
+            <h2 class="h2">Stammdaten</h2>
+            <dl class="dl">
+              <dt>Anschrift</dt><dd>Gewerbestraße 14<br>79108 Freiburg</dd>
+              <dt>USt-IdNr.</dt><dd class="mono">DE 284117560</dd>
+              <dt>Steuernummer</dt><dd class="mono">06/471/10442</dd>
+              <dt>IBANs</dt><dd class="mono">DE12 6805 0101 0012 3456 78<br>DE89 3704 0044 0532 0130 00</dd>
+              <dt>Website</dt><dd><a href="#">buerowelt-kraemer.de</a></dd>
+              <dt>E-Mail</dt><dd>rechnung@buerowelt-kraemer.de</dd>
+              <dt>Logo</dt><dd>Ausschnitt aus Seite 1 <span class="muted" style="font-size: 12px">(Upload › PDF › Favicon)</span></dd>
+            </dl>
+          </section>
+          <section class="card" style="padding: 20px; display: flex; flex-direction: column; gap: 14px">
+            <h2 class="h2">Zuordnung</h2>
+            <dl class="dl">
+              <dt>Default-Kategorie</dt><dd><span class="chip t-gray">Bürobedarf</span> <span class="muted" style="font-size: 12px">pro Beleg überschreibbar</span></dd>
+              <dt>Matching</dt><dd>Auto (ML.NET) <span class="muted" style="font-size: 12px">· trainiert 23.11.2026 02:30</span></dd>
+              <dt>Erkennung</dt><dd>USt-IdNr. › IBAN › Name/Alias</dd>
+            </dl>
+            <button type="button" class="btn btn-s" style="align-self: flex-start"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px">tune</span>Matching bearbeiten</button>
+          </section>
+        </div>
+
+        <div style="flex: 2 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+          <section class="card" style="padding: 20px">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px"><h2 class="h2">Kostenverlauf 2026</h2><span class="muted" style="font-size: 13px">brutto je Monat</span></div>
+            <div style="display: flex; align-items: flex-end; gap: 8px; height: 170px; border-bottom: 1px solid #C9CED6; background-image: linear-gradient(#EEF0F3 1px, transparent 1px); background-size: 100% 42.5px">
+              <sc-for list="{{ bars }}" as="b" hint-placeholder-count="12">
+                <div title="{{ b.t }}" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; height: 170px">
+                  <span class="muted" style="font-size: 10px">{{ b.v }}</span>
+                  <div style="width: 100%; max-width: 36px; height: {{ b.h }}px; border-radius: 4px 4px 0 0; background: #E3893B"></div>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display: flex; gap: 8px; margin-top: 6px"><sc-for list="{{ bars }}" as="b" hint-placeholder-count="12"><span class="muted" style="flex: 1; text-align: center; font-size: 11px">{{ b.m }}</span></sc-for></div>
+          </section>
+
+          <section class="card" style="overflow-x: auto">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 16px 20px"><h2 class="h2">Belege</h2><a href="Belege.dc.html" style="font-size: 13px">Alle 31 in der Belegliste</a></div>
+            <table class="tbl" style="min-width: 560px">
+              <thead><tr><th scope="col">Rechnungsnr.</th><th scope="col">Datum</th><th scope="col">Tags</th><th scope="col" class="num">Brutto</th></tr></thead>
+              <tbody>
+                <tr><td><a href="BelegDetail.dc.html" class="mono">2026-48817</a></td><td>19.11.2026</td><td><span class="chip t-blue">Inbox</span> <span class="chip t-orange">zu prüfen</span></td><td class="num">264,00 €</td></tr>
+                <tr><td><a href="BelegDetail.dc.html" class="mono">2026-47102</a></td><td>16.10.2026</td><td><span class="chip t-green">bezahlt</span></td><td class="num">142,00 €</td></tr>
+                <tr><td><a href="BelegDetail.dc.html" class="mono">2026-45930</a></td><td>14.09.2026</td><td><span class="chip t-green">bezahlt</span></td><td class="num">318,00 €</td></tr>
+                <tr><td><a href="BelegDetail.dc.html" class="mono">2026-44511</a></td><td>12.08.2026</td><td><span class="chip t-green">bezahlt</span></td><td class="num">94,00 €</td></tr>
+                <tr><td><a href="BelegDetail.dc.html" class="mono">2026-43207</a></td><td>15.07.2026</td><td><span class="chip t-green">bezahlt</span></td><td class="num">233,00 €</td></tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section class="card" style="overflow-x: auto">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 16px 20px"><h2 class="h2">Artikel dieses Korrespondenten</h2><a href="Artikel.dc.html" style="font-size: 13px">Alle 24 Artikel</a></div>
+            <table class="tbl" style="min-width: 560px">
+              <thead><tr><th scope="col">Artikel</th><th scope="col">Stammartikel</th><th scope="col" class="num">Käufe</th><th scope="col" class="num">Letzter Preis</th><th scope="col" class="num">Seit 1. Kauf</th></tr></thead>
+              <tbody>
+                <tr><td><a href="ArtikelDetail.dc.html">Kopierpapier A4 80 g</a></td><td>Kopierpapier A4 80 g</td><td class="num">9</td><td class="num">24,90 € / Karton</td><td class="num"><span class="chip t-orange">+8,3 %</span></td></tr>
+                <tr><td><a href="ArtikelDetail.dc.html">Ordner breit 8 cm, blau</a></td><td class="muted">—</td><td class="num">4</td><td class="num">2,49 € / Stück</td><td class="num"><span class="chip t-orange">+11,2 %</span></td></tr>
+                <tr><td><a href="ArtikelDetail.dc.html">Lasertoner schwarz</a></td><td>Toner schwarz</td><td class="num">6</td><td class="num">64,90 € / Stück</td><td class="num"><span class="chip t-gray">±0 %</span></td></tr>
+                <tr><td><a href="ArtikelDetail.dc.html">Kugelschreiber blau</a></td><td class="muted">—</td><td class="num">3</td><td class="num">0,89 € / Stück</td><td class="num"><span class="chip t-green">−3,3 %</span></td></tr>
+              </tbody>
+            </table>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":1500}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const v = [312, 96, 148, 402, 88, 126, 233, 94, 318, 142, 264, 0];
+    const m = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+    return { bars: v.map((x, i) => ({ m: m[i], v: x ? String(x) : '', h: Math.round(x / 500 * 150), t: m[i] + ': ' + x + ',00 €' })) };
+  }
+}
+</script>
+</body>
+</html>
