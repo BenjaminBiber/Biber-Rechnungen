@@ -43,6 +43,15 @@ npm run build
 npm run e2e           # Playwright gegen npm run preview:mock
 ```
 
+Lokal debuggen (z. B. in Rider): PostgreSQL, KoSIT und ein Test-Postfach (GreenMail; Mails per SMTP an `localhost:3025`, Empfänger `rechnungen@dev.local`) laufen in Docker, die API im Profil `Biber.Invoice.Api` aus `Properties/launchSettings.json` (Umgebung `Development`, `http://localhost:8080`), das Frontend über den Vite-Server, der `/api` an die API weiterleitet:
+
+```bash
+docker compose -f docker/compose.dev.yml up -d --build --wait
+cd frontend && npm run dev   # danach http://localhost:5173 öffnen
+```
+
+Laufzeitdaten landen in `backend/src/Biber.Invoice.Api/.daten/`. Mit `docker compose -f docker/compose.dev.yml down -v` wird die Datenbank geleert.
+
 Dokumentation prüfen:
 
 ```bash
