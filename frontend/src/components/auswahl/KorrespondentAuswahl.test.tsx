@@ -56,7 +56,10 @@ describe('KorrespondentAuswahl', () => {
   it('kennzeichnet ähnliche Namen ohne USt-IdNr. als mögliche Dublette', async () => {
     server.use(
       http.get('*/api/korrespondenten', () =>
-        HttpResponse.json([eintrag('a', 'Bürowelt Krämer KG', 'DE 284117560'), eintrag('b', 'Buerowelt Kraemer', null)]),
+        HttpResponse.json([
+          eintrag('a', 'Bürowelt Krämer KG', 'DE 284117560'),
+          eintrag('b', 'Buerowelt Kraemer', null),
+        ]),
       ),
     )
     const { nutzer } = oeffnen({ wert: 'a' })

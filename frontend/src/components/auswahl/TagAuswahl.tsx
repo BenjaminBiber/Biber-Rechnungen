@@ -27,7 +27,8 @@ export function TagAuswahl({
   const begriff = suche.trim()
   const treffer = tags.filter(
     (t) =>
-      (!nurZahlungsTags || t.istZahlungsTag) && t.name.toLocaleLowerCase('de').includes(begriff.toLocaleLowerCase('de')),
+      (!nurZahlungsTags || t.istZahlungsTag) &&
+      t.name.toLocaleLowerCase('de').includes(begriff.toLocaleLowerCase('de')),
   )
   const neuMoeglich =
     neuAnlegenErlaubt &&

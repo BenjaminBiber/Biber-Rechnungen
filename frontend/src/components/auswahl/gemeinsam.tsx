@@ -15,7 +15,11 @@ export function useEntprellt<T>(wert: T, ms = 250): T {
  * Tastaturbedienung einer Listbox über das Suchfeld: Pfeiltasten bewegen die Markierung, Enter wählt.
  * `waehlbar(i)` überspringt deaktivierte Einträge.
  */
-export function useListenNavigation(anzahl: number, onWaehlen: (index: number) => void, waehlbar = (_: number) => true) {
+export function useListenNavigation(
+  anzahl: number,
+  onWaehlen: (index: number) => void,
+  waehlbar = (_: number) => true,
+) {
   const [aktiv, setAktiv] = useState(-1)
   const aktivSicher = aktiv < anzahl ? aktiv : -1
 
@@ -105,8 +109,15 @@ export function Option({
       className={`flex h-[38px] cursor-pointer items-center gap-2.5 rounded-md px-2.5 text-sm ${
         aktiv ? 'bg-hover' : ''
       } ${deaktiviert ? 'cursor-default text-gedaempft' : ''}`}
-      // Tastatur läuft über das Suchfeld (aria-activedescendant), die Option selbst bekommt keinen Fokus.
+      // Tastatur läuft über das Suchfeld (aria-activedescendant); die Option ist nur per Klick fokussierbar.
+      tabIndex={-1}
       onClick={deaktiviert ? undefined : onWaehlen}
+      onKeyDown={(e) => {
+        if (!deaktiviert && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault()
+          onWaehlen()
+        }
+      }}
     >
       {children}
     </div>

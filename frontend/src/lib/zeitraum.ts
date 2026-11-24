@@ -3,12 +3,7 @@
  */
 
 export type ZeitraumVorgabeId =
-  | 'dieserMonat'
-  | 'letzterMonat'
-  | 'diesesQuartal'
-  | 'letztesQuartal'
-  | 'diesesJahr'
-  | 'vorjahr'
+  'dieserMonat' | 'letzterMonat' | 'diesesQuartal' | 'letztesQuartal' | 'diesesJahr' | 'vorjahr'
 
 export const zeitraumVorgaben: { id: ZeitraumVorgabeId; text: string }[] = [
   { id: 'dieserMonat', text: 'Dieser Monat' },
