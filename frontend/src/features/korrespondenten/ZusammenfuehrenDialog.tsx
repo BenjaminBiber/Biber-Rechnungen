@@ -42,16 +42,15 @@ export function ZusammenfuehrenDialog({
   const behalten = korrespondenten.find((k) => k.id === behaltenId)
   const umzuhaengen = quellen.reduce((s, k) => s + k.anzahlBelege, 0)
 
+  // `mutateAsync` statt Callbacks an `mutate`: Nach dem Neuladen fehlen die Quellen in der Liste und der
+  // Dialog ist schon abgebaut – Callbacks eines abgebauten Beobachters liefen nicht mehr.
   const absenden = () =>
-    zusammenfuehren.mutate(
-      { behaltenId, quellIds: quellen.map((k) => k.id) },
-      {
-        onSuccess: () => {
-          toast.erfolg('Korrespondenten zusammengeführt')
-          onZusammengefuehrt()
-        },
-        onError: (fehler) => toast.fehler(fehler.message),
+    zusammenfuehren.mutateAsync({ behaltenId, quellIds: quellen.map((k) => k.id) }).then(
+      () => {
+        toast.erfolg('Korrespondenten zusammengeführt')
+        onZusammengefuehrt()
       },
+      (fehler: Error) => void toast.fehler(fehler.message),
     )
 
   return (

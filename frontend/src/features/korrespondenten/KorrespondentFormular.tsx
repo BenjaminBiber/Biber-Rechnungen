@@ -8,7 +8,6 @@ import type { KorrespondentAendern, KorrespondentDetail, KorrespondentListeneint
 import { Icon } from '@/components/Icon'
 import { useToast } from '@/components/toast'
 import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ibanFormatieren, ibanGueltig } from '@/lib/iban'
 
@@ -264,22 +263,25 @@ export function KorrespondentFormular({
           <fieldset className="m-0 border-0 p-0">
             <legend className="label">Typ</legend>
             <div className="flex gap-4">
-              <span className="flex items-center gap-2 text-sm">
-                <Checkbox
-                  id={`${id}-lieferant`}
+              {/* Native Checkboxen: Radix-Checkboxen legen im Formular ein verstecktes Eingabefeld an. */}
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  className="size-[18px] accent-[var(--color-akzent)]"
                   checked={werte.istLieferant}
-                  onCheckedChange={(c) => setze('istLieferant', c === true)}
+                  onChange={(e) => setze('istLieferant', e.target.checked)}
                 />
-                <label htmlFor={`${id}-lieferant`}>Lieferant</label>
-              </span>
-              <span className="flex items-center gap-2 text-sm">
-                <Checkbox
-                  id={`${id}-kunde`}
+                Lieferant
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  className="size-[18px] accent-[var(--color-akzent)]"
                   checked={werte.istKunde}
-                  onCheckedChange={(c) => setze('istKunde', c === true)}
+                  onChange={(e) => setze('istKunde', e.target.checked)}
                 />
-                <label htmlFor={`${id}-kunde`}>Kunde</label>
-              </span>
+                Kunde
+              </label>
             </div>
           </fieldset>
           <Feld label="Default-Kategorie" id={`${id}-kategorie`} fehler={fehler.defaultKategorieId}>
