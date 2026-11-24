@@ -8,7 +8,7 @@ const eintraege: Array<[name: RegExp, url: RegExp, titel: string]> = [
   [/^Artikel$/, /\/artikel$/, 'Artikel'],
   [/^Tags & Kategorien$/, /\/tags$/, 'Tags & Kategorien'],
   [/^Export$/, /\/export$/, 'Export'],
-  [/^Einstellungen$/, /\/einstellungen\/pruefungen$/, 'Prüfungen'],
+  [/^Einstellungen$/, /\/einstellungen\/pruefungen$/, 'Einstellungen'],
   [/^Dashboard$/, /:4173\/$/, 'Dashboard'],
 ]
 
