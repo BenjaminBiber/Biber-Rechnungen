@@ -3,6 +3,7 @@ import { RouterProvider } from '@tanstack/react-router'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { wendeDarstellungAn } from '@/lib/theme'
+import { pwaRegistrieren } from '@/pwa/registrieren'
 import { erzeugeQueryClient, erzeugeRouter } from '@/router'
 import '@/styles/index.css'
 
@@ -27,4 +28,5 @@ void starteMocks().then(() => {
       </QueryClientProvider>
     </StrictMode>,
   )
+  void pwaRegistrieren()
 })

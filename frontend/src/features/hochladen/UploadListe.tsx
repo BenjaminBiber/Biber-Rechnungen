@@ -10,6 +10,7 @@ import { formatGroesse } from './pruefung'
 import { warteschlange, type UploadEintrag, type UploadStatus } from './uploadWarteschlange'
 
 const darstellung: Record<UploadStatus, { icon: string; ton: ChipTon; text: string }> = {
+  wartet: { icon: 'schedule', ton: 'orange', text: 'wartet (offline)' },
   laedt: { icon: 'upload', ton: 'blau', text: 'Hochladen' },
   verarbeitung: { icon: 'settings', ton: 'blau', text: 'In Verarbeitung' },
   fertig: { icon: 'task_alt', ton: 'gruen', text: 'Fertig' },
@@ -64,7 +65,7 @@ function Zeile({
   const chip = eintrag.status === 'laedt' ? `Hochladen ${eintrag.prozent} %` : d.text
   return (
     <li className="flex items-start gap-3 border-b border-linie px-5 py-4 last:border-b-0" data-testid="upload-eintrag">
-      {eintrag.status === 'verarbeitung' && eintrag.vorgang && <Verfolgung eintrag={eintrag} />}
+      {eintrag.status === 'verarbeitung' && (eintrag.vorgang ?? eintrag.vorgangId) && <Verfolgung eintrag={eintrag} />}
       <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] ${flaeche[d.ton]}`}>
         <Icon name={d.icon} />
       </span>
@@ -91,8 +92,8 @@ function Zeile({
 }
 
 /** Verfolgt den Import-Vorgang (Polling) und meldet jeden Stand an die Warteschlange. */
-function Verfolgung({ eintrag }: { eintrag: UploadEintrag }) {
-  const { data } = useImportVorgang(eintrag.vorgang!.id)
+export function Verfolgung({ eintrag }: { eintrag: UploadEintrag }) {
+  const { data } = useImportVorgang((eintrag.vorgang?.id ?? eintrag.vorgangId)!)
   useEffect(() => {
     if (data) warteschlange.vorgangAktualisiert(eintrag.id, data)
   }, [data, eintrag.id])
@@ -102,6 +103,8 @@ function Verfolgung({ eintrag }: { eintrag: UploadEintrag }) {
 function Inhalt({ eintrag, onErneut }: { eintrag: UploadEintrag; onErneut: (id: string) => void }) {
   const vorgang = eintrag.vorgang
   switch (eintrag.status) {
+    case 'wartet':
+      return <span className="gedaempft text-xs">Wird gesendet, sobald die Verbindung wieder da ist.</span>
     case 'laedt':
       return (
         <>

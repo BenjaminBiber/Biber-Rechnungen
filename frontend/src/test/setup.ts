@@ -1,4 +1,6 @@
 import '@testing-library/jest-dom/vitest'
+// jsdom kennt keine IndexedDB – die Upload-Warteschlange speichert dort.
+import 'fake-indexeddb/auto'
 import { cleanup } from '@testing-library/react'
 import { afterAll, afterEach, beforeAll } from 'vitest'
 import { server } from '@/mocks/server'

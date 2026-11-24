@@ -40,12 +40,14 @@ const routen: Array<[pfad: string, titel: string]> = [
 
 test.describe('Grundgerüst', () => {
   for (const [pfad, titel] of routen) {
-    test(`${pfad} zeigt „${titel}“`, async ({ page }) => {
+    test(`${pfad} zeigt „${titel}“`, async ({ page, isMobile }) => {
       const fehler: string[] = []
       page.on('pageerror', (e) => fehler.push(e.message))
 
       await page.goto(pfad)
-      await expect(page.getByRole('heading', { level: 1, name: titel, exact: true })).toBeVisible()
+      // Mobil hat „Hochladen“ eine eigene Ansicht (MobilUpload.dc.html).
+      const erwartet = isMobile && pfad === '/hochladen' ? 'Hochladen' : titel
+      await expect(page.getByRole('heading', { level: 1, name: erwartet, exact: true })).toBeVisible()
       expect(fehler).toEqual([])
     })
   }

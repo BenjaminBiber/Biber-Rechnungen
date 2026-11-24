@@ -9,8 +9,9 @@ import { useUploadWarteschlange } from './uploadWarteschlange'
 /** Seite „Hochladen & Import“: Dropzone, Liste der Uploads dieser Sitzung und Import-Vorgänge aller Quellen. */
 export function HochladenSeite() {
   const { darfBearbeiten } = useRolle()
-  const { eintraege, hinzufuegen, entfernen, erneut } = useUploadWarteschlange()
+  const { eintraege, hinzufuegen, entfernen, erneut, anmeldungNoetig } = useUploadWarteschlange()
   const laedt = eintraege.some((e) => e.status === 'laedt')
+  const wartend = eintraege.filter((e) => e.status === 'wartet').length
 
   useBlocker({
     shouldBlockFn: () => !window.confirm('Uploads laufen noch. Seite trotzdem verlassen?'),
@@ -21,6 +22,11 @@ export function HochladenSeite() {
   return (
     <div className="flex flex-col gap-5">
       <Seitenkopf titel="Hochladen & Import" />
+      {anmeldungNoetig && wartend > 0 && (
+        <p className="hinweis m-0" role="status">
+          Bitte anmelden, um {wartend} wartende Uploads zu senden
+        </p>
+      )}
       {darfBearbeiten ? (
         <div className="flex flex-wrap gap-5">
           <Dropzone onDateien={hinzufuegen} />
