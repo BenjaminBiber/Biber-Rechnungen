@@ -161,4 +161,6 @@ export type BenachrichtigungenAbfrage = Abfrage<'getBenachrichtigungenListe'>
 
 /** Gruppe für `PUT /api/einstellungen/{gruppe}` samt passendem Inhalt. */
 export type EinstellungGruppe = operations['putEinstellungenGruppe']['parameters']['path']['gruppe']
-export type EinstellungInhalt = NonNullable<operations['putEinstellungenGruppe']['requestBody']>['content']['application/json']
+export type EinstellungInhalt = NonNullable<
+  operations['putEinstellungenGruppe']['requestBody']
+>['content']['application/json']
