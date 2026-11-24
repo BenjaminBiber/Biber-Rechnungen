@@ -30,4 +30,8 @@
     <Using Include="Shouldly" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="Testdateien\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>
