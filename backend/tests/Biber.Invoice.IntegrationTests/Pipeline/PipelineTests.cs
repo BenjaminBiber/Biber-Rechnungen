@@ -5,6 +5,7 @@ using Biber.Invoice.Domain.Entitaeten;
 using Biber.Invoice.Domain.Enums;
 using Biber.Invoice.Domain.Pipeline;
 using Biber.Invoice.Infrastructure.Module.HashDublette;
+using Biber.Invoice.Infrastructure.Module.KorrespondentZuordnung;
 using Biber.Invoice.Infrastructure.Module.Pipeline;
 using Biber.Invoice.Infrastructure.Persistenz;
 using Biber.Invoice.IntegrationTests.Infrastruktur;
@@ -394,7 +395,7 @@ public sealed class PipelineTests(ApiFabrik fabrik)
     private static ApiFabrik OhneDublettenCheck(ApiFabrik fabrik) =>
         fabrik.MitSofortVerarbeitung().MitDiensten(d =>
         {
-            foreach (var schritt in d.Where(x => x.ServiceType == typeof(IPipelineSchritt) && x.ImplementationType == typeof(HashDubletteSchritt)).ToList())
+            foreach (var schritt in d.Where(x => x.ServiceType == typeof(IPipelineSchritt) && (x.ImplementationType == typeof(HashDubletteSchritt) || x.ImplementationType == typeof(KorrespondentZuordnungSchritt))).ToList())
             {
                 d.Remove(schritt);
             }
