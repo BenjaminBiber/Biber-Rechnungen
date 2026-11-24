@@ -33,35 +33,13 @@ internal static class AuthTestHilfen
         fabrik.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false, HandleCookies = true });
 
     /// <summary>
-    /// Leert die Datenbank, legt die Rollen wieder an (die Initial-Migration hat sie angelegt) und stellt die Uhr
+    /// Setzt die Datenbank zurück (die Rollen kommen aus dem Seed) und stellt die Uhr
     /// auf jetzt – Identity rechnet TOTP und Sperren mit der Systemzeit, Cookies mit der Uhr der Anwendung.
     /// </summary>
     public static async Task VorbereitenAsync(this ApiFabrik fabrik)
     {
         fabrik.Zeit.Setze(DateTimeOffset.UtcNow);
         await fabrik.ZuruecksetzenAsync();
-        using var scope = fabrik.ErzeugeScope();
-        var db = scope.ServiceProvider.GetRequiredService<BiberDbContext>();
-        if (!await db.Roles.AnyAsync())
-        {
-            foreach (var (id, rolle) in new[]
-                     {
-                         (SystemIds.RolleAdmin, Rolle.Admin),
-                         (SystemIds.RolleBenutzer, Rolle.Benutzer),
-                         (SystemIds.RolleNurLesen, Rolle.NurLesen),
-                     })
-            {
-                db.Roles.Add(new IdentityRole<Guid>
-                {
-                    Id = id,
-                    Name = rolle.ToString(),
-                    NormalizedName = rolle.ToString().ToUpperInvariant(),
-                    ConcurrencyStamp = id.ToString(),
-                });
-            }
-
-            await db.SaveChangesAsync();
-        }
     }
 
     /// <summary>Legt einen Benutzer mit <see cref="Passwort"/> direkt über Identity an.</summary>

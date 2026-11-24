@@ -276,15 +276,8 @@ public sealed class TokenTests(ApiFabrik fabrik) : IAsyncLifetime
 
         using var scope = fabrik.ErzeugeScope();
         var db = scope.ServiceProvider.GetRequiredService<BiberDbContext>();
-        // Das Zurücksetzen leert auch die per Seed angelegten Rollen.
-        var eintrag = new IdentityRole<Guid>
-        {
-            Id = Guid.NewGuid(),
-            Name = rolle.ToString(),
-            NormalizedName = rolle.ToString().ToUpperInvariant(),
-        };
-        db.Roles.Add(eintrag);
-        db.UserRoles.Add(new IdentityUserRole<Guid> { UserId = benutzer.Id, RoleId = eintrag.Id });
+        var rolleId = await db.Roles.Where(r => r.Name == rolle.ToString()).Select(r => r.Id).SingleAsync();
+        db.UserRoles.Add(new IdentityUserRole<Guid> { UserId = benutzer.Id, RoleId = rolleId });
         await db.SaveChangesAsync();
     }
 

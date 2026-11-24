@@ -18,13 +18,7 @@ public sealed class TagTests(ApiFabrik fabrik) : IAsyncLifetime
 {
     private static readonly MatchingDto OhneRegel = new(MatchingAlgorithmus.Keiner, null, false);
 
-    public async Task InitializeAsync()
-    {
-        await fabrik.ZuruecksetzenAsync();
-        // Das Zurücksetzen leert auch die Seed-Daten der Initial-Migration; hier wie dort anlegen.
-        await fabrik.SpeichernAsync(new Tag { Id = SystemIds.TagZuPruefen, Name = "zu prüfen", Farbe = "orange", IstSystem = true });
-        await fabrik.SpeichernAsync(new Tag { Id = SystemIds.TagInbox, Name = "Inbox", Farbe = "blau", IstInbox = true });
-    }
+    public Task InitializeAsync() => fabrik.ZuruecksetzenAsync();
 
     public Task DisposeAsync() => Task.CompletedTask;
 

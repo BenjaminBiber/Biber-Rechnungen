@@ -135,7 +135,6 @@ public sealed class AufteilenTests(ApiFabrik fabrik)
         var f = fabrik.MitSofortVerarbeitung();
         await TestbenutzerAsync(f, Rolle.Admin);
         await TestbenutzerAsync(f, Rolle.Benutzer);
-        await TagZuPruefenSicherstellenAsync(f);
         var vorgang = await f.ImportiereAsync("scan.pdf", VierseitigesPdf());
         vorgang.BelegId.ShouldNotBeNull($"Import endete mit {vorgang.Status}: {vorgang.Ergebnis}");
         return (f, vorgang.BelegId.Value);
@@ -156,18 +155,6 @@ public sealed class AufteilenTests(ApiFabrik fabrik)
         var benutzer = Testdaten.Benutzer();
         benutzer.Id = id;
         await f.SpeichernAsync(benutzer);
-    }
-
-    /// <summary>Die Prüfungen setzen „zu prüfen“; den Seed-Tag leert aber das Zurücksetzen anderer Testklassen.</summary>
-    private static async Task TagZuPruefenSicherstellenAsync(ApiFabrik f)
-    {
-        using var scope = f.ErzeugeScope();
-        var db = scope.ServiceProvider.GetRequiredService<BiberDbContext>();
-        if (!await db.Tags.AnyAsync(t => t.Id == SystemIds.TagZuPruefen))
-        {
-            db.Tags.Add(new Tag { Id = SystemIds.TagZuPruefen, Name = "zu prüfen", Farbe = "orange", IstSystem = true });
-            await db.SaveChangesAsync();
-        }
     }
 
     private static async Task<BelegDatei> OriginalAsync(ApiFabrik f, Guid belegId)

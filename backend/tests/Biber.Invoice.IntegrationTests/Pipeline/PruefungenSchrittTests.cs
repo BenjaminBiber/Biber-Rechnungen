@@ -194,7 +194,6 @@ public sealed class PruefungenSchrittTests(ApiFabrik fabrik)
 
     private async Task<Beleg> BelegAnlegenAsync(Action<Beleg>? belegAendern = null, Action<Korrespondent>? korrespondentAendern = null)
     {
-        await SystemTagsSicherstellenAsync();
         var korrespondent = Testdaten.Korrespondent(ustIdNr: "DE" + Random.Shared.NextInt64(100_000_000, 999_999_999));
         korrespondent.Anschrift = new Anschrift { Strasse = "Hafenstraße 12", Plz = "20457", Ort = "Hamburg" };
         korrespondentAendern?.Invoke(korrespondent);
@@ -215,27 +214,6 @@ public sealed class PruefungenSchrittTests(ApiFabrik fabrik)
         ];
         belegAendern?.Invoke(beleg);
         return await fabrik.SpeichernAsync(beleg);
-    }
-
-    /// <summary>
-    /// Die Initial-Migration legt die System-Tags an; <see cref="ApiFabrik.ZuruecksetzenAsync"/> anderer Tests
-    /// auf derselben Datenbank leert aber auch sie.
-    /// </summary>
-    private async Task SystemTagsSicherstellenAsync()
-    {
-        using var scope = fabrik.ErzeugeScope();
-        var db = scope.ServiceProvider.GetRequiredService<BiberDbContext>();
-        if (!await db.Tags.AnyAsync(t => t.Id == SystemIds.TagInbox))
-        {
-            db.Tags.Add(new Tag { Id = SystemIds.TagInbox, Name = "Inbox", Farbe = "blau", IstInbox = true });
-        }
-
-        if (!await db.Tags.AnyAsync(t => t.Id == SystemIds.TagZuPruefen))
-        {
-            db.Tags.Add(new Tag { Id = SystemIds.TagZuPruefen, Name = "zu prüfen", Farbe = "orange", IstSystem = true });
-        }
-
-        await db.SaveChangesAsync();
     }
 
     /// <summary>Lädt den Beleg wie der Orchestrator und führt Schritt 8 aus.</summary>

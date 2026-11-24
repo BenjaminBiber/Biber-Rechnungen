@@ -1,6 +1,9 @@
+using System.Security.Cryptography;
+using System.Text;
 using Biber.Invoice.Infrastructure.Module.Kosit;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
+using DotNet.Testcontainers.Configurations;
 using DotNet.Testcontainers.Images;
 
 namespace Biber.Invoice.IntegrationTests.Kosit;
@@ -17,19 +20,34 @@ public sealed class KositSidecarFixture : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
+        // Das Tag folgt dem Inhalt von docker/kosit: Docker baut nur bei Änderungen neu, sonst gilt das vorhandene Image.
+        // Ein neues Zufalls-Tag je Lauf hat das Image jedes Mal neu gebaut; unter Last blieb dieser Bau hängen.
         _image = new ImageFromDockerfileBuilder()
             .WithDockerfileDirectory(KositOrdner)
             .WithDockerfile("Dockerfile")
-            .WithName($"biber-kosit-test:{Guid.NewGuid():N}")
-            .WithCleanUp(true)
+            .WithName($"biber-kosit-test:{InhaltsHash()}")
+            .WithImageBuildPolicy(PullPolicy.Missing)
+            .WithCleanUp(false)
             .Build();
-        await _image.CreateAsync();
+        using (var bauen = new CancellationTokenSource(TimeSpan.FromMinutes(15)))
+        {
+            await _image.CreateAsync(bauen.Token);
+        }
 
         _container = new ContainerBuilder(_image)
             .WithPortBinding(8080, true)
-            .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(r => r.ForPort(8080).ForPath("/health")))
+            .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(
+                r => r.ForPort(8080).ForPath("/health"), o => o.WithTimeout(TimeSpan.FromMinutes(3))))
             .Build();
-        await _container.StartAsync();
+        try
+        {
+            await _container.StartAsync();
+        }
+        catch (Exception e)
+        {
+            var (stdout, stderr) = await _container.GetLogsAsync();
+            throw new InvalidOperationException($"KoSIT-Sidecar startet nicht.\n{stdout}\n{stderr}", e);
+        }
 
         var basis = new Uri($"http://{_container.Hostname}:{_container.GetMappedPublicPort(8080)}/");
         Client = new KositClient(new HttpClient { BaseAddress = basis, Timeout = TimeSpan.FromSeconds(60) });
@@ -41,11 +59,18 @@ public sealed class KositSidecarFixture : IAsyncLifetime
         {
             await _container.DisposeAsync();
         }
+    }
 
-        if (_image is not null)
+    private static string InhaltsHash()
+    {
+        using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+        foreach (var datei in Directory.EnumerateFiles(KositOrdner, "*", SearchOption.AllDirectories).Order(StringComparer.Ordinal))
         {
-            await _image.DisposeAsync();
+            hash.AppendData(Encoding.UTF8.GetBytes(Path.GetRelativePath(KositOrdner, datei).Replace('\\', '/')));
+            hash.AppendData(File.ReadAllBytes(datei));
         }
+
+        return Convert.ToHexStringLower(hash.GetHashAndReset())[..16];
     }
 
     private static string Ordner()

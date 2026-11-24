@@ -22,8 +22,9 @@ public sealed class AuswertungTests(ApiFabrik fabrik) : IAsyncLifetime
 {
     private static readonly DateTimeOffset Heute = new(2026, 11, 23, 10, 0, 0, TimeSpan.Zero);
 
-    private readonly Tag _inbox = new() { Id = Guid.NewGuid(), Name = "Inbox", Farbe = "blau", IstInbox = true };
-    private readonly Tag _zuPruefen = new() { Id = SystemIds.TagZuPruefen, Name = "zu prüfen", Farbe = "orange", IstSystem = true };
+    // „Inbox“ und „zu prüfen“ legt der Seed an.
+    private readonly Tag _inbox = new() { Id = SystemIds.TagInbox };
+    private readonly Tag _zuPruefen = new() { Id = SystemIds.TagZuPruefen };
     private readonly Tag _bezahlt = new() { Id = Guid.NewGuid(), Name = "bezahlt", Farbe = "gruen", IstZahlungsTag = true };
 
     private readonly Kategorie _buero = Testdaten.Kategorie("Büro", "#1F6FEB");
@@ -429,7 +430,7 @@ public sealed class AuswertungTests(ApiFabrik fabrik) : IAsyncLifetime
 
         using var scope = fabrik.ErzeugeScope();
         var db = scope.ServiceProvider.GetRequiredService<BiberDbContext>();
-        db.AddRange(_inbox, _zuPruefen, _bezahlt, _buero, _software);
+        db.AddRange(_bezahlt, _buero, _software);
         db.AddRange(_alpha, _beta, _gamma, _delta, _epsilon, _zeta, _eta);
         db.AddRange(_papier, _toner, _kaffee, lizenz);
         db.AddRange(

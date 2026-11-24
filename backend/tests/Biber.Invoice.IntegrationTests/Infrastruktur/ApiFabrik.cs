@@ -1,8 +1,14 @@
 using Biber.Invoice.Domain.Enums;
+using Biber.Invoice.Infrastructure.Persistenz;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -30,6 +36,7 @@ public sealed class ApiFabrik : WebApplicationFactory<Program>, IAsyncLifetime
     private readonly bool _echteAnmeldung;
     private readonly List<ApiFabrik> _abgeleitete = [];
     private Respawner? _respawner;
+    private string? _seedSql;
     private bool _entsorgt;
 
     public ApiFabrik()
@@ -82,7 +89,10 @@ public sealed class ApiFabrik : WebApplicationFactory<Program>, IAsyncLifetime
 
     public IServiceScope ErzeugeScope() => Services.CreateScope();
 
-    /// <summary>Leert alle Tabellen außer <c>__EFMigrationsHistory</c>.</summary>
+    /// <summary>
+    /// Leert alle Tabellen außer <c>__EFMigrationsHistory</c> und stellt den Seed der Migration wieder her
+    /// (Rollen, System-Tags; Quelle ist <c>HasData</c> im EF-Modell).
+    /// </summary>
     public async Task ZuruecksetzenAsync()
     {
         _ = Server; // startet die Anwendung und damit die Migration
@@ -103,6 +113,12 @@ public sealed class ApiFabrik : WebApplicationFactory<Program>, IAsyncLifetime
             SchemasToExclude = ["hangfire"],
         });
         await _respawner.ResetAsync(verbindung);
+
+        _seedSql ??= SeedSqlErzeugen();
+        await using (var befehl = new NpgsqlCommand(_seedSql, verbindung))
+        {
+            await befehl.ExecuteNonQueryAsync();
+        }
 
         // Zwischengespeicherte Einstellungen gehören zur geleerten Datenbank und dürfen den nächsten Test nicht beeinflussen.
         (Services.GetService<IMemoryCache>() as MemoryCache)?.Clear();
@@ -204,6 +220,20 @@ public sealed class ApiFabrik : WebApplicationFactory<Program>, IAsyncLifetime
             """,
             verbindung);
         return (bool)(await befehl.ExecuteScalarAsync())!;
+    }
+
+    /// <summary>Die <c>INSERT</c>s, die eine Migration von leer auf das aktuelle Modell für <c>HasData</c> ausführen würde.</summary>
+    private string SeedSqlErzeugen()
+    {
+        using var scope = ErzeugeScope();
+        var db = scope.ServiceProvider.GetRequiredService<BiberDbContext>();
+        var modell = db.GetService<IDesignTimeModel>().Model;
+        var einfuegen = db.GetService<IMigrationsModelDiffer>()
+            .GetDifferences(null, modell.GetRelationalModel())
+            .OfType<InsertDataOperation>()
+            .ToList<MigrationOperation>();
+        var befehle = db.GetService<IMigrationsSqlGenerator>().Generate(einfuegen, modell);
+        return string.Concat(befehle.Select(b => b.CommandText));
     }
 
     private ApiFabrik Ableiten(IReadOnlyList<Action<IServiceCollection>> aenderungen, bool echteAnmeldung)
