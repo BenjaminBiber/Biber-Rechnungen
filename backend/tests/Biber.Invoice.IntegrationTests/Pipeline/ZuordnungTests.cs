@@ -90,7 +90,7 @@ public sealed class ZuordnungTests(ApiFabrik fabrik) : IAsyncLifetime
     [Fact]
     public async Task System_Tag_wird_nie_per_Regel_gesetzt()
     {
-        var system = Testdaten.Tag("zu prüfen");
+        var system = Testdaten.Tag("System");
         system.IstSystem = true;
         system.Matching = Regel(MatchingAlgorithmus.EinWort, "Rechnung");
         await fabrik.SpeichernAsync(system);

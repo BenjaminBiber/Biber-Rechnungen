@@ -28,9 +28,6 @@ public sealed class ImportEndpunktTests(ApiFabrik fabrik) : IAsyncLifetime
         var benutzer = Testdaten.Benutzer(anzeigename: Anzeigename);
         benutzer.Id = ApiFabrik.BenutzerId(Rolle.Benutzer);
         await _f.SpeichernAsync(benutzer);
-
-        // Der Seed-Tag „zu prüfen“ fällt dem Zurücksetzen zum Opfer; die Prüfungen setzen ihn bei den Platzhalter-PDFs.
-        await _f.SpeichernAsync(new Tag { Id = SystemIds.TagZuPruefen, Name = "zu prüfen", Farbe = "orange", IstSystem = true });
     }
 
     public Task DisposeAsync() => Task.CompletedTask;

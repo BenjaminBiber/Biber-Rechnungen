@@ -141,7 +141,6 @@ public sealed class PipelineTests(ApiFabrik fabrik)
             d.AddSingleton<IPipelineSchritt>(new TestSchritt(
                 SchrittReihenfolge.DocumentIntelligence, "Document Intelligence", protokoll, _ => SchrittErgebnis.SpaeterErneut("Document Intelligence nicht erreichbar")));
         });
-        await TagZuPruefenSicherstellenAsync(f);
 
         var vorgang = await f.ImportiereAsync("rechnung.pdf", Pdf);
 
@@ -450,21 +449,6 @@ public sealed class PipelineTests(ApiFabrik fabrik)
         Konfidenz = 0.93m,
         Seiten = 1,
     };
-
-    /// <summary>
-    /// Die Initial-Migration legt den System-Tag an; <see cref="ApiFabrik.ZuruecksetzenAsync"/> anderer Tests
-    /// auf derselben Datenbank leert aber auch ihn.
-    /// </summary>
-    private static async Task TagZuPruefenSicherstellenAsync(ApiFabrik f)
-    {
-        using var scope = f.ErzeugeScope();
-        var db = scope.ServiceProvider.GetRequiredService<BiberDbContext>();
-        if (!await db.Tags.AnyAsync(t => t.Id == SystemIds.TagZuPruefen))
-        {
-            db.Tags.Add(new Tag { Id = SystemIds.TagZuPruefen, Name = "zu prüfen", Farbe = "orange", IstSystem = true });
-            await db.SaveChangesAsync();
-        }
-    }
 
     private static async Task<Beleg> BelegAsync(ApiFabrik f, Guid id)
     {

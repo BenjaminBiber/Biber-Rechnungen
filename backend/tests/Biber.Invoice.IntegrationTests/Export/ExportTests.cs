@@ -403,11 +403,6 @@ public sealed class ExportTests(ApiFabrik fabrik) : IAsyncLifetime
     {
         using var scope = fabrik.ErzeugeScope();
         var db = scope.ServiceProvider.GetRequiredService<BiberDbContext>();
-        if (!await db.Tags.AnyAsync(t => t.Id == SystemIds.TagZuPruefen))
-        {
-            db.Tags.Add(new Tag { Id = SystemIds.TagZuPruefen, Name = "zu prüfen", Farbe = "orange", IstSystem = true });
-        }
-
         var alpha = Testdaten.Korrespondent("Alpha GmbH");
         var beta = Testdaten.Korrespondent("Beta AG");
         var buero = Testdaten.Kategorie("Bürobedarf");

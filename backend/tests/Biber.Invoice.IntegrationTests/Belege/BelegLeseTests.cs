@@ -26,16 +26,6 @@ public sealed class BelegLeseTests(ApiFabrik fabrik) : IAsyncLifetime
             await fabrik.SpeichernAsync(benutzer);
         }
 
-        // Respawn leert auch die Systemdaten der Migration; die Tags „Inbox“ und „zu prüfen“ neu anlegen.
-        var inbox = Testdaten.Tag("Inbox", "blau");
-        inbox.Id = SystemIds.TagInbox;
-        inbox.IstInbox = true;
-        inbox.IstSystem = true;
-        await fabrik.SpeichernAsync(inbox);
-        var zuPruefen = Testdaten.Tag("zu prüfen", "orange");
-        zuPruefen.Id = SystemIds.TagZuPruefen;
-        zuPruefen.IstSystem = true;
-        await fabrik.SpeichernAsync(zuPruefen);
         var bezahlt = Testdaten.Tag("bezahlt", "gruen");
         bezahlt.IstZahlungsTag = true;
         _zahlungsTagId = (await fabrik.SpeichernAsync(bezahlt)).Id;

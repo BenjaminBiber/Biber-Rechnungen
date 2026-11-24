@@ -183,10 +183,6 @@ public sealed class AutoMatchingTests(ApiFabrik fabrik) : IAsyncLifetime
     public async Task Unter_50_Trainingsbelegen_entsteht_kein_Modell()
     {
         await StammdatenAsync();
-        var zuPruefen = Testdaten.Tag("zu prüfen", "orange");
-        zuPruefen.Id = SystemIds.TagZuPruefen;
-        zuPruefen.IstSystem = true;
-        await fabrik.SpeichernAsync(zuPruefen);
         await BestandAsync(jeKlasse: 24); // 48 bestätigte Belege
 
         // Unbestätigt, Dublette und nicht fertig zählen nicht mit.

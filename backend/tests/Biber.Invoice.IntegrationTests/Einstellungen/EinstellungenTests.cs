@@ -39,12 +39,12 @@ public sealed class EinstellungenTests(ApiFabrik fabrik) : IAsyncLifetime
         dto.Aufbewahrung.Jahre.ShouldBe(8);
         dto.Pruefungen.Aktiv.Count.ShouldBe(9);
         dto.Pruefungen.Aktiv.Values.ShouldAllBe(aktiv => aktiv);
-        dto.Allgemein.InboxTagId.ShouldBe(Guid.Empty);
+        dto.Allgemein.InboxTagId.ShouldBe(SystemIds.TagInbox); // Seed-Tag „Inbox“
     }
 
     public static TheoryData<string, object> Gruppen() => new()
     {
-        { "allgemein", new AllgemeinEinstellungen { Firmenname = "Biber GmbH", Zeitzone = "Europe/Vienna" } },
+        { "allgemein", new AllgemeinEinstellungen { Firmenname = "Biber GmbH", Zeitzone = "Europe/Vienna", InboxTagId = SystemIds.TagInbox } },
         { "ust", new UstEinstellungen { Status = UstStatus.Regelbesteuerung, Zeitraum = UstvaZeitraum.Monatlich } },
         { "pruefungen", new PruefEinstellungen { SummenToleranz = 0.05m, MaxAlterJahre = 5, Aktiv = new() { [PruefungArt.Dublette] = false } } },
         { "di", new DiEinstellungen { Monatslimit = 1000, WarnungAbProzent = 90, MaxSeitenJeBeleg = 20 } },

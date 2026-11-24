@@ -164,7 +164,6 @@ public sealed class AuditTests(ApiFabrik fabrik)
         using (var scope = fabrik.ErzeugeScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<BiberDbContext>();
-            await SystemTagsSicherstellenAsync(db);
             db.BelegTags.Add(new BelegTag { BelegId = beleg.Id, TagId = SystemIds.TagInbox });
             db.BelegTags.Add(new BelegTag { BelegId = beleg.Id, TagId = SystemIds.TagZuPruefen });
             db.BelegDateien.Add(new BelegDatei
@@ -263,18 +262,6 @@ public sealed class AuditTests(ApiFabrik fabrik)
         var db = scope.ServiceProvider.GetRequiredService<BiberDbContext>();
         aendern(await db.Belege.SingleAsync(b => b.Id == belegId));
         await db.SaveChangesAsync();
-    }
-
-    /// <summary>Andere Tests leeren die Datenbank samt der Tags aus der Migration.</summary>
-    private static async Task SystemTagsSicherstellenAsync(BiberDbContext db)
-    {
-        foreach (var (id, name) in new[] { (SystemIds.TagInbox, "Inbox"), (SystemIds.TagZuPruefen, "zu prüfen") })
-        {
-            if (!await db.Tags.AnyAsync(t => t.Id == id))
-            {
-                db.Tags.Add(new Tag { Id = id, Name = name, IstSystem = true });
-            }
-        }
     }
 
     private async Task<List<AuditEintrag>> EintraegeAsync(Guid belegId, string aktion)

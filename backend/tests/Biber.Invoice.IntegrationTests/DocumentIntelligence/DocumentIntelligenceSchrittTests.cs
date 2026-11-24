@@ -13,11 +13,7 @@ public sealed class DocumentIntelligenceSchrittTests(ApiFabrik fabrik) : IAsyncL
     private static readonly DateOnly Januar = new(2026, 1, 1);
     private static readonly DateOnly Februar = new(2026, 2, 1);
 
-    public async Task InitializeAsync()
-    {
-        await fabrik.ZuruecksetzenAsync();
-        await fabrik.SystemTagsSicherstellenAsync();
-    }
+    public Task InitializeAsync() => fabrik.ZuruecksetzenAsync();
 
     public Task DisposeAsync() => Task.CompletedTask;
 
