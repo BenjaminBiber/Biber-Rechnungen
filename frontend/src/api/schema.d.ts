@@ -2080,7 +2080,7 @@ export interface components {
             /** Format: decimal */
             summeBrutto: number;
             /** Format: decimal */
-            vorsteuer: number;
+            vorsteuer?: number | null;
             /** Format: int32 */
             dublettenAusgeschlossen: number;
             /** Format: int32 */

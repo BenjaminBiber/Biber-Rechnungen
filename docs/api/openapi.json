@@ -6776,7 +6776,10 @@
             "format": "decimal"
           },
           "vorsteuer": {
-            "type": "number",
+            "type": [
+              "number",
+              "null"
+            ],
             "format": "decimal"
           },
           "dublettenAusgeschlossen": {
@@ -6804,7 +6807,6 @@
         "required": [
           "anzahlBelege",
           "summeBrutto",
-          "vorsteuer",
           "dublettenAusgeschlossen",
           "anzahlZuPruefen",
           "kategorien"
