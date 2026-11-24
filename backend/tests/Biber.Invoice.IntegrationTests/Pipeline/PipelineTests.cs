@@ -4,7 +4,11 @@ using Biber.Invoice.Contracts.Dienste;
 using Biber.Invoice.Domain.Entitaeten;
 using Biber.Invoice.Domain.Enums;
 using Biber.Invoice.Domain.Pipeline;
+using Biber.Invoice.Infrastructure.Module.Formaterkennung;
+using Biber.Invoice.Infrastructure.Module.HashDublette;
+using Biber.Invoice.Infrastructure.Module.KorrespondentZuordnung;
 using Biber.Invoice.Infrastructure.Module.Pipeline;
+using Biber.Invoice.Infrastructure.Module.Zuordnung;
 using Biber.Invoice.Infrastructure.Persistenz;
 using Biber.Invoice.IntegrationTests.Infrastruktur;
 using Hangfire;
@@ -21,10 +25,26 @@ public sealed class PipelineTests(ApiFabrik fabrik)
 {
     private static readonly byte[] Pdf = "%PDF-1.7 Testinhalt"u8.ToArray();
 
+    /// <summary>
+    /// Diese Tests prüfen den Orchestrator mit eigenen Test-Schritten; die echte Formaterkennung würde
+    /// die Platzhalter-Dateien ablehnen, der echte Dubletten-Check die mehrfach importierten Bytes
+    /// (der hat <see cref="HashDubletteTests"/>) – beide werden deshalb entfernt, ebenso die echte Korrespondent-Zuordnung und die Zuordnung von Kategorie und Tags.
+    /// </summary>
+    private ApiFabrik NurOrchestrator() =>
+        fabrik.MitSofortVerarbeitung().MitDiensten(d =>
+        {
+            foreach (var eintrag in d.Where(e => e.ServiceType == typeof(IPipelineSchritt)
+                && (e.ImplementationType == typeof(FormaterkennungSchritt) || e.ImplementationType == typeof(HashDubletteSchritt)
+                    || e.ImplementationType == typeof(KorrespondentZuordnungSchritt) || e.ImplementationType == typeof(ZuordnungSchritt))).ToList())
+            {
+                d.Remove(eintrag);
+            }
+        });
+
     [Fact]
     public async Task Annahme_legt_Staging_Datei_mit_korrektem_SHA256_an()
     {
-        var f = fabrik.MitSofortVerarbeitung();
+        var f = NurOrchestrator();
 
         var vorgang = await f.ImportiereAsync("Rechnung.PDF", Pdf);
 
@@ -39,7 +59,7 @@ public sealed class PipelineTests(ApiFabrik fabrik)
     [Fact]
     public async Task Ohne_weitere_Schritte_endet_der_Vorgang_Fertig_mit_Beleg_Fertig()
     {
-        var f = fabrik.MitSofortVerarbeitung();
+        var f = NurOrchestrator();
 
         var vorgang = await f.ImportiereAsync("rechnung.pdf", Pdf);
 
@@ -59,7 +79,7 @@ public sealed class PipelineTests(ApiFabrik fabrik)
     public async Task Schritte_laufen_in_der_Reihenfolge_ihrer_Konstanten()
     {
         var protokoll = new ConcurrentQueue<string>();
-        var f = fabrik.MitSofortVerarbeitung().MitDiensten(d =>
+        var f = NurOrchestrator().MitDiensten(d =>
         {
             d.AddSingleton<IPipelineSchritt>(new TestSchritt(SchrittReihenfolge.Pruefungen, "Prüfungen", protokoll));
             d.AddSingleton<IPipelineSchritt>(new TestSchritt(SchrittReihenfolge.HashDublette, "Dubletten-Check", protokoll));
@@ -69,7 +89,7 @@ public sealed class PipelineTests(ApiFabrik fabrik)
         var vorgang = await f.ImportiereAsync("rechnung.pdf", Pdf);
 
         protokoll.ShouldBe(["Dubletten-Check", "Korrespondent", "Prüfungen"]);
-        vorgang.Schritte.Select(s => s.Name).ShouldBe(["Dubletten-Check", "Document Intelligence", "Daten übernehmen", "Korrespondent", "Prüfungen"]);
+        vorgang.Schritte.Select(s => s.Name).ShouldBe(["Dubletten-Check", "E-Rechnung lesen", "KoSIT-Validierung", "Document Intelligence", "Daten übernehmen", "Korrespondent", "Fachliche Dublette", "Prüfungen"]);
         vorgang.Status.ShouldBe(ImportStatus.Fertig);
     }
 
@@ -77,7 +97,7 @@ public sealed class PipelineTests(ApiFabrik fabrik)
     public async Task Beendet_stoppt_die_Pipeline_mit_dem_genannten_Status()
     {
         var protokoll = new ConcurrentQueue<string>();
-        var f = fabrik.MitSofortVerarbeitung().MitDiensten(d =>
+        var f = NurOrchestrator().MitDiensten(d =>
         {
             d.AddSingleton<IPipelineSchritt>(new TestSchritt(
                 SchrittReihenfolge.HashDublette, "Dubletten-Check", protokoll, _ => SchrittErgebnis.Beendet(ImportStatus.Dublette, "Dublette von 26-0912")));
@@ -89,7 +109,7 @@ public sealed class PipelineTests(ApiFabrik fabrik)
         vorgang.Status.ShouldBe(ImportStatus.Dublette);
         vorgang.Ergebnis.ShouldBe("Dublette von 26-0912");
         protokoll.ShouldBe(["Dubletten-Check"]);
-        vorgang.Schritte.Select(s => s.Status).ShouldBe(["ok", "offen", "offen", "offen"]);
+        vorgang.Schritte.Select(s => s.Status).ShouldBe(["ok", "offen", "offen", "offen", "offen", "offen", "offen"]);
     }
 
     [Theory]
@@ -108,7 +128,7 @@ public sealed class PipelineTests(ApiFabrik fabrik)
     {
         var meldungen = Substitute.For<IBenachrichtigungsDienst>();
         var protokoll = new ConcurrentQueue<string>();
-        var f = fabrik.MitSofortVerarbeitung().MitDiensten(d =>
+        var f = NurOrchestrator().MitDiensten(d =>
         {
             d.AddSingleton(meldungen);
             d.AddSingleton<IPipelineSchritt>(new TestSchritt(
@@ -152,7 +172,7 @@ public sealed class PipelineTests(ApiFabrik fabrik)
     public async Task Exception_eines_Schritts_zaehlt_als_Versuch_und_verwirft_dessen_Aenderungen()
     {
         var protokoll = new ConcurrentQueue<string>();
-        var f = fabrik.MitSofortVerarbeitung().MitDiensten(d =>
+        var f = NurOrchestrator().MitDiensten(d =>
             d.AddSingleton<IPipelineSchritt>(new TestSchritt(SchrittReihenfolge.Korrespondent, "Korrespondent", protokoll, k =>
             {
                 k.Beleg.Rechnungsnummer = "halbfertig";
@@ -173,7 +193,7 @@ public sealed class PipelineTests(ApiFabrik fabrik)
     {
         var pausieren = true;
         var protokoll = new ConcurrentQueue<string>();
-        var f = fabrik.MitSofortVerarbeitung().MitDiensten(d =>
+        var f = NurOrchestrator().MitDiensten(d =>
             d.AddSingleton<IPipelineSchritt>(new TestSchritt(SchrittReihenfolge.DocumentIntelligence, "Document Intelligence", protokoll, _ =>
                 pausieren ? SchrittErgebnis.Pausiert("DI-Limit erreicht") : SchrittErgebnis.Weiter)));
 
@@ -205,7 +225,7 @@ public sealed class PipelineTests(ApiFabrik fabrik)
     public async Task Unzulaessiges_Format_wird_abgelehnt(string dateiname)
     {
         var meldungen = Substitute.For<IBenachrichtigungsDienst>();
-        var f = fabrik.MitSofortVerarbeitung().MitDiensten(d => d.AddSingleton(meldungen));
+        var f = NurOrchestrator().MitDiensten(d => d.AddSingleton(meldungen));
 
         var vorgang = await f.ImportiereAsync(dateiname, Pdf);
 
@@ -229,7 +249,7 @@ public sealed class PipelineTests(ApiFabrik fabrik)
     [InlineData("a.tiff")]
     public async Task Zulaessige_Formate_werden_angenommen(string dateiname)
     {
-        var f = fabrik.MitSofortVerarbeitung();
+        var f = NurOrchestrator();
 
         var vorgang = await f.ImportiereAsync(dateiname, Pdf);
 
@@ -240,7 +260,7 @@ public sealed class PipelineTests(ApiFabrik fabrik)
     public async Task ExtraktionUebernehmen_ist_idempotent()
     {
         var protokoll = new ConcurrentQueue<string>();
-        var f = fabrik.MitSofortVerarbeitung().MitDiensten(d =>
+        var f = NurOrchestrator().MitDiensten(d =>
             d.AddSingleton<IPipelineSchritt>(new TestSchritt(SchrittReihenfolge.DocumentIntelligence, "Document Intelligence", protokoll, k =>
             {
                 k.Extraktion = Extraktion();
@@ -285,7 +305,7 @@ public sealed class PipelineTests(ApiFabrik fabrik)
     {
         var protokoll = new ConcurrentQueue<string>();
         var kontexte = new ConcurrentQueue<VerarbeitungsKontext>();
-        var f = fabrik.MitSofortVerarbeitung().MitDiensten(d =>
+        var f = NurOrchestrator().MitDiensten(d =>
         {
             d.AddSingleton<IPipelineSchritt>(new TestSchritt(SchrittReihenfolge.HashDublette, "Dubletten-Check", protokoll));
             d.AddSingleton<IPipelineSchritt>(new TestSchritt(SchrittReihenfolge.Formaterkennung, "Format", protokoll, k =>
@@ -325,7 +345,7 @@ public sealed class PipelineTests(ApiFabrik fabrik)
     [Fact]
     public async Task Vorgang_zeigt_Herkunft_je_Quelle()
     {
-        var f = fabrik.MitSofortVerarbeitung();
+        var f = NurOrchestrator();
         var mail = await f.ImportiereAsync("anhang.pdf", Pdf, ImportQuelle.Mail, new ImportHerkunft(MailAbsender: "rechnung@stadtwerke.example", MailBetreff: "Ihre Rechnung 2026-1194"));
         var ordner = await f.ImportiereAsync("Scan_0915.pdf", Pdf, ImportQuelle.Ordner, new ImportHerkunft(Pfad: "/srv/rechnungen/eingang/Scan_0915.pdf"));
 

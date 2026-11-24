@@ -4,6 +4,7 @@ using Biber.Invoice.Domain.Entitaeten;
 using Biber.Invoice.Domain.Enums;
 using Biber.Invoice.Domain.Pipeline;
 using Biber.Invoice.Infrastructure.Module.DocumentIntelligence;
+using Biber.Invoice.Infrastructure.Module.Formaterkennung;
 using Biber.Invoice.Infrastructure.Persistenz;
 using Biber.Invoice.IntegrationTests.Infrastruktur;
 using Microsoft.EntityFrameworkCore;
@@ -47,7 +48,7 @@ public sealed class FakeDiClient : IDocumentIntelligenceClient
     public Task<bool> VerbindungTestenAsync(CancellationToken ct) => Task.FromResult(IstKonfiguriert);
 }
 
-/// <summary>Ersetzt die (noch fehlende) Formaterkennung: setzt Format und Seitenzahl des Belegs.</summary>
+/// <summary>Ersetzt die echte Formaterkennung (sie würde die Platzhalter-Dateien ablehnen): setzt Format und Seitenzahl des Belegs.</summary>
 public sealed class FormatSchritt(ErkanntesFormat format, int seiten) : IPipelineSchritt
 {
     public int Reihenfolge => SchrittReihenfolge.Formaterkennung;
@@ -72,6 +73,11 @@ public static class DiTestHilfen
         {
             d.RemoveAll<IDocumentIntelligenceClient>();
             d.AddSingleton<IDocumentIntelligenceClient>(client);
+            foreach (var eintrag in d.Where(e => e.ServiceType == typeof(IPipelineSchritt) && e.ImplementationType == typeof(FormaterkennungSchritt)).ToList())
+            {
+                d.Remove(eintrag);
+            }
+
             d.AddSingleton<IPipelineSchritt>(new FormatSchritt(format, seiten));
         });
 
