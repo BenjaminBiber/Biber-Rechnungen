@@ -1,7 +1,4 @@
 import { expect, test, type BrowserContext, type Page } from '@playwright/test'
-import { authStatus } from '../src/mocks/fixtures/auth'
-import { belege } from '../src/mocks/fixtures/belege'
-import { importVorgaenge } from '../src/mocks/fixtures/import'
 
 /**
  * Projekt `pwa`: echter Build ohne Mock-Server (`npm run preview:pwa`) mit Service Worker.
@@ -10,7 +7,66 @@ import { importVorgaenge } from '../src/mocks/fixtures/import'
  */
 type Api = { anfragen: string[]; offline: boolean }
 
-const vorgang = { ...importVorgaenge[0], id: 'e2e-vorgang', status: 'Fertig' as const, belegId: belege[0].id }
+// Eigene kleine Testdaten: Die Mock-Fixtures importieren Typen über den Alias `@/`, den tsconfig.node nicht kennt.
+const authStatus = {
+  eingerichtet: true,
+  angemeldet: true,
+  benutzer: {
+    id: '00000000-0000-4000-8000-0000000000b1',
+    name: 'Martin Keller',
+    email: 'm.keller@firma.de',
+    rolle: 'Admin',
+    freigegeben: true,
+    totpAktiv: false,
+    anmeldung: 'Passwort',
+    zuletztAktiv: '2026-11-24T09:00:00Z',
+  },
+  registrierungOffen: false,
+  googleAktiv: false,
+}
+
+const belege = ['Hostwerk Süd GmbH', 'Bürowelt Krämer KG'].map((name, i) => ({
+  id: `00000000-0000-4000-8000-00000000000${i + 1}`,
+  rechnungsnummer: `RE-${1000 + i}`,
+  korrespondent: { id: `00000000-0000-4000-8000-0000000000a${i + 1}`, name },
+  logo: { url: null, initialen: name.slice(0, 2).toUpperCase(), quelle: 'Keine' },
+  titel: `Rechnung ${name}`,
+  kategorie: null,
+  rechnungsdatum: '2026-11-20',
+  faelligkeitsdatum: '2026-12-04',
+  ueberfaellig: false,
+  netto: 100,
+  brutto: 119,
+  waehrung: 'EUR',
+  seitenanzahl: 1,
+  quelle: 'Upload',
+  format: 'PDF',
+  tags: [],
+  auszug: '',
+  vorschauUrl: null,
+  istDublette: false,
+  konfidenz: null,
+  leistungsdatum: null,
+}))
+
+const vorgang = {
+  id: '00000000-0000-4000-8000-0000000000c1',
+  zeitpunkt: '2026-11-24T09:00:00Z',
+  quelle: 'Upload',
+  dateiname: 'Offline_Rechnung.pdf',
+  groesse: 16,
+  herkunft: 'M. Keller',
+  herkunftDetail: null,
+  status: 'Fertig',
+  versuche: 1,
+  maxVersuche: 5,
+  ergebnis: null,
+  fehler: null,
+  belegId: belege[0].id,
+  duplikatVonBelegId: null,
+  naechsterVersuchAm: null,
+  schritte: [],
+}
 
 async function apiNachbilden(context: BrowserContext): Promise<Api> {
   const api: Api = { anfragen: [], offline: false }
@@ -29,18 +85,16 @@ async function apiNachbilden(context: BrowserContext): Promise<Api> {
           return json(authStatus)
         case '/api/belege':
           return json({
-            eintraege: belege.slice(0, 5),
-            gesamt: 5,
+            eintraege: belege,
+            gesamt: belege.length,
             seite: 1,
             seitengroesse: 25,
-            summeBrutto: 0,
+            summeBrutto: 238,
           })
         case '/api/belege/zaehler':
-          return json({ alle: 5, inbox: 0, zuPruefen: 0, offen: 0, ueberfaellig: 0 })
+          return json({ alle: belege.length, inbox: 0, zuPruefen: 0, offen: 0, ueberfaellig: 0 })
         case `/api/import/vorgaenge/${vorgang.id}`:
           return json(vorgang)
-        case `/api/belege/${belege[0].id}`:
-          return json(belege[0])
         default:
           return json({ type: 'about:blank', title: 'Nicht gefunden', status: 404 }, 404)
       }
@@ -93,7 +147,7 @@ test('App-Shell und zuletzt geladene Liste sind offline verfügbar', async ({ pa
   await serviceWorkerBereit(page)
   // Einmal unter Kontrolle des Service Workers laden, damit die Liste im Cache landet.
   await page.reload()
-  const erster = belege[0].korrespondent?.name ?? belege[0].rechnungsnummer!
+  const erster = belege[0].titel
   await expect(page.getByText(erster).first()).toBeVisible()
 
   await offline(context, api, true)
