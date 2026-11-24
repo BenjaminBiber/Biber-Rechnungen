@@ -1,9 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createMemoryHistory, createRouter, RouterProvider } from '@tanstack/react-router'
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http } from 'msw'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
+import { alleEntfernen } from '@/components/toast/toast-store'
 import { db } from '@/mocks/db'
 import { tagIds } from '@/mocks/fixtures/ids'
 import { server } from '@/mocks/server'
@@ -44,6 +45,9 @@ async function ersteZeile() {
 }
 
 describe('Zeilenmenü', { timeout: 20_000 }, () => {
+  // Der Toast-Speicher ist global: Toasts früherer Tests dürfen die Suche nicht verfälschen.
+  afterEach(() => act(() => alleEntfernen()))
+
   it('öffnet per ⋮-Knopf mit allen Einträgen', async () => {
     const { nutzer } = renderBelege()
     const { zeile } = await ersteZeile()
@@ -91,6 +95,74 @@ describe('Zeilenmenü', { timeout: 20_000 }, () => {
     await nutzer.click(await screen.findByRole('menuitem', { name: /Bestätigen/ }))
     expect(await screen.findByText('Beleg bestätigt')).toBeInTheDocument()
     expect(anfragen.map((a) => a.pfad)).toContain(`/api/belege/${beleg.id}/bestaetigen`)
+  })
+
+  describe('Zeile wird ausgehängt, bevor die Antwort eintrifft', () => {
+    /**
+     * Die Aktion wird gesendet, die Antwort zurückgehalten und die Belegliste (samt Zeile und Menü) verlassen;
+     * erst danach antwortet der Server – wie wenn der Beleg nach dem Neuladen aus der Ansicht fällt.
+     */
+    async function ausgehaengt(pfad: string, aktion: string, aktionAusloesen: () => Promise<void>, status?: number) {
+      let freigeben = () => {}
+      const wartet = new Promise<void>((weiter) => (freigeben = weiter))
+      const view = renderBelege(pfad)
+      server.use(
+        http.post(`*/api/belege/:id/${aktion}`, async () => {
+          await wartet
+          if (status) return new Response(null, { status })
+        }),
+      )
+      await ersteZeile()
+      await aktionAusloesen()
+      await view.router.navigate({ to: '/benachrichtigungen' })
+      await waitFor(() => expect(screen.queryByRole('table')).not.toBeInTheDocument())
+      freigeben()
+    }
+
+    it('„Als bezahlt markieren“ zeigt den Erfolgs-Toast', async () => {
+      await ausgehaengt('/belege?ansicht=Offen', 'tags', async () => {
+        const nutzer = userEvent.setup()
+        await nutzer.click(within(zeilen()[0]).getByRole('button', { name: /^Aktionen für/ }))
+        screen.getByRole('menuitem', { name: /Als bezahlt markieren/ }).focus()
+        await nutzer.keyboard('{ArrowRight}')
+        await waitFor(() => expect(screen.getByRole('menuitem', { name: 'bezahlt' })).toHaveFocus())
+        await nutzer.keyboard('{Enter}')
+      })
+      expect(await screen.findByText('Als „bezahlt“ markiert')).toBeInTheDocument()
+    })
+
+    it('„Bestätigen“ zeigt den Erfolgs-Toast', async () => {
+      await ausgehaengt('/belege?ansicht=ZuPruefen', 'bestaetigen', async () => {
+        const nutzer = userEvent.setup()
+        await nutzer.click(within(zeilen()[0]).getByRole('button', { name: /^Aktionen für/ }))
+        await nutzer.click(await screen.findByRole('menuitem', { name: /Bestätigen/ }))
+      })
+      expect(await screen.findByText('Beleg bestätigt')).toBeInTheDocument()
+    })
+
+    it('schlägt die Aktion fehl, erscheint der Fehler-Toast mit „Erneut“ ohne unbehandelte Rejection', async () => {
+      const unbehandelt: unknown[] = []
+      const merken = (grund: unknown) => unbehandelt.push(grund)
+      process.on('unhandledRejection', merken)
+      try {
+        await ausgehaengt(
+          '/belege?ansicht=ZuPruefen',
+          'bestaetigen',
+          async () => {
+            const nutzer = userEvent.setup()
+            await nutzer.click(within(zeilen()[0]).getByRole('button', { name: /^Aktionen für/ }))
+            await nutzer.click(await screen.findByRole('menuitem', { name: /Bestätigen/ }))
+          },
+          500,
+        )
+        expect(await screen.findByText('Die Aktion ist fehlgeschlagen.')).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: 'Erneut' })).toBeInTheDocument()
+        await new Promise((r) => setTimeout(r, 50))
+        expect(unbehandelt).toEqual([])
+      } finally {
+        process.off('unhandledRejection', merken)
+      }
+    })
   })
 
   it('zeigt „Bestätigen“ nicht ohne „zu prüfen“', async () => {

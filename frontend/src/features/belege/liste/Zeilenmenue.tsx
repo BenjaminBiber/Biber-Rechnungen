@@ -104,44 +104,48 @@ export function Zeilenmenue({ beleg }: { beleg: BelegListeneintrag }) {
     [beleg.id, darfBearbeiten],
   )
 
-  function fehler(erneut: () => void) {
-    return () => toast.fehler('Die Aktion ist fehlgeschlagen.', { erneut })
+  /**
+   * Toasts hängen am Promise von `mutateAsync`, nicht an den Callbacks von `mutate`: Fällt der Beleg nach dem
+   * Neuladen aus der Ansicht, ist dieses Menü schon ausgehängt, und TanStack Query ruft deren Callbacks nicht mehr auf.
+   */
+  function melden(aktion: Promise<unknown>, erfolg: (() => void) | null, erneut: () => void) {
+    void aktion.then(erfolg ?? (() => {}), () => toast.fehler('Die Aktion ist fehlgeschlagen.', { erneut }))
   }
 
   function tagsAendern(neu: string[]) {
     for (const tagId of neu.filter((t) => !tagIds.includes(t)))
-      tagHinzufuegen.mutate({ id: beleg.id, tagId }, { onError: fehler(() => tagsAendern(neu)) })
+      melden(tagHinzufuegen.mutateAsync({ id: beleg.id, tagId }), null, () => tagsAendern(neu))
     for (const tagId of tagIds.filter((t) => !neu.includes(t)))
-      tagEntfernen.mutate({ id: beleg.id, tagId }, { onError: fehler(() => tagsAendern(neu)) })
+      melden(tagEntfernen.mutateAsync({ id: beleg.id, tagId }), null, () => tagsAendern(neu))
   }
 
   function alsBezahlt(tagId: string, name: string) {
-    tagHinzufuegen.mutate(
-      { id: beleg.id, tagId },
-      { onSuccess: () => toast.erfolg(`Als „${name}“ markiert`), onError: fehler(() => alsBezahlt(tagId, name)) },
+    melden(
+      tagHinzufuegen.mutateAsync({ id: beleg.id, tagId }),
+      () => toast.erfolg(`Als „${name}“ markiert`),
+      () => alsBezahlt(tagId, name),
     )
   }
 
   function kategorieSetzen(kategorieId: string | null) {
     if (!detail) return
-    aendern.mutate(mitKategorie(detail, kategorieId), {
-      onSuccess: () => toast.erfolg('Kategorie gesetzt'),
-      onError: fehler(() => kategorieSetzen(kategorieId)),
-    })
-  }
-
-  function bestaetigenAusfuehren() {
-    bestaetigen.mutate(
-      { id: beleg.id },
-      { onSuccess: () => toast.erfolg('Beleg bestätigt'), onError: fehler(bestaetigenAusfuehren) },
+    melden(
+      aendern.mutateAsync(mitKategorie(detail, kategorieId)),
+      () => toast.erfolg('Kategorie gesetzt'),
+      () => kategorieSetzen(kategorieId),
     )
   }
 
+  function bestaetigenAusfuehren() {
+    melden(bestaetigen.mutateAsync({ id: beleg.id }), () => toast.erfolg('Beleg bestätigt'), bestaetigenAusfuehren)
+  }
+
   function erneutAuslesenAusfuehren() {
-    erneutAuslesen.mutate(beleg.id, {
-      onSuccess: () => toast.info('Beleg wird erneut ausgelesen'),
-      onError: fehler(erneutAuslesenAusfuehren),
-    })
+    melden(
+      erneutAuslesen.mutateAsync(beleg.id),
+      () => toast.info('Beleg wird erneut ausgelesen'),
+      erneutAuslesenAusfuehren,
+    )
   }
 
   const original = detail?.dateien.find((d) => d.rolle === 'Original')

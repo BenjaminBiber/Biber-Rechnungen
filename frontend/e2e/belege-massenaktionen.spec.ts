@@ -31,21 +31,15 @@ test.describe('Belege: Massenaktionen und Zeilenmenü', () => {
     const titel = await erste.getByRole('link').innerText()
     await expect(erste.locator('.chip', { hasText: /^bezahlt$/ })).toHaveCount(0)
 
-    // Markiert wird in „Alle“: in „Offen“ verschwindet die Zeile nach dem Neuladen samt Menü, oft bevor der
-    // Erfolgs-Toast kommt (Wechsel in der App – der Mock-Zustand bleibt).
-    await page.getByRole('button', { name: /^Ansicht/ }).click()
-    await page.getByRole('menuitemradio', { name: /^Alle Belege/ }).click()
-    const zeile = page.getByRole('table').getByRole('row').filter({ hasText: titel })
-    await expect(zeile.locator('.chip', { hasText: /^bezahlt$/ })).toHaveCount(0)
-
     // Ganz per Tastatur: steht der Mauszeiger über dem aufklappenden Menü, kann ein Hover das Untermenü wieder schließen.
-    await zeile.getByRole('button', { name: /^Aktionen für/ }).press('Enter')
+    await erste.getByRole('button', { name: /^Aktionen für/ }).press('Enter')
     await page.getByRole('menuitem', { name: /Als bezahlt markieren/ }).press('ArrowRight')
     // Ein Mausklick ins gerade aufklappende Untermenü scheiterte an „element is not stable“.
     const bezahlt = page.getByRole('menuitem', { name: 'bezahlt', exact: true })
     await expect(bezahlt).toBeFocused()
     await bezahlt.press('Enter')
     await expect(page.getByText('Als „bezahlt“ markiert')).toBeVisible()
-    await expect(zeile.locator('.chip', { hasText: /^bezahlt$/ })).toBeVisible()
+    // Bezahlt gilt nicht mehr als „offen“: die Zeile fällt aus der Ansicht.
+    await expect(page.getByRole('table').getByRole('link', { name: titel })).toHaveCount(0)
   })
 })
