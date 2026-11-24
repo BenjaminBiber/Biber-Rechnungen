@@ -14,14 +14,21 @@ public static partial class GrundpreisRechner
     /// <summary>Basiseinheit und Faktor zur Basiseinheit je erkannter Einheit (Kurzzeichen und UN/ECE-Codes).</summary>
     private static readonly Dictionary<string, (string Basis, decimal Faktor)> Masse = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["kg"] = ("kg", 1m), ["kgm"] = ("kg", 1m),
-        ["g"] = ("kg", 0.001m), ["grm"] = ("kg", 0.001m),
-        ["l"] = ("l", 1m), ["ltr"] = ("l", 1m),
-        ["ml"] = ("l", 0.001m), ["mlt"] = ("l", 0.001m),
+        ["kg"] = ("kg", 1m),
+        ["kgm"] = ("kg", 1m),
+        ["g"] = ("kg", 0.001m),
+        ["grm"] = ("kg", 0.001m),
+        ["l"] = ("l", 1m),
+        ["ltr"] = ("l", 1m),
+        ["ml"] = ("l", 0.001m),
+        ["mlt"] = ("l", 0.001m),
         ["cl"] = ("l", 0.01m),
-        ["m"] = ("m", 1m), ["mtr"] = ("m", 1m),
-        ["cm"] = ("m", 0.01m), ["cmt"] = ("m", 0.01m),
-        ["mm"] = ("m", 0.001m), ["mmt"] = ("m", 0.001m),
+        ["m"] = ("m", 1m),
+        ["mtr"] = ("m", 1m),
+        ["cm"] = ("m", 0.01m),
+        ["cmt"] = ("m", 0.01m),
+        ["mm"] = ("m", 0.001m),
+        ["mmt"] = ("m", 0.001m),
     };
 
     private static readonly HashSet<string> StueckEinheiten = new(StringComparer.OrdinalIgnoreCase)
