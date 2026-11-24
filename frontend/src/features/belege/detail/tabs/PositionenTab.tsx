@@ -137,7 +137,8 @@ export function PositionenTab({ beleg, darfBearbeiten }: { beleg: BelegDetail; d
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="overflow-x-auto">
+      {/* relative: auch absolut positionierte Kinder (sr-only) bleiben im Scroll-Container und verbreitern mobil nicht die Seite. */}
+      <div className="relative overflow-x-auto">
         <table className="tabelle min-w-[640px]">
           <thead>
             <tr>
