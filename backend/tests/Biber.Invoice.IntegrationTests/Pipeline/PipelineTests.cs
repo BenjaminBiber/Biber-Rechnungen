@@ -9,6 +9,7 @@ using Biber.Invoice.Infrastructure.Module.Formaterkennung;
 using Biber.Invoice.Infrastructure.Module.HashDublette;
 using Biber.Invoice.Infrastructure.Module.KorrespondentZuordnung;
 using Biber.Invoice.Infrastructure.Module.Pipeline;
+using Biber.Invoice.Infrastructure.Module.Pruefungen;
 using Biber.Invoice.Infrastructure.Module.Zuordnung;
 using Biber.Invoice.Infrastructure.Persistenz;
 using Biber.Invoice.IntegrationTests.Infrastruktur;
@@ -30,7 +31,7 @@ public sealed class PipelineTests(ApiFabrik fabrik)
     /// Diese Tests prüfen den Orchestrator mit eigenen Test-Schritten; die echte Formaterkennung würde
     /// die Platzhalter-Dateien ablehnen, der echte Dubletten-Check die mehrfach importierten Bytes
     /// (der hat <see cref="HashDubletteTests"/>) – beide werden deshalb entfernt, ebenso die echte Korrespondent-Zuordnung,
-    /// die Zuordnung von Kategorie und Tags und die Ablage (die hat <see cref="AblageTests"/>).
+    /// die Zuordnung von Kategorie und Tags, die echten Prüfungen und die Ablage (die hat <see cref="AblageTests"/>).
     /// </summary>
     private ApiFabrik NurOrchestrator() =>
         fabrik.MitSofortVerarbeitung().MitDiensten(d =>
@@ -38,7 +39,7 @@ public sealed class PipelineTests(ApiFabrik fabrik)
             foreach (var eintrag in d.Where(e => e.ServiceType == typeof(IPipelineSchritt)
                 && (e.ImplementationType == typeof(FormaterkennungSchritt) || e.ImplementationType == typeof(HashDubletteSchritt)
                     || e.ImplementationType == typeof(KorrespondentZuordnungSchritt) || e.ImplementationType == typeof(ZuordnungSchritt)
-                    || e.ImplementationType == typeof(AblageSchritt))).ToList())
+                    || e.ImplementationType == typeof(PruefungenSchritt) || e.ImplementationType == typeof(AblageSchritt))).ToList())
             {
                 d.Remove(eintrag);
             }
