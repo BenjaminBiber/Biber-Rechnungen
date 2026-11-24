@@ -108,20 +108,41 @@ function AusschnittWaehler({
   )
 }
 
-/** Vorschau des Ausschnitts: dieselbe Seite, so vergrößert, dass nur das Rechteck sichtbar ist. */
+/** Seitenverhältnis bis das Bild geladen ist: DIN A4 hochkant. */
+const A4 = { breite: 1000, hoehe: 1414 }
+
+/**
+ * Vorschau des Ausschnitts: dieselbe Seite, so vergrößert, dass nur das Rechteck sichtbar ist.
+ * Die viewBox liegt in Bildpixeln, damit das Seitenverhältnis des Ausschnitts erhalten bleibt
+ * und er unverzerrt in die Box eingepasst wird.
+ */
 function AusschnittVorschau({ bild, wert }: { bild: string; wert: Rechteck }) {
-  const pos = (start: number, groesse: number) => (groesse >= 1 ? 0 : (start / (1 - groesse)) * 100)
+  const [groesse, setGroesse] = useState<{ bild: string; breite: number; hoehe: number } | null>(null)
+
+  useEffect(() => {
+    let aktiv = true
+    const img = new Image()
+    img.onload = () => {
+      if (aktiv && img.naturalWidth && img.naturalHeight)
+        setGroesse({ bild, breite: img.naturalWidth, hoehe: img.naturalHeight })
+    }
+    img.src = bild
+    return () => {
+      aktiv = false
+    }
+  }, [bild])
+
+  const { breite: b, hoehe: h } = groesse?.bild === bild ? groesse : A4
   return (
-    <div
+    <svg
       role="img"
       aria-label="Vorschau des Ausschnitts"
-      className="h-24 w-full rounded-lg border border-rand bg-karte bg-no-repeat"
-      style={{
-        backgroundImage: `url("${bild}")`,
-        backgroundSize: `${100 / wert.breite}% ${100 / wert.hoehe}%`,
-        backgroundPosition: `${pos(wert.x, wert.breite)}% ${pos(wert.y, wert.hoehe)}%`,
-      }}
-    />
+      className="h-24 w-full rounded-lg border border-rand bg-karte"
+      viewBox={`${wert.x * b} ${wert.y * h} ${Math.max(wert.breite * b, 1)} ${Math.max(wert.hoehe * h, 1)}`}
+      preserveAspectRatio="xMidYMid meet"
+    >
+      <image href={bild} x={0} y={0} width={b} height={h} preserveAspectRatio="none" />
+    </svg>
   )
 }
 

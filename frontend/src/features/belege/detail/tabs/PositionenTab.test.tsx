@@ -67,6 +67,27 @@ describe('Tab Positionen', () => {
     expect(screen.getByLabelText('Gesamt')).toHaveValue('29,88')
   })
 
+  it('bearbeitet eine Position im Dialog, Abbrechen ändert nichts', async () => {
+    const { nutzer } = await oeffnen()
+    await nutzer.click(screen.getByRole('button', { name: 'Position 2 bearbeiten' }))
+    const dialog = screen.getByRole('dialog', { name: 'Position 2 bearbeiten' })
+    expect(dialog).toContainElement(screen.getByLabelText('Text'))
+    await nutzer.type(screen.getByLabelText('Text'), ' geändert')
+    await nutzer.click(screen.getByRole('button', { name: 'Abbrechen' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Änderungen speichern' })).not.toBeInTheDocument()
+
+    await nutzer.click(screen.getByRole('button', { name: 'Position 2 bearbeiten' }))
+    const text = screen.getByLabelText('Text')
+    await nutzer.clear(text)
+    await nutzer.click(screen.getByRole('button', { name: 'Übernehmen' }))
+    expect(screen.getByRole('alert')).toHaveTextContent('Bitte einen Text eingeben.')
+    await nutzer.type(text, 'Neuer Text{Enter}')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(zeilen()[1]).toHaveTextContent('Neuer Text')
+    expect(screen.getByRole('button', { name: 'Änderungen speichern' })).toBeInTheDocument()
+  })
+
   it('löschen und verwerfen setzt zurück', async () => {
     const { nutzer } = await oeffnen()
     await nutzer.click(screen.getByRole('button', { name: 'Position 6 löschen' }))

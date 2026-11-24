@@ -4,6 +4,19 @@ import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 // Worker lokal gebündelt (Vite liefert ihn als eigene Datei aus), kein CDN.
 pdfjs.GlobalWorkerOptions.workerSrc = workerUrl
 
+/**
+ * Nachgeladene Hilfsdateien (vite.config.ts → pdfjsDateien): WASM-Decoder für JPEG2000/JBIG2 (sonst fehlen
+ * solche Bilder, oft der Briefkopf), CMaps und Standardschriften für PDFs ohne eingebettete Schriften.
+ * Konstantes Objekt, damit <Document> das PDF nicht bei jedem Rendern neu lädt.
+ */
+const optionen = {
+  wasmUrl: '/pdfjs/wasm/',
+  cMapUrl: '/pdfjs/cmaps/',
+  cMapPacked: true,
+  standardFontDataUrl: '/pdfjs/standard_fonts/',
+  iccUrl: '/pdfjs/iccs/',
+}
+
 /** Seitenverhältnis Höhe : Breite eines A4-Blatts. */
 const A4 = 1.414
 
@@ -27,6 +40,7 @@ export function PdfSeite({
     <div style={{ minHeight: hoehe }}>
       <Document
         file={url}
+        options={optionen}
         onLoadSuccess={({ numPages }) => onSeiten(numPages)}
         loading={<p className="gedaempft m-0 text-sm">PDF wird geladen …</p>}
         error={<p className="m-0 text-sm text-rot-text">Das PDF konnte nicht angezeigt werden.</p>}

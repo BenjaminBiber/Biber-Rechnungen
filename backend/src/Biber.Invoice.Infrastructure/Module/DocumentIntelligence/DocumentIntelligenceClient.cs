@@ -186,15 +186,103 @@ public sealed partial class DocumentIntelligenceClient : IDocumentIntelligenceCl
 
     private static List<ExtrahiertePosition> Positionen(AzureDi.DocumentField? feld) =>
         [.. (feld?.ValueList ?? [])
-            .Select((p, i) => (Felder: p.ValueDictionary, Inhalt: p.Content, Nr: i + 1))
-            .Select(p => new ExtrahiertePosition(
-                p.Nr,
-                Text(Feld(p.Felder, "Description")) ?? p.Inhalt?.Trim() ?? "",
-                Zahl(Feld(p.Felder, "Quantity")),
-                Text(Feld(p.Felder, "Unit")),
-                Betrag(Feld(p.Felder, "UnitPrice")),
-                Betrag(Feld(p.Felder, "Amount")),
-                Satz(Feld(p.Felder, "TaxRate"))))];
+            .SelectMany(p => Aufteilen(p) ?? [Position(p)])
+            .Select(MengeAusText)
+            .Select((p, i) => p with { Nr = i + 1 })];
+
+    private static ExtrahiertePosition Position(AzureDi.DocumentField p)
+    {
+        var felder = p.ValueDictionary;
+        return new ExtrahiertePosition(
+            0,
+            Text(Feld(felder, "Description")) ?? p.Content?.Trim() ?? "",
+            Zahl(Feld(felder, "Quantity")),
+            Text(Feld(felder, "Unit")),
+            Betrag(Feld(felder, "UnitPrice")),
+            Betrag(Feld(felder, "Amount")),
+            Satz(Feld(felder, "TaxRate")));
+    }
+
+    /// <summary>
+    /// Document Intelligence fasst manchmal mehrere Tabellenzeilen zu einem Item zusammen (gesehen bei
+    /// Fortsetzungstabellen auf Folgeseiten); der Inhalt enthält dann mehrere Betragszeilen. Jede Betragszeile
+    /// schließt eine Position ab, Datums- und Strichzeilen fallen weg. Liefert <c>null</c>, wenn nichts zu teilen ist
+    /// oder der von DI erkannte Betrag nicht zur ersten Teilposition passt.
+    /// </summary>
+    private static List<ExtrahiertePosition>? Aufteilen(AzureDi.DocumentField p)
+    {
+        var zeilen = (p.Content ?? "").Split('\n', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        if (zeilen.Count(z => BetragszeileMuster().IsMatch(z)) < 2)
+        {
+            return null;
+        }
+
+        var teile = new List<ExtrahiertePosition>();
+        var text = new List<string>();
+        foreach (var zeile in zeilen)
+        {
+            if (BetragszeileMuster().IsMatch(zeile))
+            {
+                if (text.Count == 0)
+                {
+                    return null; // Betrag ohne Beschreibung – Struktur unklar, lieber DI übernehmen
+                }
+
+                teile.Add(new ExtrahiertePosition(0, string.Join(' ', text), null, null, null, BetragAusText(zeile), null));
+                text.Clear();
+            }
+            else if (!DatumszeileMuster().IsMatch(zeile) && zeile != "-")
+            {
+                text.Add(zeile);
+            }
+        }
+
+        var diBetrag = Betrag(Feld(p.ValueDictionary, "Amount"));
+        return diBetrag is null || teile[0].Gesamt == diBetrag ? teile : null;
+    }
+
+    /// <summary>„3 x 1,0 Dos Engemycin“: Menge vorn im Text, wenn DI keine eigene Menge erkannt hat.</summary>
+    private static ExtrahiertePosition MengeAusText(ExtrahiertePosition p)
+    {
+        if (p.Menge is not null)
+        {
+            return p;
+        }
+
+        var treffer = MengeImTextMuster().Match(p.Text);
+        if (!treffer.Success || !int.TryParse(treffer.Groups["menge"].Value, CultureInfo.InvariantCulture, out var menge) || menge <= 0)
+        {
+            return p;
+        }
+
+        return p with
+        {
+            Text = treffer.Groups["text"].Value.Trim(),
+            Menge = menge,
+            Einzelpreis = p.Einzelpreis ?? (p.Gesamt is { } gesamt ? Math.Round(gesamt / menge, 2) : null),
+        };
+    }
+
+    /// <summary>Deutscher Betrag wie „1 534,10“, „1.534,10“ oder „-38,22“.</summary>
+    private static decimal? BetragAusText(string zeile) =>
+        decimal.TryParse(
+            zeile.Replace(" ", "", StringComparison.Ordinal).Replace(".", "", StringComparison.Ordinal),
+            NumberStyles.Number,
+            Deutsch,
+            out var betrag)
+            ? betrag
+            : null;
+
+    private static readonly CultureInfo Deutsch = CultureInfo.GetCultureInfo("de-DE");
+
+    [GeneratedRegex(@"^-?\d{1,3}(?:[ .]?\d{3})*,\d{2}$")]
+    private static partial Regex BetragszeileMuster();
+
+    [GeneratedRegex(@"^\d{1,2}\.\d{1,2}\.\d{2,4}$")]
+    private static partial Regex DatumszeileMuster();
+
+    [GeneratedRegex(@"^(?<menge>\d{1,4})\s*[x×X]\s+(?<text>\S.*)$", RegexOptions.Singleline)]
+    private static partial Regex MengeImTextMuster();
 
     private static List<string> Ibans(AzureDi.DocumentField? feld) =>
         [.. (feld?.ValueList ?? [])

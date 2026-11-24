@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { useEffect } from 'react'
 import { useBeleg } from '@/api/belege'
-import { useImportVorgang } from '@/api/import'
+import { useImportVorgang, vorgangFehlt } from '@/api/import'
 import type { ImportSchritt } from '@/api/typen'
 import { Chip, type ChipTon } from '@/components/Chip'
 import { Icon } from '@/components/Icon'
@@ -93,10 +93,14 @@ function Zeile({
 
 /** Verfolgt den Import-Vorgang (Polling) und meldet jeden Stand an die Warteschlange. */
 export function Verfolgung({ eintrag }: { eintrag: UploadEintrag }) {
-  const { data } = useImportVorgang((eintrag.vorgang?.id ?? eintrag.vorgangId)!)
+  const { data, error } = useImportVorgang((eintrag.vorgang?.id ?? eintrag.vorgangId)!)
   useEffect(() => {
     if (data) warteschlange.vorgangAktualisiert(eintrag.id, data)
   }, [data, eintrag.id])
+  const fehlt = !data && vorgangFehlt(error)
+  useEffect(() => {
+    if (fehlt) warteschlange.vorgangUnbekannt(eintrag.id)
+  }, [fehlt, eintrag.id])
   return null
 }
 

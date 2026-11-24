@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { belegeNeuLaden } from './belege'
-import { api, beiNichtAngemeldet, daten, zuApiFehler } from './client'
+import { ApiFehler, api, beiNichtAngemeldet, daten, zuApiFehler } from './client'
 import type { ImportStatus, ImportVorgang, ImportVorgaengeAbfrage } from './typen'
 
 export const importKeys = {
@@ -28,12 +28,25 @@ export function useImportVorgaenge(filter: ImportVorgaengeAbfrage = {}) {
   })
 }
 
-/** GET /api/import/vorgaenge/{id} – pollt alle 3 s, solange der Vorgang läuft. */
+/** `true`, wenn der Server den Vorgang nicht (mehr) kennt. */
+export function vorgangFehlt(fehler: unknown): boolean {
+  return fehler instanceof ApiFehler && fehler.status === 404
+}
+
+/**
+ * GET /api/import/vorgaenge/{id} – pollt alle 3 s, solange der Vorgang läuft. Schlägt das Laden fehl
+ * (z. B. Backend kurz weg), wird weiter versucht – nur ein unbekannter Vorgang (404) beendet das Polling.
+ */
 export function useImportVorgang(id: string) {
   return useQuery({
     queryKey: importKeys.vorgang(id),
     queryFn: ({ signal }) => daten(api.GET('/api/import/vorgaenge/{id}', { params: { path: { id } }, signal })),
-    refetchInterval: (query) => (query.state.data && laeuftNoch(query.state.data) ? pollIntervall : false),
+    retry: (versuche, fehler) => !vorgangFehlt(fehler) && versuche < 3,
+    refetchInterval: (query) => {
+      const vorgang = query.state.data
+      if (vorgang) return laeuftNoch(vorgang) ? pollIntervall : false
+      return vorgangFehlt(query.state.error) ? false : pollIntervall
+    },
   })
 }
 

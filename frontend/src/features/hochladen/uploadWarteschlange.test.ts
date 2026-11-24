@@ -140,4 +140,18 @@ describe('Upload-Warteschlange', () => {
     warteschlange.vorgangAktualisiert(id, { ...importVorgaenge[0], status: 'Dublette' })
     expect(warteschlange.stand()[0].status).toBe('dublette')
   })
+
+  it('setzt einen laufenden Eintrag mit unbekanntem Vorgang auf „fehler“', async () => {
+    warteschlange.hinzufuegen([pdf('c.pdf')])
+    await vi.waitFor(() => expect(offen).toHaveLength(1))
+    offen[0].erfuellen([{ ...importVorgaenge[0], status: 'Angenommen' }])
+    await vi.waitFor(() => expect(warteschlange.stand()[0].status).toBe('verarbeitung'))
+    const id = warteschlange.stand()[0].id
+    warteschlange.vorgangUnbekannt(id)
+    expect(warteschlange.stand()[0]).toMatchObject({
+      status: 'fehler',
+      meldung: 'Import-Vorgang nicht mehr vorhanden.',
+    })
+    expect((await ablage.lesen(id))?.status).toBe('fehler')
+  })
 })

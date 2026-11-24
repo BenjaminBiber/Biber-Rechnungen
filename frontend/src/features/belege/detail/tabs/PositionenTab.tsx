@@ -5,6 +5,7 @@ import { useEinstellungen } from '@/api/einstellungen'
 import type { BelegDetail, Position, PositionAendern } from '@/api/typen'
 import { Icon } from '@/components/Icon'
 import { useToast } from '@/components/toast'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { formatEuro, formatZahl } from '@/lib/format'
 import { betragEingabe, parseBetrag, parseSatz, satzEingabe, STEUER_TOLERANZ } from '../gemeinsam'
 
@@ -133,8 +134,6 @@ export function PositionenTab({ beleg, darfBearbeiten }: { beleg: BelegDetail; d
     setBearbeitet(null)
   }
 
-  const neueZeile = bearbeitet !== null && bearbeitet.index >= zeilen.length
-
   return (
     <div className="flex flex-col gap-3">
       {/* relative: auch absolut positionierte Kinder (sr-only) bleiben im Scroll-Container und verbreitern mobil nicht die Seite. */}
@@ -165,77 +164,55 @@ export function PositionenTab({ beleg, darfBearbeiten }: { beleg: BelegDetail; d
             </tr>
           </thead>
           <tbody>
-            {zeilen.map((p, index) =>
-              bearbeitet?.index === index ? (
-                <EditZeile
-                  key={index}
-                  nr={index + 1}
-                  entwurf={bearbeitet.entwurf}
-                  fehler={bearbeitet.fehler}
-                  onAendern={feldAendern}
-                  onUebernehmen={uebernehmen}
-                  onAbbrechen={() => setBearbeitet(null)}
-                />
-              ) : (
-                <tr key={index}>
-                  <td className="gedaempft">{index + 1}</td>
-                  <td>{p.text}</td>
-                  <td className="num">{mengeText(p)}</td>
-                  <td className="num">
-                    {p.einzelpreis === null || p.einzelpreis === undefined ? '—' : formatZahl(p.einzelpreis, 2)}
-                  </td>
-                  <td className="num font-medium">{formatZahl(p.gesamt, 2)}</td>
-                  <td>
-                    {p.stammartikelId ? (
-                      <Link
-                        to="/artikel/stammartikel/$stammartikelId"
-                        params={{ stammartikelId: p.stammartikelId }}
-                        className="text-xs"
-                      >
-                        {p.artikel?.name ?? 'Stammartikel'}
-                      </Link>
-                    ) : p.artikel ? (
-                      <Link to="/artikel/$artikelId" params={{ artikelId: p.artikel.id }} className="text-xs">
-                        {p.artikel.name}
-                      </Link>
-                    ) : (
-                      <span className="gedaempft">—</span>
-                    )}
-                  </td>
-                  <td className="num gedaempft">{grundpreisText(p)}</td>
-                  {darfBearbeiten && (
-                    <td className="whitespace-nowrap">
-                      <button
-                        type="button"
-                        className="btn btn-klein w-[30px] border-transparent px-0"
-                        aria-label={`Position ${index + 1} bearbeiten`}
-                        onClick={() => setBearbeitet({ index, entwurf: entwurfAus(p) })}
-                      >
-                        <Icon name="edit" />
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-klein w-[30px] border-transparent px-0"
-                        aria-label={`Position ${index + 1} löschen`}
-                        onClick={() => loeschen(index)}
-                      >
-                        <Icon name="delete" />
-                      </button>
-                    </td>
+            {zeilen.map((p, index) => (
+              <tr key={index}>
+                <td className="gedaempft">{index + 1}</td>
+                <td>{p.text}</td>
+                <td className="num">{mengeText(p)}</td>
+                <td className="num">
+                  {p.einzelpreis === null || p.einzelpreis === undefined ? '—' : formatZahl(p.einzelpreis, 2)}
+                </td>
+                <td className="num font-medium">{formatZahl(p.gesamt, 2)}</td>
+                <td>
+                  {p.stammartikelId ? (
+                    <Link
+                      to="/artikel/stammartikel/$stammartikelId"
+                      params={{ stammartikelId: p.stammartikelId }}
+                      className="text-xs"
+                    >
+                      {p.artikel?.name ?? 'Stammartikel'}
+                    </Link>
+                  ) : p.artikel ? (
+                    <Link to="/artikel/$artikelId" params={{ artikelId: p.artikel.id }} className="text-xs">
+                      {p.artikel.name}
+                    </Link>
+                  ) : (
+                    <span className="gedaempft">—</span>
                   )}
-                </tr>
-              ),
-            )}
-            {neueZeile && (
-              <EditZeile
-                nr={zeilen.length + 1}
-                entwurf={bearbeitet.entwurf}
-                fehler={bearbeitet.fehler}
-                onAendern={feldAendern}
-                onUebernehmen={uebernehmen}
-                onAbbrechen={() => setBearbeitet(null)}
-              />
-            )}
+                </td>
+                <td className="num gedaempft">{grundpreisText(p)}</td>
+                {darfBearbeiten && (
+                  <td className="whitespace-nowrap">
+                    <button
+                      type="button"
+                      className="btn btn-klein w-[30px] border-transparent px-0"
+                      aria-label={`Position ${index + 1} bearbeiten`}
+                      onClick={() => setBearbeitet({ index, entwurf: entwurfAus(p) })}
+                    >
+                      <Icon name="edit" />
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-klein w-[30px] border-transparent px-0"
+                      aria-label={`Position ${index + 1} löschen`}
+                      onClick={() => loeschen(index)}
+                    >
+                      <Icon name="delete" />
+                    </button>
+                  </td>
+                )}
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
@@ -286,6 +263,19 @@ export function PositionenTab({ beleg, darfBearbeiten }: { beleg: BelegDetail; d
         </div>
       )}
 
+      {bearbeitet && (
+        <PositionDialog
+          titel={
+            bearbeitet.index >= zeilen.length ? 'Position hinzufügen' : `Position ${bearbeitet.index + 1} bearbeiten`
+          }
+          entwurf={bearbeitet.entwurf}
+          fehler={bearbeitet.fehler}
+          onAendern={feldAendern}
+          onUebernehmen={uebernehmen}
+          onAbbrechen={() => setBearbeitet(null)}
+        />
+      )}
+
       <p className="gedaempft m-0 text-xs">
         Positionstexte werden pro Korrespondent normalisiert und Artikeln zugeordnet. Grundpreis nur, wenn Menge und
         Einheit erkannt wurden.
@@ -294,15 +284,16 @@ export function PositionenTab({ beleg, darfBearbeiten }: { beleg: BelegDetail; d
   )
 }
 
-function EditZeile({
-  nr,
+/** Dialog zum Bearbeiten bzw. Hinzufügen einer Position; „Übernehmen“ ändert nur den lokalen Stand. */
+function PositionDialog({
+  titel,
   entwurf,
   fehler,
   onAendern,
   onUebernehmen,
   onAbbrechen,
 }: {
-  nr: number
+  titel: string
   entwurf: Entwurf
   fehler?: string
   onAendern: (feld: keyof Entwurf, wert: string) => void
@@ -316,33 +307,41 @@ function EditZeile({
     </label>
   )
   return (
-    <tr>
-      <td className="gedaempft align-top">{nr}</td>
-      <td colSpan={7}>
-        <div className="flex flex-col gap-2">
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-6">
-            {feld('text', 'Text', 'col-span-2 sm:col-span-6')}
+    <Dialog open onOpenChange={(offen) => !offen && onAbbrechen()}>
+      <DialogContent className="max-w-[560px]" aria-describedby={undefined}>
+        <DialogHeader>
+          <DialogTitle>{titel}</DialogTitle>
+        </DialogHeader>
+        <form
+          className="flex flex-col gap-4"
+          onSubmit={(e) => {
+            e.preventDefault()
+            onUebernehmen()
+          }}
+        >
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {feld('text', 'Text', 'col-span-2 sm:col-span-3')}
             {feld('menge', 'Menge')}
             {feld('einheit', 'Einheit')}
+            {feld('steuersatz', 'Steuersatz')}
             {feld('einzelpreis', 'Einzelpreis')}
             {feld('gesamt', 'Gesamt')}
-            {feld('steuersatz', 'Steuersatz')}
           </div>
           {fehler && (
             <p role="alert" className="m-0 text-[13px] text-rot-text">
               {fehler}
             </p>
           )}
-          <div className="flex gap-2">
-            <button type="button" className="btn btn-klein btn-primaer" onClick={onUebernehmen}>
-              Übernehmen
-            </button>
-            <button type="button" className="btn btn-klein" onClick={onAbbrechen}>
+          <DialogFooter>
+            <button type="button" className="btn" onClick={onAbbrechen}>
               Abbrechen
             </button>
-          </div>
-        </div>
-      </td>
-    </tr>
+            <button type="submit" className="btn btn-primaer">
+              Übernehmen
+            </button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   )
 }

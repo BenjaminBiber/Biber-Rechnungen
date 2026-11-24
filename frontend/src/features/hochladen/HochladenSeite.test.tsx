@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { importVorgaenge } from '@/mocks/fixtures/import'
 import { server } from '@/mocks/server'
 import { szenario } from '@/mocks/szenarien'
+import * as ablage from '@/pwa/warteschlange'
 import { renderMitApp } from '@/test/render'
 import { HochladenSeite } from './HochladenSeite'
 import { UploadListe } from './UploadListe'
@@ -62,6 +63,24 @@ describe('Hochladen', () => {
     await userEvent.click(screen.getByRole('button', { name: 'foto_beleg.heic entfernen' }))
     expect(screen.getAllByTestId('upload-eintrag')).toHaveLength(1)
     ende()
+  })
+
+  it('meldet einen gespeicherten Upload, dessen Vorgang der Server nicht kennt, als Fehler', async () => {
+    const gespeichert = await ablage.ablegen(pdf('Rechnung 2162.pdf'), 'dateien')
+    await ablage.aktualisieren(gespeichert.id, {
+      status: 'uebertragen',
+      uebertragenAm: Date.now(),
+      vorgangId: '00000000-0000-0000-0000-000000000000',
+    })
+    // Wie nach einem Neuladen: die Oberfläche übernimmt den Stand aus der IndexedDB.
+    await warteschlange.nachsenden()
+    renderMitApp(<HochladenSeite />)
+
+    const liste = within(await screen.findByRole('region', { name: 'Hochgeladene Dateien' }))
+    expect(await liste.findByText('Import-Vorgang nicht mehr vorhanden.')).toBeInTheDocument()
+    expect(liste.getByText('Fehler')).toBeInTheDocument()
+    await userEvent.click(liste.getByRole('button', { name: 'Rechnung 2162.pdf entfernen' }))
+    expect(screen.queryByTestId('upload-eintrag')).not.toBeInTheDocument()
   })
 
   it('zeigt NurLesen statt der Dropzone einen Hinweis, die Tabelle bleibt', async () => {
