@@ -2,6 +2,7 @@ import { HttpResponse } from 'msw'
 import type { ImportQuelle, ImportVorgang } from '@/api/typen'
 import { db, neueId } from '../db'
 import { mockHeute } from '../fixtures/belege'
+import { belegIds } from '../fixtures/ids'
 import { abfrage, nichtGefunden, route, seite, ungueltig, zahl, type Route } from './gemeinsam'
 
 const schritte = [
@@ -34,6 +35,7 @@ function weiterlaufen(): void {
         ...v,
         status: 'Fertig',
         ergebnis: 'Beleg angelegt',
+        belegId: belegIds.b1,
         schritte: schritte.map((name) => ({ name, status: 'ok' })),
       }
     return v

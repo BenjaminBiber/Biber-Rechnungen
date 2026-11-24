@@ -12,7 +12,7 @@ const routen: Array<[pfad: string, titel: string]> = [
   ['/belege/b-1/dateien', 'Dateien'],
   ['/belege/b-1/dubletten', 'Dubletten'],
   ['/belege/b-1/aufteilen', 'Beleg aufteilen'],
-  ['/hochladen', 'Hochladen'],
+  ['/hochladen', 'Hochladen & Import'],
   ['/korrespondenten', 'Korrespondenten'],
   ['/korrespondenten/k-1', 'Korrespondent'],
   ['/artikel', 'Artikel'],
