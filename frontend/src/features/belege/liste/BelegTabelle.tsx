@@ -9,6 +9,7 @@ import { useBelegAuswahl } from './auswahl'
 import { auswahlLabel, faelligText, TagChips } from './bausteine'
 import { spaltenDefinitionen, type SpaltenDefinition, type SpaltenSchluessel } from './spaltenDefinitionen'
 import { quelleIcon, quelleText, type ListenZustand } from './suche'
+import { useListenKuerzel } from './useListenKuerzel'
 import { Zeilenmenue } from './Zeilenmenue'
 
 function betrag(wert: number | null | undefined, waehrung: string): string {
@@ -120,6 +121,7 @@ export function BelegTabelle({
   zustand: ListenZustand
 }) {
   const auswahl = useBelegAuswahl()
+  const tbody = useListenKuerzel(eintraege)
   const sortierung = suche.sortierung ?? 'Rechnungsdatum'
   const absteigend = suche.absteigend ?? true
   const definitionen = spalten.map((s) => spaltenDefinitionen.find((d) => d.schluessel === s)!)
@@ -162,12 +164,13 @@ export function BelegTabelle({
             </th>
           </tr>
         </thead>
-        <tbody>
+        <tbody ref={tbody}>
           {eintraege.map((beleg) => {
             const gewaehlt = auswahl.istGewaehlt(beleg.id)
             return (
               <tr
                 key={beleg.id}
+                tabIndex={0}
                 data-gewaehlt={gewaehlt || undefined}
                 className={gewaehlt ? 'bg-akzent-zart' : 'bg-karte'}
               >
