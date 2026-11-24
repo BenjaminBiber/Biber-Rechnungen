@@ -1,7 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it } from 'vitest'
-import { nodeFormDataVerwenden } from '@/api/testHilfe'
 import { importVorgaenge } from '@/mocks/fixtures/import'
 import { server } from '@/mocks/server'
 import { szenario } from '@/mocks/szenarien'
@@ -27,7 +26,6 @@ const pdf = (name: string) => new File(['%PDF-1.4 Test'], name, { type: 'applica
 
 describe('Hochladen', () => {
   it('startet zwei Uploads mit Fortschritt; sie enden als „Fertig“ mit Link zum Beleg', async () => {
-    await nodeFormDataVerwenden()
     const { anfragen, ende } = mitschneiden('/api/import/upload')
     renderMitApp(<HochladenSeite />)
     const eingabe = await screen.findByLabelText('Dateien auswählen')
