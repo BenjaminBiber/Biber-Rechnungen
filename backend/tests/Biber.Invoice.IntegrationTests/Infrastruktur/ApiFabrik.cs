@@ -112,6 +112,7 @@ public sealed class ApiFabrik : WebApplicationFactory<Program>, IAsyncLifetime
 
         builder.UseSetting("Verfahrensdoku:Pfad", Path.Combine(TempOrdner, "verfahrensdokumentation"));
         builder.UseSetting("OrdnerWatcher:Aktiv", "false");
+        builder.UseSetting("Hangfire:ServerAktiv", "false"); // Jobs laufen in Tests über SofortPlaner
 
         builder.ConfigureTestServices(dienste =>
         {
