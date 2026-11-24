@@ -28,10 +28,10 @@ const routen: Array<[pfad: string, titel: string]> = [
   ['/einstellungen/document-intelligence', 'Document Intelligence'],
   ['/einstellungen/mail', 'E-Mail-Import'],
   ['/einstellungen/eingangsordner', 'Eingangsordner'],
-  ['/einstellungen/benutzer', 'Benutzer & Freigaben'],
+  ['/einstellungen/benutzer', 'Einstellungen'],
   ['/einstellungen/api-tokens', 'API-Tokens (MCP)'],
   ['/einstellungen/integritaet', 'Integrität & Sicherung'],
-  ['/einstellungen/konto', 'Mein Konto'],
+  ['/einstellungen/konto', 'Einstellungen'],
   ['/einstellungen/verfahrensdoku', 'Verfahrensdoku'],
 ]
 
