@@ -163,6 +163,22 @@ describe('Tags & Kategorien', { timeout: 20000 }, () => {
     ende()
   })
 
+  it('meldet nach dem Löschen einer Kategorie die betroffenen Belege und Korrespondenten', async () => {
+    const id = kategorieIds.sonstiges
+    const belege = db.belege.filter((b) => b.kategorie?.id === id).length
+    const korrespondenten = db.korrespondenten.filter((k) => k.defaultKategorie?.id === id).length
+    const { ende } = renderSeite(`/tags?reiter=kategorien&bearbeiten=${id}`)
+    const dialog = await screen.findByRole('dialog', { name: 'Kategorie bearbeiten' })
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Löschen' }))
+    const rueckfrage = await screen.findByRole('alertdialog', { name: /löschen\?$/ })
+    await userEvent.click(within(rueckfrage).getByRole('button', { name: 'Löschen' }))
+    const text = new RegExp(
+      `Kategorie gelöscht – ${belege} Belege? und ${korrespondenten} Korrespondent(en)? ohne Kategorie`,
+    )
+    expect(await screen.findByText(text)).toBeInTheDocument()
+    ende()
+  })
+
   it('zeigt 409 am Namensfeld', async () => {
     server.use(
       http.put('*/api/tags/:id', () =>

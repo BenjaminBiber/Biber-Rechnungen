@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using Biber.Invoice.Contracts;
 using Biber.Invoice.Contracts.Dto.Sonstiges;
 using Biber.Invoice.Domain.Enums;
@@ -56,7 +55,7 @@ public sealed class VerfahrensdokuTests(ApiFabrik fabrik) : IDisposable
         var antwort = await fabrik.ErzeugeClient(Rolle.NurLesen).GetAsync(ApiRouten.Verfahrensdoku.Info);
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var dto = (await antwort.Content.ReadFromJsonAsync<VerfahrensdokuDto>())!;
+        var dto = (await antwort.Content.LesenAsync<VerfahrensdokuDto>())!;
         dto.Version.ShouldBe("2.3");
         dto.Stand.ShouldBe(new DateOnly(2026, 5, 17));
         dto.OffeneStellen.ShouldBe(3);
@@ -69,7 +68,7 @@ public sealed class VerfahrensdokuTests(ApiFabrik fabrik) : IDisposable
         Schreiben("# Nur ein Text\n\nOhne Angaben.");
         File.SetLastWriteTimeUtc(Datei, new DateTime(2025, 3, 9, 12, 0, 0, DateTimeKind.Utc));
 
-        var dto = (await fabrik.ErzeugeClient(Rolle.NurLesen).GetFromJsonAsync<VerfahrensdokuDto>(ApiRouten.Verfahrensdoku.Info))!;
+        var dto = (await fabrik.ErzeugeClient(Rolle.NurLesen).GetJsonAsync<VerfahrensdokuDto>(ApiRouten.Verfahrensdoku.Info))!;
 
         dto.Version.ShouldBe("unbekannt");
         dto.Stand.ShouldBe(new DateOnly(2025, 3, 9));
@@ -130,7 +129,7 @@ public sealed class VerfahrensdokuTests(ApiFabrik fabrik) : IDisposable
         File.Copy(EchteDatei(), Schreiben(null), overwrite: true);
 
         var client = fabrik.ErzeugeClient(Rolle.NurLesen);
-        var dto = (await client.GetFromJsonAsync<VerfahrensdokuDto>(ApiRouten.Verfahrensdoku.Info))!;
+        var dto = (await client.GetJsonAsync<VerfahrensdokuDto>(ApiRouten.Verfahrensdoku.Info))!;
         dto.Version.ShouldNotBeNullOrWhiteSpace();
         dto.OffeneStellen.ShouldBeGreaterThan(0);
 

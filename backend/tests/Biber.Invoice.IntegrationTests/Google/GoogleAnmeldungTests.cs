@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using Biber.Invoice.Contracts;
 using Biber.Invoice.Contracts.Dienste;
 using Biber.Invoice.Contracts.Dto.Auth;
@@ -272,8 +271,8 @@ public sealed class GoogleAnmeldungTests(ApiFabrik basis) : IAsyncLifetime
     }
 
     private static async Task<AuthStatusDto> StatusAsync(HttpClient client) =>
-        (await client.GetFromJsonAsync<AuthStatusDto>(ApiRouten.Auth.Status, AuthTestHilfen.Json))!;
+        (await client.GetJsonAsync<AuthStatusDto>(ApiRouten.Auth.Status))!;
 
     private static async Task<KontoDto> KontoAsync(HttpClient client) =>
-        (await client.GetFromJsonAsync<KontoDto>(ApiRouten.Konto.Eigenes, AuthTestHilfen.Json))!;
+        (await client.GetJsonAsync<KontoDto>(ApiRouten.Konto.Eigenes))!;
 }

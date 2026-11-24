@@ -24,10 +24,15 @@ const rechte: Record<Rolle, Richtlinie[]> = {
   NurLesen: ['Lesen'],
 }
 
-/** ProblemDetails-Antwort (RFC 9457). */
-export function problem(status: number, title: string, errors?: Record<string, string[]>): Response {
+/** ProblemDetails-Antwort (RFC 9457); `erweiterungen` sind zusätzliche Felder wie `korrespondentId`. */
+export function problem(
+  status: number,
+  title: string,
+  errors?: Record<string, string[]>,
+  erweiterungen: Record<string, unknown> = {},
+): Response {
   return HttpResponse.json(
-    { type: `https://httpstatuses.io/${status}`, title, status, ...(errors ? { errors } : {}) },
+    { type: `https://httpstatuses.io/${status}`, title, status, ...(errors ? { errors } : {}), ...erweiterungen },
     { status, headers: { 'Content-Type': 'application/problem+json' } },
   )
 }

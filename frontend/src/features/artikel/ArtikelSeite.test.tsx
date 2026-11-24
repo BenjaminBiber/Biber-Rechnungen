@@ -91,7 +91,7 @@ describe('Artikelseite', () => {
 
     await nutzer.click(screen.getByRole('switch', { name: 'Ohne Stammartikel' }))
     await waitFor(() => expect(letzte().get('ohneStammartikel')).toBe('true'))
-    await waitFor(() => expect(zeilen()).toHaveLength(4))
+    await waitFor(() => expect(zeilen()).toHaveLength(3))
     await nutzer.click(screen.getByRole('switch', { name: 'Ohne Stammartikel' }))
 
     await nutzer.click(screen.getByRole('button', { name: /Preisänderung/ }))
@@ -134,8 +134,10 @@ describe('Artikelseite', () => {
   })
 
   it('Knopf zählt die Auswahl; Dialog rechnet Grundpreise und sendet die Anfrage', async () => {
-    // Kopierpapier hat schon einen Stammartikel – für die Neuanlage zwei freie Artikel nehmen.
-    db.artikel = db.artikel.map((a) => (a.id === artikelIds.a1 ? { ...a, stammartikel: null } : a))
+    // a1 und a7 gehören schon zu Kopierpapier – für die Neuanlage beide freistellen.
+    db.artikel = db.artikel.map((a) =>
+      a.id === artikelIds.a1 || a.id === artikelIds.a7 ? { ...a, stammartikel: null } : a,
+    )
     db.stammartikel = db.stammartikel.filter((s) => s.id !== stammartikelIds.kopierpapier)
     const { nutzer, gesendet, router } = renderArtikel()
     await tabelle()

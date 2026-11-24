@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using Biber.Invoice.Contracts;
 using Biber.Invoice.Contracts.Dto;
 using Biber.Invoice.Contracts.Dto.Artikel;
@@ -112,7 +111,7 @@ public sealed class ArtikelTests(ApiFabrik fabrik)
     {
         var s = await SzenarioAsync(mitStammartikel: true);
 
-        var liste = await Client().GetFromJsonAsync<StammartikelListeneintragDto[]>(ApiRouten.Stammartikel.Liste);
+        var liste = await Client().GetJsonAsync<StammartikelListeneintragDto[]>(ApiRouten.Stammartikel.Liste);
 
         var eintrag = liste!.Single(e => e.Id == s.Stamm!.Id);
         eintrag.AnzahlArtikel.ShouldBe(2);
@@ -158,19 +157,19 @@ public sealed class ArtikelTests(ApiFabrik fabrik)
         var s = await SzenarioAsync(mitStammartikel: false);
         var client = Client();
 
-        var anlegen = await client.PostAsJsonAsync(ApiRouten.Stammartikel.Liste, new StammartikelAendernDto(
+        var anlegen = await client.PostJsonAsync(ApiRouten.Stammartikel.Liste, new StammartikelAendernDto(
             $"Kopierpapier {s.Marke}", "Blatt", 100m, [new ArtikelZuordnungDto(s.Karton.Id, 2500m)]));
         anlegen.StatusCode.ShouldBe(HttpStatusCode.Created);
-        var stamm = (await anlegen.Content.ReadFromJsonAsync<StammartikelListeneintragDto>())!;
+        var stamm = (await anlegen.Content.LesenAsync<StammartikelListeneintragDto>())!;
         stamm.AnzahlArtikel.ShouldBe(1);
         stamm.GuenstigsterPreis.ShouldBe(1.00m);
         var route = ApiRouten.Stammartikel.Einzeln.Replace("{id}", stamm.Id.ToString());
 
-        var aendern = await client.PutAsJsonAsync(route, new StammartikelAendernDto(
+        var aendern = await client.PutJsonAsync(route, new StammartikelAendernDto(
             $"Kopierpapier {s.Marke}", "Blatt", 100m,
             [new ArtikelZuordnungDto(s.Karton.Id, 5000m), new ArtikelZuordnungDto(s.Pack.Id, 500m)]));
         aendern.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var geaendert = (await aendern.Content.ReadFromJsonAsync<StammartikelListeneintragDto>())!;
+        var geaendert = (await aendern.Content.LesenAsync<StammartikelListeneintragDto>())!;
         geaendert.AnzahlArtikel.ShouldBe(2);
         geaendert.GuenstigsterPreis.ShouldBe(0.50m);
 
@@ -190,7 +189,7 @@ public sealed class ArtikelTests(ApiFabrik fabrik)
     {
         var s = await SzenarioAsync(mitStammartikel: true);
 
-        var antwort = await Client().PostAsJsonAsync(ApiRouten.Stammartikel.Liste, new StammartikelAendernDto(
+        var antwort = await Client().PostJsonAsync(ApiRouten.Stammartikel.Liste, new StammartikelAendernDto(
             $"Anderes Papier {s.Marke}", "Blatt", 1m, [new ArtikelZuordnungDto(s.Karton.Id, 2500m)]));
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.Conflict);
@@ -202,12 +201,12 @@ public sealed class ArtikelTests(ApiFabrik fabrik)
     {
         var s = await SzenarioAsync(mitStammartikel: true);
 
-        var antwort = await Client().PutAsJsonAsync(
+        var antwort = await Client().PutJsonAsync(
             ApiRouten.Stammartikel.Einzeln.Replace("{id}", s.Stamm!.Id.ToString()),
             new StammartikelAendernDto($"Kopierpapier A4 {s.Marke}", "Blatt", 100m, [new ArtikelZuordnungDto(s.Karton.Id, 2500m)]));
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await antwort.Content.ReadFromJsonAsync<StammartikelListeneintragDto>())!.AnzahlArtikel.ShouldBe(2);
+        (await antwort.Content.LesenAsync<StammartikelListeneintragDto>())!.AnzahlArtikel.ShouldBe(2);
     }
 
     [Theory]
@@ -221,7 +220,7 @@ public sealed class ArtikelTests(ApiFabrik fabrik)
         var s = await SzenarioAsync(mitStammartikel: false);
         ArtikelZuordnungDto[] artikel = mitArtikel ? [new ArtikelZuordnungDto(s.Karton.Id, faktor)] : [];
 
-        var antwort = await Client().PostAsJsonAsync(
+        var antwort = await Client().PostJsonAsync(
             ApiRouten.Stammartikel.Liste, new StammartikelAendernDto(name, basiseinheit, menge, artikel));
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -233,8 +232,8 @@ public sealed class ArtikelTests(ApiFabrik fabrik)
         var client = Client();
         var dto = new StammartikelAendernDto("Papier", "Blatt", 100m, [new ArtikelZuordnungDto(Guid.NewGuid(), 1m)]);
 
-        (await client.PostAsJsonAsync(ApiRouten.Stammartikel.Liste, dto)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        (await client.PutAsJsonAsync(ApiRouten.Stammartikel.Einzeln.Replace("{id}", Guid.NewGuid().ToString()), dto))
+        (await client.PostJsonAsync(ApiRouten.Stammartikel.Liste, dto)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await client.PutJsonAsync(ApiRouten.Stammartikel.Einzeln.Replace("{id}", Guid.NewGuid().ToString()), dto))
             .StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
@@ -248,8 +247,8 @@ public sealed class ArtikelTests(ApiFabrik fabrik)
 
         (await client.GetAsync(ApiRouten.Artikel.Liste)).StatusCode.ShouldBe(HttpStatusCode.OK);
         (await client.GetAsync(route)).StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await client.PostAsJsonAsync(ApiRouten.Stammartikel.Liste, dto)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
-        (await client.PutAsJsonAsync(route, dto)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await client.PostJsonAsync(ApiRouten.Stammartikel.Liste, dto)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await client.PutJsonAsync(route, dto)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
         (await client.DeleteAsync(ArtikelRoute(s.Stamm.Id, s.Karton.Id))).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
@@ -259,10 +258,10 @@ public sealed class ArtikelTests(ApiFabrik fabrik)
         ApiRouten.Stammartikel.Artikel.Replace("{id}", stammId.ToString()).Replace("{artikelId}", artikelId.ToString());
 
     private async Task<SeiteDto<ArtikelListeneintragDto>> ListeAsync(string query) =>
-        (await Client().GetFromJsonAsync<SeiteDto<ArtikelListeneintragDto>>(ApiRouten.Artikel.Liste + query))!;
+        (await Client().GetJsonAsync<SeiteDto<ArtikelListeneintragDto>>(ApiRouten.Artikel.Liste + query))!;
 
     private async Task<PreisDetailDto> DetailAsync(string route, Guid id, int jahr) =>
-        (await Client().GetFromJsonAsync<PreisDetailDto>($"{route.Replace("{id}", id.ToString())}?jahr={jahr}"))!;
+        (await Client().GetJsonAsync<PreisDetailDto>($"{route.Replace("{id}", id.ToString())}?jahr={jahr}"))!;
 
     private async Task<ArtikelEntitaet> LadeArtikelAsync(Guid id)
     {

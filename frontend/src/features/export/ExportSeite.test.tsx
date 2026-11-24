@@ -1,5 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { http, HttpResponse } from 'msw'
 import { describe, expect, it, vi } from 'vitest'
 import type { ExportAnfrage } from '@/api/typen'
 import { ToastBereich } from '@/components/toast'
@@ -126,6 +127,16 @@ describe('Export', () => {
     expect(screen.getByRole('button', { name: 'Export erstellen' })).toBeDisabled()
   })
 
+  it('zeigt in „Letzte Exporte“ den Ersteller in der Spalte „Von“', async () => {
+    rendern()
+    const tabelle = within(await screen.findByRole('region', { name: 'Letzte Exporte' }))
+    await waitFor(() => expect(tabelle.getAllByRole('row')).toHaveLength(4))
+    const spalte = tabelle.getAllByRole('columnheader').findIndex((k) => k.textContent === 'Von')
+    for (const zeile of tabelle.getAllByRole('row').slice(1)) {
+      expect(within(zeile).getAllByRole('cell')[spalte]).toHaveTextContent('M. Keller')
+    }
+  })
+
   it('Erstellen sendet die vollständige Anfrage, startet den Download und ergänzt die Tabelle', async () => {
     const klick = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
     const { koerper, ende } = mitschneiden('/api/export')
@@ -165,6 +176,37 @@ describe('Export', () => {
     await waitFor(() => expect(knopf).toBeEnabled())
     await userEvent.click(knopf)
     expect(await screen.findByText('Export Q3 2026 konnte nicht erstellt werden.')).toBeInTheDocument()
+  })
+
+  it('nennt bei 409 die veränderten Originale', async () => {
+    server.use(
+      http.post('*/api/export', () =>
+        HttpResponse.json(
+          { title: 'Originale verändert', status: 409, pfade: ['2026/07/a.pdf', '2026/08/b.pdf'] },
+          { status: 409 },
+        ),
+      ),
+    )
+    rendern()
+    const knopf = await screen.findByRole('button', { name: 'Export erstellen' })
+    await waitFor(() => expect(knopf).toBeEnabled())
+    await userEvent.click(knopf)
+    expect(
+      await screen.findByText(/Originale seit dem Import verändert – 2026\/07\/a\.pdf, 2026\/08\/b\.pdf/),
+    ).toBeInTheDocument()
+  })
+
+  it('meldet bei 410 im Download, dass die Exportdatei fehlt', async () => {
+    server.use(
+      http.get('*/api/export/laeufe/:id/datei', () =>
+        HttpResponse.json({ title: 'Exportdatei fehlt', status: 410 }, { status: 410 }),
+      ),
+    )
+    rendern()
+    const tabelle = within(await screen.findByRole('region', { name: 'Letzte Exporte' }))
+    const [link] = await tabelle.findAllByRole('link', { name: /herunterladen/ })
+    await userEvent.click(link)
+    expect(await screen.findByText(/fehlt auf dem Server/)).toBeInTheDocument()
   })
 
   it('übernimmt die Vorbelegung der Filter', async () => {

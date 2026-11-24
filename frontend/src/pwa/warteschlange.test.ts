@@ -1,5 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { nodeFormDataVerwenden } from '@/api/testHilfe'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   ablegen,
   aktualisieren,
@@ -65,9 +64,6 @@ describe('Warteschlange in der IndexedDB', () => {
 })
 
 describe('Senden aus dem Service Worker', () => {
-  // Node-`File`/`FormData` statt jsdom: nur sie überstehen das Klonen in die IndexedDB als echter Blob.
-  beforeEach(() => nodeFormDataVerwenden())
-
   it('überträgt und merkt sich den Vorgang', async () => {
     const eintrag = await ablegen(pdf('ok.pdf'), 'geteilt')
     const f = vi.fn(async () => Response.json([{ id: 'v-7' }], { status: 202 }))

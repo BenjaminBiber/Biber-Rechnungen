@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using Biber.Invoice.Contracts;
 using Biber.Invoice.Contracts.Dienste;
 using Biber.Invoice.Contracts.Dto.Auswertung;
@@ -329,7 +328,7 @@ public sealed class AuswertungTests(ApiFabrik fabrik) : IAsyncLifetime
         var antwort = await mitFakes.ErzeugeClient().GetAsync(ApiRouten.SystemInfo.Status);
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var eintraege = (await antwort.Content.ReadFromJsonAsync<SystemStatusEintragDto[]>())!;
+        var eintraege = (await antwort.Content.LesenAsync<SystemStatusEintragDto[]>())!;
         eintraege.Select(e => (e.Schluessel, e.Schweregrad)).ShouldBe([("aa-wirft", Schweregrad.Fehler), ("zz-ok", Schweregrad.Ok)]);
         eintraege[1].Titel.ShouldBe("Alles gut");
     }
@@ -340,7 +339,7 @@ public sealed class AuswertungTests(ApiFabrik fabrik) : IAsyncLifetime
         var ohneQuellen = fabrik.MitDiensten(d => d.RemoveAll<ISystemStatusQuelle>());
 
         var eintraege = await ohneQuellen.ErzeugeClient()
-            .GetFromJsonAsync<SystemStatusEintragDto[]>(ApiRouten.SystemInfo.Status);
+            .GetJsonAsync<SystemStatusEintragDto[]>(ApiRouten.SystemInfo.Status);
 
         eintraege.ShouldBeEmpty();
     }
@@ -350,7 +349,7 @@ public sealed class AuswertungTests(ApiFabrik fabrik) : IAsyncLifetime
         var url = $"{ApiRouten.Auswertung.Dashboard}?zeitraum={zeitraum}" + (jahr is null ? "" : $"&jahr={jahr}");
         var antwort = await fabrik.ErzeugeClient().GetAsync(url);
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
-        return (await antwort.Content.ReadFromJsonAsync<DashboardDto>())!;
+        return (await antwort.Content.LesenAsync<DashboardDto>())!;
     }
 
     private async Task<KostenAuswertungDto> KostenAsync(KostenGruppierung gruppierung)

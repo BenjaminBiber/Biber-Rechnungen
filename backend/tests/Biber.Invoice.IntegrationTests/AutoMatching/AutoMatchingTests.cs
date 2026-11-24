@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using Biber.Invoice.Contracts;
 using Biber.Invoice.Contracts.Dto.Tags;
 using Biber.Invoice.Domain.Entitaeten;
@@ -315,13 +314,13 @@ public sealed class AutoMatchingTests(ApiFabrik fabrik) : IAsyncLifetime
     public async Task Status_liefert_Zeitpunkt_Anzahl_und_Guete()
     {
         var client = fabrik.ErzeugeClient(Rolle.NurLesen);
-        (await client.GetFromJsonAsync<AutoMatchingStatusDto[]>(ApiRouten.Matching.AutoStatus)).ShouldBe([]);
+        (await client.GetJsonAsync<AutoMatchingStatusDto[]>(ApiRouten.Matching.AutoStatus)).ShouldBe([]);
 
         await StammdatenAsync();
         await BestandAsync();
         await TrainierenAsync();
 
-        var status = (await client.GetFromJsonAsync<AutoMatchingStatusDto[]>(ApiRouten.Matching.AutoStatus)).ShouldNotBeNull();
+        var status = (await client.GetJsonAsync<AutoMatchingStatusDto[]>(ApiRouten.Matching.AutoStatus)).ShouldNotBeNull();
         status.Select(s => s.Ziel).ShouldBe(["Kategorie", "Korrespondent", "Tag"]);
         status.ShouldAllBe(s => s.TrainiertAm == fabrik.Zeit.GetUtcNow() && s.AnzahlBeispiele == 80 && s.Guete >= 0.9m);
         (await fabrik.ErzeugeAnonymenClient().GetAsync(ApiRouten.Matching.AutoStatus)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);

@@ -9,7 +9,7 @@ const eintraege: Array<[name: RegExp, url: RegExp, titel: string]> = [
   [/^Tags & Kategorien$/, /\/tags$/, 'Tags & Kategorien'],
   [/^Export$/, /\/export$/, 'Export'],
   [/^Einstellungen$/, /\/einstellungen\/pruefungen$/, 'Einstellungen'],
-  [/^Dashboard$/, /:4173\/$/, 'Dashboard'],
+  [/^Dashboard$/, /^http:\/\/[^/]+\/$/, 'Dashboard'],
 ]
 
 test.describe('App-Shell Desktop', () => {

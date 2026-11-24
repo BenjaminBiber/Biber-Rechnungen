@@ -1,6 +1,5 @@
 using System.IO.Compression;
 using System.Net;
-using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -33,7 +32,6 @@ public sealed class ExportTests(ApiFabrik fabrik) : IAsyncLifetime
 {
     private static readonly DateOnly Von = new(2026, 1, 1);
     private static readonly DateOnly Bis = new(2026, 6, 30);
-    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     private Datenbestand _daten = null!;
 
@@ -269,10 +267,10 @@ public sealed class ExportTests(ApiFabrik fabrik) : IAsyncLifetime
         await File.WriteAllBytesAsync(absolut, [.. manipuliert.Inhalt, 0x20]);
 
         var antwort = await fabrik.ErzeugeClient(Rolle.Benutzer)
-            .PostAsJsonAsync(ApiRouten.Export.Erzeugen, Anfrage() with { ZipOriginale = true });
+            .PostJsonAsync(ApiRouten.Export.Erzeugen, Anfrage() with { ZipOriginale = true });
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.Conflict);
-        var problem = await antwort.Content.ReadFromJsonAsync<JsonElement>();
+        var problem = await antwort.Content.LesenAsync<JsonElement>();
         problem.GetProperty("pfade").EnumerateArray().Select(p => p.GetString()).ShouldBe([manipuliert.Pfad]);
         (await LaeufeAsync()).ShouldBeEmpty();
     }
@@ -285,6 +283,8 @@ public sealed class ExportTests(ApiFabrik fabrik) : IAsyncLifetime
         var liste = await LaeufeAsync();
         liste.ShouldHaveSingleItem().Id.ShouldBe(lauf.Id);
         liste[0].Bezeichnung.ShouldBe("Q1/Q2 2026: Steuerberater");
+        lauf.ErstelltVon.ShouldBe("Test-Benutzer");
+        liste[0].ErstelltVon.ShouldBe("Test-Benutzer");
 
         var antwort = await fabrik.ErzeugeClient(Rolle.NurLesen).GetAsync(lauf.DownloadUrl);
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -320,14 +320,14 @@ public sealed class ExportTests(ApiFabrik fabrik) : IAsyncLifetime
     {
         var client = fabrik.ErzeugeClient(Rolle.Benutzer);
 
-        (await client.PostAsJsonAsync(ApiRouten.Export.Erzeugen, Anfrage())).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        (await client.PostAsJsonAsync(ApiRouten.Export.Erzeugen, Anfrage() with { Belegliste = true, Von = Bis, Bis = Von }))
+        (await client.PostJsonAsync(ApiRouten.Export.Erzeugen, Anfrage())).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await client.PostJsonAsync(ApiRouten.Export.Erzeugen, Anfrage() with { Belegliste = true, Von = Bis, Bis = Von }))
             .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        (await client.PostAsJsonAsync(ApiRouten.Export.Vorschau, Anfrage() with { Von = Bis, Bis = Von }))
+        (await client.PostJsonAsync(ApiRouten.Export.Vorschau, Anfrage() with { Von = Bis, Bis = Von }))
             .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 
         await UstSetzenAsync(UstStatus.Kleinunternehmer);
-        (await client.PostAsJsonAsync(ApiRouten.Export.Erzeugen, Anfrage() with { Vorsteuer = true }))
+        (await client.PostJsonAsync(ApiRouten.Export.Erzeugen, Anfrage() with { Vorsteuer = true }))
             .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
@@ -336,9 +336,9 @@ public sealed class ExportTests(ApiFabrik fabrik) : IAsyncLifetime
     {
         var nurLesen = fabrik.ErzeugeClient(Rolle.NurLesen);
 
-        (await nurLesen.PostAsJsonAsync(ApiRouten.Export.Erzeugen, Anfrage() with { Belegliste = true }))
+        (await nurLesen.PostJsonAsync(ApiRouten.Export.Erzeugen, Anfrage() with { Belegliste = true }))
             .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
-        (await nurLesen.PostAsJsonAsync(ApiRouten.Export.Vorschau, Anfrage())).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await nurLesen.PostJsonAsync(ApiRouten.Export.Vorschau, Anfrage())).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
 
         var lauf = await ErzeugenAsync(Anfrage() with { Belegliste = true });
         (await nurLesen.GetAsync(ApiRouten.Export.Laeufe)).StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -353,20 +353,20 @@ public sealed class ExportTests(ApiFabrik fabrik) : IAsyncLifetime
 
     private async Task<ExportVorschauDto> VorschauAsync(ExportAnfrageDto anfrage)
     {
-        var antwort = await fabrik.ErzeugeClient(Rolle.Benutzer).PostAsJsonAsync(ApiRouten.Export.Vorschau, anfrage);
+        var antwort = await fabrik.ErzeugeClient(Rolle.Benutzer).PostJsonAsync(ApiRouten.Export.Vorschau, anfrage);
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
-        return (await antwort.Content.ReadFromJsonAsync<ExportVorschauDto>(Json))!;
+        return (await antwort.Content.LesenAsync<ExportVorschauDto>())!;
     }
 
     private async Task<ExportLaufDto> ErzeugenAsync(ExportAnfrageDto anfrage)
     {
-        var antwort = await fabrik.ErzeugeClient(Rolle.Benutzer).PostAsJsonAsync(ApiRouten.Export.Erzeugen, anfrage);
+        var antwort = await fabrik.ErzeugeClient(Rolle.Benutzer).PostJsonAsync(ApiRouten.Export.Erzeugen, anfrage);
         antwort.StatusCode.ShouldBe(HttpStatusCode.Created, await antwort.Content.ReadAsStringAsync());
-        return (await antwort.Content.ReadFromJsonAsync<ExportLaufDto>(Json))!;
+        return (await antwort.Content.LesenAsync<ExportLaufDto>())!;
     }
 
     private async Task<ExportLaufDto[]> LaeufeAsync() =>
-        (await fabrik.ErzeugeClient(Rolle.NurLesen).GetFromJsonAsync<ExportLaufDto[]>(ApiRouten.Export.Laeufe, Json))!;
+        (await fabrik.ErzeugeClient(Rolle.NurLesen).GetJsonAsync<ExportLaufDto[]>(ApiRouten.Export.Laeufe))!;
 
     private async Task<byte[]> HerunterladenAsync(ExportLaufDto lauf)
     {

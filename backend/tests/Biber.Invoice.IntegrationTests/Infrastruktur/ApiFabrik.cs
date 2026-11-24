@@ -34,13 +34,14 @@ public sealed class ApiFabrik : WebApplicationFactory<Program>, IAsyncLifetime
     private readonly bool _besitztContainer;
     private readonly IReadOnlyList<Action<IServiceCollection>> _aenderungen;
     private readonly bool _echteAnmeldung;
+    private readonly string? _datenOrdner;
     private readonly List<ApiFabrik> _abgeleitete = [];
     private Respawner? _respawner;
     private string? _seedSql;
     private bool _entsorgt;
 
     public ApiFabrik()
-        : this(new PostgreSqlBuilder("postgres:17").Build(), besitztContainer: true, [], echteAnmeldung: false)
+        : this(new PostgreSqlBuilder("postgres:17").Build(), besitztContainer: true, [], echteAnmeldung: false, datenOrdner: null)
     {
     }
 
@@ -48,15 +49,20 @@ public sealed class ApiFabrik : WebApplicationFactory<Program>, IAsyncLifetime
         PostgreSqlContainer postgres,
         bool besitztContainer,
         IReadOnlyList<Action<IServiceCollection>> aenderungen,
-        bool echteAnmeldung)
+        bool echteAnmeldung,
+        string? datenOrdner)
     {
         _postgres = postgres;
         _besitztContainer = besitztContainer;
         _aenderungen = aenderungen;
         _echteAnmeldung = echteAnmeldung;
+        _datenOrdner = datenOrdner;
         TempOrdner = Path.Combine(Path.GetTempPath(), "biber-invoice-tests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(Path.Combine(TempOrdner, "wwwroot"));
     }
+
+    /// <summary>Ordner, den die Anwendung als <c>Pfade:Daten</c> bekommt (darin liegt der Schlüsselbund).</summary>
+    public string DatenOrdner => _datenOrdner ?? Path.Combine(TempOrdner, "daten");
 
     /// <summary>Eigener Ordner dieser Fabrik; <c>Pfade:*</c> und <c>wwwroot</c> liegen darunter.</summary>
     public string TempOrdner { get; }
@@ -82,10 +88,16 @@ public sealed class ApiFabrik : WebApplicationFactory<Program>, IAsyncLifetime
     /// (z. B. Fakes statt echter Dienste). Wird mit dieser Fabrik entsorgt.
     /// </summary>
     public ApiFabrik MitDiensten(Action<IServiceCollection> aendern) =>
-        Ableiten([.. _aenderungen, aendern], _echteAnmeldung);
+        Ableiten([.. _aenderungen, aendern], _echteAnmeldung, _datenOrdner);
 
     /// <summary>Neue Fabrik ohne Testschema: Es gilt die echte Anmeldung der Anwendung.</summary>
-    public ApiFabrik MitEchterAnmeldung() => Ableiten(_aenderungen, echteAnmeldung: true);
+    public ApiFabrik MitEchterAnmeldung() => Ableiten(_aenderungen, echteAnmeldung: true, _datenOrdner);
+
+    /// <summary>
+    /// Neue Fabrik, deren Anwendung <paramref name="pfad"/> als <c>Pfade:Daten</c> nutzt – etwa der Ordner einer
+    /// anderen Fabrik, um einen Neustart der Anwendung nachzustellen.
+    /// </summary>
+    public ApiFabrik MitDatenOrdner(string pfad) => Ableiten(_aenderungen, _echteAnmeldung, pfad);
 
     public IServiceScope ErzeugeScope() => Services.CreateScope();
 
@@ -129,10 +141,12 @@ public sealed class ApiFabrik : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseEnvironment("Testing");
         builder.UseWebRoot(Path.Combine(TempOrdner, "wwwroot"));
         builder.UseSetting("ConnectionStrings:Datenbank", _postgres.GetConnectionString());
-        foreach (var pfad in new[] { "Eingang", "Staging", "Ablage", "Daten", "Backup" })
+        foreach (var pfad in new[] { "Eingang", "Staging", "Ablage", "Backup" })
         {
             builder.UseSetting($"Pfade:{pfad}", Path.Combine(TempOrdner, pfad.ToLowerInvariant()));
         }
+
+        builder.UseSetting("Pfade:Daten", DatenOrdner);
 
         builder.UseSetting("Verfahrensdoku:Pfad", Path.Combine(TempOrdner, "verfahrensdokumentation"));
         builder.UseSetting("OrdnerWatcher:Aktiv", "false");
@@ -236,9 +250,9 @@ public sealed class ApiFabrik : WebApplicationFactory<Program>, IAsyncLifetime
         return string.Concat(befehle.Select(b => b.CommandText));
     }
 
-    private ApiFabrik Ableiten(IReadOnlyList<Action<IServiceCollection>> aenderungen, bool echteAnmeldung)
+    private ApiFabrik Ableiten(IReadOnlyList<Action<IServiceCollection>> aenderungen, bool echteAnmeldung, string? datenOrdner)
     {
-        var fabrik = new ApiFabrik(_postgres, besitztContainer: false, aenderungen, echteAnmeldung);
+        var fabrik = new ApiFabrik(_postgres, besitztContainer: false, aenderungen, echteAnmeldung, datenOrdner);
         _abgeleitete.Add(fabrik);
         return fabrik;
     }

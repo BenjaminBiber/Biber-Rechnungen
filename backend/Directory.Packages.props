@@ -17,6 +17,8 @@
     <!-- Bildbibliothek SkiaSharp statt SixLabors.ImageSharp (Entscheidung MCA-F0001) -->
     <PackageVersion Include="SkiaSharp" Version="4.157.0" />
     <PackageVersion Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="4.157.0" />
+    <!-- TIFF-Dekodierung (BSD-3-Clause, verwaltet); kodiert wird weiter mit SkiaSharp -->
+    <PackageVersion Include="BitMiracle.LibTiff.NET" Version="2.4.660" />
     <PackageVersion Include="Azure.AI.DocumentIntelligence" Version="1.0.0" />
     <PackageVersion Include="MailKit" Version="5.0.0" />
     <PackageVersion Include="Microsoft.ML" Version="6.0.0" />

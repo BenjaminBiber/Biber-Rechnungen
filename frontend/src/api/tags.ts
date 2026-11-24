@@ -87,11 +87,11 @@ export function useKategorieAendern() {
   })
 }
 
-/** DELETE /api/kategorien/{id}. */
+/** DELETE /api/kategorien/{id} – liefert die Zahl der Belege und Korrespondenten, die die Kategorie verloren haben. */
 export function useKategorieLoeschen() {
   const neuLaden = useNeuLaden()
   return useMutation({
-    mutationFn: (id: string) => erledigt(api.DELETE('/api/kategorien/{id}', { params: { path: { id } } })),
+    mutationFn: (id: string) => daten(api.DELETE('/api/kategorien/{id}', { params: { path: { id } } })),
     onSuccess: neuLaden,
   })
 }

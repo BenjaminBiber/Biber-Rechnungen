@@ -19,7 +19,12 @@ test('zwei Korrespondenten zusammenführen', async ({ page }) => {
 
 test('Klick auf einen Namen öffnet das Detail', async ({ page }) => {
   await page.goto('/korrespondenten')
-  await page.getByRole('link', { name: 'Autohaus Brenner GmbH' }).click()
+  // Erst klicken, wenn die Liste steht – sonst kann der Klick in ein Neuzeichnen fallen.
+  await expect(page.getByRole('heading', { level: 1, name: 'Korrespondenten', exact: true })).toBeVisible()
+  const link = page.getByRole('link', { name: 'Autohaus Brenner GmbH' })
+  await expect(link).toBeVisible()
+  await link.click()
   await expect(page).toHaveURL(/\/korrespondenten\/[0-9a-f-]+$/)
-  await expect(page.getByRole('heading', { level: 1, name: 'Korrespondent' })).toBeVisible()
+  // Die Detailseite trägt den Namen als Überschrift (die Liste hieß „Korrespondenten“).
+  await expect(page.getByRole('heading', { level: 1, name: 'Autohaus Brenner GmbH', exact: true })).toBeVisible()
 })

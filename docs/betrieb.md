@@ -133,6 +133,7 @@ claude mcp add --transport http biber-rechnungen https://rechnungen.<domain>/mcp
 
 - Der Dienst `db-backup` schreibt jede Nacht um 02:00 Uhr einen `pg_dump` nach `PFAD_BACKUP` (`biber-rechnungen_<yyyyMMdd-HHmmss>.dump`) und löscht Dumps, die älter als 30 Tage sind. Details: [`docker/db-backup/README.md`](../docker/db-backup/README.md).
 - **Der Backup-Ordner (`PFAD_BACKUP`) und die Ablage (`PFAD_ABLAGE`) müssen vom vorhandenen Host-Backup auf ein anderes Gerät gesichert werden (P3).** Ohne diese Sicherung ist die Aufbewahrung bei einem Hardwaredefekt nicht gewährleistet. Empfohlen zusätzlich: `PFAD_DATEN` (ML-Modelle, Schlüssel).
+- Der Schlüsselbund für Anmelde-Cookies und Links (Passwort zurücksetzen, Bestätigungen) liegt unter `PFAD_DATEN/schluessel` und gehört zur Sicherung von `PFAD_DATEN`. Er übersteht `docker compose up -d --build`. Fehlt er (z. B. nach dem Löschen von `PFAD_DATEN`), legt die Anwendung beim Start einen neuen an: Alle müssen sich neu anmelden und offene Links verfallen, Daten gehen dabei nicht verloren. Das Log warnt „No XML encryptor configured“; das ist erwartet, der Ordner ist durch die Dateirechte (`APP_UID`) geschützt.
 - Das Volume `pgdata` muss nicht gesichert werden; die Dumps genügen.
 
 ## Wiederherstellung
@@ -168,6 +169,7 @@ Die Datenbankmigration läuft beim Start automatisch. Vorher prüfen, dass der l
   - Dateien im Eingang werden nicht übernommen → Rechte: Besitzer muss `APP_UID:APP_GID` sein (`force user`/`force group` in der Freigabe prüfen).
   - `api` startet nicht → `postgres` nicht gesund oder `POSTGRES_PASSWORD` nach dem ersten Start geändert.
   - Upload bricht ab → `client_max_body_size 60m` im Proxy-Host fehlt.
+  - Nach einem Neustart sind alle abgemeldet → `PFAD_DATEN/schluessel` fehlt oder ist für `APP_UID` nicht beschreibbar.
   - Google-Anmeldung meldet „redirect_uri_mismatch“ → Redirect-URL und `OEFFENTLICHE_URL` stimmen nicht überein.
   - PDFs werden nicht ausgelesen → `AZURE_DI_ENDPUNKT`/`AZURE_DI_SCHLUESSEL` leer oder Seitenlimit erreicht (Glocke).
   - Keine Mails → IMAP-Zugang falsch oder App-Passwort abgelaufen; Logs der `api` zeigen den Fehler.

@@ -2064,6 +2064,7 @@ export interface components {
             id: string;
             /** Format: date-time */
             erstelltAm: string;
+            erstelltVon: string;
             bezeichnung: string;
             inhalt: string;
             /** Format: int32 */
@@ -2184,6 +2185,12 @@ export interface components {
             anzahlBelege: number;
             /** Format: decimal */
             summeBrutto: number;
+        };
+        KategorieGeloeschtDto: {
+            /** Format: int32 */
+            belege: number;
+            /** Format: int32 */
+            korrespondenten: number;
         };
         KaufDto: {
             /** Format: date */
@@ -3699,6 +3706,7 @@ export interface operations {
         parameters: {
             query?: {
                 seite?: number;
+                breite?: number;
             };
             header?: never;
             path: {
@@ -4206,6 +4214,26 @@ export interface operations {
             400: components["responses"]["Ungueltig"];
             401: components["responses"]["NichtAngemeldet"];
             403: components["responses"]["KeinRecht"];
+            /** @description USt-IdNr. ist schon vergeben; korrespondentId nennt den vorhandenen Korrespondenten */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        type?: string;
+                        title?: string;
+                        /** Format: int32 */
+                        status?: number;
+                        detail?: string;
+                        errors?: {
+                            [key: string]: string[];
+                        };
+                        /** Format: uuid */
+                        korrespondentId: string;
+                    };
+                };
+            };
         };
     };
     getKorrespondentenEinzeln: {
@@ -4264,6 +4292,26 @@ export interface operations {
             401: components["responses"]["NichtAngemeldet"];
             403: components["responses"]["KeinRecht"];
             404: components["responses"]["NichtGefunden"];
+            /** @description USt-IdNr. ist schon vergeben; korrespondentId nennt den vorhandenen Korrespondenten */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        type?: string;
+                        title?: string;
+                        /** Format: int32 */
+                        status?: number;
+                        detail?: string;
+                        errors?: {
+                            [key: string]: string[];
+                        };
+                        /** Format: uuid */
+                        korrespondentId: string;
+                    };
+                };
+            };
         };
     };
     postKorrespondentenZusammenfuehren: {
@@ -4598,12 +4646,14 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Erledigt */
-            204: {
+            /** @description OK */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["KategorieGeloeschtDto"];
+                };
             };
             400: components["responses"]["Ungueltig"];
             401: components["responses"]["NichtAngemeldet"];
@@ -4792,6 +4842,24 @@ export interface operations {
             400: components["responses"]["Ungueltig"];
             401: components["responses"]["NichtAngemeldet"];
             403: components["responses"]["KeinRecht"];
+            /** @description Ein Artikel gehört schon zu einem anderen Stammartikel */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        type?: string;
+                        title?: string;
+                        /** Format: int32 */
+                        status?: number;
+                        detail?: string;
+                        errors?: {
+                            [key: string]: string[];
+                        };
+                    };
+                };
+            };
         };
     };
     getStammartikelEinzeln: {
@@ -4850,6 +4918,24 @@ export interface operations {
             401: components["responses"]["NichtAngemeldet"];
             403: components["responses"]["KeinRecht"];
             404: components["responses"]["NichtGefunden"];
+            /** @description Ein Artikel gehört schon zu einem anderen Stammartikel */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        type?: string;
+                        title?: string;
+                        /** Format: int32 */
+                        status?: number;
+                        detail?: string;
+                        errors?: {
+                            [key: string]: string[];
+                        };
+                    };
+                };
+            };
         };
     };
     deleteStammartikelArtikel: {
@@ -4999,6 +5085,25 @@ export interface operations {
             400: components["responses"]["Ungueltig"];
             401: components["responses"]["NichtAngemeldet"];
             403: components["responses"]["KeinRecht"];
+            /** @description Originaldateien seit dem Import verändert; pfade nennt sie */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        type?: string;
+                        title?: string;
+                        /** Format: int32 */
+                        status?: number;
+                        detail?: string;
+                        errors?: {
+                            [key: string]: string[];
+                        };
+                        pfade: string[];
+                    };
+                };
+            };
         };
     };
     getExportLaeufe: {
@@ -5047,6 +5152,24 @@ export interface operations {
             401: components["responses"]["NichtAngemeldet"];
             403: components["responses"]["KeinRecht"];
             404: components["responses"]["NichtGefunden"];
+            /** @description Exportdatei fehlt auf dem Datenträger */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        type?: string;
+                        title?: string;
+                        /** Format: int32 */
+                        status?: number;
+                        detail?: string;
+                        errors?: {
+                            [key: string]: string[];
+                        };
+                    };
+                };
+            };
         };
     };
     getEinstellungenAlle: {
@@ -5370,6 +5493,24 @@ export interface operations {
             400: components["responses"]["Ungueltig"];
             401: components["responses"]["NichtAngemeldet"];
             403: components["responses"]["KeinRecht"];
+            /** @description Keine Belege mit abgelaufener Aufbewahrungsfrist */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        type?: string;
+                        title?: string;
+                        /** Format: int32 */
+                        status?: number;
+                        detail?: string;
+                        errors?: {
+                            [key: string]: string[];
+                        };
+                    };
+                };
+            };
         };
     };
     getIntegritaetLaeufe: {

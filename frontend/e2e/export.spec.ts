@@ -4,6 +4,7 @@ test('Export erstellen löst einen Download aus und erscheint in „Letzte Expor
   await page.goto('/export?von=2026-10-01&bis=2026-10-31')
   const letzte = page.getByRole('region', { name: 'Letzte Exporte' })
   await expect(letzte.locator('tbody tr')).toHaveCount(3)
+  await expect(letzte.locator('tbody tr').first()).toContainText('M. Keller')
 
   await page.getByRole('button', { name: 'Vorjahr' }).click()
   await expect(page.getByLabel('Von')).toHaveValue(/^01\.01\.\d{4}$/)
@@ -14,8 +15,9 @@ test('Export erstellen löst einen Download aus und erscheint in „Letzte Expor
 
   const download = page.waitForEvent('download')
   await page.getByRole('button', { name: 'Export erstellen' }).click()
-  expect((await download).url()).toMatch(/\/api\/export\/laeufe\/[0-9a-f-]+\/datei$/)
+  expect((await download).suggestedFilename()).toMatch(/^Export_.+\.zip$/)
 
   await expect(letzte.locator('tbody tr')).toHaveCount(4)
   await expect(letzte.locator('tbody tr').first()).toContainText(`Jahr ${jahr}`)
+  await expect(letzte.locator('tbody tr').first()).toContainText('M. Keller')
 })

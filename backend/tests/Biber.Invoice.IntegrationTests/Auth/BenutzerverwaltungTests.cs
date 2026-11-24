@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using Biber.Invoice.Contracts;
 using Biber.Invoice.Contracts.Dto.Auth;
 using Biber.Invoice.Contracts.Dto.Benutzer;
@@ -51,17 +50,16 @@ public sealed class BenutzerverwaltungTests(ApiFabrik basis) : IAsyncLifetime
     {
         var admin = await _fabrik.AngemeldetAsync(await _fabrik.BenutzerAnlegenAsync(Rolle.Admin));
 
-        var antwort = await admin.PostAsJsonAsync(
+        var antwort = await admin.PostJsonAsync(
             ApiRouten.Benutzer.Liste,
-            new BenutzerAnlegenDto("Steuerbüro", "kanzlei@example.org", AuthTestHilfen.Passwort, Rolle.NurLesen),
-            AuthTestHilfen.Json);
+            new BenutzerAnlegenDto("Steuerbüro", "kanzlei@example.org", AuthTestHilfen.Passwort, Rolle.NurLesen));
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.Created);
-        var neu = (await antwort.Content.ReadFromJsonAsync<BenutzerDto>(AuthTestHilfen.Json)).ShouldNotBeNull();
+        var neu = (await antwort.Content.LesenAsync<BenutzerDto>()).ShouldNotBeNull();
         neu.Rolle.ShouldBe(Rolle.NurLesen);
         neu.Freigegeben.ShouldBeTrue();
         neu.Anmeldung.ShouldBe("Passwort");
-        var liste = await admin.GetFromJsonAsync<BenutzerDto[]>(ApiRouten.Benutzer.Liste, AuthTestHilfen.Json);
+        var liste = await admin.GetJsonAsync<BenutzerDto[]>(ApiRouten.Benutzer.Liste);
         liste.ShouldNotBeNull().Length.ShouldBe(2);
         liste.ShouldContain(b => b.Email == "kanzlei@example.org" && b.Rolle == Rolle.NurLesen);
         (await _fabrik.Client().AnmeldenAsync("kanzlei@example.org")).ShouldBe(AnmeldeStatus.Ok);
@@ -72,10 +70,9 @@ public sealed class BenutzerverwaltungTests(ApiFabrik basis) : IAsyncLifetime
     {
         var admin = await _fabrik.AngemeldetAsync(await _fabrik.BenutzerAnlegenAsync(Rolle.Admin));
 
-        var antwort = await admin.PostAsJsonAsync(
+        var antwort = await admin.PostJsonAsync(
             ApiRouten.Benutzer.Liste,
-            new BenutzerAnlegenDto("Kurz", "kurz@example.org", "elf-zeichen", Rolle.Benutzer),
-            AuthTestHilfen.Json);
+            new BenutzerAnlegenDto("Kurz", "kurz@example.org", "elf-zeichen", Rolle.Benutzer));
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await antwort.Content.ReadAsStringAsync()).ShouldContain("mindestens 12 Zeichen");
@@ -88,15 +85,15 @@ public sealed class BenutzerverwaltungTests(ApiFabrik basis) : IAsyncLifetime
         var admin = await _fabrik.AngemeldetAsync(adminKonto);
         var pfad = ApiRouten.Benutzer.Einzeln.Replace("{id}", adminKonto.Id.ToString(), StringComparison.Ordinal);
 
-        (await admin.PutAsJsonAsync(pfad, new BenutzerAendernDto(Rolle.Benutzer, true), AuthTestHilfen.Json))
+        (await admin.PutJsonAsync(pfad, new BenutzerAendernDto(Rolle.Benutzer, true)))
             .StatusCode.ShouldBe(HttpStatusCode.Conflict);
-        (await admin.PutAsJsonAsync(pfad, new BenutzerAendernDto(Rolle.Admin, false), AuthTestHilfen.Json))
+        (await admin.PutJsonAsync(pfad, new BenutzerAendernDto(Rolle.Admin, false)))
             .StatusCode.ShouldBe(HttpStatusCode.Conflict);
 
         await _fabrik.BenutzerAnlegenAsync(Rolle.Admin);
-        var antwort = await admin.PutAsJsonAsync(pfad, new BenutzerAendernDto(Rolle.Benutzer, true), AuthTestHilfen.Json);
+        var antwort = await admin.PutJsonAsync(pfad, new BenutzerAendernDto(Rolle.Benutzer, true));
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await antwort.Content.ReadFromJsonAsync<BenutzerDto>(AuthTestHilfen.Json)).ShouldNotBeNull().Rolle.ShouldBe(Rolle.Benutzer);
+        (await antwort.Content.LesenAsync<BenutzerDto>()).ShouldNotBeNull().Rolle.ShouldBe(Rolle.Benutzer);
     }
 
     [Fact]
@@ -107,7 +104,7 @@ public sealed class BenutzerverwaltungTests(ApiFabrik basis) : IAsyncLifetime
         var benutzer = await _fabrik.AngemeldetAsync(konto);
         var pfad = ApiRouten.Benutzer.Einzeln.Replace("{id}", konto.Id.ToString(), StringComparison.Ordinal);
 
-        var antwort = await admin.PutAsJsonAsync(pfad, new BenutzerAendernDto(Rolle.Benutzer, false), AuthTestHilfen.Json);
+        var antwort = await admin.PutJsonAsync(pfad, new BenutzerAendernDto(Rolle.Benutzer, false));
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
         (await benutzer.GetAsync(ApiRouten.Konto.Eigenes)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
@@ -122,14 +119,13 @@ public sealed class BenutzerverwaltungTests(ApiFabrik basis) : IAsyncLifetime
         var pfad = ApiRouten.Benutzer.Passwort.Replace("{id}", konto.Id.ToString(), StringComparison.Ordinal);
         const string neu = "vom-admin-gesetzt-2026";
 
-        (await admin.PostAsJsonAsync(pfad, new NeuesPasswortDto("kurz"), AuthTestHilfen.Json))
+        (await admin.PostJsonAsync(pfad, new NeuesPasswortDto("kurz")))
             .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        (await admin.PostAsJsonAsync(pfad, new NeuesPasswortDto(neu), AuthTestHilfen.Json))
+        (await admin.PostJsonAsync(pfad, new NeuesPasswortDto(neu)))
             .StatusCode.ShouldBe(HttpStatusCode.NoContent);
-        (await admin.PostAsJsonAsync(
+        (await admin.PostJsonAsync(
                 ApiRouten.Benutzer.Passwort.Replace("{id}", Guid.NewGuid().ToString(), StringComparison.Ordinal),
-                new NeuesPasswortDto(neu),
-                AuthTestHilfen.Json))
+                new NeuesPasswortDto(neu)))
             .StatusCode.ShouldBe(HttpStatusCode.NotFound);
 
         (await _fabrik.Client().AnmeldenAsync(konto.Email!, neu)).ShouldBe(AnmeldeStatus.Ok);

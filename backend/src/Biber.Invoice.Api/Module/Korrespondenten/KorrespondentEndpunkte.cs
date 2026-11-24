@@ -77,7 +77,11 @@ public sealed class KorrespondentEndpunkte : IEndpunktModul
         }
         catch (KorrespondentKonfliktAusnahme ex)
         {
-            return TypedResults.Problem(statusCode: StatusCodes.Status409Conflict, title: "Konflikt", detail: ex.Message);
+            return TypedResults.Problem(
+                statusCode: StatusCodes.Status409Conflict,
+                title: "Konflikt",
+                detail: ex.Message,
+                extensions: new Dictionary<string, object?> { ["korrespondentId"] = ex.VorhandenId });
         }
     }
 

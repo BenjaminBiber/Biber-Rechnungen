@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Headers;
-using System.Net.Http.Json;
 using System.Security.Claims;
 using Biber.Invoice.Contracts;
 using Biber.Invoice.Contracts.Dto.Sonstiges;
@@ -63,7 +62,7 @@ public sealed class TokenTests(ApiFabrik fabrik) : IAsyncLifetime
 
         var antwort = await benutzer.GetAsync(ApiRouten.Tokens.Liste);
         string json = await antwort.Content.ReadAsStringAsync();
-        var liste = await antwort.Content.ReadFromJsonAsync<ApiTokenDto[]>();
+        var liste = await antwort.Content.LesenAsync<ApiTokenDto[]>();
 
         liste.ShouldNotBeNull().Select(t => t.Name).ShouldBe(["Neu", "Alt"]);
         json.ShouldNotContain("brk_");
@@ -74,7 +73,7 @@ public sealed class TokenTests(ApiFabrik fabrik) : IAsyncLifetime
     public async Task Leere_Scopes_ergeben_400()
     {
         var antwort = await fabrik.ErzeugeClient(Rolle.Benutzer)
-            .PostAsJsonAsync(ApiRouten.Tokens.Liste, new ApiTokenAnlegenDto("Leer", []));
+            .PostJsonAsync(ApiRouten.Tokens.Liste, new ApiTokenAnlegenDto("Leer", []));
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
@@ -84,11 +83,11 @@ public sealed class TokenTests(ApiFabrik fabrik) : IAsyncLifetime
     {
         var client = fabrik.ErzeugeClient(Rolle.Benutzer);
 
-        (await client.PostAsJsonAsync(ApiRouten.Tokens.Liste, new ApiTokenAnlegenDto("X", ["admin"])))
+        (await client.PostJsonAsync(ApiRouten.Tokens.Liste, new ApiTokenAnlegenDto("X", ["admin"])))
             .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        (await client.PostAsJsonAsync(ApiRouten.Tokens.Liste, new ApiTokenAnlegenDto(" ", [TokenScopes.Lesen])))
+        (await client.PostJsonAsync(ApiRouten.Tokens.Liste, new ApiTokenAnlegenDto(" ", [TokenScopes.Lesen])))
             .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        (await client.PostAsJsonAsync(ApiRouten.Tokens.Liste, new ApiTokenAnlegenDto(new string('a', 101), [TokenScopes.Lesen])))
+        (await client.PostJsonAsync(ApiRouten.Tokens.Liste, new ApiTokenAnlegenDto(new string('a', 101), [TokenScopes.Lesen])))
             .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
@@ -98,7 +97,7 @@ public sealed class TokenTests(ApiFabrik fabrik) : IAsyncLifetime
         var client = fabrik.ErzeugeClient(Rolle.Benutzer);
         var erstes = await ErzeugeAsync(client, "Doppelt", TokenScopes.Lesen);
 
-        (await client.PostAsJsonAsync(ApiRouten.Tokens.Liste, new ApiTokenAnlegenDto("Doppelt", [TokenScopes.Lesen])))
+        (await client.PostJsonAsync(ApiRouten.Tokens.Liste, new ApiTokenAnlegenDto("Doppelt", [TokenScopes.Lesen])))
             .StatusCode.ShouldBe(HttpStatusCode.Conflict);
 
         await WiderrufeAsync(client, erstes.Token.Id, HttpStatusCode.NoContent);
@@ -110,7 +109,7 @@ public sealed class TokenTests(ApiFabrik fabrik) : IAsyncLifetime
     {
         var client = fabrik.ErzeugeClient(Rolle.NurLesen);
 
-        (await client.PostAsJsonAsync(ApiRouten.Tokens.Liste, new ApiTokenAnlegenDto("Upload", [TokenScopes.Upload])))
+        (await client.PostJsonAsync(ApiRouten.Tokens.Liste, new ApiTokenAnlegenDto("Upload", [TokenScopes.Upload])))
             .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
         await ErzeugeAsync(client, "Lesen", TokenScopes.Lesen);
     }
@@ -140,7 +139,7 @@ public sealed class TokenTests(ApiFabrik fabrik) : IAsyncLifetime
         var antwort = await client.GetAsync(McpLesenPfad);
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var claims = (await antwort.Content.ReadFromJsonAsync<Dictionary<string, string>>()).ShouldNotBeNull();
+        var claims = (await antwort.Content.LesenAsync<Dictionary<string, string>>()).ShouldNotBeNull();
         claims[ClaimTypes.NameIdentifier].ShouldBe(ApiFabrik.BenutzerId(Rolle.Benutzer).ToString());
         claims[ClaimTypes.Role].ShouldBe(nameof(Rolle.Benutzer));
         claims["token_id"].ShouldBe(erstellt.Token.Id.ToString());
@@ -241,9 +240,9 @@ public sealed class TokenTests(ApiFabrik fabrik) : IAsyncLifetime
 
     private static async Task<ApiTokenErstelltDto> ErzeugeAsync(HttpClient client, string name, params string[] scopes)
     {
-        var antwort = await client.PostAsJsonAsync(ApiRouten.Tokens.Liste, new ApiTokenAnlegenDto(name, scopes));
+        var antwort = await client.PostJsonAsync(ApiRouten.Tokens.Liste, new ApiTokenAnlegenDto(name, scopes));
         antwort.StatusCode.ShouldBe(HttpStatusCode.Created);
-        return (await antwort.Content.ReadFromJsonAsync<ApiTokenErstelltDto>()).ShouldNotBeNull();
+        return (await antwort.Content.LesenAsync<ApiTokenErstelltDto>()).ShouldNotBeNull();
     }
 
     private static async Task WiderrufeAsync(HttpClient client, Guid id, HttpStatusCode erwartet)

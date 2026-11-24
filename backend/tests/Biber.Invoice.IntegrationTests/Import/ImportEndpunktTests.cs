@@ -1,8 +1,5 @@
 using System.Net;
-using System.Net.Http.Json;
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Biber.Invoice.Contracts;
 using Biber.Invoice.Contracts.Dto;
 using Biber.Invoice.Contracts.Dto.Import;
@@ -21,7 +18,6 @@ namespace Biber.Invoice.IntegrationTests.Import;
 public sealed class ImportEndpunktTests(ApiFabrik fabrik) : IAsyncLifetime
 {
     private const string Anzeigename = "Berta Beispiel";
-    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };
 
     private readonly ApiFabrik _f = OhneFormaterkennung(fabrik);
 
@@ -99,7 +95,7 @@ public sealed class ImportEndpunktTests(ApiFabrik fabrik) : IAsyncLifetime
         var client = _f.ErzeugeClient(Rolle.Benutzer);
 
         var leer = await client.PostAsync(ApiRouten.Import.Upload, new MultipartFormDataContent());
-        var keinFormular = await client.PostAsJsonAsync(ApiRouten.Import.Upload, new { });
+        var keinFormular = await client.PostJsonAsync(ApiRouten.Import.Upload, new { });
 
         leer.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         keinFormular.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -288,7 +284,7 @@ public sealed class ImportEndpunktTests(ApiFabrik fabrik) : IAsyncLifetime
 
     private static async Task<T> Lese<T>(HttpResponseMessage antwort)
         where T : class =>
-        (await antwort.Content.ReadFromJsonAsync<T>(Json)).ShouldNotBeNull();
+        (await antwort.Content.LesenAsync<T>()).ShouldNotBeNull();
 
     private static async Task<SeiteDto<ImportVorgangDto>> Liste(HttpClient client, string abfrage) =>
         await Lese<SeiteDto<ImportVorgangDto>>(await client.GetAsync(ApiRouten.Import.Vorgaenge + abfrage));

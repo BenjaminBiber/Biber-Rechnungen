@@ -1,9 +1,14 @@
 name: CI
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  # Wird vom Release-Workflow vor dem Push der Images aufgerufen.
+  workflow_call:
 
 concurrency:
-  group: ci-${{ github.ref }}
+  # Bei workflow_call ist github.workflow der Name des Aufrufers („Release“), die Gruppe also eine andere.
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -79,6 +84,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Versionsskript testen
+        run: bash .github/scripts/naechste-version.test.sh
 
       # hashFiles ist auf Job-Ebene nicht erlaubt; ohne docker/smoke.sh wird der Schritt übersprungen.
       - name: Smoke-Test

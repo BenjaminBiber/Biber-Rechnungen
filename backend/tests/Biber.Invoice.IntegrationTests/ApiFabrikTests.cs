@@ -1,4 +1,3 @@
-using System.Net.Http.Json;
 using Biber.Invoice.Contracts;
 using Biber.Invoice.Contracts.Dienste;
 using Biber.Invoice.Domain.Entitaeten;
@@ -125,7 +124,7 @@ public sealed class ApiFabrikTests(ApiFabrik fabrik)
         await using var mitEndpunkt = fabrik.MitDiensten(d => d.AddSingleton<IEndpunktModul, BenutzerEndpunkt>());
         var client = mitEndpunkt.ErzeugeClient(Rolle.Benutzer);
 
-        var antwort = await client.GetFromJsonAsync<BenutzerAntwort>("/api/test/ich");
+        var antwort = await client.GetJsonAsync<BenutzerAntwort>("/api/test/ich");
 
         antwort.ShouldNotBeNull();
         antwort.Id.ShouldBe(ApiFabrik.BenutzerId(Rolle.Benutzer));

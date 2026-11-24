@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using System.Security.Cryptography;
 using Biber.Invoice.Contracts;
 using Biber.Invoice.Contracts.Dto;
@@ -61,10 +60,10 @@ public sealed class BelegSchreibTests(ApiFabrik fabrik) : IAsyncLifetime
             Steuerzeilen = [new(19m, 100m, 19m), new(7m, 50m, 3.50m)],
         };
 
-        var antwort = await Client().PutAsJsonAsync(Route(ApiRouten.Belege.Einzeln, beleg.Id), aenderung);
+        var antwort = await Client().PutJsonAsync(Route(ApiRouten.Belege.Einzeln, beleg.Id), aenderung);
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var detail = (await antwort.Content.ReadFromJsonAsync<BelegDetailDto>()).ShouldNotBeNull();
+        var detail = (await antwort.Content.LesenAsync<BelegDetailDto>()).ShouldNotBeNull();
         detail.Rechnungsnummer.ShouldBe("RE-4711");
         detail.Titel.ShouldBe("Druckerpapier");
         detail.Brutto.ShouldBe(173.50m);
@@ -101,7 +100,7 @@ public sealed class BelegSchreibTests(ApiFabrik fabrik) : IAsyncLifetime
     {
         var beleg = await BelegAsync();
 
-        var antwort = await Client().PutAsJsonAsync(Route(ApiRouten.Belege.Einzeln, beleg.Id), aendern(Aenderung(beleg)));
+        var antwort = await Client().PutJsonAsync(Route(ApiRouten.Belege.Einzeln, beleg.Id), aendern(Aenderung(beleg)));
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await antwort.Content.ReadAsStringAsync()).ShouldContain($"\"{feld}\"");
@@ -121,7 +120,7 @@ public sealed class BelegSchreibTests(ApiFabrik fabrik) : IAsyncLifetime
             Steuerzeilen = [new(19m, -100m, -19m)],
         };
 
-        var antwort = await Client().PutAsJsonAsync(Route(ApiRouten.Belege.Einzeln, beleg.Id), aenderung);
+        var antwort = await Client().PutJsonAsync(Route(ApiRouten.Belege.Einzeln, beleg.Id), aenderung);
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
         (await LadenAsync(beleg.Id)).Brutto.ShouldBe(-119m);
@@ -138,23 +137,23 @@ public sealed class BelegSchreibTests(ApiFabrik fabrik) : IAsyncLifetime
         var beleg = await BelegAsync(b => (b.KorrespondentId, b.KategorieId) = (korrespondent.Id, standard.Id));
         var route = Route(ApiRouten.Belege.Einzeln, beleg.Id);
 
-        (await Client().PutAsJsonAsync(route, Aenderung(beleg) with { KategorieId = andere.Id })).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await Client().PutJsonAsync(route, Aenderung(beleg) with { KategorieId = andere.Id })).StatusCode.ShouldBe(HttpStatusCode.OK);
 
         var gesetzt = await LadenAsync(beleg.Id);
         gesetzt.KategorieId.ShouldBe(andere.Id);
         gesetzt.KategorieManuell.ShouldBeTrue();
 
         // Unveränderte Kategorie lässt den Schutz stehen.
-        (await Client().PutAsJsonAsync(route, Aenderung(gesetzt) with { Titel = "Anders" })).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await Client().PutJsonAsync(route, Aenderung(gesetzt) with { Titel = "Anders" })).StatusCode.ShouldBe(HttpStatusCode.OK);
         (await LadenAsync(beleg.Id)).KategorieManuell.ShouldBeTrue();
 
-        var antwort = await Client().PutAsJsonAsync(route, Aenderung(gesetzt) with { KategorieId = null });
+        var antwort = await Client().PutJsonAsync(route, Aenderung(gesetzt) with { KategorieId = null });
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
         var geleert = await LadenAsync(beleg.Id);
         geleert.KategorieId.ShouldBe(standard.Id);
         geleert.KategorieManuell.ShouldBeFalse();
-        (await antwort.Content.ReadFromJsonAsync<BelegDetailDto>())!.KategorieManuell.ShouldBeFalse();
+        (await antwort.Content.LesenAsync<BelegDetailDto>())!.KategorieManuell.ShouldBeFalse();
     }
 
     [Fact]
@@ -171,7 +170,7 @@ public sealed class BelegSchreibTests(ApiFabrik fabrik) : IAsyncLifetime
             b.Positionen = [Position(1, "Kopierpapier A4", 100m)];
         });
 
-        var antwort = await Client().PutAsJsonAsync(Route(ApiRouten.Belege.Einzeln, beleg.Id), Aenderung(beleg) with { KorrespondentId = neu.Id });
+        var antwort = await Client().PutJsonAsync(Route(ApiRouten.Belege.Einzeln, beleg.Id), Aenderung(beleg) with { KorrespondentId = neu.Id });
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
         var gespeichert = await LadenAsync(beleg.Id);
@@ -200,7 +199,7 @@ public sealed class BelegSchreibTests(ApiFabrik fabrik) : IAsyncLifetime
             b.Befunde = [Befund(PruefungArt.Positionssumme, PruefErgebnis.Fehlgeschlagen)];
         });
 
-        var antwort = await Client().PutAsJsonAsync(
+        var antwort = await Client().PutJsonAsync(
             Route(ApiRouten.Belege.Positionen, beleg.Id),
             new PositionAendernDto[]
             {
@@ -209,7 +208,7 @@ public sealed class BelegSchreibTests(ApiFabrik fabrik) : IAsyncLifetime
             });
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var detail = (await antwort.Content.ReadFromJsonAsync<BelegDetailDto>()).ShouldNotBeNull();
+        var detail = (await antwort.Content.LesenAsync<BelegDetailDto>()).ShouldNotBeNull();
         detail.Positionen.Length.ShouldBe(2);
         var gespeichert = await LadenAsync(beleg.Id);
         gespeichert.Positionen.OrderBy(p => p.Nr).Select(p => (p.Nr, p.Text)).ShouldBe([(1, "Papier"), (2, "Toner")]);
@@ -222,7 +221,7 @@ public sealed class BelegSchreibTests(ApiFabrik fabrik) : IAsyncLifetime
     {
         var beleg = await BelegAsync();
 
-        var antwort = await Client().PutAsJsonAsync(
+        var antwort = await Client().PutJsonAsync(
             Route(ApiRouten.Belege.Positionen, beleg.Id), new PositionAendernDto[] { new(1, " ", null, null, null, 10m, null) });
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -244,7 +243,7 @@ public sealed class BelegSchreibTests(ApiFabrik fabrik) : IAsyncLifetime
         });
         fabrik.Zeit.Setze(Jetzt.AddHours(2));
 
-        var antwort = await Client(Rolle.Benutzer).PostAsJsonAsync(
+        var antwort = await Client(Rolle.Benutzer).PostJsonAsync(
             Route(ApiRouten.Belege.Bestaetigen, beleg.Id), new BestaetigenDto("Differenz ist Rundung des Lieferanten"));
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.NoContent);
@@ -263,7 +262,7 @@ public sealed class BelegSchreibTests(ApiFabrik fabrik) : IAsyncLifetime
     {
         var beleg = await BelegAsync();
 
-        var antwort = await Client().PostAsJsonAsync(Route(ApiRouten.Belege.Bestaetigen, beleg.Id), new BestaetigenDto(null));
+        var antwort = await Client().PostJsonAsync(Route(ApiRouten.Belege.Bestaetigen, beleg.Id), new BestaetigenDto(null));
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.NoContent);
         (await LadenAsync(beleg.Id)).BestaetigtAm.ShouldBeNull();
@@ -279,7 +278,7 @@ public sealed class BelegSchreibTests(ApiFabrik fabrik) : IAsyncLifetime
         var ohneTag = await BelegAsync();
 
         var entfernen = await Client().DeleteAsync(Route(ApiRouten.Belege.Tag, mitTag.Id, SystemIds.TagZuPruefen));
-        var setzen = await Client().PostAsJsonAsync(Route(ApiRouten.Belege.Tags, ohneTag.Id), new TagZuordnenDto(SystemIds.TagZuPruefen));
+        var setzen = await Client().PostJsonAsync(Route(ApiRouten.Belege.Tags, ohneTag.Id), new TagZuordnenDto(SystemIds.TagZuPruefen));
 
         entfernen.StatusCode.ShouldBe(HttpStatusCode.Conflict);
         setzen.StatusCode.ShouldBe(HttpStatusCode.Conflict);
@@ -293,9 +292,9 @@ public sealed class BelegSchreibTests(ApiFabrik fabrik) : IAsyncLifetime
         var beleg = await BelegAsync();
         var client = Client(Rolle.Benutzer);
 
-        (await client.PostAsJsonAsync(Route(ApiRouten.Belege.Tags, beleg.Id), new TagZuordnenDto(_zahlungsTagId)))
+        (await client.PostJsonAsync(Route(ApiRouten.Belege.Tags, beleg.Id), new TagZuordnenDto(_zahlungsTagId)))
             .StatusCode.ShouldBe(HttpStatusCode.NoContent);
-        (await client.PostAsJsonAsync(Route(ApiRouten.Belege.Tags, beleg.Id), new TagZuordnenDto(_zahlungsTagId)))
+        (await client.PostJsonAsync(Route(ApiRouten.Belege.Tags, beleg.Id), new TagZuordnenDto(_zahlungsTagId)))
             .StatusCode.ShouldBe(HttpStatusCode.NoContent);
 
         var tag = (await LadenAsync(beleg.Id)).Tags.ShouldHaveSingleItem();
@@ -312,11 +311,11 @@ public sealed class BelegSchreibTests(ApiFabrik fabrik) : IAsyncLifetime
     {
         var beleg = await BelegAsync();
 
-        (await Client().PostAsJsonAsync(Route(ApiRouten.Belege.Tags, beleg.Id), new TagZuordnenDto(Guid.NewGuid())))
+        (await Client().PostJsonAsync(Route(ApiRouten.Belege.Tags, beleg.Id), new TagZuordnenDto(Guid.NewGuid())))
             .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        (await Client().PostAsJsonAsync(Route(ApiRouten.Belege.Tags, Guid.NewGuid()), new TagZuordnenDto(_zahlungsTagId)))
+        (await Client().PostJsonAsync(Route(ApiRouten.Belege.Tags, Guid.NewGuid()), new TagZuordnenDto(_zahlungsTagId)))
             .StatusCode.ShouldBe(HttpStatusCode.NotFound);
-        (await Client().PutAsJsonAsync(Route(ApiRouten.Belege.Einzeln, Guid.NewGuid()), Aenderung(beleg)))
+        (await Client().PutJsonAsync(Route(ApiRouten.Belege.Einzeln, Guid.NewGuid()), Aenderung(beleg)))
             .StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
@@ -400,28 +399,28 @@ public sealed class BelegSchreibTests(ApiFabrik fabrik) : IAsyncLifetime
         var client = Client();
 
         // Ein unbekannter Beleg verhindert die ganze Aktion.
-        (await client.PostAsJsonAsync(ApiRouten.Belege.Massenaktion,
+        (await client.PostJsonAsync(ApiRouten.Belege.Massenaktion,
             new MassenaktionDto([a.Id, b.Id, Guid.NewGuid()], MassenaktionArt.TagsSetzen, [_zahlungsTagId], null)))
             .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         // Ein Beleg in Verarbeitung ebenso.
         var inVerarbeitung = await BelegAsync(x => x.Status = BelegStatus.InVerarbeitung);
-        (await client.PostAsJsonAsync(ApiRouten.Belege.Massenaktion,
+        (await client.PostJsonAsync(ApiRouten.Belege.Massenaktion,
             new MassenaktionDto([a.Id, inVerarbeitung.Id], MassenaktionArt.TagsSetzen, [_zahlungsTagId], null)))
             .StatusCode.ShouldBe(HttpStatusCode.Conflict);
         (await LadenAsync(a.Id)).Tags.ShouldBeEmpty();
         (await LadenAsync(b.Id)).Tags.ShouldBeEmpty();
 
-        (await client.PostAsJsonAsync(ApiRouten.Belege.Massenaktion,
+        (await client.PostJsonAsync(ApiRouten.Belege.Massenaktion,
             new MassenaktionDto([a.Id], MassenaktionArt.TagsEntfernen, [SystemIds.TagZuPruefen], null)))
             .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        (await client.PostAsJsonAsync(ApiRouten.Belege.Massenaktion,
+        (await client.PostJsonAsync(ApiRouten.Belege.Massenaktion,
             new MassenaktionDto([a.Id], MassenaktionArt.KategorieSetzen, null, null)))
             .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        (await client.PostAsJsonAsync(ApiRouten.Belege.Massenaktion,
+        (await client.PostJsonAsync(ApiRouten.Belege.Massenaktion,
             new MassenaktionDto([], MassenaktionArt.Bestaetigen, null, null)))
             .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         var zuViele = Enumerable.Range(0, BelegBearbeitungsDienst.MaxMassenaktion + 1).Select(_ => Guid.NewGuid()).ToArray();
-        (await client.PostAsJsonAsync(ApiRouten.Belege.Massenaktion,
+        (await client.PostJsonAsync(ApiRouten.Belege.Massenaktion,
             new MassenaktionDto(zuViele, MassenaktionArt.Bestaetigen, null, null)))
             .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
@@ -435,10 +434,10 @@ public sealed class BelegSchreibTests(ApiFabrik fabrik) : IAsyncLifetime
         var kopie = await BelegAsync();
         var route = Route(ApiRouten.Belege.Dublette, kopie.Id);
 
-        (await Client().PostAsJsonAsync(route, new DubletteSetzenDto(original.Id))).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        (await Client().PostJsonAsync(route, new DubletteSetzenDto(original.Id))).StatusCode.ShouldBe(HttpStatusCode.NoContent);
         (await LadenAsync(kopie.Id)).DuplikatVonId.ShouldBe(original.Id);
 
-        (await Client().PostAsJsonAsync(route, new DubletteSetzenDto(null))).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        (await Client().PostJsonAsync(route, new DubletteSetzenDto(null))).StatusCode.ShouldBe(HttpStatusCode.NoContent);
         (await LadenAsync(kopie.Id)).DuplikatVonId.ShouldBeNull();
     }
 
@@ -449,9 +448,9 @@ public sealed class BelegSchreibTests(ApiFabrik fabrik) : IAsyncLifetime
         var dublette = await BelegAsync(b => b.DuplikatVonId = original.Id);
         var dritter = await BelegAsync();
 
-        (await Client().PostAsJsonAsync(Route(ApiRouten.Belege.Dublette, dritter.Id), new DubletteSetzenDto(dritter.Id)))
+        (await Client().PostJsonAsync(Route(ApiRouten.Belege.Dublette, dritter.Id), new DubletteSetzenDto(dritter.Id)))
             .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        (await Client().PostAsJsonAsync(Route(ApiRouten.Belege.Dublette, dritter.Id), new DubletteSetzenDto(dublette.Id)))
+        (await Client().PostJsonAsync(Route(ApiRouten.Belege.Dublette, dritter.Id), new DubletteSetzenDto(dublette.Id)))
             .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await LadenAsync(dritter.Id)).DuplikatVonId.ShouldBeNull();
     }
@@ -483,9 +482,9 @@ public sealed class BelegSchreibTests(ApiFabrik fabrik) : IAsyncLifetime
     {
         var beleg = await BelegAsync(b => b.Status = BelegStatus.InVerarbeitung);
 
-        (await Client().PutAsJsonAsync(Route(ApiRouten.Belege.Einzeln, beleg.Id), Aenderung(beleg)))
+        (await Client().PutJsonAsync(Route(ApiRouten.Belege.Einzeln, beleg.Id), Aenderung(beleg)))
             .StatusCode.ShouldBe(HttpStatusCode.Conflict);
-        (await Client().PostAsJsonAsync(Route(ApiRouten.Belege.Tags, beleg.Id), new TagZuordnenDto(_zahlungsTagId)))
+        (await Client().PostJsonAsync(Route(ApiRouten.Belege.Tags, beleg.Id), new TagZuordnenDto(_zahlungsTagId)))
             .StatusCode.ShouldBe(HttpStatusCode.Conflict);
     }
 
@@ -499,14 +498,14 @@ public sealed class BelegSchreibTests(ApiFabrik fabrik) : IAsyncLifetime
 
         HttpResponseMessage[] antworten =
         [
-            await client.PutAsJsonAsync(Route(ApiRouten.Belege.Einzeln, beleg.Id), Aenderung(beleg)),
-            await client.PutAsJsonAsync(Route(ApiRouten.Belege.Positionen, beleg.Id), Array.Empty<PositionAendernDto>()),
-            await client.PostAsJsonAsync(Route(ApiRouten.Belege.Tags, beleg.Id), new TagZuordnenDto(_zahlungsTagId)),
+            await client.PutJsonAsync(Route(ApiRouten.Belege.Einzeln, beleg.Id), Aenderung(beleg)),
+            await client.PutJsonAsync(Route(ApiRouten.Belege.Positionen, beleg.Id), Array.Empty<PositionAendernDto>()),
+            await client.PostJsonAsync(Route(ApiRouten.Belege.Tags, beleg.Id), new TagZuordnenDto(_zahlungsTagId)),
             await client.DeleteAsync(Route(ApiRouten.Belege.Tag, beleg.Id, _zahlungsTagId)),
-            await client.PostAsJsonAsync(Route(ApiRouten.Belege.Bestaetigen, beleg.Id), new BestaetigenDto(null)),
+            await client.PostJsonAsync(Route(ApiRouten.Belege.Bestaetigen, beleg.Id), new BestaetigenDto(null)),
             await client.PostAsync(Route(ApiRouten.Belege.ErneutAuslesen, beleg.Id), null),
-            await client.PostAsJsonAsync(Route(ApiRouten.Belege.Dublette, beleg.Id), new DubletteSetzenDto(null)),
-            await client.PostAsJsonAsync(ApiRouten.Belege.Massenaktion, new MassenaktionDto([beleg.Id], MassenaktionArt.Bestaetigen, null, null)),
+            await client.PostJsonAsync(Route(ApiRouten.Belege.Dublette, beleg.Id), new DubletteSetzenDto(null)),
+            await client.PostJsonAsync(ApiRouten.Belege.Massenaktion, new MassenaktionDto([beleg.Id], MassenaktionArt.Bestaetigen, null, null)),
         ];
 
         antworten.Select(a => a.StatusCode).ShouldAllBe(s => s == HttpStatusCode.Forbidden);
@@ -537,18 +536,18 @@ public sealed class BelegSchreibTests(ApiFabrik fabrik) : IAsyncLifetime
         });
         var client = Client();
 
-        (await client.PutAsJsonAsync(Route(ApiRouten.Belege.Einzeln, beleg.Id),
+        (await client.PutJsonAsync(Route(ApiRouten.Belege.Einzeln, beleg.Id),
             Aenderung(beleg) with { KorrespondentId = korrespondent.Id, KategorieId = kategorie.Id, Titel = "Neu" }))
             .StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await client.PutAsJsonAsync(Route(ApiRouten.Belege.Positionen, beleg.Id),
+        (await client.PutJsonAsync(Route(ApiRouten.Belege.Positionen, beleg.Id),
             new PositionAendernDto[] { new(1, "Papier", 1m, "Stk", 100m, 100m, 19m) })).StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await client.PostAsJsonAsync(Route(ApiRouten.Belege.Tags, beleg.Id), new TagZuordnenDto(_zahlungsTagId)))
+        (await client.PostJsonAsync(Route(ApiRouten.Belege.Tags, beleg.Id), new TagZuordnenDto(_zahlungsTagId)))
             .StatusCode.ShouldBe(HttpStatusCode.NoContent);
-        (await client.PostAsJsonAsync(Route(ApiRouten.Belege.Dublette, beleg.Id), new DubletteSetzenDto(anderer.Id)))
+        (await client.PostJsonAsync(Route(ApiRouten.Belege.Dublette, beleg.Id), new DubletteSetzenDto(anderer.Id)))
             .StatusCode.ShouldBe(HttpStatusCode.NoContent);
-        (await client.PostAsJsonAsync(Route(ApiRouten.Belege.Bestaetigen, beleg.Id), new BestaetigenDto("passt")))
+        (await client.PostJsonAsync(Route(ApiRouten.Belege.Bestaetigen, beleg.Id), new BestaetigenDto("passt")))
             .StatusCode.ShouldBe(HttpStatusCode.NoContent);
-        (await client.PostAsJsonAsync(ApiRouten.Belege.Massenaktion,
+        (await client.PostJsonAsync(ApiRouten.Belege.Massenaktion,
             new MassenaktionDto([beleg.Id], MassenaktionArt.TagsEntfernen, [_zahlungsTagId], null))).StatusCode.ShouldBe(HttpStatusCode.OK);
 
         (await File.ReadAllBytesAsync(pfad)).ShouldBe(inhalt);
@@ -570,9 +569,9 @@ public sealed class BelegSchreibTests(ApiFabrik fabrik) : IAsyncLifetime
 
     private async Task<int> MassenaktionAsync(MassenaktionDto aktion)
     {
-        var antwort = await Client(Rolle.Benutzer).PostAsJsonAsync(ApiRouten.Belege.Massenaktion, aktion);
+        var antwort = await Client(Rolle.Benutzer).PostJsonAsync(ApiRouten.Belege.Massenaktion, aktion);
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
-        return (await antwort.Content.ReadFromJsonAsync<AnzahlGeaendertDto>())!.Geaendert;
+        return (await antwort.Content.LesenAsync<AnzahlGeaendertDto>())!.Geaendert;
     }
 
     private async Task<Beleg> BelegAsync(Action<Beleg>? anpassen = null)
