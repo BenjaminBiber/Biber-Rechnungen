@@ -38,14 +38,28 @@ export function useImportVorgang(id: string) {
 }
 
 /**
+ * Serialisiert das Multipart-Formular vorab (`Request` erzeugt Grenze und Content-Type). XHR sendet dann
+ * nur Bytes – das verhält sich im Browser gleich und übersteht die XHR-Nachbildung von MSW unter Node,
+ * die einen `FormData`-Körper sonst als Text „[object FormData]“ weiterreicht.
+ */
+async function multipart(datei: File): Promise<{ inhalt: ArrayBuffer; contentType: string }> {
+  const formular = new FormData()
+  formular.append('dateien', datei, datei.name)
+  const verpackt = new Request(globalThis.location?.href ?? 'http://localhost/', { method: 'POST', body: formular })
+  return { inhalt: await verpackt.arrayBuffer(), contentType: verpackt.headers.get('Content-Type') ?? '' }
+}
+
+/**
  * Lädt eine Datei per `XMLHttpRequest` hoch (fetch kennt keinen Upload-Fortschritt).
  * `beiFortschritt` erhält 0–100.
  */
-export function dateiHochladen(datei: File, beiFortschritt: (prozent: number) => void): Promise<ImportVorgang[]> {
+export async function dateiHochladen(datei: File, beiFortschritt: (prozent: number) => void): Promise<ImportVorgang[]> {
+  const { inhalt, contentType } = await multipart(datei)
   return new Promise((erfuellen, ablehnen) => {
     const xhr = new XMLHttpRequest()
     xhr.open('POST', '/api/import/upload')
     xhr.withCredentials = true
+    xhr.setRequestHeader('Content-Type', contentType)
     xhr.responseType = 'text'
     xhr.upload.onprogress = (ereignis) => {
       if (ereignis.lengthComputable) beiFortschritt(Math.round((ereignis.loaded / ereignis.total) * 100))
@@ -66,9 +80,7 @@ export function dateiHochladen(datei: File, beiFortschritt: (prozent: number) =>
       ablehnen(zuApiFehler(xhr.status, koerper, xhr.statusText))
     }
     xhr.onerror = () => ablehnen(zuApiFehler(0, undefined, 'Netzwerkfehler beim Hochladen'))
-    const formular = new FormData()
-    formular.append('dateien', datei, datei.name)
-    xhr.send(formular)
+    xhr.send(inhalt)
   })
 }
 
