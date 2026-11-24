@@ -1,6 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { DashboardSeite } from '@/features/dashboard/DashboardSeite'
 import type { DashboardZeitraum } from '@/features/dashboard/gemeinsam'
+import { MobilUebersicht } from '@/features/mobil/MobilUebersicht'
+import { useIstMobil } from '@/lib/useIstMobil'
 
 type DashboardSuche = { zeitraum?: DashboardZeitraum; jahr?: number }
 
@@ -21,6 +23,8 @@ export const Route = createFileRoute('/_app/')({
 function DashboardRoute() {
   const suche = Route.useSearch()
   const navigate = Route.useNavigate()
+  const istMobil = useIstMobil()
+  if (istMobil) return <MobilUebersicht jahr={suche.jahr ?? new Date().getFullYear()} />
   return (
     <DashboardSeite
       zeitraum={suche.zeitraum ?? 'Jahr'}

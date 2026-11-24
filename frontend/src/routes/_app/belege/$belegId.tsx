@@ -4,6 +4,8 @@ import { istApiFehler } from '@/api/client'
 import type { BelegeAbfrage } from '@/api/typen'
 import { BelegDetailSeite } from '@/features/belege/detail/BelegDetailSeite'
 import type { BelegDetailSuche } from '@/features/belege/detail/gemeinsam'
+import { MobilBeleg } from '@/features/mobil/MobilBeleg'
+import { useIstMobil } from '@/lib/useIstMobil'
 
 /** Layout des Beleg-Details: Kopf, Viewer und Tab-Leiste; die Tabs sind verschachtelte Routen. */
 export const Route = createFileRoute('/_app/belege/$belegId')({
@@ -21,6 +23,13 @@ export const Route = createFileRoute('/_app/belege/$belegId')({
 function BelegDetailRoute() {
   const { belegId } = Route.useParams()
   const { aus } = Route.useSearch()
+  const istMobil = useIstMobil()
+  if (istMobil)
+    return (
+      <MobilBeleg belegId={belegId}>
+        <Outlet />
+      </MobilBeleg>
+    )
   return (
     <BelegDetailSeite belegId={belegId} aus={aus}>
       <Outlet />

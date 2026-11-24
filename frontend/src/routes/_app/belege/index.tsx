@@ -21,6 +21,8 @@ import {
 } from '@/features/belege/liste/suche'
 import { VorschauDialog } from '@/features/belege/liste/VorschauDialog'
 import { Zusammenfassung } from '@/features/belege/liste/Zusammenfassung'
+import { MobilBelege } from '@/features/mobil/MobilBelege'
+import { useIstMobil } from '@/lib/useIstMobil'
 
 /** Belegliste; der gesamte Listen-Zustand steht in den Suchparametern (teilbar, Zurück-Taste). */
 export const Route = createFileRoute('/_app/belege/')({
@@ -31,6 +33,7 @@ export const Route = createFileRoute('/_app/belege/')({
 function BelegeSeite() {
   const suche = Route.useSearch()
   const navigate = Route.useNavigate()
+  const istMobil = useIstMobil()
   const zustand: ListenZustand = {
     suche,
     setze: (teil) =>
@@ -39,6 +42,7 @@ function BelegeSeite() {
       }),
     ersetze: (neu) => void navigate({ search: ohneLeere(neu) }),
   }
+  if (istMobil) return <MobilBelege zustand={zustand} />
   // Die Auswahl gilt für Filter, Sortierung und Seite – nicht für die Darstellung.
   return (
     <BelegAuswahlProvider schluessel={JSON.stringify({ ...suche, darstellung: undefined })}>
