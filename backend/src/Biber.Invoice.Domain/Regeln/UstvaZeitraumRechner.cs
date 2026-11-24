@@ -6,7 +6,12 @@ namespace Biber.Invoice.Domain.Regeln;
 /// <summary>Zerlegt einen Zeitraum in Voranmeldungszeiträume (Monat, Quartal, Jahr), begrenzt auf die Auswahl.</summary>
 public static class UstvaZeitraumRechner
 {
-    private static readonly CultureInfo Deutsch = CultureInfo.GetCultureInfo("de-DE");
+    /// <summary>Feste Monatsnamen, damit die Bezeichnung nicht von den Kulturdaten des Containers abhängt.</summary>
+    private static readonly string[] Monatsnamen =
+    [
+        "Januar", "Februar", "März", "April", "Mai", "Juni",
+        "Juli", "August", "September", "Oktober", "November", "Dezember",
+    ];
 
     /// <summary>
     /// Alle Voranmeldungszeiträume, die [<paramref name="von"/>, <paramref name="bis"/>] berühren. Angeschnittene
@@ -36,7 +41,7 @@ public static class UstvaZeitraumRechner
 
     private static string Bezeichnung(DateOnly beginn, UstvaZeitraum art) => art switch
     {
-        UstvaZeitraum.Monatlich => beginn.ToString("MMMM yyyy", Deutsch),
+        UstvaZeitraum.Monatlich => $"{Monatsnamen[beginn.Month - 1]} {beginn.Year}",
         UstvaZeitraum.Quartalsweise => $"Q{((beginn.Month - 1) / 3) + 1} {beginn.Year}",
         _ => beginn.Year.ToString(CultureInfo.InvariantCulture),
     };
