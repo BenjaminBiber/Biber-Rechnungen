@@ -337,11 +337,11 @@ public sealed class KorrespondentDienst(BiberDbContext db, TimeProvider zeit) : 
         {
             var anderer = await db.Korrespondenten
                 .Where(k => k.UstIdNr == ustIdNr && k.Id != ziel.Id)
-                .Select(k => k.Name)
+                .Select(k => new { k.Id, k.Name })
                 .FirstOrDefaultAsync(ct);
             if (anderer is not null)
             {
-                throw new KorrespondentKonfliktAusnahme($"Die USt-IdNr. {ustIdNr} gehört bereits zu „{anderer}“.");
+                throw new KorrespondentKonfliktAusnahme($"Die USt-IdNr. {ustIdNr} gehört bereits zu „{anderer.Name}“.", anderer.Id);
             }
         }
 

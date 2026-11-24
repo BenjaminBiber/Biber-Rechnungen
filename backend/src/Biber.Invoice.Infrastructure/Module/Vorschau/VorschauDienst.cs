@@ -2,6 +2,7 @@ using Biber.Invoice.Domain.Entitaeten;
 using Biber.Invoice.Domain.Enums;
 using Biber.Invoice.Domain.Pipeline;
 using Biber.Invoice.Infrastructure.Persistenz;
+using BitMiracle.LibTiff.Classic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using SkiaSharp;
@@ -9,7 +10,7 @@ using SkiaSharp;
 namespace Biber.Invoice.Infrastructure.Module.Vorschau;
 
 /// <summary>
-/// Rendert Seitenbilder aus dem Original (PDF über <see cref="IPdfRenderer"/>, Bilder über SkiaSharp) und legt sie als WebP unter
+/// Rendert Seitenbilder aus dem Original (PDF über <see cref="IPdfRenderer"/>, TIFF auch mehrseitig über LibTiff, andere Bilder über SkiaSharp) und legt sie als WebP unter
 /// <c>Pfade:Daten/vorschau/{yyyy}/{MM}/{BelegId}-{seite}-{breite}.webp</c> ab; ein vorhandenes Bild wird nicht neu gerendert.
 /// </summary>
 public sealed class VorschauDienst(IPdfRenderer renderer, BiberDbContext db, IConfiguration konfiguration) : IVorschauDienst
@@ -88,6 +89,12 @@ public sealed class VorschauDienst(IPdfRenderer renderer, BiberDbContext db, ICo
             return AlsWebp(png);
         }
 
+        if (IstTiff(quelle))
+        {
+            using var tiffBild = TiffSeite(quelle, seite);
+            return tiffBild is null ? null : SkaliertAlsWebp(tiffBild, breitePx);
+        }
+
         // Bilder haben genau eine Seite; reines XML oder Unbekanntes kann SkiaSharp nicht lesen.
         if (seite != 1)
         {
@@ -96,15 +103,50 @@ public sealed class VorschauDienst(IPdfRenderer renderer, BiberDbContext db, ICo
 
         using var codec = SKCodec.Create(new MemoryStream(quelle, writable: false));
         using var bild = codec is null ? null : SKBitmap.Decode(codec);
-        if (bild is null)
+        return bild is null ? null : SkaliertAlsWebp(bild, breitePx);
+    }
+
+    /// <summary>Dekodiert Seite <paramref name="seite"/> (1-basiert) eines TIFF mit LibTiff; null, wenn es die Seite nicht gibt.</summary>
+    private static SKBitmap? TiffSeite(byte[] quelle, int seite)
+    {
+        using var tiff = Tiff.ClientOpen("vorschau", "r", new MemoryStream(quelle, writable: false), new TiffStream());
+        if (tiff is null || seite < 1 || seite > tiff.NumberOfDirectories() || !tiff.SetDirectory((short)(seite - 1)))
         {
             return null;
         }
 
+        var breite = tiff.GetField(TiffTag.IMAGEWIDTH)[0].ToInt();
+        var hoehe = tiff.GetField(TiffTag.IMAGELENGTH)[0].ToInt();
+        var raster = new int[breite * hoehe];
+        if (!tiff.ReadRGBAImageOriented(breite, hoehe, raster, Orientation.TOPLEFT))
+        {
+            return null;
+        }
+
+        // LibTiff packt je Pixel 0xAABBGGRR in ein int; Kanäle einzeln auslesen, damit die Bytefolge nicht von der Plattform abhängt.
+        var bitmap = new SKBitmap(new SKImageInfo(breite, hoehe, SKColorType.Rgba8888, SKAlphaType.Unpremul));
+        var ziel = bitmap.GetPixelSpan();
+        for (var i = 0; i < raster.Length; i++)
+        {
+            var p = raster[i];
+            ziel[i * 4] = (byte)Tiff.GetR(p);
+            ziel[(i * 4) + 1] = (byte)Tiff.GetG(p);
+            ziel[(i * 4) + 2] = (byte)Tiff.GetB(p);
+            ziel[(i * 4) + 3] = (byte)Tiff.GetA(p);
+        }
+
+        return bitmap;
+    }
+
+    private static byte[] SkaliertAlsWebp(SKBitmap bild, int breitePx)
+    {
         var hoehe = Math.Max(1, (int)Math.Round(bild.Height * (double)breitePx / bild.Width));
         using var skaliert = bild.Resize(new SKImageInfo(breitePx, hoehe), new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear));
         return AlsWebp(skaliert);
     }
+
+    private static bool IstTiff(byte[] quelle) =>
+        quelle.Length >= 4 && (quelle.AsSpan(0, 4).SequenceEqual("II*\0"u8) || quelle.AsSpan(0, 4).SequenceEqual("MM\0*"u8));
 
     private static byte[] AlsWebp(SKBitmap bitmap)
     {

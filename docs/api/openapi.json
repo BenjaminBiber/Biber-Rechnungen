@@ -1626,6 +1626,18 @@
               "format": "int32",
               "default": 1
             }
+          },
+          {
+            "name": "breite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 600,
+              "minimum": 200,
+              "maximum": 1600
+            }
           }
         ],
         "responses": {
@@ -2514,6 +2526,48 @@
           },
           "403": {
             "$ref": "#/components/responses/KeinRecht"
+          },
+          "409": {
+            "description": "USt-IdNr. ist schon vergeben; korrespondentId nennt den vorhandenen Korrespondenten",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object",
+                  "description": "ProblemDetails nach RFC 9457",
+                  "properties": {
+                    "type": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "korrespondentId": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  },
+                  "required": [
+                    "korrespondentId"
+                  ]
+                }
+              }
+            }
           }
         }
       }
@@ -2621,6 +2675,48 @@
           },
           "404": {
             "$ref": "#/components/responses/NichtGefunden"
+          },
+          "409": {
+            "description": "USt-IdNr. ist schon vergeben; korrespondentId nennt den vorhandenen Korrespondenten",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object",
+                  "description": "ProblemDetails nach RFC 9457",
+                  "properties": {
+                    "type": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "korrespondentId": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  },
+                  "required": [
+                    "korrespondentId"
+                  ]
+                }
+              }
+            }
           }
         }
       }
@@ -3173,8 +3269,15 @@
           }
         ],
         "responses": {
-          "204": {
-            "description": "Erledigt"
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KategorieGeloeschtDto"
+                }
+              }
+            }
           },
           "400": {
             "$ref": "#/components/responses/Ungueltig"
@@ -3511,6 +3614,41 @@
           },
           "403": {
             "$ref": "#/components/responses/KeinRecht"
+          },
+          "409": {
+            "description": "Ein Artikel gehört schon zu einem anderen Stammartikel",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object",
+                  "description": "ProblemDetails nach RFC 9457",
+                  "properties": {
+                    "type": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -3618,6 +3756,41 @@
           },
           "404": {
             "$ref": "#/components/responses/NichtGefunden"
+          },
+          "409": {
+            "description": "Ein Artikel gehört schon zu einem anderen Stammartikel",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object",
+                  "description": "ProblemDetails nach RFC 9457",
+                  "properties": {
+                    "type": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -3862,6 +4035,50 @@
           },
           "403": {
             "$ref": "#/components/responses/KeinRecht"
+          },
+          "409": {
+            "description": "Originaldateien seit dem Import verändert; pfade nennt sie",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object",
+                  "description": "ProblemDetails nach RFC 9457",
+                  "properties": {
+                    "type": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "pfade": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "pfade"
+                  ]
+                }
+              }
+            }
           }
         }
       }
@@ -3939,6 +4156,41 @@
           },
           "404": {
             "$ref": "#/components/responses/NichtGefunden"
+          },
+          "410": {
+            "description": "Exportdatei fehlt auf dem Datenträger",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object",
+                  "description": "ProblemDetails nach RFC 9457",
+                  "properties": {
+                    "type": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -4428,6 +4680,41 @@
           },
           "403": {
             "$ref": "#/components/responses/KeinRecht"
+          },
+          "409": {
+            "description": "Keine Belege mit abgelaufener Aufbewahrungsfrist",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object",
+                  "description": "ProblemDetails nach RFC 9457",
+                  "properties": {
+                    "type": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -7170,6 +7457,23 @@
           "matching",
           "anzahlBelege",
           "summeBrutto"
+        ]
+      },
+      "KategorieGeloeschtDto": {
+        "type": "object",
+        "properties": {
+          "belege": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "korrespondenten": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "belege",
+          "korrespondenten"
         ]
       },
       "KaufDto": {

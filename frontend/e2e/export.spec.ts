@@ -14,7 +14,7 @@ test('Export erstellen löst einen Download aus und erscheint in „Letzte Expor
 
   const download = page.waitForEvent('download')
   await page.getByRole('button', { name: 'Export erstellen' }).click()
-  expect((await download).url()).toMatch(/\/api\/export\/laeufe\/[0-9a-f-]+\/datei$/)
+  expect((await download).suggestedFilename()).toMatch(/^Export_.+\.zip$/)
 
   await expect(letzte.locator('tbody tr')).toHaveCount(4)
   await expect(letzte.locator('tbody tr').first()).toContainText(`Jahr ${jahr}`)

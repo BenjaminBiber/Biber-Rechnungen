@@ -1,8 +1,23 @@
 import { defineConfig, devices } from '@playwright/test'
 
-const basisUrl = 'http://localhost:4173'
+/**
+ * Ports je Worktree: aus `E2E_PORT`/`E2E_PWA_PORT`, sonst deterministisch aus dem Arbeitsordner abgeleitet.
+ * Playwright lädt die Config in jedem Worker neu – deshalb zurück in `process.env` schreiben, damit alle
+ * Prozesse denselben Port sehen. Parallele Worktrees bekommen so verschiedene Ports.
+ */
+function ordnerPort(): number {
+  let hash = 0
+  for (const zeichen of process.cwd().toLowerCase()) hash = (hash * 31 + zeichen.charCodeAt(0)) >>> 0
+  return 4200 + (hash % 350) * 2
+}
+process.env.E2E_PORT ??= String(ordnerPort())
+process.env.E2E_PWA_PORT ??= String(Number(process.env.E2E_PORT) + 1)
+const port = Number(process.env.E2E_PORT)
+const pwaPort = Number(process.env.E2E_PWA_PORT)
+
+const basisUrl = `http://localhost:${port}`
 /** Build ohne Mocks mit PWA-Service-Worker; API-Antworten liefert der Test per `context.route`. */
-const pwaUrl = 'http://localhost:4174'
+const pwaUrl = `http://localhost:${pwaPort}`
 
 export default defineConfig({
   testDir: './e2e',
@@ -47,15 +62,17 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: 'npm run preview:mock',
+      // Nie einen laufenden Server übernehmen: er könnte aus einem anderen Worktree stammen.
+      // Mit `--strictPort` scheitert ein belegter Port laut.
+      command: `npm run preview:mock -- --port ${port}`,
       url: basisUrl,
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: false,
       timeout: 180_000,
     },
     {
-      command: 'npm run preview:pwa',
+      command: `npm run preview:pwa -- --port ${pwaPort}`,
       url: pwaUrl,
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: false,
       timeout: 180_000,
     },
   ],

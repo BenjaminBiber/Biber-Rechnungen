@@ -13,7 +13,9 @@ RUN npm run build
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS backend
 WORKDIR /src/backend
 COPY backend/ ./
-RUN dotnet publish src/Biber.Invoice.Api/Biber.Invoice.Api.csproj -c Release -o /app/publish /p:UseAppHost=false
+# Version aus dem Release-Workflow; lokale Builds ohne Argument bleiben bei 0.0.0.
+ARG APP_VERSION=0.0.0
+RUN dotnet publish src/Biber.Invoice.Api/Biber.Invoice.Api.csproj -c Release -o /app/publish /p:UseAppHost=false /p:Version=${APP_VERSION}
 
 # 3) Laufzeit
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS laufzeit

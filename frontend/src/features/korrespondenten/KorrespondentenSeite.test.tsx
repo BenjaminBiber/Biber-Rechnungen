@@ -154,11 +154,6 @@ describe('Korrespondenten', { timeout: 20000 }, () => {
   })
 
   it('zeigt bei 409 einen Link auf den vorhandenen Korrespondenten', async () => {
-    server.use(
-      http.post('*/api/korrespondenten', () =>
-        HttpResponse.json({ title: 'USt-IdNr. bereits vergeben', status: 409 }, { status: 409 }),
-      ),
-    )
     const { ende } = renderSeite('/korrespondenten?neu=true')
     // Liste geladen (hinter dem modalen Dialog, daher Text- statt Rollenabfrage)
     await screen.findByText('Autohaus Brenner GmbH', undefined, { timeout: 5000 })
@@ -168,6 +163,26 @@ describe('Korrespondenten', { timeout: 20000 }, () => {
     await userEvent.click(within(dialog).getByRole('button', { name: 'Anlegen' }))
     const link = await within(dialog).findByRole('link', { name: 'Zu Autohaus Brenner GmbH' })
     expect(link).toHaveAttribute('href', `/korrespondenten/${korrespondentIds.autohausBrenner}`)
+    ende()
+  })
+
+  it('verlinkt bei 409 die korrespondentId aus der Antwort, auch ohne Eintrag in einer geladenen Liste', async () => {
+    const unbekannt = '0f9e8d7c-6b5a-4c3d-8e2f-1a0b9c8d7e6f'
+    server.use(
+      http.post('*/api/korrespondenten', () =>
+        HttpResponse.json(
+          { title: 'Konflikt', status: 409, detail: 'USt-IdNr. vergeben', korrespondentId: unbekannt },
+          { status: 409 },
+        ),
+      ),
+    )
+    const { ende } = renderSeite('/korrespondenten?neu=true')
+    const dialog = await screen.findByRole('dialog', { name: 'Korrespondent anlegen' }, { timeout: 5000 })
+    await userEvent.type(within(dialog).getByLabelText('Name'), 'Doppelt')
+    await userEvent.type(within(dialog).getByLabelText('USt-IdNr.'), 'DE999999999')
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Anlegen' }))
+    const link = await within(dialog).findByRole('link', { name: 'Vorhandenen Korrespondenten öffnen' })
+    expect(link).toHaveAttribute('href', `/korrespondenten/${unbekannt}`)
     ende()
   })
 

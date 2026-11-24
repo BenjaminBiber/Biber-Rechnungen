@@ -2,7 +2,7 @@ import { act, waitFor } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { importVorgangId } from '@/mocks/fixtures/ids'
 import { laeuftNoch, useImportVorgaenge, useImportVorgang, useUpload } from './import'
-import { erwarteDaten, nodeFormDataVerwenden, renderMitQuery } from './testHilfe'
+import { erwarteDaten, renderMitQuery } from './testHilfe'
 
 describe('Import-Hooks', () => {
   it('useImportVorgaenge liefert die sieben Vorgänge des Designs, neueste zuerst', async () => {
@@ -26,7 +26,6 @@ describe('Import-Hooks', () => {
   })
 
   it('useUpload lädt per XMLHttpRequest hoch, meldet Fortschritt und legt Vorgänge an', async () => {
-    await nodeFormDataVerwenden()
     const { result } = renderMitQuery(() => ({ upload: useUpload(), liste: useImportVorgaenge() }))
     await erwarteDaten(() => result.current.liste)
     const datei = new File(['%PDF-1.4 Test'], 'Rechnung_Test.pdf', { type: 'application/pdf' })

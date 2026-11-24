@@ -1,8 +1,12 @@
-import { exportDateiUrl, useExportLaeufe } from '@/api/export'
+import { istApiFehler } from '@/api/client'
+import { exportDateiHerunterladen, exportDateiUrl, useExportLaeufe } from '@/api/export'
+import { useToast } from '@/components/toast'
 import { formatDatumZeit } from '@/lib/format'
+import { exportFehlertext } from './fehler'
 
-/** Tabelle „Letzte Exporte“ mit Download je Lauf. */
+/** Tabelle „Letzte Exporte“ mit Download je Lauf; fehlt die Datei auf dem Server (410), erscheint ein Hinweis. */
 export function LetzteExporte() {
+  const toast = useToast()
   const { data: laeufe = [], isPending } = useExportLaeufe()
   return (
     <section className="karte mt-6 overflow-hidden" aria-labelledby="letzte-exporte">
@@ -41,6 +45,16 @@ export function LetzteExporte() {
                     className="btn btn-klein"
                     href={exportDateiUrl(lauf.id)}
                     download
+                    onClick={(e) => {
+                      e.preventDefault()
+                      exportDateiHerunterladen(lauf.id).catch((f: unknown) =>
+                        toast.fehler(
+                          istApiFehler(f) && f.status === 410
+                            ? exportFehlertext(f, lauf.bezeichnung)
+                            : `${lauf.bezeichnung} konnte nicht heruntergeladen werden.`,
+                        ),
+                      )
+                    }}
                     aria-label={`${lauf.bezeichnung} herunterladen`}
                   >
                     Herunterladen

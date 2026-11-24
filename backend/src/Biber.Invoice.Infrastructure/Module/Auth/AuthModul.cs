@@ -4,6 +4,7 @@ using Biber.Invoice.Domain.Module;
 using Biber.Invoice.Infrastructure.Persistenz;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
@@ -15,11 +16,15 @@ namespace Biber.Invoice.Infrastructure.Module.Auth;
 /// Lokale Anmeldung mit ASP.NET Core Identity: Benutzer, Rollen und Cookie <see cref="CookieName"/>
 /// (Schema <see cref="AuthSchemata.Cookie"/>). Passwort ab 12 Zeichen ohne Zeichenklassen-Pflicht,
 /// Sperre nach 5 Fehlversuchen für 10 Minuten. Geschützte Aufrufe ohne gültiges Cookie erhalten 401/403
-/// statt einer Umleitung.
+/// statt einer Umleitung. Der Schlüsselbund für Cookies und Tokens liegt unter <c>Pfade:Daten/schluessel</c>,
+/// damit Anmeldungen einen Neustart überstehen.
 /// </summary>
 public sealed class AuthModul : IDienstModul
 {
     public const string CookieName = "biber.sitzung";
+
+    /// <summary>Fester Name für Data Protection, unabhängig vom Installationspfad der Anwendung.</summary>
+    public const string Anwendungsname = "Biber-Rechnungen";
 
     public static readonly TimeSpan CookieLaufzeit = TimeSpan.FromDays(14);
 
@@ -27,6 +32,12 @@ public sealed class AuthModul : IDienstModul
 
     public void Registrieren(IServiceCollection dienste, IConfiguration konfiguration)
     {
+        var daten = konfiguration["Pfade:Daten"] ?? throw new InvalidOperationException("Pfade:Daten ist nicht konfiguriert.");
+        var schluesselOrdner = Directory.CreateDirectory(Path.Combine(daten, "schluessel"));
+        dienste.AddDataProtection()
+            .PersistKeysToFileSystem(schluesselOrdner)
+            .SetApplicationName(Anwendungsname);
+
         dienste.AddIdentityCore<Benutzer>(optionen =>
             {
                 optionen.Password.RequiredLength = 12;

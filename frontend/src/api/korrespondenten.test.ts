@@ -10,7 +10,7 @@ import {
   useKorrespondentenZusammenfuehren,
   useLogoHochladen,
 } from './korrespondenten'
-import { erwarteDaten, nodeFormDataVerwenden, renderMitQuery } from './testHilfe'
+import { erwarteDaten, renderMitQuery } from './testHilfe'
 
 describe('Korrespondenten-Hooks', () => {
   it('useKorrespondenten liefert die zehn Korrespondenten und sucht in Namen und Aliasen', async () => {
@@ -71,7 +71,6 @@ describe('Korrespondenten-Hooks', () => {
   })
 
   it('useLogoHochladen sendet die Datei als Formular', async () => {
-    await nodeFormDataVerwenden()
     const { result } = renderMitQuery(() => useLogoHochladen())
     const logo = await act(() =>
       result.current.mutateAsync({

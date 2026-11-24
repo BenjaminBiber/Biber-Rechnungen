@@ -108,7 +108,10 @@ export const artikelListe: ArtikelListeneintrag[] = [
     id: artikelIds.a7,
     name: 'Papier Kopier A4 80g/m² 500 Bl.',
     korrespondent: druckereiWeller,
-    stammartikel: null,
+    // Abweichung vom Design: `Artikel.dc.html:112` führt a7 ohne Stammartikel, die Stammartikel-Karte
+    // (2 Artikel · Bürowelt Krämer KG, Druckerei Weller), `ArtikelDetail.dc.html:111` und `Dialoge.dc.html:108`
+    // zählen a7 dagegen zu Kopierpapier – drei Stellen gegen eine, daher hier widerspruchsfrei zugeordnet.
+    stammartikel: kopierpapier,
     kaeufe: 2,
     letzterEinzelpreis: 5.49,
     einheit: 'Pack',

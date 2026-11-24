@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json;
 using Biber.Invoice.Contracts;
 using Biber.Invoice.Contracts.Dto;
 using Biber.Invoice.Contracts.Dto.Korrespondenten;
@@ -233,6 +234,24 @@ public sealed class KorrespondentTests(ApiFabrik fabrik) : IAsyncLifetime
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.Conflict);
         (await antwort.Content.ReadAsStringAsync()).ShouldContain("Erster");
+    }
+
+    [Fact]
+    public async Task Doppelte_UstIdNr_nennt_den_vorhandenen_Korrespondenten_bei_Anlegen_und_Aendern()
+    {
+        var erster = await fabrik.SpeichernAsync(Testdaten.Korrespondent("Vorhanden", "DE987654321"));
+        var zweiter = await fabrik.SpeichernAsync(Testdaten.Korrespondent("Anderer"));
+        var client = fabrik.ErzeugeClient(Rolle.Benutzer);
+
+        var anlegen = await client.PostJsonAsync(ApiRouten.Korrespondenten.Liste, Eingabe("Neuer") with { UstIdNr = "DE987654321" });
+        var aendern = await client.PutJsonAsync(Einzeln(zweiter.Id), Eingabe("Anderer") with { UstIdNr = "DE987654321" });
+
+        foreach (var antwort in new[] { anlegen, aendern })
+        {
+            antwort.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+            var problem = await antwort.Content.LesenAsync<JsonElement>();
+            problem.GetProperty("korrespondentId").GetGuid().ShouldBe(erster.Id);
+        }
     }
 
     [Fact]

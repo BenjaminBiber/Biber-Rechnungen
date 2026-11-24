@@ -1,5 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { api, apiUrl, daten } from './client'
+import { api, apiUrl, daten, zuApiFehler } from './client'
 import type { ExportAnfrage } from './typen'
 
 export const exportKeys = {
@@ -41,4 +41,31 @@ export function useExportLaeufe() {
 /** GET /api/export/laeufe/{id}/datei – ZIP/CSV eines Laufs herunterladen. */
 export function exportDateiUrl(id: string): string {
   return apiUrl(`/api/export/laeufe/${id}/datei`)
+}
+
+/**
+ * Lädt die Datei eines Laufs und speichert sie über einen Download-Link.
+ * Wirft `ApiFehler`, z. B. 410, wenn die Exportdatei auf dem Server fehlt.
+ */
+export async function exportDateiHerunterladen(id: string): Promise<void> {
+  const antwort = await globalThis.fetch(exportDateiUrl(id), { credentials: 'include' })
+  if (!antwort.ok) {
+    const text = await antwort.text()
+    let koerper: unknown = text
+    try {
+      koerper = JSON.parse(text)
+    } catch {
+      // Kein ProblemDetails – Text bleibt Körper.
+    }
+    throw zuApiFehler(antwort.status, koerper, antwort.statusText)
+  }
+  const name = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(antwort.headers.get('Content-Disposition') ?? '')?.[1]
+  const url = URL.createObjectURL(await antwort.blob())
+  const link = document.createElement('a')
+  link.href = url
+  link.download = name ? decodeURIComponent(name) : ''
+  document.body.append(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
 }
