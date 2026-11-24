@@ -44,7 +44,7 @@ export function Filterleiste({ zustand }: { zustand: ListenZustand }) {
   const mitBetrag = suche.betragVon !== undefined || suche.betragBis !== undefined
 
   return (
-    <div className="karte flex flex-wrap items-center gap-2 p-3">
+    <div role="search" aria-label="Filter" className="karte flex flex-wrap items-center gap-2 p-3">
       <Suchzeile zustand={zustand} />
       <span className="flex-1" />
       <TagAuswahl

@@ -5,7 +5,7 @@ const routen: Array<[pfad: string, titel: string]> = [
   ['/anmelden', 'Anmelden'],
   ['/', 'Dashboard'],
   ['/benachrichtigungen', 'Benachrichtigungen'],
-  ['/belege', 'Belege'],
+  ['/belege', 'Alle Belege'],
   ['/belege/b-1', 'Daten'],
   ['/belege/b-1/positionen', 'Positionen'],
   ['/belege/b-1/pruefung', 'Prüfung'],

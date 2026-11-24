@@ -33,14 +33,17 @@ export function MenueKnopf({
         aktiv ? 'bg-akzent text-auf-akzent' : 'bg-karte text-akzent-text hover:bg-akzent-zart',
         className,
       )}
+      aria-label={anzahl ? `${label}, aktiv: ${anzahl}` : undefined}
       {...props}
     >
       <Icon name={icon} />
       {label}
       <Icon name="arrow_drop_down" />
       {anzahl !== undefined && anzahl > 0 && (
-        <span className="absolute -top-2 -right-2 flex h-[18px] min-w-[18px] items-center justify-center rounded-[9px] border-2 border-karte bg-gedaempft px-1 text-[11px] font-semibold text-auf-akzent">
-          <span className="sr-only">, aktiv: </span>
+        <span
+          aria-hidden="true"
+          className="absolute -top-2 -right-2 flex h-[18px] min-w-[18px] items-center justify-center rounded-[9px] border-2 border-karte bg-gedaempft px-1 text-[11px] font-semibold text-auf-akzent"
+        >
           {anzahl}
         </span>
       )}
