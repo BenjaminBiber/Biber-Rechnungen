@@ -9,7 +9,7 @@ namespace Biber.Invoice.Infrastructure.Module.AutoMatching;
 
 /// <summary>
 /// Schritt 7b: ergänzt per ML-Modell, was die Regeln offengelassen haben – Kategorie (nicht manuell, ≥ 0,75),
-/// Korrespondent (≥ 0,85) und Tags (≥ 0,75). Gesetzt werden nur Ziele, die aktuell den Algorithmus „Auto“ haben,
+/// Korrespondent (≥ 0,85, Erkennung „Auto“) und Tags (≥ 0,75). Gesetzt werden nur Ziele, die aktuell den Algorithmus „Auto“ haben,
 /// nie der System-Tag. Ohne Modell oder bei Fehlern läuft die Pipeline unverändert weiter.
 /// </summary>
 public sealed class AutoZuordnungSchritt(
@@ -63,6 +63,7 @@ public sealed class AutoZuordnungSchritt(
             && await db.Korrespondenten.AnyAsync(k => k.Id == korrespondent.Id && k.Matching.Algorithmus == MatchingAlgorithmus.Auto, ct))
         {
             beleg.KorrespondentId = korrespondent.Id;
+            beleg.KorrespondentErkennung = KorrespondentErkennung.Auto;
         }
 
         var kandidaten = ergebnis.Tags.Where(t => t.Wahrscheinlichkeit >= SchwelleTag).Select(t => t.Id).ToList();

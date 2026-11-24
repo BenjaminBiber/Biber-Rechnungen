@@ -7794,7 +7794,8 @@
           "UstIdNr",
           "Iban",
           "Name",
-          "Manuell"
+          "Manuell",
+          "Auto"
         ]
       },
       "KorrespondentKennzahlenDto": {

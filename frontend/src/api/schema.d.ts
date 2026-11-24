@@ -2264,7 +2264,7 @@ export interface components {
             anzahlArtikel: number;
         };
         /** @enum {string} */
-        KorrespondentErkennung: "Keine" | "UstIdNr" | "Iban" | "Name" | "Manuell";
+        KorrespondentErkennung: "Keine" | "UstIdNr" | "Iban" | "Name" | "Manuell" | "Auto";
         KorrespondentKennzahlenDto: {
             /** Format: decimal */
             kostenJahr: number;

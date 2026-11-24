@@ -31,6 +31,7 @@ const erkennung: Record<KorrespondentErkennung, string | null> = {
   Iban: 'erkannt über IBAN',
   Name: 'erkannt über Name',
   Manuell: 'manuell zugeordnet',
+  Auto: 'automatisch zugeordnet',
   Keine: null,
 }
 

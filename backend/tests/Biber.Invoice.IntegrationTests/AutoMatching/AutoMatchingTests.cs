@@ -162,6 +162,7 @@ public sealed class AutoMatchingTests(ApiFabrik fabrik) : IAsyncLifetime
         ergebnis.ShouldBe(SchrittErgebnis.Weiter);
         beleg.KategorieId.ShouldBe(HostingId);
         beleg.KorrespondentId.ShouldBe(HosterId);
+        beleg.KorrespondentErkennung.ShouldBe(KorrespondentErkennung.Auto);
         tags.ShouldBe([LastschriftId]);
     }
 
@@ -248,6 +249,7 @@ public sealed class AutoMatchingTests(ApiFabrik fabrik) : IAsyncLifetime
 
         beleg.KategorieId.ShouldBeNull();
         beleg.KorrespondentId.ShouldBe(HosterId);
+        beleg.KorrespondentErkennung.ShouldBe(KorrespondentErkennung.Auto);
         tags.ShouldBeEmpty();
     }
 
@@ -273,6 +275,13 @@ public sealed class AutoMatchingTests(ApiFabrik fabrik) : IAsyncLifetime
         (_, beleg, _) = await SchrittAsync(perRegel);
         beleg.KategorieId.ShouldBe(BueroId);
         beleg.KorrespondentId.ShouldBe(BueroHaendlerId);
+        beleg.KorrespondentErkennung.ShouldBe(KorrespondentErkennung.Manuell);
+
+        var perName = Testdaten.Beleg(korrespondentId: BueroHaendlerId, volltext: HostingText(80), status: BelegStatus.InVerarbeitung);
+        perName.KorrespondentErkennung = KorrespondentErkennung.Name;
+        (_, beleg, _) = await SchrittAsync(perName);
+        beleg.KorrespondentId.ShouldBe(BueroHaendlerId);
+        beleg.KorrespondentErkennung.ShouldBe(KorrespondentErkennung.Name);
     }
 
     [Theory]

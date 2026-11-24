@@ -49,6 +49,12 @@ describe('Tab „Daten“', () => {
     expect(speichern()).toBeDisabled()
   })
 
+  it('zeigt für einen per Auto-Matching zugeordneten Korrespondenten „automatisch zugeordnet“', async () => {
+    await oeffneDaten(`/belege/${belegIds.b12}`)
+    expect(within(formular()).getByText('automatisch zugeordnet')).toBeInTheDocument()
+    expect(within(formular()).queryByText(/erkannt über/)).not.toBeInTheDocument()
+  })
+
   it('sendet beim Speichern das erwartete BelegAendernDto und meldet „Gespeichert“', async () => {
     const { anfragen } = anfragenMitschneiden()
     const { nutzer } = await oeffneDaten()

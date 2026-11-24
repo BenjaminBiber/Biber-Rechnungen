@@ -7,4 +7,5 @@ public enum KorrespondentErkennung
     Iban,
     Name,
     Manuell,
+    Auto,
 }
