@@ -2064,6 +2064,7 @@ export interface components {
             id: string;
             /** Format: date-time */
             erstelltAm: string;
+            erstelltVon: string;
             bezeichnung: string;
             inhalt: string;
             /** Format: int32 */

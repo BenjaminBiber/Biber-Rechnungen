@@ -128,6 +128,7 @@ export const exportLaeufe: ExportLauf[] = [
   {
     id: exportLaufId(1),
     erstelltAm: '2026-10-05T08:12:00Z',
+    erstelltVon: 'M. Keller',
     bezeichnung: 'Q3 2026',
     inhalt: 'Belegliste (xlsx), Summen, Vorsteuer, ZIP',
     anzahlBelege: 61,
@@ -138,6 +139,7 @@ export const exportLaeufe: ExportLauf[] = [
   {
     id: exportLaufId(2),
     erstelltAm: '2026-07-06T07:40:00Z',
+    erstelltVon: 'M. Keller',
     bezeichnung: 'Q2 2026',
     inhalt: 'Belegliste (xlsx), Summen, Vorsteuer',
     anzahlBelege: 54,
@@ -148,6 +150,7 @@ export const exportLaeufe: ExportLauf[] = [
   {
     id: exportLaufId(3),
     erstelltAm: '2026-04-08T14:05:00Z',
+    erstelltVon: 'M. Keller',
     bezeichnung: 'Q1 2026',
     inhalt: 'Belegliste (csv), Summen, Vorsteuer, ZIP',
     anzahlBelege: 58,

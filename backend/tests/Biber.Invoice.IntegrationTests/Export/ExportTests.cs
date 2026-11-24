@@ -283,6 +283,8 @@ public sealed class ExportTests(ApiFabrik fabrik) : IAsyncLifetime
         var liste = await LaeufeAsync();
         liste.ShouldHaveSingleItem().Id.ShouldBe(lauf.Id);
         liste[0].Bezeichnung.ShouldBe("Q1/Q2 2026: Steuerberater");
+        lauf.ErstelltVon.ShouldBe("Test-Benutzer");
+        liste[0].ErstelltVon.ShouldBe("Test-Benutzer");
 
         var antwort = await fabrik.ErzeugeClient(Rolle.NurLesen).GetAsync(lauf.DownloadUrl);
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);

@@ -238,6 +238,7 @@ public sealed partial class ExportDienst(
     private static ExportLaufDto Dto(ExportLauf lauf) => new(
         lauf.Id,
         lauf.ErstelltAm,
+        lauf.BenutzerName,
         lauf.Bezeichnung,
         lauf.Inhalt,
         lauf.AnzahlBelege,

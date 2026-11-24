@@ -7018,6 +7018,9 @@
             "type": "string",
             "format": "date-time"
           },
+          "erstelltVon": {
+            "type": "string"
+          },
           "bezeichnung": {
             "type": "string"
           },
@@ -7043,6 +7046,7 @@
         "required": [
           "id",
           "erstelltAm",
+          "erstelltVon",
           "bezeichnung",
           "inhalt",
           "anzahlBelege",
