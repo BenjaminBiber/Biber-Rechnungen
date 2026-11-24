@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Npgsql;
@@ -95,10 +96,13 @@ public sealed class ApiFabrik : WebApplicationFactory<Program>, IAsyncLifetime
         _respawner ??= await Respawner.CreateAsync(verbindung, new RespawnerOptions
         {
             DbAdapter = DbAdapter.Postgres,
-            TablesToIgnore = [new Table("__EFMigrationsHistory")],
-            SchemasToExclude = ["hangfire"],
+            // hangfire.schema hält die Schema-Version; geleert installiert Hangfire bei jedem Start neu und scheitert.
+            TablesToIgnore = [new Table("__EFMigrationsHistory"), new Table("hangfire", "schema")],
         });
         await _respawner.ResetAsync(verbindung);
+
+        // Zwischengespeicherte Einstellungen gehören zur geleerten Datenbank und dürfen den nächsten Test nicht beeinflussen.
+        (Services.GetService<IMemoryCache>() as MemoryCache)?.Clear();
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)

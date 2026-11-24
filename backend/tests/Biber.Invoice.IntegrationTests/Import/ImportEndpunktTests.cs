@@ -6,6 +6,7 @@ using System.Text.Json.Serialization;
 using Biber.Invoice.Contracts;
 using Biber.Invoice.Contracts.Dto;
 using Biber.Invoice.Contracts.Dto.Import;
+using Biber.Invoice.Domain.Entitaeten;
 using Biber.Invoice.Domain.Enums;
 using Biber.Invoice.Domain.Pipeline;
 using Biber.Invoice.Infrastructure.Module.Formaterkennung;
@@ -28,10 +29,12 @@ public sealed class ImportEndpunktTests(ApiFabrik fabrik) : IAsyncLifetime
     {
         _f.Zeit.Setze(new DateTimeOffset(2026, 1, 15, 10, 0, 0, TimeSpan.Zero));
         await _f.ZuruecksetzenAsync();
-        await _f.SystemTagsSicherstellenAsync();
         var benutzer = Testdaten.Benutzer(anzeigename: Anzeigename);
         benutzer.Id = ApiFabrik.BenutzerId(Rolle.Benutzer);
         await _f.SpeichernAsync(benutzer);
+
+        // Der Seed-Tag „zu prüfen“ fällt dem Zurücksetzen zum Opfer; die Prüfungen setzen ihn bei den Platzhalter-PDFs.
+        await _f.SpeichernAsync(new Tag { Id = SystemIds.TagZuPruefen, Name = "zu prüfen", Farbe = "orange", IstSystem = true });
     }
 
     public Task DisposeAsync() => Task.CompletedTask;

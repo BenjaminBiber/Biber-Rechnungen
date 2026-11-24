@@ -1,11 +1,10 @@
 import { expect, test } from '@playwright/test'
 
-/** Jede Platzhalter-Route mit der Überschrift, die sie zeigt. */
+/** Jede Platzhalter-Route mit der Überschrift, die sie zeigt (`/anmelden` prüft anmeldung.spec.ts). */
 const routen: Array<[pfad: string, titel: string]> = [
-  ['/anmelden', 'Anmelden'],
   ['/', 'Dashboard'],
   ['/benachrichtigungen', 'Benachrichtigungen'],
-  ['/belege', 'Belege'],
+  ['/belege', 'Alle Belege'],
   ['/belege/b-1', 'Daten'],
   ['/belege/b-1/positionen', 'Positionen'],
   ['/belege/b-1/pruefung', 'Prüfung'],
@@ -13,7 +12,7 @@ const routen: Array<[pfad: string, titel: string]> = [
   ['/belege/b-1/dateien', 'Dateien'],
   ['/belege/b-1/dubletten', 'Dubletten'],
   ['/belege/b-1/aufteilen', 'Beleg aufteilen'],
-  ['/hochladen', 'Hochladen'],
+  ['/hochladen', 'Hochladen & Import'],
   ['/korrespondenten', 'Korrespondenten'],
   ['/korrespondenten/k-1', 'Korrespondent'],
   ['/artikel', 'Artikel'],
