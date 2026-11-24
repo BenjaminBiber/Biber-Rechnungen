@@ -37,7 +37,12 @@ public sealed class ExtraktionUebernehmenSchritt(TimeProvider zeit) : IPipelineS
         beleg.Steuer = e.Steuer;
         beleg.Brutto = e.Brutto;
         beleg.Volltext = e.Volltext;
-        beleg.Seitenanzahl = e.Seiten;
+        // Ohne Seitenzahl aus der Extraktion bleibt die der Formaterkennung (z. B. TIFF-Seiten) stehen.
+        if (e.Seiten > 0)
+        {
+            beleg.Seitenanzahl = e.Seiten;
+        }
+
         beleg.ExtraktionsQuelle = e.Quelle;
         beleg.DiKonfidenz = e.Konfidenz;
         beleg.ExtrahiertAm = zeit.GetUtcNow();
