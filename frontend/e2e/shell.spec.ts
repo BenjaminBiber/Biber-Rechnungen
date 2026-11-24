@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 
 /** Einträge der Seitenleiste mit Ziel-URL und Überschrift der Zielseite. */
 const eintraege: Array<[name: RegExp, url: RegExp, titel: string]> = [
-  [/^Belege/, /\/belege$/, 'Belege'],
+  [/^Belege/, /\/belege$/, 'Alle Belege'],
   [/^Hochladen$/, /\/hochladen$/, 'Hochladen'],
   [/^Korrespondenten$/, /\/korrespondenten$/, 'Korrespondenten'],
   [/^Artikel$/, /\/artikel$/, 'Artikel'],
