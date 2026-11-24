@@ -2,6 +2,7 @@ import { expect, type APIRequestContext, type Page } from '@playwright/test'
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { PDFDocument, StandardFonts } from 'pdf-lib'
 import { frischerTotpCode } from './totp'
 
 const hier = dirname(fileURLToPath(import.meta.url))
@@ -12,6 +13,14 @@ export const ADMIN_SITZUNG = join(zustandOrdner, 'admin-sitzung.json')
 
 export function testdatei(name: string): Buffer {
   return readFileSync(join(hier, '..', 'testdateien', name))
+}
+
+/** Kleines, je Text eindeutiges PDF (landet bei azure-mock im allgemeinen Ergebnis mit eigener Rechnungsnummer). */
+export async function einfachesPdf(text: string): Promise<Buffer> {
+  const doc = await PDFDocument.create()
+  const schrift = await doc.embedFont(StandardFonts.Helvetica)
+  doc.addPage([595, 842]).drawText(text, { x: 50, y: 780, size: 12, font: schrift })
+  return Buffer.from(await doc.save())
 }
 
 export interface Zugang {
@@ -102,6 +111,34 @@ export async function aufVorgangWarten(request: APIRequestContext, id: string, t
 export async function hochladenUndWarten(request: APIRequestContext, name: string, inhalt = testdatei(name)): Promise<Vorgang> {
   const [vorgang] = await hochladen(request, { name, inhalt })
   return aufVorgangWarten(request, vorgang.id)
+}
+
+/** Import-Vorgänge der letzten Tage (neueste zuerst). */
+export async function vorgaenge(request: APIRequestContext, quelle?: string): Promise<Vorgang[]> {
+  const antwort = await request.get('/api/import/vorgaenge', { params: { tage: 30, seitengroesse: 200, ...(quelle ? { quelle } : {}) } })
+  expect(antwort.status()).toBe(200)
+  return ((await antwort.json()) as { eintraege: Vorgang[] }).eintraege
+}
+
+/** Wartet, bis eine Bedingung über die Vorgänge erfüllt ist, und liefert die passenden Vorgänge. */
+export async function aufVorgaengeWarten(
+  request: APIRequestContext,
+  filter: (v: Vorgang) => boolean,
+  anzahl: number,
+  timeout = 120_000,
+): Promise<Vorgang[]> {
+  const ende = new Set(['Fertig', 'Dublette', 'OhneBeleg', 'Abgelehnt', 'Fehler', 'Pausiert'])
+  let treffer: Vorgang[] = []
+  await expect
+    .poll(
+      async () => {
+        treffer = (await vorgaenge(request)).filter(filter)
+        return treffer.length >= anzahl && treffer.every((v) => ende.has(v.status))
+      },
+      { timeout, intervals: [1000] },
+    )
+    .toBe(true)
+  return treffer
 }
 
 export async function belegLesen(request: APIRequestContext, id: string): Promise<any> {

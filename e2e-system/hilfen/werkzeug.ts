@@ -34,7 +34,8 @@ export function eingangAblegen(dateiname: string, inhalt: Buffer): void {
 
 /** Dateien im Eingangsordner (ohne Unterordner wie `_abgelehnt`). */
 export function eingangDateien(): string[] {
-  return werkzeug('find /eingang -maxdepth 1 -type f -printf "%f\\n"').toString('utf8').split('\n').filter(Boolean)
+  // BusyBox-find kennt kein -printf.
+  return werkzeug('cd /eingang && find . -maxdepth 1 -type f | sed "s|^\\./||"').toString('utf8').split('\n').filter(Boolean)
 }
 
 /** Alle Dateien der Ablage, relativ zu ihrem Wurzelordner (`2026/Korrespondent/…`). */
