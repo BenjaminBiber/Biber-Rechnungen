@@ -171,9 +171,15 @@ public sealed class ApiFabrik : WebApplicationFactory<Program>, IAsyncLifetime
 
         try
         {
+            // Die Ablage setzt ihre Dateien schreibgeschützt; das würde das rekursive Löschen verhindern.
+            foreach (var datei in Directory.EnumerateFiles(TempOrdner, "*", SearchOption.AllDirectories))
+            {
+                File.SetAttributes(datei, FileAttributes.Normal);
+            }
+
             Directory.Delete(TempOrdner, recursive: true);
         }
-        catch (IOException)
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
             // Aufräumen ist Kür; gesperrte Dateien bleiben im Temp-Ordner liegen.
         }

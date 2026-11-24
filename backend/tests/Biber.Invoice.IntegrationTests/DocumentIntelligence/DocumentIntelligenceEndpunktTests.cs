@@ -18,7 +18,11 @@ public sealed class DocumentIntelligenceEndpunktTests(ApiFabrik fabrik) : IAsync
 
     private readonly WireMockServer _azure = WireMockServer.Start();
 
-    public Task InitializeAsync() => fabrik.ZuruecksetzenAsync();
+    public async Task InitializeAsync()
+    {
+        await fabrik.ZuruecksetzenAsync();
+        await fabrik.SystemTagsSicherstellenAsync();
+    }
 
     public Task DisposeAsync() => Task.CompletedTask;
 

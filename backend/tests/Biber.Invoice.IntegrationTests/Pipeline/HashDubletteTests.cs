@@ -27,7 +27,8 @@ public sealed class HashDubletteTests(ApiFabrik fabrik)
         vorgang.Status.ShouldBe(ImportStatus.Dublette);
         vorgang.Ergebnis.ShouldBe("Identische Datei (SHA-256) wie Beleg RE-2026-0912 vom 10.01.2026 – als Dublette verknüpft, nicht doppelt gezählt.");
         vorgang.BeendetAm.ShouldBe(f.Zeit.GetUtcNow());
-        vorgang.Schritte.Select(s => s.Status).ShouldBe(["ok", "offen", "offen", "offen", "offen", "offen", "offen", "offen"]);
+        vorgang.Schritte[0].Status.ShouldBe("ok");
+        vorgang.Schritte.Skip(1).ShouldAllBe(s => s.Status == "offen");
         vorgang.BelegId.ShouldNotBeNull();
         vorgang.BelegId.ShouldNotBe(original.Id);
 
@@ -59,7 +60,7 @@ public sealed class HashDubletteTests(ApiFabrik fabrik)
 
         vorgang.Status.ShouldBe(ImportStatus.Fertig);
         vorgang.Schritte.ShouldAllBe(s => s.Status == "ok");
-        File.Exists(vorgang.StagingPfad!).ShouldBeTrue();
+        vorgang.StagingPfad.ShouldBeNull(); // die Ablage hat die Datei übernommen
         (await BelegAsync(f, vorgang.BelegId!.Value)).DuplikatVonId.ShouldBeNull();
     }
 

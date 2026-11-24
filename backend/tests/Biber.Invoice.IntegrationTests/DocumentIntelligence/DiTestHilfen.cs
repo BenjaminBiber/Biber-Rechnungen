@@ -1,3 +1,4 @@
+using System.Text;
 using Biber.Invoice.Contracts.Dienste;
 using Biber.Invoice.Contracts.Dto.Einstellungen;
 using Biber.Invoice.Domain.Entitaeten;
@@ -65,7 +66,8 @@ public sealed class FormatSchritt(ErkanntesFormat format, int seiten) : IPipelin
 
 public static class DiTestHilfen
 {
-    public static readonly byte[] Pdf = "%PDF-1.7 Testinhalt"u8.ToArray();
+    /// <summary>Jeder Zugriff liefert andere Bytes – gleiche Dateien würde der Dubletten-Check (SHA-256) als Dublette beenden.</summary>
+    public static byte[] Pdf => Encoding.UTF8.GetBytes($"%PDF-1.7 {Guid.NewGuid():N}");
 
     /// <summary>Fabrik mit sofortiger Verarbeitung, <paramref name="client"/> als Document Intelligence und erkanntem Format.</summary>
     public static ApiFabrik MitDi(this ApiFabrik fabrik, FakeDiClient client, ErkanntesFormat format = ErkanntesFormat.Pdf, int seiten = 1) =>
