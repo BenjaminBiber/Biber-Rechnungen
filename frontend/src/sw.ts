@@ -44,7 +44,8 @@ registerRoute(
 
 // Anmeldestatus: immer vom Netz, nur offline (oder nach 3 s) der zuletzt geladene Stand.
 registerRoute(
-  ({ url, request }) => request.method === 'GET' && url.origin === self.location.origin && istAnmeldestatus(url.pathname),
+  ({ url, request }) =>
+    request.method === 'GET' && url.origin === self.location.origin && istAnmeldestatus(url.pathname),
   new NetworkFirst({ cacheName: cacheNamen.anmeldung, networkTimeoutSeconds: 3, plugins: [nurOk] }),
   'GET',
 )
