@@ -185,6 +185,35 @@ describe('Artikel-Detail', { timeout: 20000 }, () => {
     ende()
   })
 
+  it('zeigt bei a7 die Zugehörigkeit zum Stammartikel Kopierpapier mit Link', async () => {
+    const { ende } = renderSeite(`/artikel/${artikelIds.a7}?jahr=2026`)
+    await titel('Papier Kopier A4 80g/m² 500 Bl.')
+    expect(await screen.findByText(/Gehört zu Stammartikel/)).toBeInTheDocument()
+    expect(screen.queryByText(/Keinem Stammartikel zugeordnet/)).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Kopierpapier A4 80 g' })).toHaveAttribute(
+      'href',
+      `/artikel/stammartikel/${stammartikelIds.kopierpapier}`,
+    )
+    ende()
+  })
+
+  it('löst a7 aus Kopierpapier heraus und zeigt den Erfolgstoast', async () => {
+    const user = userEvent.setup()
+    const { anfragen, ende } = renderSeite()
+    await titel('Kopierpapier A4 80 g')
+    await user.click(screen.getByRole('button', { name: 'Artikel herauslösen' }))
+    const dialog = await screen.findByRole('alertdialog', { name: 'Artikel herauslösen' })
+    await user.selectOptions(within(dialog).getByRole('combobox', { name: 'Artikel' }), artikelIds.a7)
+    await user.click(within(dialog).getByRole('button', { name: 'Herauslösen' }))
+    await waitFor(() => expect(anfragen).toHaveLength(1))
+    expect(anfragen[0]).toMatchObject({
+      methode: 'DELETE',
+      pfad: `/api/stammartikel/${stammartikelIds.kopierpapier}/artikel/${artikelIds.a7}`,
+    })
+    expect(await screen.findByText('„Papier Kopier A4 80g/m² 500 Bl.“ herausgelöst')).toBeInTheDocument()
+    ende()
+  })
+
   it('zeigt NurLesen keine Bearbeiten-Elemente', async () => {
     szenario.rolle('NurLesen')
     const { ende } = renderSeite()

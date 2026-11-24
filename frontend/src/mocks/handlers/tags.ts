@@ -82,6 +82,8 @@ export const tagsRouten: Route[] = [
     if (db.tags.some((t) => t.name.toLocaleLowerCase('de') === eingabe.name.trim().toLocaleLowerCase('de')))
       return ungueltig('name', 'Ein Tag mit diesem Namen gibt es schon.')
     const tag: Tag = { id: neueId(), ...eingabe, istSystem: false, anzahlBelege: 0 }
+    // Inbox-Tag gibt es nur einmal (wie im PUT-Handler).
+    if (tag.istInbox) db.tags = db.tags.map((t) => (t.istInbox ? { ...t, istInbox: false } : t))
     db.tags.push(tag)
     return HttpResponse.json(tag, { status: 201 })
   }),
