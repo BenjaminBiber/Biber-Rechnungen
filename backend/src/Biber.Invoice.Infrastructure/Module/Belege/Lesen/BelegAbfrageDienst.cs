@@ -192,8 +192,9 @@ public sealed partial class BelegAbfrageDienst(BiberDbContext db, IEinstellungen
     }
 
     /// <summary>
-    /// Belege desselben Korrespondenten oder mit Volltext-Treffern auf die zehn häufigsten Begriffe des Belegs;
-    /// Rang = gleicher Korrespondent (1) + <c>ts_rank</c>.
+    /// Belege desselben Korrespondenten oder mit mindestens drei der zehn häufigsten Begriffe des Belegs (bei
+    /// weniger Begriffen alle); ein einzelner gemeinsamer Allerweltsbegriff reicht nicht.
+    /// Rang = gleicher Korrespondent (1) + <c>ts_rank</c> gegen diese Begriffe.
     /// </summary>
     public async Task<IReadOnlyList<BelegListeneintragDto>> AehnlicheAsync(Guid id, int anzahl, CancellationToken ct)
     {
@@ -213,16 +214,22 @@ public sealed partial class BelegAbfrageDienst(BiberDbContext db, IEinstellungen
                 ORDER BY coalesce(cardinality(u.positions), 0) DESC, u.lexeme
                 LIMIT 10),
             anfrage AS (
-                SELECT to_tsquery('simple', string_agg(quote_literal(lexeme), ' | ')) AS q FROM begriffe)
-            SELECT b.id AS "Value"
-            FROM beleg b CROSS JOIN anfrage a
-            WHERE b.id <> {id}
-              AND b.status IN ('Fertig', 'Fehler')
-              AND (b.korrespondent_id = {korrespondentId} OR (a.q IS NOT NULL AND b.suchvektor @@ a.q))
-            ORDER BY (CASE WHEN b.korrespondent_id = {korrespondentId} THEN 1 ELSE 0 END)
-                     + coalesce(ts_rank(b.suchvektor, a.q), 0) DESC,
-                     b.erstellt_am DESC,
-                     b.id
+                SELECT coalesce(array_agg(lexeme), ARRAY[]::text[]) AS liste,
+                       to_tsquery('simple', string_agg(quote_literal(lexeme), ' | ')) AS q
+                FROM begriffe),
+            kandidaten AS (
+                SELECT b.id,
+                       b.erstellt_am,
+                       coalesce(b.korrespondent_id = {korrespondentId}, false) AS gleicher,
+                       (SELECT count(*) FROM unnest(tsvector_to_array(b.suchvektor)) AS l WHERE l = ANY(a.liste)) AS gemeinsam,
+                       cardinality(a.liste) AS begriffe,
+                       coalesce(ts_rank(b.suchvektor, a.q), 0) AS rang
+                FROM beleg b CROSS JOIN anfrage a
+                WHERE b.id <> {id} AND b.status IN ('Fertig', 'Fehler'))
+            SELECT id AS "Value"
+            FROM kandidaten
+            WHERE gleicher OR (gemeinsam > 0 AND gemeinsam >= least(3, begriffe))
+            ORDER BY (CASE WHEN gleicher THEN 1 ELSE 0 END) + rang DESC, erstellt_am DESC, id
             LIMIT {anzahl}
             """).ToListAsync(ct);
 
