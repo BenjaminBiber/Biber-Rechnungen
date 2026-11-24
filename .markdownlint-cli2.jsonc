@@ -1,0 +1,7 @@
+{
+  // Standardregeln, nur die Zeilenlänge ist abgeschaltet.
+  "config": {
+    "default": true,
+    "MD013": false
+  }
+}
