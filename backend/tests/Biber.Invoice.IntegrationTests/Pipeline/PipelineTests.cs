@@ -5,6 +5,7 @@ using Biber.Invoice.Domain.Entitaeten;
 using Biber.Invoice.Domain.Enums;
 using Biber.Invoice.Domain.Pipeline;
 using Biber.Invoice.Infrastructure.Module.HashDublette;
+using Biber.Invoice.Infrastructure.Module.KorrespondentZuordnung;
 using Biber.Invoice.Infrastructure.Module.Pipeline;
 using Biber.Invoice.Infrastructure.Persistenz;
 using Biber.Invoice.IntegrationTests.Infrastruktur;
@@ -70,7 +71,7 @@ public sealed class PipelineTests(ApiFabrik fabrik)
         var vorgang = await f.ImportiereAsync("rechnung.pdf", Pdf);
 
         protokoll.ShouldBe(["Dubletten-Check", "Korrespondent", "Prüfungen"]);
-        vorgang.Schritte.Select(s => s.Name).ShouldBe(["Dubletten-Check", "KoSIT-Validierung", "Daten übernehmen", "Korrespondent", "Prüfungen"]);
+        vorgang.Schritte.Select(s => s.Name).ShouldBe(["Dubletten-Check", "E-Rechnung lesen", "KoSIT-Validierung", "Daten übernehmen", "Korrespondent", "Prüfungen"]);
         vorgang.Status.ShouldBe(ImportStatus.Fertig);
     }
 
@@ -90,7 +91,7 @@ public sealed class PipelineTests(ApiFabrik fabrik)
         vorgang.Status.ShouldBe(ImportStatus.Dublette);
         vorgang.Ergebnis.ShouldBe("Dublette von 26-0912");
         protokoll.ShouldBe(["Dubletten-Check"]);
-        vorgang.Schritte.Select(s => s.Status).ShouldBe(["ok", "offen", "offen", "offen"]);
+        vorgang.Schritte.Select(s => s.Status).ShouldBe(["ok", "offen", "offen", "offen", "offen"]);
     }
 
     [Theory]
@@ -394,7 +395,7 @@ public sealed class PipelineTests(ApiFabrik fabrik)
     private static ApiFabrik OhneDublettenCheck(ApiFabrik fabrik) =>
         fabrik.MitSofortVerarbeitung().MitDiensten(d =>
         {
-            foreach (var schritt in d.Where(x => x.ServiceType == typeof(IPipelineSchritt) && x.ImplementationType == typeof(HashDubletteSchritt)).ToList())
+            foreach (var schritt in d.Where(x => x.ServiceType == typeof(IPipelineSchritt) && (x.ImplementationType == typeof(HashDubletteSchritt) || x.ImplementationType == typeof(KorrespondentZuordnungSchritt))).ToList())
             {
                 d.Remove(schritt);
             }
