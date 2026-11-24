@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using Biber.Invoice.Contracts;
 using Biber.Invoice.Contracts.Dto.Auth;
 using Biber.Invoice.Contracts.Dto.Konto;
@@ -43,8 +42,8 @@ public sealed class KontoTests(ApiFabrik basis) : IAsyncLifetime
         konto.GoogleVerknuepft.ShouldBeFalse();
         konto.AktiveSitzungen.ShouldBe(1);
 
-        var antwort = await client.PutAsJsonAsync(
-            ApiRouten.Konto.Eigenes, new KontoAendernDto("Neuer Name", "neu@example.org"), AuthTestHilfen.Json);
+        var antwort = await client.PutJsonAsync(
+            ApiRouten.Konto.Eigenes, new KontoAendernDto("Neuer Name", "neu@example.org"));
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
         var geaendert = await KontoAsync(client);
@@ -60,12 +59,12 @@ public sealed class KontoTests(ApiFabrik basis) : IAsyncLifetime
         var client = await _fabrik.AngemeldetAsync(benutzer);
         const string neu = "ganz-neues-passwort-2026";
 
-        var falsch = await client.PostAsJsonAsync(
-            ApiRouten.Konto.Passwort, new PasswortAendernDto("falsches-altes-passwort", neu), AuthTestHilfen.Json);
-        var kurz = await client.PostAsJsonAsync(
-            ApiRouten.Konto.Passwort, new PasswortAendernDto(AuthTestHilfen.Passwort, "kurz"), AuthTestHilfen.Json);
-        var richtig = await client.PostAsJsonAsync(
-            ApiRouten.Konto.Passwort, new PasswortAendernDto(AuthTestHilfen.Passwort, neu), AuthTestHilfen.Json);
+        var falsch = await client.PostJsonAsync(
+            ApiRouten.Konto.Passwort, new PasswortAendernDto("falsches-altes-passwort", neu));
+        var kurz = await client.PostJsonAsync(
+            ApiRouten.Konto.Passwort, new PasswortAendernDto(AuthTestHilfen.Passwort, "kurz"));
+        var richtig = await client.PostJsonAsync(
+            ApiRouten.Konto.Passwort, new PasswortAendernDto(AuthTestHilfen.Passwort, neu));
 
         falsch.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         kurz.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -82,17 +81,17 @@ public sealed class KontoTests(ApiFabrik basis) : IAsyncLifetime
         var client = await _fabrik.AngemeldetAsync(benutzer);
 
         var einrichtung = await (await client.PostAsync(ApiRouten.Konto.TotpEinrichten, null))
-            .Content.ReadFromJsonAsync<TotpEinrichtungDto>(AuthTestHilfen.Json);
+            .Content.LesenAsync<TotpEinrichtungDto>();
         einrichtung.ShouldNotBeNull().OtpAuthUri.ShouldStartWith($"otpauth://totp/Biber-Rechnungen:{benutzer.Email}?secret=");
-        var falsch = await client.PostAsJsonAsync(
-            ApiRouten.Konto.TotpAktivieren, new CodeDto(AuthTestHilfen.TotpCode(einrichtung.Schluessel, schritte: 20)), AuthTestHilfen.Json);
+        var falsch = await client.PostJsonAsync(
+            ApiRouten.Konto.TotpAktivieren, new CodeDto(AuthTestHilfen.TotpCode(einrichtung.Schluessel, schritte: 20)));
         falsch.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 
-        var aktiviert = await client.PostAsJsonAsync(
-            ApiRouten.Konto.TotpAktivieren, new CodeDto(AuthTestHilfen.TotpCode(einrichtung.Schluessel)), AuthTestHilfen.Json);
+        var aktiviert = await client.PostJsonAsync(
+            ApiRouten.Konto.TotpAktivieren, new CodeDto(AuthTestHilfen.TotpCode(einrichtung.Schluessel)));
 
         aktiviert.StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await aktiviert.Content.ReadFromJsonAsync<WiederherstellungscodesDto>(AuthTestHilfen.Json))
+        (await aktiviert.Content.LesenAsync<WiederherstellungscodesDto>())
             .ShouldNotBeNull().Codes.Length.ShouldBe(8);
         var konto = await KontoAsync(client);
         konto.TotpAktiv.ShouldBeTrue();
@@ -106,5 +105,5 @@ public sealed class KontoTests(ApiFabrik basis) : IAsyncLifetime
     }
 
     private static async Task<KontoDto> KontoAsync(HttpClient client) =>
-        (await client.GetFromJsonAsync<KontoDto>(ApiRouten.Konto.Eigenes, AuthTestHilfen.Json)).ShouldNotBeNull();
+        (await client.GetJsonAsync<KontoDto>(ApiRouten.Konto.Eigenes)).ShouldNotBeNull();
 }

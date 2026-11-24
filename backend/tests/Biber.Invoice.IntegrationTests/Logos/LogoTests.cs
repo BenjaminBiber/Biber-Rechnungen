@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Headers;
-using System.Net.Http.Json;
 using Biber.Invoice.Contracts;
 using Biber.Invoice.Contracts.Dto;
 using Biber.Invoice.Contracts.Dto.Belege;
@@ -28,7 +27,7 @@ public sealed class LogoTests(ApiFabrik fabrik)
         var antwort = await client.PutAsync(Route(k.Id), Formular(LogoTestbilder.Png(800, 400, SKColors.Blue, rand: 50)));
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var dto = (await antwort.Content.ReadFromJsonAsync<LogoDto>())!;
+        var dto = (await antwort.Content.LesenAsync<LogoDto>())!;
         dto.Quelle.ShouldBe(LogoQuelle.Upload);
         dto.Url.ShouldBe(Route(k.Id));
 
@@ -129,10 +128,10 @@ public sealed class LogoTests(ApiFabrik fabrik)
         var belegId = await BelegMitDateiAsync(k.Id, LogoTestbilder.PdfMitRotemRechteck(), "pdf");
 
         var antwort = await fabrik.ErzeugeClient(Rolle.Benutzer)
-            .PostAsJsonAsync(UebernehmenRoute(belegId), new LogoAusschnittDto(1, 0.02, 0.01, 0.12, 0.05));
+            .PostJsonAsync(UebernehmenRoute(belegId), new LogoAusschnittDto(1, 0.02, 0.01, 0.12, 0.05));
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await antwort.Content.ReadFromJsonAsync<LogoDto>())!.Quelle.ShouldBe(LogoQuelle.Pdf);
+        (await antwort.Content.LesenAsync<LogoDto>())!.Quelle.ShouldBe(LogoQuelle.Pdf);
         var gespeichert = await KorrespondentAsync(k.Id);
         gespeichert.LogoQuelle.ShouldBe(LogoQuelle.Pdf);
         using var bild = LogoTestbilder.Lesen(await File.ReadAllBytesAsync(Path.Combine(fabrik.TempOrdner, "daten", gespeichert.LogoPfad!)));
@@ -149,7 +148,7 @@ public sealed class LogoTests(ApiFabrik fabrik)
         var belegId = await BelegMitDateiAsync(k.Id, LogoTestbilder.Png(400, 400, SKColors.Lime), "png");
 
         var antwort = await fabrik.ErzeugeClient()
-            .PostAsJsonAsync(UebernehmenRoute(belegId), new LogoAusschnittDto(1, 0.25, 0.25, 0.5, 0.5));
+            .PostJsonAsync(UebernehmenRoute(belegId), new LogoAusschnittDto(1, 0.25, 0.25, 0.5, 0.5));
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
         using var bild = LogoTestbilder.Lesen(await (await fabrik.ErzeugeClient().GetAsync(Route(k.Id))).Content.ReadAsByteArrayAsync());
@@ -173,7 +172,7 @@ public sealed class LogoTests(ApiFabrik fabrik)
         var k = await fabrik.SpeichernAsync(Testdaten.Korrespondent());
         var belegId = await BelegMitDateiAsync(k.Id, LogoTestbilder.PdfMitRotemRechteck(), "pdf");
 
-        var antwort = await fabrik.ErzeugeClient().PostAsJsonAsync(UebernehmenRoute(belegId), ausschnitt);
+        var antwort = await fabrik.ErzeugeClient().PostJsonAsync(UebernehmenRoute(belegId), ausschnitt);
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await KorrespondentAsync(k.Id)).LogoPfad.ShouldBeNull();
@@ -184,7 +183,7 @@ public sealed class LogoTests(ApiFabrik fabrik)
     {
         var belegId = await BelegMitDateiAsync(null, LogoTestbilder.PdfMitRotemRechteck(), "pdf");
 
-        var antwort = await fabrik.ErzeugeClient().PostAsJsonAsync(UebernehmenRoute(belegId), new LogoAusschnittDto(1, 0, 0, 0.2, 0.1));
+        var antwort = await fabrik.ErzeugeClient().PostJsonAsync(UebernehmenRoute(belegId), new LogoAusschnittDto(1, 0, 0, 0.2, 0.1));
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.Conflict);
     }
@@ -195,7 +194,7 @@ public sealed class LogoTests(ApiFabrik fabrik)
         var k = await fabrik.SpeichernAsync(Testdaten.Korrespondent());
         var belegId = await BelegMitDateiAsync(k.Id, "<?xml version=\"1.0\"?><Invoice/>"u8.ToArray(), "xml");
 
-        var antwort = await fabrik.ErzeugeClient().PostAsJsonAsync(UebernehmenRoute(belegId), new LogoAusschnittDto(1, 0, 0, 0.2, 0.1));
+        var antwort = await fabrik.ErzeugeClient().PostJsonAsync(UebernehmenRoute(belegId), new LogoAusschnittDto(1, 0, 0, 0.2, 0.1));
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.Conflict);
     }
@@ -203,7 +202,7 @@ public sealed class LogoTests(ApiFabrik fabrik)
     [Fact]
     public async Task Unbekannter_Beleg_ergibt_404()
     {
-        var antwort = await fabrik.ErzeugeClient().PostAsJsonAsync(UebernehmenRoute(Guid.NewGuid()), new LogoAusschnittDto(1, 0, 0, 0.2, 0.1));
+        var antwort = await fabrik.ErzeugeClient().PostJsonAsync(UebernehmenRoute(Guid.NewGuid()), new LogoAusschnittDto(1, 0, 0, 0.2, 0.1));
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
@@ -223,7 +222,7 @@ public sealed class LogoTests(ApiFabrik fabrik)
         var antwort = await client.PostAsync(FaviconRoute(k.Id), null);
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await antwort.Content.ReadFromJsonAsync<LogoDto>())!.Quelle.ShouldBe(LogoQuelle.Favicon);
+        (await antwort.Content.LesenAsync<LogoDto>())!.Quelle.ShouldBe(LogoQuelle.Favicon);
         (await KorrespondentAsync(k.Id)).LogoQuelle.ShouldBe(LogoQuelle.Favicon);
     }
 
@@ -272,7 +271,7 @@ public sealed class LogoTests(ApiFabrik fabrik)
         (await client.PutAsync(Route(k.Id), Formular(LogoTestbilder.Png(32, 32, SKColors.Red)))).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
         (await client.DeleteAsync(Route(k.Id))).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
         (await client.PostAsync(FaviconRoute(k.Id), null)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
-        (await client.PostAsJsonAsync(UebernehmenRoute(Guid.NewGuid()), new LogoAusschnittDto(1, 0, 0, 0.2, 0.1)))
+        (await client.PostJsonAsync(UebernehmenRoute(Guid.NewGuid()), new LogoAusschnittDto(1, 0, 0, 0.2, 0.1)))
             .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 

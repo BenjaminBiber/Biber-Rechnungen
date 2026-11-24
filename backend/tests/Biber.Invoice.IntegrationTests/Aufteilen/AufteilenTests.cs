@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using System.Security.Cryptography;
 using Biber.Invoice.Contracts;
 using Biber.Invoice.Contracts.Dto.Belege;
@@ -30,10 +29,10 @@ public sealed class AufteilenTests(ApiFabrik fabrik)
         var pfad = Path.Combine(f.TempOrdner, "ablage", original.Pfad);
         var hashVorher = Sha256(await File.ReadAllBytesAsync(pfad));
 
-        var antwort = await f.ErzeugeClient(Rolle.Benutzer).PostAsJsonAsync(Route(belegId), ZweiTeile);
+        var antwort = await f.ErzeugeClient(Rolle.Benutzer).PostJsonAsync(Route(belegId), ZweiTeile);
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var vorgaenge = (await antwort.Content.ReadFromJsonAsync<ImportVorgangDto[]>())!;
+        var vorgaenge = (await antwort.Content.LesenAsync<ImportVorgangDto[]>())!;
         vorgaenge.Length.ShouldBe(2);
 
         using var scope = f.ErzeugeScope();
@@ -70,7 +69,7 @@ public sealed class AufteilenTests(ApiFabrik fabrik)
     {
         var (f, belegId) = await VierseitigenBelegAsync();
 
-        var antwort = await f.ErzeugeClient().PostAsJsonAsync(Route(belegId), new AufteilenDto([.. teile.Select(s => new AufteilenTeilDto(s))]));
+        var antwort = await f.ErzeugeClient().PostJsonAsync(Route(belegId), new AufteilenDto([.. teile.Select(s => new AufteilenTeilDto(s))]));
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await TeileAsync(f, belegId)).ShouldBe(0);
@@ -81,9 +80,9 @@ public sealed class AufteilenTests(ApiFabrik fabrik)
     {
         var (f, belegId) = await VierseitigenBelegAsync();
         var client = f.ErzeugeClient();
-        (await client.PostAsJsonAsync(Route(belegId), ZweiTeile)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await client.PostJsonAsync(Route(belegId), ZweiTeile)).StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var antwort = await client.PostAsJsonAsync(Route(belegId), ZweiTeile);
+        var antwort = await client.PostJsonAsync(Route(belegId), ZweiTeile);
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.Conflict);
         (await TeileAsync(f, belegId)).ShouldBe(2);
@@ -106,7 +105,7 @@ public sealed class AufteilenTests(ApiFabrik fabrik)
             AbgelegtAm = fabrik.Zeit.GetUtcNow(),
         });
 
-        var antwort = await fabrik.ErzeugeClient().PostAsJsonAsync(Route(beleg.Id), ZweiTeile);
+        var antwort = await fabrik.ErzeugeClient().PostJsonAsync(Route(beleg.Id), ZweiTeile);
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.Conflict);
     }
@@ -114,7 +113,7 @@ public sealed class AufteilenTests(ApiFabrik fabrik)
     [Fact]
     public async Task NurLesen_ergibt_403()
     {
-        var antwort = await fabrik.ErzeugeClient(Rolle.NurLesen).PostAsJsonAsync(Route(Guid.NewGuid()), ZweiTeile);
+        var antwort = await fabrik.ErzeugeClient(Rolle.NurLesen).PostJsonAsync(Route(Guid.NewGuid()), ZweiTeile);
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
@@ -122,7 +121,7 @@ public sealed class AufteilenTests(ApiFabrik fabrik)
     [Fact]
     public async Task Unbekannter_Beleg_ergibt_404()
     {
-        var antwort = await fabrik.ErzeugeClient().PostAsJsonAsync(Route(Guid.NewGuid()), ZweiTeile);
+        var antwort = await fabrik.ErzeugeClient().PostJsonAsync(Route(Guid.NewGuid()), ZweiTeile);
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }

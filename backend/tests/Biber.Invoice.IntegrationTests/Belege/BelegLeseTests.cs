@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Headers;
-using System.Net.Http.Json;
 using System.Text;
 using Biber.Invoice.Contracts;
 using Biber.Invoice.Contracts.Dto.Belege;
@@ -80,9 +79,9 @@ public sealed class BelegLeseTests(ApiFabrik fabrik) : IAsyncLifetime
             (await client.GetAsync(route)).StatusCode.ShouldBe(HttpStatusCode.OK, route);
         }
 
-        var angelegt = await client.PostAsJsonAsync(ApiRouten.Ansichten.Liste, Ansicht("Meine"));
+        var angelegt = await client.PostJsonAsync(ApiRouten.Ansichten.Liste, Ansicht("Meine"));
         angelegt.StatusCode.ShouldBe(HttpStatusCode.Created);
-        var ansicht = (await angelegt.Content.ReadFromJsonAsync<GespeicherteAnsichtDto>()).ShouldNotBeNull();
+        var ansicht = (await angelegt.Content.LesenAsync<GespeicherteAnsichtDto>()).ShouldNotBeNull();
         (await client.DeleteAsync(Route(ApiRouten.Ansichten.Einzeln, ansicht.Id))).StatusCode.ShouldBe(HttpStatusCode.NoContent);
     }
 
@@ -477,7 +476,7 @@ public sealed class BelegLeseTests(ApiFabrik fabrik) : IAsyncLifetime
 
         var antwort = await fabrik.ErzeugeClient().GetAsync(Route(ApiRouten.Belege.Einzeln, beleg.Id));
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var detail = (await antwort.Content.ReadFromJsonAsync<BelegDetailDto>()).ShouldNotBeNull();
+        var detail = (await antwort.Content.LesenAsync<BelegDetailDto>()).ShouldNotBeNull();
 
         detail.Rechnungsnummer.ShouldBe("2026-48817");
         detail.Korrespondent.ShouldBe(new Contracts.Dto.VerweisDto(korrespondent.Id, "Bürowelt Krämer KG"));
@@ -603,11 +602,11 @@ public sealed class BelegLeseTests(ApiFabrik fabrik) : IAsyncLifetime
         await BelegAsync(b => (b.KorrespondentId, b.Volltext, b.Titel, b.Rechnungsnummer) = (k2.Id, "Strom Abschlag", "Strom", "S-1"));
 
         var client = fabrik.ErzeugeClient();
-        var aehnliche = (await client.GetFromJsonAsync<BelegListeneintragDto[]>(Route(ApiRouten.Belege.Aehnliche, beleg.Id))).ShouldNotBeNull();
+        var aehnliche = (await client.GetJsonAsync<BelegListeneintragDto[]>(Route(ApiRouten.Belege.Aehnliche, beleg.Id))).ShouldNotBeNull();
 
         aehnliche.Select(a => a.Id).ShouldBe([gleicherKorrespondent.Id, gleicherInhalt.Id], ignoreOrder: true);
 
-        var nurEiner = (await client.GetFromJsonAsync<BelegListeneintragDto[]>($"{Route(ApiRouten.Belege.Aehnliche, beleg.Id)}?anzahl=1")).ShouldNotBeNull();
+        var nurEiner = (await client.GetJsonAsync<BelegListeneintragDto[]>($"{Route(ApiRouten.Belege.Aehnliche, beleg.Id)}?anzahl=1")).ShouldNotBeNull();
         nurEiner.Length.ShouldBe(1);
         (await client.GetAsync($"{Route(ApiRouten.Belege.Aehnliche, beleg.Id)}?anzahl=0")).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
@@ -697,19 +696,19 @@ public sealed class BelegLeseTests(ApiFabrik fabrik) : IAsyncLifetime
         var zweite = await AnlegenAsync(admin, new GespeicherteAnsichtAnlegenDto("Überfällig", filter with { Suche = "Papier" }, ["Datum"], "GrosseKarten"));
 
         zweite.Id.ShouldBe(erste.Id);
-        var liste = (await admin.GetFromJsonAsync<GespeicherteAnsichtDto[]>(ApiRouten.Ansichten.Liste)).ShouldNotBeNull();
+        var liste = (await admin.GetJsonAsync<GespeicherteAnsichtDto[]>(ApiRouten.Ansichten.Liste)).ShouldNotBeNull();
         var ansicht = liste.ShouldHaveSingleItem();
         ansicht.Name.ShouldBe("Überfällig");
         ansicht.Filter.ShouldBe(filter with { Suche = "Papier" }, new FilterVergleich());
         ansicht.Spalten.ShouldBe(["Datum"]);
         ansicht.Darstellung.ShouldBe("GrosseKarten");
 
-        var fremde = (await benutzer.GetFromJsonAsync<GespeicherteAnsichtDto[]>(ApiRouten.Ansichten.Liste)).ShouldNotBeNull().ShouldHaveSingleItem();
+        var fremde = (await benutzer.GetJsonAsync<GespeicherteAnsichtDto[]>(ApiRouten.Ansichten.Liste)).ShouldNotBeNull().ShouldHaveSingleItem();
         fremde.Id.ShouldNotBe(erste.Id);
         (await benutzer.DeleteAsync(Route(ApiRouten.Ansichten.Einzeln, erste.Id))).StatusCode.ShouldBe(HttpStatusCode.NotFound);
         (await admin.DeleteAsync(Route(ApiRouten.Ansichten.Einzeln, erste.Id))).StatusCode.ShouldBe(HttpStatusCode.NoContent);
-        (await admin.GetFromJsonAsync<GespeicherteAnsichtDto[]>(ApiRouten.Ansichten.Liste)).ShouldNotBeNull().ShouldBeEmpty();
-        (await benutzer.GetFromJsonAsync<GespeicherteAnsichtDto[]>(ApiRouten.Ansichten.Liste)).ShouldNotBeNull().Length.ShouldBe(1);
+        (await admin.GetJsonAsync<GespeicherteAnsichtDto[]>(ApiRouten.Ansichten.Liste)).ShouldNotBeNull().ShouldBeEmpty();
+        (await benutzer.GetJsonAsync<GespeicherteAnsichtDto[]>(ApiRouten.Ansichten.Liste)).ShouldNotBeNull().Length.ShouldBe(1);
     }
 
     [Fact]
@@ -717,8 +716,8 @@ public sealed class BelegLeseTests(ApiFabrik fabrik) : IAsyncLifetime
     {
         var client = fabrik.ErzeugeClient();
 
-        (await client.PostAsJsonAsync(ApiRouten.Ansichten.Liste, Ansicht(" "))).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        (await client.PostAsJsonAsync(ApiRouten.Ansichten.Liste, Ansicht("X") with { Darstellung = "Kacheln" })).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await client.PostJsonAsync(ApiRouten.Ansichten.Liste, Ansicht(" "))).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await client.PostJsonAsync(ApiRouten.Ansichten.Liste, Ansicht("X") with { Darstellung = "Kacheln" })).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
     // ---------- Hilfen ----------
@@ -761,22 +760,22 @@ public sealed class BelegLeseTests(ApiFabrik fabrik) : IAsyncLifetime
     }
 
     private async Task<BelegListeDto> ListeAsync(string query) =>
-        (await fabrik.ErzeugeClient().GetFromJsonAsync<BelegListeDto>($"{ApiRouten.Belege.Liste}?{query}")).ShouldNotBeNull();
+        (await fabrik.ErzeugeClient().GetJsonAsync<BelegListeDto>($"{ApiRouten.Belege.Liste}?{query}")).ShouldNotBeNull();
 
     private async Task<BelegZaehlerDto> ZaehlerAsync() =>
-        (await fabrik.ErzeugeClient().GetFromJsonAsync<BelegZaehlerDto>(ApiRouten.Belege.Zaehler)).ShouldNotBeNull();
+        (await fabrik.ErzeugeClient().GetJsonAsync<BelegZaehlerDto>(ApiRouten.Belege.Zaehler)).ShouldNotBeNull();
 
     private async Task<BelegDetailDto> DetailAsync(Guid id) =>
-        (await fabrik.ErzeugeClient().GetFromJsonAsync<BelegDetailDto>(Route(ApiRouten.Belege.Einzeln, id))).ShouldNotBeNull();
+        (await fabrik.ErzeugeClient().GetJsonAsync<BelegDetailDto>(Route(ApiRouten.Belege.Einzeln, id))).ShouldNotBeNull();
 
     private async Task<BelegNachbarnDto> NachbarnAsync(Guid id, string query) =>
-        (await fabrik.ErzeugeClient().GetFromJsonAsync<BelegNachbarnDto>($"{Route(ApiRouten.Belege.Nachbarn, id)}?{query}")).ShouldNotBeNull();
+        (await fabrik.ErzeugeClient().GetJsonAsync<BelegNachbarnDto>($"{Route(ApiRouten.Belege.Nachbarn, id)}?{query}")).ShouldNotBeNull();
 
     private static async Task<GespeicherteAnsichtDto> AnlegenAsync(HttpClient client, GespeicherteAnsichtAnlegenDto eingabe)
     {
-        var antwort = await client.PostAsJsonAsync(ApiRouten.Ansichten.Liste, eingabe);
+        var antwort = await client.PostJsonAsync(ApiRouten.Ansichten.Liste, eingabe);
         antwort.StatusCode.ShouldBe(HttpStatusCode.Created);
-        return (await antwort.Content.ReadFromJsonAsync<GespeicherteAnsichtDto>()).ShouldNotBeNull();
+        return (await antwort.Content.LesenAsync<GespeicherteAnsichtDto>()).ShouldNotBeNull();
     }
 
     private static GespeicherteAnsichtAnlegenDto Ansicht(string name) => new(name, new BelegFilterDto(), [], "Tabelle");

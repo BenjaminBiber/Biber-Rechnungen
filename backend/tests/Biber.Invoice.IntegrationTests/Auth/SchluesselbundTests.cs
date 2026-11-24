@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using Biber.Invoice.Contracts;
 using Biber.Invoice.Contracts.Dto.Auth;
 using Biber.Invoice.Domain.Enums;
@@ -59,8 +58,8 @@ public sealed class SchluesselbundTests(ApiFabrik basis) : IAsyncLifetime
     private async Task<string> AngemeldetenCookieAsync()
     {
         var benutzer = await _fabrik.BenutzerAnlegenAsync(Rolle.Benutzer);
-        var antwort = await _fabrik.Client().PostAsJsonAsync(
-            ApiRouten.Auth.Anmelden, new AnmeldenDto(benutzer.Email!, AuthTestHilfen.Passwort, false), AuthTestHilfen.Json);
+        var antwort = await _fabrik.Client().PostJsonAsync(
+            ApiRouten.Auth.Anmelden, new AnmeldenDto(benutzer.Email!, AuthTestHilfen.Passwort, false));
         antwort.EnsureSuccessStatusCode();
 
         return antwort.Headers.GetValues("Set-Cookie")

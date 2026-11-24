@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using Biber.Invoice.Contracts;
 using Biber.Invoice.Contracts.Dto;
 using Biber.Invoice.Contracts.Dto.Tags;
@@ -33,13 +32,13 @@ public sealed class KategorieTests(ApiFabrik fabrik) : IAsyncLifetime
     private static string Einzeln(Guid id) => ApiRouten.Kategorien.Einzeln.Replace("{id}", id.ToString());
 
     private async Task<KategorieDto[]> ListeAsync(int? jahr = null) =>
-        (await Client.GetFromJsonAsync<KategorieDto[]>(ApiRouten.Kategorien.Liste + (jahr is null ? "" : $"?jahr={jahr}"))).ShouldNotBeNull();
+        (await Client.GetJsonAsync<KategorieDto[]>(ApiRouten.Kategorien.Liste + (jahr is null ? "" : $"?jahr={jahr}"))).ShouldNotBeNull();
 
     private async Task<KategorieDto> AnlegenAsync(KategorieAendernDto dto)
     {
-        var antwort = await Client.PostAsJsonAsync(ApiRouten.Kategorien.Liste, dto);
+        var antwort = await Client.PostJsonAsync(ApiRouten.Kategorien.Liste, dto);
         antwort.StatusCode.ShouldBe(HttpStatusCode.Created);
-        return (await antwort.Content.ReadFromJsonAsync<KategorieDto>()).ShouldNotBeNull();
+        return (await antwort.Content.LesenAsync<KategorieDto>()).ShouldNotBeNull();
     }
 
     [Fact]
@@ -49,9 +48,9 @@ public sealed class KategorieTests(ApiFabrik fabrik) : IAsyncLifetime
         kategorie.EuerZeile.ShouldBe("Zeile 33 – Sonstige Betriebsausgaben");
         (await ListeAsync()).ShouldHaveSingleItem().EuerZeile.ShouldBe("Zeile 33 – Sonstige Betriebsausgaben");
 
-        var geaendert = await Client.PutAsJsonAsync(Einzeln(kategorie.Id), Dto("Software & Lizenzen", euerZeile: "Zeile 30"));
+        var geaendert = await Client.PutJsonAsync(Einzeln(kategorie.Id), Dto("Software & Lizenzen", euerZeile: "Zeile 30"));
         geaendert.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var dto = (await geaendert.Content.ReadFromJsonAsync<KategorieDto>()).ShouldNotBeNull();
+        var dto = (await geaendert.Content.LesenAsync<KategorieDto>()).ShouldNotBeNull();
         dto.Name.ShouldBe("Software & Lizenzen");
         dto.EuerZeile.ShouldBe("Zeile 30");
 
@@ -72,13 +71,13 @@ public sealed class KategorieTests(ApiFabrik fabrik) : IAsyncLifetime
     [Fact]
     public async Task Ungueltige_Eingaben_ergeben_400()
     {
-        (await Client.PostAsJsonAsync(ApiRouten.Kategorien.Liste, Dto("Rot", farbe: "rot")))
+        (await Client.PostJsonAsync(ApiRouten.Kategorien.Liste, Dto("Rot", farbe: "rot")))
             .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        (await Client.PostAsJsonAsync(ApiRouten.Kategorien.Liste, Dto(" ")))
+        (await Client.PostJsonAsync(ApiRouten.Kategorien.Liste, Dto(" ")))
             .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        (await Client.PostAsJsonAsync(ApiRouten.Kategorien.Liste, Dto("Lang", euerZeile: new string('x', 101))))
+        (await Client.PostJsonAsync(ApiRouten.Kategorien.Liste, Dto("Lang", euerZeile: new string('x', 101))))
             .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        (await Client.PostAsJsonAsync(ApiRouten.Kategorien.Liste, Dto("Regex", matching: new MatchingDto(MatchingAlgorithmus.Regex, "(", false))))
+        (await Client.PostJsonAsync(ApiRouten.Kategorien.Liste, Dto("Regex", matching: new MatchingDto(MatchingAlgorithmus.Regex, "(", false))))
             .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
@@ -87,7 +86,7 @@ public sealed class KategorieTests(ApiFabrik fabrik) : IAsyncLifetime
     {
         await AnlegenAsync(Dto("Büro"));
 
-        (await Client.PostAsJsonAsync(ApiRouten.Kategorien.Liste, Dto("BÜRO")))
+        (await Client.PostJsonAsync(ApiRouten.Kategorien.Liste, Dto("BÜRO")))
             .StatusCode.ShouldBe(HttpStatusCode.Conflict);
     }
 
@@ -123,7 +122,7 @@ public sealed class KategorieTests(ApiFabrik fabrik) : IAsyncLifetime
         var antwort = await Client.DeleteAsync(Einzeln(kategorie.Id));
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await antwort.Content.ReadFromJsonAsync<KategorieGeloeschtDto>()).ShouldBe(new KategorieGeloeschtDto(1, 1));
+        (await antwort.Content.LesenAsync<KategorieGeloeschtDto>()).ShouldBe(new KategorieGeloeschtDto(1, 1));
         using var scope = fabrik.ErzeugeScope();
         var db = scope.ServiceProvider.GetRequiredService<BiberDbContext>();
         (await db.Belege.SingleAsync(b => b.Id == beleg.Id)).KategorieId.ShouldBeNull();
@@ -133,7 +132,7 @@ public sealed class KategorieTests(ApiFabrik fabrik) : IAsyncLifetime
     [Fact]
     public async Task Unbekannte_Kategorie_ergibt_404()
     {
-        (await Client.PutAsJsonAsync(Einzeln(Guid.NewGuid()), Dto("X"))).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await Client.PutJsonAsync(Einzeln(Guid.NewGuid()), Dto("X"))).StatusCode.ShouldBe(HttpStatusCode.NotFound);
         (await Client.DeleteAsync(Einzeln(Guid.NewGuid()))).StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
@@ -143,7 +142,7 @@ public sealed class KategorieTests(ApiFabrik fabrik) : IAsyncLifetime
         var client = fabrik.ErzeugeClient(Rolle.NurLesen);
 
         (await client.GetAsync(ApiRouten.Kategorien.Liste)).StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await client.PostAsJsonAsync(ApiRouten.Kategorien.Liste, Dto("Verboten"))).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await client.PostJsonAsync(ApiRouten.Kategorien.Liste, Dto("Verboten"))).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
         (await client.DeleteAsync(Einzeln(Guid.NewGuid()))).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 }

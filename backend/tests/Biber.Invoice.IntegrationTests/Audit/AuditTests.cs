@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using Biber.Invoice.Contracts.Dienste;
 using Biber.Invoice.Contracts.Dto.Belege;
 using Biber.Invoice.Domain.Entitaeten;
@@ -273,7 +272,7 @@ public sealed class AuditTests(ApiFabrik fabrik)
     {
         var antwort = await fabrik.ErzeugeClient(Rolle.NurLesen).GetAsync($"/api/belege/{belegId}/historie");
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
-        return (await antwort.Content.ReadFromJsonAsync<AuditEintragDto[]>())!;
+        return (await antwort.Content.LesenAsync<AuditEintragDto[]>())!;
     }
 
     private static class AuditAktion

@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using Biber.Invoice.Contracts;
 using Biber.Invoice.Contracts.Dienste;
 using Biber.Invoice.Contracts.Dto;
@@ -239,7 +238,7 @@ public sealed class MailImportTests(ApiFabrik fabrik, GreenMail greenMail) : ICl
         eintrag.Schweregrad.ShouldBe(Schweregrad.Info);
         eintrag.Titel.ShouldBe("E-Mail-Import nicht eingerichtet");
         var antwort = await ohne.ErzeugeClient().PostAsync(ApiRouten.Einstellungen.MailJetztAbrufen, null);
-        (await antwort.Content.ReadFromJsonAsync<AktionErgebnisDto>())!.Erfolg.ShouldBeFalse();
+        (await antwort.Content.LesenAsync<AktionErgebnisDto>())!.Erfolg.ShouldBeFalse();
     }
 
     [Fact]
@@ -253,8 +252,8 @@ public sealed class MailImportTests(ApiFabrik fabrik, GreenMail greenMail) : ICl
         var antwort = await admin.PostAsync(ApiRouten.Einstellungen.MailJetztAbrufen, null);
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await antwort.Content.ReadFromJsonAsync<AktionErgebnisDto>()).ShouldBe(new AktionErgebnisDto(true, "2 Mails, 3 Anhänge übernommen"));
-        var status = await Mail.ErzeugeClient(Rolle.NurLesen).GetFromJsonAsync<MailStatusDto>(ApiRouten.Einstellungen.MailStatus);
+        (await antwort.Content.LesenAsync<AktionErgebnisDto>()).ShouldBe(new AktionErgebnisDto(true, "2 Mails, 3 Anhänge übernommen"));
+        var status = await Mail.ErzeugeClient(Rolle.NurLesen).GetJsonAsync<MailStatusDto>(ApiRouten.Einstellungen.MailStatus);
         status.ShouldBe(new MailStatusDto(true, Mail.Zeit.GetUtcNow(), null));
 
         Mail.Zeit.Vorspulen(TimeSpan.FromMinutes(3));
@@ -269,7 +268,7 @@ public sealed class MailImportTests(ApiFabrik fabrik, GreenMail greenMail) : ICl
     {
         var antwort = await Mail.ErzeugeClient(Rolle.Admin).PostAsync(ApiRouten.Einstellungen.MailVerbindungTesten, null);
 
-        var ergebnis = (await antwort.Content.ReadFromJsonAsync<AktionErgebnisDto>())!;
+        var ergebnis = (await antwort.Content.LesenAsync<AktionErgebnisDto>())!;
         ergebnis.Erfolg.ShouldBeTrue(ergebnis.Meldung);
         ergebnis.Meldung.ShouldBe("Verbindung erfolgreich · 0 Mails im Eingang");
     }
@@ -286,16 +285,16 @@ public sealed class MailImportTests(ApiFabrik fabrik, GreenMail greenMail) : ICl
 
         var admin = falscheFabrik.ErzeugeClient(Rolle.Admin);
 
-        var test = (await (await admin.PostAsync(ApiRouten.Einstellungen.MailVerbindungTesten, null)).Content.ReadFromJsonAsync<AktionErgebnisDto>())!;
+        var test = (await (await admin.PostAsync(ApiRouten.Einstellungen.MailVerbindungTesten, null)).Content.LesenAsync<AktionErgebnisDto>())!;
         test.Erfolg.ShouldBeFalse();
         test.Meldung.ShouldNotContain(falsch);
         test.Meldung.ShouldContain("Anmeldung");
 
-        var abruf = (await (await admin.PostAsync(ApiRouten.Einstellungen.MailJetztAbrufen, null)).Content.ReadFromJsonAsync<AktionErgebnisDto>())!;
+        var abruf = (await (await admin.PostAsync(ApiRouten.Einstellungen.MailJetztAbrufen, null)).Content.LesenAsync<AktionErgebnisDto>())!;
         abruf.Erfolg.ShouldBeFalse();
         abruf.Meldung.ShouldNotContain(falsch);
 
-        var status = (await admin.GetFromJsonAsync<MailStatusDto>(ApiRouten.Einstellungen.MailStatus))!;
+        var status = (await admin.GetJsonAsync<MailStatusDto>(ApiRouten.Einstellungen.MailStatus))!;
         status.Verbunden.ShouldBeFalse();
         status.Fehler.ShouldBe(abruf.Meldung);
         var eintrag = await StatusQuelle(falscheFabrik).LesenAsync(default);

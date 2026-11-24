@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using Biber.Invoice.Contracts;
 using Biber.Invoice.Contracts.Dto;
 using Biber.Invoice.Contracts.Dto.Einstellungen;
@@ -38,7 +37,7 @@ public sealed class DocumentIntelligenceEndpunktTests(ApiFabrik fabrik) : IAsync
         var antwort = await f.ErzeugeClient(Rolle.NurLesen).GetAsync(ApiRouten.Einstellungen.DiVerbrauch);
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await antwort.Content.ReadFromJsonAsync<DiVerbrauchDto>()).ShouldBe(new DiVerbrauchDto("2026-01", 412, 500, 82, false, 0));
+        (await antwort.Content.LesenAsync<DiVerbrauchDto>()).ShouldBe(new DiVerbrauchDto("2026-01", 412, 500, 82, false, 0));
     }
 
     [Fact]
@@ -79,7 +78,7 @@ public sealed class DocumentIntelligenceEndpunktTests(ApiFabrik fabrik) : IAsync
         var antwort = await f.ErzeugeClient(Rolle.Admin).PostAsync(ApiRouten.Einstellungen.DiFortsetzen, null);
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await antwort.Content.ReadFromJsonAsync<AktionErgebnisDto>()).ShouldBe(new AktionErgebnisDto(true, "3 Belege fortgesetzt"));
+        (await antwort.Content.LesenAsync<AktionErgebnisDto>()).ShouldBe(new AktionErgebnisDto(true, "3 Belege fortgesetzt"));
         foreach (var vorgang in vorgaenge)
         {
             (await f.VorgangAsync(vorgang.Id)).Status.ShouldBe(ImportStatus.Fertig);
@@ -99,7 +98,7 @@ public sealed class DocumentIntelligenceEndpunktTests(ApiFabrik fabrik) : IAsync
         var antwort = await f.ErzeugeClient(Rolle.Admin).PostAsync(ApiRouten.Einstellungen.DiVerbindungTesten, null);
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await antwort.Content.ReadFromJsonAsync<AktionErgebnisDto>()).ShouldBe(new AktionErgebnisDto(true, "Verbindung erfolgreich"));
+        (await antwort.Content.LesenAsync<AktionErgebnisDto>()).ShouldBe(new AktionErgebnisDto(true, "Verbindung erfolgreich"));
         _azure.LogEntries.ShouldContain(l => l.RequestMessage!.Path == AzureNachbildung.ModellPfad);
     }
 
@@ -111,7 +110,7 @@ public sealed class DocumentIntelligenceEndpunktTests(ApiFabrik fabrik) : IAsync
 
         var antwort = await f.ErzeugeClient(Rolle.Admin).PostAsync(ApiRouten.Einstellungen.DiVerbindungTesten, null);
 
-        (await antwort.Content.ReadFromJsonAsync<AktionErgebnisDto>()).ShouldBe(new AktionErgebnisDto(false, "Verbindung fehlgeschlagen"));
+        (await antwort.Content.LesenAsync<AktionErgebnisDto>()).ShouldBe(new AktionErgebnisDto(false, "Verbindung fehlgeschlagen"));
     }
 
     [Fact]
@@ -120,7 +119,7 @@ public sealed class DocumentIntelligenceEndpunktTests(ApiFabrik fabrik) : IAsync
         var antwort = await fabrik.ErzeugeClient(Rolle.Admin).PostAsync(ApiRouten.Einstellungen.DiVerbindungTesten, null);
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var ergebnis = (await antwort.Content.ReadFromJsonAsync<AktionErgebnisDto>()).ShouldNotBeNull();
+        var ergebnis = (await antwort.Content.LesenAsync<AktionErgebnisDto>()).ShouldNotBeNull();
         ergebnis.Erfolg.ShouldBeFalse();
         ergebnis.Meldung.ShouldStartWith("Document Intelligence ist nicht konfiguriert");
     }

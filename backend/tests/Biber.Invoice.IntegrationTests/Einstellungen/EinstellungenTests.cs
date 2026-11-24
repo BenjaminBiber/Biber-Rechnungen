@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
 using Biber.Invoice.Contracts.Dienste;
 using Biber.Invoice.Contracts.Dto.Einstellungen;
@@ -19,7 +18,6 @@ namespace Biber.Invoice.IntegrationTests.Einstellungen;
 [Collection("Api")]
 public sealed class EinstellungenTests(ApiFabrik fabrik) : IAsyncLifetime
 {
-    private static readonly JsonSerializerOptions Json = EinstellungenDienst.Json;
 
     public async Task InitializeAsync()
     {
@@ -62,7 +60,7 @@ public sealed class EinstellungenTests(ApiFabrik fabrik) : IAsyncLifetime
     {
         var client = fabrik.ErzeugeClient(Rolle.Admin);
 
-        var antwort = await PutRohAsync(client, gruppe, JsonSerializer.Serialize(wert, wert.GetType(), Json));
+        var antwort = await PutRohAsync(client, gruppe, JsonSerializer.Serialize(wert, wert.GetType(), JsonTest.Optionen));
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.NoContent);
         var dto = await LesenAsync(client);
@@ -77,7 +75,7 @@ public sealed class EinstellungenTests(ApiFabrik fabrik) : IAsyncLifetime
             "aufbewahrung" => dto.Aufbewahrung,
             _ => dto.Zugriff,
         };
-        JsonSerializer.Serialize(gelesen, gelesen.GetType(), Json).ShouldBe(JsonSerializer.Serialize(wert, wert.GetType(), Json));
+        JsonSerializer.Serialize(gelesen, gelesen.GetType(), JsonTest.Optionen).ShouldBe(JsonSerializer.Serialize(wert, wert.GetType(), JsonTest.Optionen));
     }
 
     [Fact]
@@ -130,8 +128,8 @@ public sealed class EinstellungenTests(ApiFabrik fabrik) : IAsyncLifetime
     [Fact]
     public async Task Zu_langer_Firmenname_liefert_400()
     {
-        var antwort = await fabrik.ErzeugeClient().PutAsJsonAsync(
-            "/api/einstellungen/allgemein", new AllgemeinEinstellungen { Firmenname = new string('x', 201) }, Json);
+        var antwort = await fabrik.ErzeugeClient().PutJsonAsync(
+            "/api/einstellungen/allgemein", new AllgemeinEinstellungen { Firmenname = new string('x', 201) });
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await FehlerAsync(antwort)).ShouldContainKey("firmenname");
@@ -182,7 +180,7 @@ public sealed class EinstellungenTests(ApiFabrik fabrik) : IAsyncLifetime
         text.ShouldNotContain(schluessel);
         text.ShouldNotContain(passwort);
         text.ShouldNotContain(googleGeheimnis);
-        var umgebung = JsonSerializer.Deserialize<EinstellungenDto>(text, Json)!.Umgebung;
+        var umgebung = JsonSerializer.Deserialize<EinstellungenDto>(text, JsonTest.Optionen)!.Umgebung;
         umgebung.DiEndpunkt.ShouldBe("https://di.example.test/");
         umgebung.DiModell.ShouldBe("prebuilt-invoice");
         umgebung.ImapServer.ShouldBe("imap.example.test:993");
@@ -203,7 +201,7 @@ public sealed class EinstellungenTests(ApiFabrik fabrik) : IAsyncLifetime
         var neu = await fabrik.SpeichernAsync(Testdaten.Tag());
         var client = fabrik.ErzeugeClient();
 
-        var antwort = await client.PutAsJsonAsync("/api/einstellungen/allgemein", new AllgemeinEinstellungen { InboxTagId = neu.Id }, Json);
+        var antwort = await client.PutJsonAsync("/api/einstellungen/allgemein", new AllgemeinEinstellungen { InboxTagId = neu.Id });
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.NoContent);
         using var scope = fabrik.ErzeugeScope();
@@ -219,8 +217,8 @@ public sealed class EinstellungenTests(ApiFabrik fabrik) : IAsyncLifetime
         system.IstSystem = true;
         await fabrik.SpeichernAsync(system);
 
-        var antwort = await fabrik.ErzeugeClient().PutAsJsonAsync(
-            "/api/einstellungen/allgemein", new AllgemeinEinstellungen { InboxTagId = system.Id }, Json);
+        var antwort = await fabrik.ErzeugeClient().PutJsonAsync(
+            "/api/einstellungen/allgemein", new AllgemeinEinstellungen { InboxTagId = system.Id });
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await FehlerAsync(antwort)).ShouldContainKey("inboxTagId");
@@ -246,7 +244,7 @@ public sealed class EinstellungenTests(ApiFabrik fabrik) : IAsyncLifetime
     {
         var antwort = await client.GetAsync("/api/einstellungen");
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
-        return (await antwort.Content.ReadFromJsonAsync<EinstellungenDto>(Json))!;
+        return (await antwort.Content.LesenAsync<EinstellungenDto>())!;
     }
 
     private static Task<HttpResponseMessage> PutRohAsync(HttpClient client, string gruppe, string inhalt) =>
