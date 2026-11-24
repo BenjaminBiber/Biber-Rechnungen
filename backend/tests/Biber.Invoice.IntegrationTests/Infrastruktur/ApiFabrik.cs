@@ -97,6 +97,9 @@ public sealed class ApiFabrik : WebApplicationFactory<Program>, IAsyncLifetime
         {
             DbAdapter = DbAdapter.Postgres,
             TablesToIgnore = [new Table("__EFMigrationsHistory")],
+            // Hangfire verwaltet sein Schema selbst (inkl. Versionszeile); geleert hängt das Eintragen
+            // wiederkehrender Jobs beim nächsten Start der Anwendung.
+            SchemasToExclude = ["hangfire"],
         });
         await _respawner.ResetAsync(verbindung);
 

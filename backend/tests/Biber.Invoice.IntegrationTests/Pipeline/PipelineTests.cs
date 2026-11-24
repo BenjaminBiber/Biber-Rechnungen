@@ -5,6 +5,7 @@ using Biber.Invoice.Domain.Entitaeten;
 using Biber.Invoice.Domain.Enums;
 using Biber.Invoice.Domain.Pipeline;
 using Biber.Invoice.Infrastructure.Module.Ablage;
+using Biber.Invoice.Infrastructure.Module.AutoMatching;
 using Biber.Invoice.Infrastructure.Module.Formaterkennung;
 using Biber.Invoice.Infrastructure.Module.HashDublette;
 using Biber.Invoice.Infrastructure.Module.KorrespondentZuordnung;
@@ -39,6 +40,7 @@ public sealed class PipelineTests(ApiFabrik fabrik)
             foreach (var eintrag in d.Where(e => e.ServiceType == typeof(IPipelineSchritt)
                 && (e.ImplementationType == typeof(FormaterkennungSchritt) || e.ImplementationType == typeof(HashDubletteSchritt)
                     || e.ImplementationType == typeof(KorrespondentZuordnungSchritt) || e.ImplementationType == typeof(ZuordnungSchritt)
+                    || e.ImplementationType == typeof(AutoZuordnungSchritt)
                     || e.ImplementationType == typeof(PruefungenSchritt) || e.ImplementationType == typeof(AblageSchritt))).ToList())
             {
                 d.Remove(eintrag);
