@@ -9,6 +9,7 @@ using Biber.Invoice.Infrastructure.Module.HashDublette;
 using Biber.Invoice.Infrastructure.Module.KorrespondentZuordnung;
 using Biber.Invoice.Infrastructure.Module.Pipeline;
 using Biber.Invoice.Infrastructure.Module.Pruefungen;
+using Biber.Invoice.Infrastructure.Module.Zuordnung;
 using Biber.Invoice.Infrastructure.Persistenz;
 using Biber.Invoice.IntegrationTests.Infrastruktur;
 using Hangfire;
@@ -28,15 +29,16 @@ public sealed class PipelineTests(ApiFabrik fabrik)
     /// <summary>
     /// Diese Tests prüfen den Orchestrator mit eigenen Test-Schritten; die echte Formaterkennung würde
     /// die Platzhalter-Dateien ablehnen, der echte Dubletten-Check die mehrfach importierten Bytes
-    /// (der hat <see cref="HashDubletteTests"/>) – beide werden deshalb entfernt, ebenso die echte Korrespondent-Zuordnung
-    /// und die echten Prüfungen.
+    /// (der hat <see cref="HashDubletteTests"/>) – beide werden deshalb entfernt, ebenso die echte Korrespondent-Zuordnung,
+    /// die Zuordnung von Kategorie und Tags und die echten Prüfungen.
     /// </summary>
     private ApiFabrik NurOrchestrator() =>
         fabrik.MitSofortVerarbeitung().MitDiensten(d =>
         {
             foreach (var eintrag in d.Where(e => e.ServiceType == typeof(IPipelineSchritt)
                 && (e.ImplementationType == typeof(FormaterkennungSchritt) || e.ImplementationType == typeof(HashDubletteSchritt)
-                    || e.ImplementationType == typeof(KorrespondentZuordnungSchritt) || e.ImplementationType == typeof(PruefungenSchritt))).ToList())
+                    || e.ImplementationType == typeof(KorrespondentZuordnungSchritt) || e.ImplementationType == typeof(ZuordnungSchritt)
+                    || e.ImplementationType == typeof(PruefungenSchritt))).ToList())
             {
                 d.Remove(eintrag);
             }
@@ -90,7 +92,7 @@ public sealed class PipelineTests(ApiFabrik fabrik)
         var vorgang = await f.ImportiereAsync("rechnung.pdf", Pdf);
 
         protokoll.ShouldBe(["Dubletten-Check", "Korrespondent", "Prüfungen"]);
-        vorgang.Schritte.Select(s => s.Name).ShouldBe(["Dubletten-Check", "E-Rechnung lesen", "Daten übernehmen", "Korrespondent", "Prüfungen"]);
+        vorgang.Schritte.Select(s => s.Name).ShouldBe(["Dubletten-Check", "E-Rechnung lesen", "KoSIT-Validierung", "Daten übernehmen", "Korrespondent", "Fachliche Dublette", "Prüfungen"]);
         vorgang.Status.ShouldBe(ImportStatus.Fertig);
     }
 
@@ -110,7 +112,7 @@ public sealed class PipelineTests(ApiFabrik fabrik)
         vorgang.Status.ShouldBe(ImportStatus.Dublette);
         vorgang.Ergebnis.ShouldBe("Dublette von 26-0912");
         protokoll.ShouldBe(["Dubletten-Check"]);
-        vorgang.Schritte.Select(s => s.Status).ShouldBe(["ok", "offen", "offen", "offen"]);
+        vorgang.Schritte.Select(s => s.Status).ShouldBe(["ok", "offen", "offen", "offen", "offen", "offen"]);
     }
 
     [Theory]
