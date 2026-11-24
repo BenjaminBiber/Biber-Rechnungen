@@ -1,18 +1,22 @@
 import { expect, test } from '@playwright/test'
 import { artikelIds, korrespondentIds, stammartikelIds } from '../src/mocks/fixtures/ids'
 
+/** Beleg b2 aus den Mock-Fixtures (Beleg-Detail mit Tabs). */
+const beleg = '/belege/b0000000-0000-4000-8000-000000000002'
+
 /** Jede Platzhalter-Route mit der Überschrift, die sie zeigt (`/anmelden` prüft anmeldung.spec.ts). */
 const routen: Array<[pfad: string, titel: string]> = [
   ['/', 'Dashboard'],
   ['/benachrichtigungen', 'Benachrichtigungen'],
   ['/belege', 'Alle Belege'],
-  ['/belege/b-1', 'Daten'],
-  ['/belege/b-1/positionen', 'Positionen'],
-  ['/belege/b-1/pruefung', 'Prüfung'],
-  ['/belege/b-1/historie', 'Historie'],
-  ['/belege/b-1/dateien', 'Dateien'],
-  ['/belege/b-1/dubletten', 'Dubletten'],
-  ['/belege/b-1/aufteilen', 'Beleg aufteilen'],
+  ['/belege/b-1', 'Beleg nicht gefunden'],
+  [beleg, 'Bürowelt Krämer KG'],
+  [`${beleg}/positionen`, 'Positionen'],
+  [`${beleg}/pruefung`, 'Prüfung'],
+  [`${beleg}/historie`, 'Historie'],
+  [`${beleg}/dateien`, 'Dateien'],
+  [`${beleg}/dubletten`, 'Dubletten'],
+  [`${beleg}/aufteilen`, 'Beleg aufteilen'],
   ['/hochladen', 'Hochladen & Import'],
   ['/korrespondenten', 'Korrespondenten'],
   [`/korrespondenten/${korrespondentIds.bueroweltKraemer}`, 'Bürowelt Krämer KG'],

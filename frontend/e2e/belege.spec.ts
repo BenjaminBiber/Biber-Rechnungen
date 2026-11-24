@@ -37,7 +37,7 @@ test.describe('Belege', () => {
     await page.goto('/belege')
     await page.getByRole('link', { name: 'Büromaterial Bestellung' }).click()
     await expect(page).toHaveURL(/\/belege\/[0-9a-f-]+$/)
-    await expect(page.getByRole('heading', { level: 1, name: 'Daten' })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1, name: 'Bürowelt Krämer KG' })).toBeVisible()
   })
 
   test('URL mit Filtern stellt den Zustand wieder her', async ({ page }) => {
