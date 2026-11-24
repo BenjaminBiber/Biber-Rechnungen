@@ -12,6 +12,8 @@
     </PackageReference>
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
     <PackageReference Include="Hangfire.Core" />
+    <!-- AddHangfire/AddHangfireServer und Job-Aktivierung über den DI-Container (PipelineModul) -->
+    <PackageReference Include="Hangfire.AspNetCore" />
     <PackageReference Include="Hangfire.PostgreSql" />
     <PackageReference Include="ZUGFeRD-csharp" />
     <PackageReference Include="PdfPig" />
