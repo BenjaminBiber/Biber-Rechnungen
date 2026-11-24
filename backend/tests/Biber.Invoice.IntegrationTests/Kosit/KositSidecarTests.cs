@@ -2,8 +2,8 @@ using System.Security.Cryptography;
 using System.Text;
 using Biber.Invoice.Infrastructure.Module.Kosit;
 using DotNet.Testcontainers.Builders;
-using DotNet.Testcontainers.Containers;
 using DotNet.Testcontainers.Configurations;
+using DotNet.Testcontainers.Containers;
 using DotNet.Testcontainers.Images;
 
 namespace Biber.Invoice.IntegrationTests.Kosit;
