@@ -1,32 +1,53 @@
 # Biber-Rechnungen
 
-Selbst gehostetes, GoBD-orientiertes Belegarchiv für Eingangsrechnungen: Import per E-Mail, Scanner-/Eingangsordner und Upload, Auslesen von E-Rechnungen (ZUGFeRD/XRechnung) und PDFs (Azure Document Intelligence), Plausibilitätsprüfungen, unveränderbare Ablage, Auswertung von Kosten, Korrespondenten und Artikeln. Mit MCP-Server und PWA.
+Selbst gehostetes, GoBD-orientiertes Belegarchiv für Eingangsrechnungen: Import per E-Mail, Scanner-/Eingangsordner und Upload, Auslesen von E-Rechnungen (ZUGFeRD/XRechnung) und PDFs (Azure Document Intelligence), Plausibilitätsprüfungen, unveränderbare Ablage, Auswertung von Kosten, Korrespondenten und Artikeln. Mit MCP-Server und PWA. Läuft mit Docker Compose (`api`, `postgres`, `kosit`, `db-backup`) neben einem vorhandenen Samba-Container und Nginx Proxy Manager, nur im LAN.
 
-**Status:** Planung abgeschlossen, Umsetzung noch nicht begonnen.
+## Dokumentation
 
-- Plan: [`docs/plan.md`](docs/plan.md)
-- Verfahrensdokumentation (Entwurf): [`docs/verfahrensdokumentation/`](docs/verfahrensdokumentation/verfahrensdokumentation.md)
-- Entscheidungsprotokoll und Fragebögen: [`planung/`](planung/entscheidungen.md)
+- Einrichtung und Betrieb (Verzeichnisse, `.env`, Samba, Proxy, Backup, Wiederherstellung): [`docs/betrieb.md`](docs/betrieb.md)
+- Plan (Architektur, Datenmodell, Pipeline): [`docs/plan.md`](docs/plan.md)
+- Verfahrensdokumentation (GoBD): [`docs/verfahrensdokumentation/verfahrensdokumentation.md`](docs/verfahrensdokumentation/verfahrensdokumentation.md)
+- Samba-Beispielkonfiguration: [`docker/samba/README.md`](docker/samba/README.md)
+- Entscheidungsprotokoll und Fragebögen: [`planung/entscheidungen.md`](planung/entscheidungen.md)
 
-## Starten
+## Schnellstart
 
-Voraussetzung: Docker mit Compose v2.
+```bash
+cp .env.example .env            # mindestens POSTGRES_PASSWORD ändern
+sudo mkdir -p /srv/rechnungen/{eingang,staging,ablage,daten,backup}
+sudo chown -R 1000:1000 /srv/rechnungen
+docker compose up -d
+```
 
-1. Konfiguration anlegen und Werte anpassen (mindestens `POSTGRES_PASSWORD`; Azure, IMAP und Google dürfen leer bleiben):
-   ```bash
-   cp .env.example .env
-   ```
-2. Verzeichnisse auf dem Host anlegen und dem Container-Benutzer (`APP_UID`/`APP_GID`) übergeben:
-   ```bash
-   sudo mkdir -p /srv/rechnungen/{eingang,staging,ablage,daten,backup}
-   sudo chown -R 1000:1000 /srv/rechnungen
-   ```
-3. Starten:
-   ```bash
-   docker compose up -d
-   ```
-   Die Anwendung ist danach unter `http://<host>:${API_PORT}` erreichbar (Standard 8080).
+Ausführlich in [`docs/betrieb.md`](docs/betrieb.md). Smoke-Test ohne Host-Verzeichnisse: `bash docker/smoke.sh`.
 
-Smoke-Test ohne Host-Verzeichnisse: `bash docker/smoke.sh`.
+## Entwicklung
+
+Backend (.NET 10, aus dem Repo-Hauptordner; Integrationstests brauchen Docker):
+
+```bash
+dotnet build backend/Biber.Invoice.sln -warnaserror
+dotnet test backend/Biber.Invoice.sln
+dotnet format backend/Biber.Invoice.sln --verify-no-changes
+```
+
+Frontend (in `frontend/`):
+
+```bash
+npm ci
+npm run dev           # Entwicklungsserver
+npm run lint
+npm run typecheck
+npm run test
+npm run build
+npm run e2e           # Playwright gegen npm run preview:mock
+```
+
+Dokumentation prüfen:
+
+```bash
+node docs/pruefe-doku.mjs
+npx --yes markdownlint-cli2 "README.md" "docs/betrieb.md" "docs/verfahrensdokumentation/*.md" "docker/**/*.md"
+```
 
 Stack: .NET 10 (Minimal APIs, EF Core, Hangfire) · PostgreSQL · React (Vite, TypeScript) · Docker Compose
