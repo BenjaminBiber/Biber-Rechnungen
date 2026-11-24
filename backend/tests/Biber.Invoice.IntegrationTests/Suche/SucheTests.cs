@@ -62,9 +62,9 @@ public sealed class SucheTests(ApiFabrik fabrik)
     [Fact]
     public async Task Rechnungsnummer_Teil_findet_Beleg()
     {
-        var beleg = await fabrik.SpeichernAsync(Testdaten.Beleg(rechnungsnummer: "RE-2026-48817"));
+        var beleg = await fabrik.SpeichernAsync(Testdaten.Beleg(rechnungsnummer: "RE-2026-73591"));
 
-        var ergebnis = await SucheAsync("48817");
+        var ergebnis = await SucheAsync("73591");
 
         ergebnis.Belege.ShouldContain(b => b.Id == beleg.Id);
     }
