@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using Biber.Invoice.Contracts;
 using Biber.Invoice.Contracts.Dienste;
+using Biber.Invoice.Domain.Entitaeten;
 using Biber.Invoice.Domain.Enums;
 using Biber.Invoice.Domain.Module;
 using Biber.Invoice.Infrastructure.Persistenz;
@@ -75,6 +76,35 @@ public sealed class ApiFabrikTests(ApiFabrik fabrik)
                 DELETE FROM "__EFMigrationsHistory" WHERE "MigrationId" = '99999999999999_Test';
                 """);
         }
+    }
+
+    [Fact]
+    public async Task Zuruecksetzen_stellt_den_Seed_der_Migration_wieder_her()
+    {
+        await fabrik.ZuruecksetzenAsync();
+        using (var vorher = fabrik.ErzeugeScope())
+        {
+            var db = vorher.ServiceProvider.GetRequiredService<BiberDbContext>();
+            db.Korrespondenten.Add(new Korrespondent { Name = "Seed-Test GmbH" });
+            await db.SaveChangesAsync();
+        }
+
+        await fabrik.ZuruecksetzenAsync();
+
+        using var scope = fabrik.ErzeugeScope();
+        var dbNachher = scope.ServiceProvider.GetRequiredService<BiberDbContext>();
+        (await dbNachher.Roles.Select(r => r.Name).OrderBy(n => n).ToListAsync())
+            .ShouldBe(["Admin", "Benutzer", "NurLesen"]);
+        var inbox = await dbNachher.Tags.SingleAsync(t => t.Id == SystemIds.TagInbox);
+        inbox.Name.ShouldBe("Inbox");
+        inbox.IstInbox.ShouldBeTrue();
+        var zuPruefen = await dbNachher.Tags.SingleAsync(t => t.Id == SystemIds.TagZuPruefen);
+        zuPruefen.Name.ShouldBe("zu prüfen");
+        zuPruefen.IstSystem.ShouldBeTrue();
+        zuPruefen.Matching.Algorithmus.ShouldBe(MatchingAlgorithmus.Keiner);
+        (await dbNachher.Tags.CountAsync()).ShouldBe(2);
+        (await dbNachher.Korrespondenten.AnyAsync()).ShouldBeFalse();
+        (await dbNachher.Belege.AnyAsync()).ShouldBeFalse();
     }
 
     [Fact]
