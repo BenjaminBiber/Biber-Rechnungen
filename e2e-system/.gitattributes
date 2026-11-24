@@ -1,0 +1,3 @@
+# Testdateien byte-genau (Prüfsummen, Base64-Merkmale für azure-mock); Skripte laufen auch unter Linux.
+testdateien/* -text
+*.sh text eol=lf

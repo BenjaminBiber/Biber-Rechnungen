@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createMemoryHistory, createRouter, RouterProvider } from '@tanstack/react-router'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { szenario } from '@/mocks/szenarien'
 import { routeTree } from '@/routeTree.gen'
@@ -46,8 +46,8 @@ describe('Layout _app', () => {
     szenario.rolle('NurLesen')
     renderApp('/export')
     expect(await screen.findByRole('heading', { level: 1, name: 'Export' })).toBeInTheDocument()
-    await screen.findByRole('button', { name: 'Benutzermenü' })
-    await screen.findByText('M. Keller')
+    // Die Export-Historie nennt den Namen ebenfalls – nur im Benutzermenü suchen.
+    await within(await screen.findByRole('button', { name: 'Benutzermenü' })).findByText('M. Keller')
     expect(screen.queryByRole('link', { name: 'Beleg hochladen' })).not.toBeInTheDocument()
   })
 })

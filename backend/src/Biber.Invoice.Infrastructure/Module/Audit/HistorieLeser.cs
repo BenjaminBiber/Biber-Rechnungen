@@ -1,5 +1,7 @@
 using System.Globalization;
+using Biber.Invoice.Contracts.Dienste;
 using Biber.Invoice.Contracts.Dto.Belege;
+using Biber.Invoice.Contracts.Dto.Einstellungen;
 using Biber.Invoice.Domain.Entitaeten;
 using Biber.Invoice.Domain.Enums;
 using Biber.Invoice.Infrastructure.Persistenz;
@@ -7,8 +9,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Biber.Invoice.Infrastructure.Module.Audit;
 
-/// <summary>Liest die Historie eines Belegs und bildet die Protokolleinträge auf lesbare Texte ab (Design „Historie“).</summary>
-public sealed class HistorieLeser(BiberDbContext db)
+/// <summary>
+/// Liest die Historie eines Belegs und bildet die Protokolleinträge auf lesbare Texte ab (Design „Historie“).
+/// Zeitpunkte in den Werten stehen in der eingestellten Zeitzone, technische Felder unter deutschem Namen.
+/// </summary>
+public sealed class HistorieLeser(BiberDbContext db, IEinstellungen einstellungen)
 {
     private const string Leer = "leer";
     private static readonly CultureInfo Deutsch = CultureInfo.GetCultureInfo("de-DE");
@@ -16,7 +21,18 @@ public sealed class HistorieLeser(BiberDbContext db)
     private static readonly Dictionary<string, string> Feldnamen = new()
     {
         [nameof(Beleg.KategorieId)] = "Kategorie",
+        [nameof(Beleg.KategorieManuell)] = "Kategorie manuell gesetzt",
         [nameof(Beleg.KorrespondentId)] = "Korrespondent",
+        [nameof(Beleg.KorrespondentErkennung)] = "Korrespondent erkannt über",
+        [nameof(Beleg.Quelle)] = "Quelle",
+        [nameof(Beleg.ImportVorgangId)] = "Import-Vorgang",
+        [nameof(Beleg.ExtraktionsQuelle)] = "Ausgelesen aus",
+        [nameof(Beleg.DiKonfidenz)] = "Konfidenz",
+        [nameof(Beleg.ExtrahiertAm)] = "Ausgelesen am",
+        [nameof(Beleg.Seitenanzahl)] = "Seitenanzahl",
+        [nameof(Beleg.DuplikatVonId)] = "Dublette von",
+        [nameof(Beleg.AufgeteiltAusBelegId)] = "Aufgeteilt aus",
+        [nameof(Beleg.BestaetigtVonId)] = "Bestätigt von",
         [nameof(Beleg.Titel)] = "Titel",
         [nameof(Beleg.Rechnungsnummer)] = "Rechnungsnummer",
         [nameof(Beleg.Rechnungsdatum)] = "Rechnungsdatum",
@@ -55,6 +71,7 @@ public sealed class HistorieLeser(BiberDbContext db)
             .ToListAsync(ct);
 
         var namen = await NamenAsync(eintraege, ct);
+        var zone = Zeitzone((await einstellungen.LesenAsync<AllgemeinEinstellungen>(ct)).Zeitzone);
         var dateiname = beleg.ImportVorgangId is { } vorgangId
             ? await db.ImportVorgaenge.Where(v => v.Id == vorgangId).Select(v => v.Dateiname).FirstOrDefaultAsync(ct)
             : null;
@@ -80,11 +97,17 @@ public sealed class HistorieLeser(BiberDbContext db)
                 continue;
             }
 
-            ergebnis.Add(Abbilden(eintrag, beleg, namen, dateiname));
+            ergebnis.Add(Abbilden(eintrag, beleg, new Werte(namen, zone), dateiname));
         }
 
         return ergebnis;
     }
+
+    /// <summary>Was zum Anzeigen der Werte nötig ist: Namen zu IDs und die Zeitzone für Zeitpunkte.</summary>
+    private sealed record Werte(Dictionary<string, string> Namen, TimeZoneInfo Zone);
+
+    private static TimeZoneInfo Zeitzone(string id) =>
+        TimeZoneInfo.TryFindSystemTimeZoneById(id, out var zone) ? zone : TimeZoneInfo.Utc;
 
     private async Task<Dictionary<string, string>> NamenAsync(List<AuditEintrag> eintraege, CancellationToken ct)
     {
@@ -100,7 +123,15 @@ public sealed class HistorieLeser(BiberDbContext db)
             .ToListAsync(ct);
         var korrespondenten = await db.Korrespondenten.Where(k => ids.Contains(k.Id)).Select(k => new { k.Id, k.Name })
             .ToListAsync(ct);
-        return kategorien.Concat(korrespondenten).ToDictionary(k => k.Id.ToString(), k => k.Name);
+        var namen = kategorien.Concat(korrespondenten).ToDictionary(k => k.Id.ToString(), k => k.Name);
+
+        // „Bestätigt von“ nennt eine Benutzer-ID; ihr Name steht an den Einträgen, die dieser Benutzer geschrieben hat.
+        foreach (var a in eintraege.Where(a => a.BenutzerId is not null))
+        {
+            namen.TryAdd(a.BenutzerId!.Value.ToString(), a.BenutzerName);
+        }
+
+        return namen;
     }
 
     private static AuditEintragDto Tags(AuditEintrag erster, List<AuditEintrag> gruppe)
@@ -118,8 +149,7 @@ public sealed class HistorieLeser(BiberDbContext db)
         return Dto(erster, text, null, null, null, warnung ? "warnung" : null);
     }
 
-    private static AuditEintragDto Abbilden(AuditEintrag a, Beleg beleg, Dictionary<string, string> namen,
-        string? dateiname)
+    private static AuditEintragDto Abbilden(AuditEintrag a, Beleg beleg, Werte werte, string? dateiname)
     {
         var system = a.BenutzerId is null;
         switch (a.Entitaet, a.Aktion)
@@ -131,7 +161,7 @@ public sealed class HistorieLeser(BiberDbContext db)
             case (nameof(Beleg), AuditInterceptor.Geloescht):
                 return Dto(a, "Beleg gelöscht");
             case (nameof(Beleg), AuditInterceptor.Geaendert):
-                return Feldaenderung(a, beleg, namen, system);
+                return Feldaenderung(a, beleg, werte, system);
             case (nameof(BelegDatei), AuditInterceptor.Angelegt) when a.Feld == nameof(DateiRolle.Original):
                 return Dto(a, $"Abgelegt unter {AblagePfad(a.NeuerWert)}");
             case (nameof(BelegDatei), AuditInterceptor.Angelegt):
@@ -151,16 +181,16 @@ public sealed class HistorieLeser(BiberDbContext db)
             case (nameof(Steuerzeile), AuditInterceptor.Geloescht):
                 return Dto(a, $"Steuerzeile entfernt: {Zahl(a.AlterWert)} %");
             case (nameof(Position) or nameof(Steuerzeile), AuditInterceptor.Geaendert):
-                return FeldDto(a, $"{a.Entitaet} – {Feldname(a.Feld)}", namen);
+                return FeldDto(a, $"{a.Entitaet} – {Feldname(a.Feld)}", werte);
             default:
                 // Notizen über IAuditSchreiber: ihr Text, ersatzweise die Aktion.
                 return Dto(a, a.NeuerWert ?? a.Aktion);
         }
     }
 
-    private static AuditEintragDto Feldaenderung(AuditEintrag a, Beleg beleg, Dictionary<string, string> namen,
-        bool system)
+    private static AuditEintragDto Feldaenderung(AuditEintrag a, Beleg beleg, Werte werte, bool system)
     {
+        var namen = werte.Namen;
         if (system && a.Feld == nameof(Beleg.ExtrahiertAm) && a.NeuerWert is not null)
         {
             var seiten = beleg.Seitenanzahl == 1 ? "1 Seite" : $"{beleg.Seitenanzahl} Seiten";
@@ -179,13 +209,13 @@ public sealed class HistorieLeser(BiberDbContext db)
             return Dto(a, $"Kategorie „{Name(a.NeuerWert, namen)}“ gesetzt");
         }
 
-        return FeldDto(a, Feldname(a.Feld), namen);
+        return FeldDto(a, Feldname(a.Feld), werte);
     }
 
-    private static AuditEintragDto FeldDto(AuditEintrag a, string feldname, Dictionary<string, string> namen)
+    private static AuditEintragDto FeldDto(AuditEintrag a, string feldname, Werte werte)
     {
         var text = a.AlterWert is null ? $"{feldname} ergänzt" : $"{feldname} geändert";
-        return Dto(a, text, a.Feld, Anzeigewert(a.Feld, a.AlterWert, namen), Anzeigewert(a.Feld, a.NeuerWert, namen));
+        return Dto(a, text, a.Feld, Anzeigewert(a.Feld, a.AlterWert, werte), Anzeigewert(a.Feld, a.NeuerWert, werte));
     }
 
     private static AuditEintragDto Dto(AuditEintrag a, string text, string? feld = null, string? alt = null,
@@ -208,16 +238,21 @@ public sealed class HistorieLeser(BiberDbContext db)
     private static string Feldname(string? feld) =>
         feld is not null && Feldnamen.TryGetValue(feld, out var name) ? name : feld ?? "";
 
-    private static string Anzeigewert(string? feld, string? wert, Dictionary<string, string> namen)
+    private static string Anzeigewert(string? feld, string? wert, Werte werte)
     {
         if (string.IsNullOrEmpty(wert))
         {
             return Leer;
         }
 
-        if (feld is nameof(Beleg.KategorieId) or nameof(Beleg.KorrespondentId))
+        if (feld is nameof(Beleg.KategorieId) or nameof(Beleg.KorrespondentId) or nameof(Beleg.BestaetigtVonId))
         {
-            return Name(wert, namen);
+            return Name(wert, werte.Namen);
+        }
+
+        if (bool.TryParse(wert, out var ja))
+        {
+            return ja ? "ja" : "nein";
         }
 
         if (DateOnly.TryParseExact(wert, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None,
@@ -229,7 +264,7 @@ public sealed class HistorieLeser(BiberDbContext db)
         if (DateTimeOffset.TryParseExact(wert, "O", CultureInfo.InvariantCulture, DateTimeStyles.None,
                 out var zeitpunkt))
         {
-            return zeitpunkt.ToString("dd.MM.yyyy, HH:mm", CultureInfo.InvariantCulture);
+            return TimeZoneInfo.ConvertTime(zeitpunkt, werte.Zone).ToString("dd.MM.yyyy, HH:mm", CultureInfo.InvariantCulture);
         }
 
         return Zahl(wert);

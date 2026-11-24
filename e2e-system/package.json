@@ -1,0 +1,23 @@
+{
+  "name": "biber-rechnungen-e2e-system",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "playwright test",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.1",
+    "@types/adm-zip": "^0.5.7",
+    "@types/node": "^26.6.6",
+    "@types/nodemailer": "^6.4.17",
+    "adm-zip": "^0.5.16",
+    "nodemailer": "^7.0.10",
+    "pdf-lib": "^1.17.1",
+    "typescript": "~5.9.3"
+  }
+}

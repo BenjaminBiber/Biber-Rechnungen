@@ -80,6 +80,43 @@ jobs:
             frontend/test-results/
           if-no-files-found: ignore
 
+  # End-to-End gegen das echte System (Docker Compose, Azure und IMAP gemockt), siehe e2e-system/.
+  e2e-system:
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: e2e-system/package-lock.json
+
+      # lauf.sh installiert nur den Browser; die Systembibliotheken braucht der Runner einmalig.
+      - name: Browser-Abhängigkeiten
+        working-directory: e2e-system
+        run: |
+          npm ci --no-audit --no-fund
+          npx playwright install --with-deps chromium
+
+      - name: E2E-Lauf
+        run: bash e2e-system/lauf.sh
+        env:
+          E2E_LOGS: ${{ runner.temp }}/docker-compose.log
+
+      - name: Playwright-Bericht und Compose-Logs hochladen
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-system-bericht
+          path: |
+            e2e-system/playwright-report/
+            e2e-system/test-results/
+            ${{ runner.temp }}/docker-compose.log
+          if-no-files-found: ignore
+
   docker:
     runs-on: ubuntu-latest
     steps:
