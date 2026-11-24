@@ -96,6 +96,7 @@ public sealed class ApiFabrik : WebApplicationFactory<Program>, IAsyncLifetime
         {
             DbAdapter = DbAdapter.Postgres,
             TablesToIgnore = [new Table("__EFMigrationsHistory")],
+            SchemasToExclude = ["hangfire"],
         });
         await _respawner.ResetAsync(verbindung);
     }
