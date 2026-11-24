@@ -6,6 +6,7 @@ using Biber.Invoice.Domain.Enums;
 using Biber.Invoice.Domain.Module;
 using Biber.Invoice.Infrastructure.Persistenz;
 using Biber.Invoice.IntegrationTests.Infrastruktur;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -207,6 +208,43 @@ public sealed class AuditTests(ApiFabrik fabrik)
         (datum.AlterWert, datum.NeuerWert).ShouldBe(("leer", "19.11.2026"));
         historie.Single(h => h.Text.StartsWith("Tags gesetzt", StringComparison.Ordinal)).Art.ShouldBe("warnung");
         historie.Single(h => h.Text.StartsWith("Abgelegt", StringComparison.Ordinal)).Art.ShouldBe("system");
+    }
+
+    [Fact]
+    public async Task Historie_zeigt_Bestaetigung_in_lokaler_Zeit_mit_Namen_statt_technischer_Felder()
+    {
+        var beleg = await fabrik.SpeichernAsync(Testdaten.Beleg());
+        using (var scope = fabrik.ErzeugeScope())
+        {
+            // „Bestätigt von“ verweist auf ein echtes Konto.
+            var konten = scope.ServiceProvider.GetRequiredService<UserManager<Benutzer>>();
+            if (await konten.FindByIdAsync(LehmannId.ToString()) is null)
+            {
+                var lehmann = Testdaten.Benutzer(null);
+                lehmann.Id = LehmannId;
+                (await konten.CreateAsync(lehmann)).Succeeded.ShouldBeTrue();
+            }
+        }
+
+        await using var alsLehmann = AlsBenutzer();
+
+        await AendernAsync(alsLehmann, beleg.Id, b =>
+        {
+            b.KategorieManuell = true;
+            b.BestaetigtAm = new DateTimeOffset(2026, 11, 24, 16, 30, 0, TimeSpan.Zero);
+            b.BestaetigtVonId = LehmannId;
+        });
+
+        var historie = await HistorieAsync(beleg.Id);
+
+        // Standard-Zeitzone Europe/Berlin: 16:30 UTC ist 17:30 Ortszeit.
+        var bestaetigung = historie.Single(h => h.Text == "Bestätigung ergänzt");
+        bestaetigung.NeuerWert.ShouldBe("24.11.2026, 17:30");
+        var von = historie.Single(h => h.Text == "Bestätigt von ergänzt");
+        von.NeuerWert.ShouldBe("A. Lehmann");
+        var manuell = historie.Single(h => h.Text == "Kategorie manuell gesetzt geändert");
+        (manuell.AlterWert, manuell.NeuerWert).ShouldBe(("nein", "ja"));
+        historie.ShouldNotContain(h => h.Text.Contains("BestaetigtVonId") || h.Text.Contains("KategorieManuell"));
     }
 
     [Fact]
