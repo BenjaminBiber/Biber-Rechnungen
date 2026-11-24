@@ -3,6 +3,7 @@ using System.Text;
 using Biber.Invoice.Domain.Entitaeten;
 using Biber.Invoice.Domain.Enums;
 using Biber.Invoice.Domain.Pipeline;
+using Biber.Invoice.Infrastructure.Module.Formaterkennung;
 using Biber.Invoice.Infrastructure.Module.HashDublette;
 using Biber.Invoice.Infrastructure.Persistenz;
 using Biber.Invoice.IntegrationTests.Infrastruktur;
@@ -17,7 +18,7 @@ public sealed class HashDubletteTests(ApiFabrik fabrik)
     [Fact]
     public async Task Zweiter_Import_derselben_Bytes_wird_Dublette_und_verweist_auf_das_Original()
     {
-        var f = fabrik.MitSofortVerarbeitung();
+        var f = OhneFormaterkennung();
         var inhalt = EindeutigerInhalt();
         var original = await OriginalAnlegenAsync(f, inhalt, "RE-2026-0912", new DateOnly(2026, 1, 10));
 
@@ -51,7 +52,7 @@ public sealed class HashDubletteTests(ApiFabrik fabrik)
     [Fact]
     public async Task Anderer_Inhalt_laeuft_weiter_und_bleibt_ohne_Verknuepfung()
     {
-        var f = fabrik.MitSofortVerarbeitung();
+        var f = OhneFormaterkennung();
         await OriginalAnlegenAsync(f, EindeutigerInhalt(), "RE-2026-0100", new DateOnly(2026, 1, 10));
 
         var vorgang = await f.ImportiereAsync("neu.pdf", EindeutigerInhalt());
@@ -65,7 +66,7 @@ public sealed class HashDubletteTests(ApiFabrik fabrik)
     [Fact]
     public async Task Dritter_Import_verweist_auf_den_ersten_Beleg()
     {
-        var f = fabrik.MitSofortVerarbeitung();
+        var f = OhneFormaterkennung();
         var inhalt = EindeutigerInhalt();
         var original = await OriginalAnlegenAsync(f, inhalt, "RE-2026-0200", new DateOnly(2026, 2, 1));
 
@@ -81,7 +82,7 @@ public sealed class HashDubletteTests(ApiFabrik fabrik)
     [Fact]
     public async Task Bei_einer_Kette_zeigt_der_Treffer_auf_den_aeltesten_Beleg()
     {
-        var f = fabrik.MitSofortVerarbeitung();
+        var f = OhneFormaterkennung();
         var inhalt = EindeutigerInhalt();
         var wurzel = await OriginalAnlegenAsync(f, inhalt, "RE-2026-0300", new DateOnly(2026, 3, 1), tageAlt: 1);
         // Älter als die Wurzel, aber selbst Dublette (mit eigener Datei): der Treffer darf nicht auf ihn zeigen.
@@ -96,7 +97,7 @@ public sealed class HashDubletteTests(ApiFabrik fabrik)
     [Fact]
     public async Task Wiederholung_ueberspringt_den_Schritt()
     {
-        var f = fabrik.MitSofortVerarbeitung();
+        var f = OhneFormaterkennung();
         var inhalt = EindeutigerInhalt();
         await OriginalAnlegenAsync(f, inhalt, "RE-2026-0400", new DateOnly(2026, 4, 1));
         var beleg = Testdaten.Beleg();
@@ -116,6 +117,18 @@ public sealed class HashDubletteTests(ApiFabrik fabrik)
         (await schritt.AusfuehrenAsync(kontext, CancellationToken.None)).ShouldBe(SchrittErgebnis.Weiter);
         beleg.DuplikatVonId.ShouldBeNull();
     }
+
+    /// <summary>
+    /// Sofort-Verarbeitung ohne die echte Formaterkennung: Sie würde die Platzhalter-PDFs ablehnen.
+    /// </summary>
+    private ApiFabrik OhneFormaterkennung() =>
+        fabrik.MitSofortVerarbeitung().MitDiensten(d =>
+        {
+            foreach (var eintrag in d.Where(e => e.ServiceType == typeof(IPipelineSchritt) && e.ImplementationType == typeof(FormaterkennungSchritt)).ToList())
+            {
+                d.Remove(eintrag);
+            }
+        });
 
     private static byte[] EindeutigerInhalt() => Encoding.UTF8.GetBytes($"%PDF-1.7 {Guid.NewGuid():N}");
 
