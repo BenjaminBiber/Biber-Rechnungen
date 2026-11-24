@@ -6,13 +6,16 @@ export class ApiFehler extends Error {
   readonly status: number
   readonly titel: string
   readonly fehler?: Record<string, string[]>
+  /** Vollständiger ProblemDetails-Körper, z. B. für Erweiterungen wie `korrespondentId` oder `pfade`. */
+  readonly problem: Record<string, unknown>
 
-  constructor(status: number, titel: string, fehler?: Record<string, string[]>) {
+  constructor(status: number, titel: string, fehler?: Record<string, string[]>, problem: Record<string, unknown> = {}) {
     super(titel)
     this.name = 'ApiFehler'
     this.status = status
     this.titel = titel
     this.fehler = fehler
+    this.problem = problem
   }
 }
 
@@ -31,7 +34,7 @@ export function zuApiFehler(status: number, koerper: unknown, statusText = ''): 
     (typeof koerper === 'string' && koerper.trim() ? koerper.trim() : '') ||
     statusText ||
     `Fehler ${status}`
-  return new ApiFehler(status, titel, problem.errors ?? undefined)
+  return new ApiFehler(status, titel, problem.errors ?? undefined, problem as Record<string, unknown>)
 }
 
 /**

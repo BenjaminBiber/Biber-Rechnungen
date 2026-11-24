@@ -37,6 +37,13 @@ type Werte = {
 
 const keinMatching: Matching = { algorithmus: 'Keiner', muster: null, grossKlein: false }
 
+/** „3 Belege und 1 Korrespondent ohne Kategorie“ nach dem Löschen einer Kategorie. */
+function betroffen(belege: number, korrespondenten: number): string {
+  const b = `${belege} ${belege === 1 ? 'Beleg' : 'Belege'}`
+  const k = `${korrespondenten} ${korrespondenten === 1 ? 'Korrespondent' : 'Korrespondenten'}`
+  return `${b} und ${k} ohne Kategorie`
+}
+
 type Ziel = { art: 'tag'; tag?: Tag; alleTags: Tag[] } | { art: 'kategorie'; kategorie?: Kategorie }
 
 function startwerte(ziel: Ziel): Werte {
@@ -137,15 +144,23 @@ export function BearbeitenDialog({ onSchliessen, ...ziel }: Ziel & { onSchliesse
 
   const loeschen = () => {
     if (!vorhanden) return
-    const optionen = {
-      onSuccess: () => {
-        toast.erfolg(`${istTag ? 'Tag' : 'Kategorie'} gelöscht`)
-        onSchliessen()
-      },
-      onError: (f: Error) => toast.fehler(f.message),
-    }
-    if (istTag) tagLoeschen.mutate(vorhanden.id, optionen)
-    else katLoeschen.mutate(vorhanden.id, optionen)
+    const onError = (f: Error) => toast.fehler(f.message)
+    if (istTag)
+      tagLoeschen.mutate(vorhanden.id, {
+        onSuccess: () => {
+          toast.erfolg('Tag gelöscht')
+          onSchliessen()
+        },
+        onError,
+      })
+    else
+      katLoeschen.mutate(vorhanden.id, {
+        onSuccess: ({ belege, korrespondenten }) => {
+          toast.erfolg(`Kategorie gelöscht – ${betroffen(belege, korrespondenten)}`)
+          onSchliessen()
+        },
+        onError,
+      })
   }
 
   return (

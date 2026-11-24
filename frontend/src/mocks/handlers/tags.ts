@@ -4,6 +4,7 @@ import type {
   BelegDetail,
   Kategorie,
   KategorieAendern,
+  KategorieGeloescht,
   Matching,
   MatchingAnwenden,
   MatchingTest,
@@ -131,12 +132,14 @@ export const tagsRouten: Route[] = [
 
   route('delete', '/api/kategorien/{id}', 'Bearbeiten', ({ params }) => {
     if (!db.kategorien.some((k) => k.id === params.id)) return nichtGefunden('Kategorie')
+    const belege = db.belege.filter((b) => b.kategorie?.id === params.id).length
+    const korrespondenten = db.korrespondenten.filter((k) => k.defaultKategorie?.id === params.id).length
     db.kategorien = db.kategorien.filter((k) => k.id !== params.id)
     db.belege = db.belege.map((b) => (b.kategorie?.id === params.id ? { ...b, kategorie: null } : b))
     db.korrespondenten = db.korrespondenten.map((k) =>
       k.defaultKategorie?.id === params.id ? { ...k, defaultKategorie: null } : k,
     )
-    return keinInhalt()
+    return HttpResponse.json({ belege, korrespondenten } satisfies KategorieGeloescht)
   }),
 
   route('post', '/api/matching/testen', 'Bearbeiten', async ({ request }) => {
