@@ -1,0 +1,86 @@
+name: CI
+
+on: [push, pull_request]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('backend/Directory.Packages.props', 'backend/**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Build
+        run: dotnet build backend/Biber.Invoice.sln -warnaserror
+
+      - name: Format prüfen
+        run: dotnet format backend/Biber.Invoice.sln --verify-no-changes
+
+      - name: Tests
+        run: dotnet test backend/Biber.Invoice.sln --logger trx
+
+      - name: Testergebnisse hochladen
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-testergebnisse
+          path: backend/**/TestResults/*.trx
+          if-no-files-found: ignore
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test
+      - run: npm run build
+
+      - run: npx playwright install --with-deps chromium
+      - run: npm run e2e -- --reporter=list,html
+
+      - name: Playwright-Bericht hochladen
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-bericht
+          path: |
+            frontend/playwright-report/
+            frontend/test-results/
+          if-no-files-found: ignore
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # hashFiles ist auf Job-Ebene nicht erlaubt; ohne docker/smoke.sh wird der Schritt übersprungen.
+      - name: Smoke-Test
+        if: hashFiles('docker/smoke.sh') != ''
+        run: bash docker/smoke.sh
