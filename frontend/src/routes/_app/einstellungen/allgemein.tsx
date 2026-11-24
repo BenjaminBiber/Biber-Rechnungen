@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Platzhalter } from '@/components/Platzhalter'
+import { AllgemeinBereich } from '@/features/einstellungen/allgemein'
 
 export const Route = createFileRoute('/_app/einstellungen/allgemein')({
-  component: () => <Platzhalter titel="Allgemein" />,
+  component: AllgemeinBereich,
 })

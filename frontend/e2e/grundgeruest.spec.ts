@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { artikelIds, stammartikelIds } from '../src/mocks/fixtures/ids'
 
 /** Jede Platzhalter-Route mit der Überschrift, die sie zeigt (`/anmelden` prüft anmeldung.spec.ts). */
 const routen: Array<[pfad: string, titel: string]> = [
@@ -16,14 +17,14 @@ const routen: Array<[pfad: string, titel: string]> = [
   ['/korrespondenten', 'Korrespondenten'],
   ['/korrespondenten/k-1', 'Korrespondent'],
   ['/artikel', 'Artikel'],
-  ['/artikel/a-1', 'Artikel-Detail'],
-  ['/artikel/stammartikel/s-1', 'Stammartikel'],
+  [`/artikel/${artikelIds.a2}`, 'Ordner breit 8 cm, blau'],
+  [`/artikel/stammartikel/${stammartikelIds.kopierpapier}`, 'Kopierpapier A4 80 g'],
   ['/tags', 'Tags & Kategorien'],
   ['/export', 'Export'],
-  ['/einstellungen/allgemein', 'Allgemein'],
-  ['/einstellungen/umsatzsteuer', 'Umsatzsteuer'],
-  ['/einstellungen/pruefungen', 'Prüfungen'],
-  ['/einstellungen/aufbewahrung', 'Aufbewahrung'],
+  ['/einstellungen/allgemein', 'Einstellungen'],
+  ['/einstellungen/umsatzsteuer', 'Einstellungen'],
+  ['/einstellungen/pruefungen', 'Einstellungen'],
+  ['/einstellungen/aufbewahrung', 'Einstellungen'],
   ['/einstellungen/document-intelligence', 'Document Intelligence'],
   ['/einstellungen/mail', 'E-Mail-Import'],
   ['/einstellungen/eingangsordner', 'Eingangsordner'],
@@ -49,7 +50,7 @@ test.describe('Grundgerüst', () => {
   test('/einstellungen leitet auf die Prüfungen um', async ({ page }) => {
     await page.goto('/einstellungen')
     await expect(page).toHaveURL(/\/einstellungen\/pruefungen$/)
-    await expect(page.getByRole('heading', { level: 1, name: 'Prüfungen', exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 2, name: 'Prüfungen & Schwellen', exact: true })).toBeVisible()
   })
 
   test('unbekannte Pfade zeigen „Seite nicht gefunden“', async ({ page }) => {
