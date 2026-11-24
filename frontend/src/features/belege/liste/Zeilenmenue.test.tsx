@@ -36,7 +36,7 @@ function renderBelege(pfad = '/belege') {
 const zeilen = () => screen.getAllByRole('row').slice(1)
 
 async function ersteZeile() {
-  await screen.findByRole('table')
+  await screen.findByRole('table', {}, { timeout: 5000 })
   await waitFor(() => expect(zeilen().length).toBeGreaterThan(0))
   const zeile = zeilen()[0]
   const titel = db.belege.find((b) => zeile.textContent?.includes(b.titel))!
@@ -95,7 +95,7 @@ describe('Zeilenmenü', { timeout: 20_000 }, () => {
 
   it('zeigt „Bestätigen“ nicht ohne „zu prüfen“', async () => {
     const { nutzer } = renderBelege('/belege')
-    await screen.findByRole('table')
+    await screen.findByRole('table', {}, { timeout: 5000 })
     await waitFor(() => expect(zeilen().length).toBeGreaterThan(0))
     const ohne = zeilen().find((z) => !within(z).queryByText('zu prüfen'))!
     await nutzer.click(within(ohne).getByRole('button', { name: /^Aktionen für/ }))

@@ -4,6 +4,7 @@ import { expect, test } from '@playwright/test'
 const beleg = '/belege/b0000000-0000-4000-8000-000000000002'
 
 test.describe('Beleg-Detail', () => {
+  test.skip(({ isMobile }) => isMobile, 'mobil: e2e/mobil.spec.ts')
   test.beforeEach(async ({ page }) => {
     await page.goto(beleg)
     await expect(page.getByRole('heading', { level: 1, name: 'Bürowelt Krämer KG' })).toBeVisible()
