@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Platzhalter } from '@/components/Platzhalter'
+import { VerfahrensdokuBereich } from '@/features/einstellungen/betrieb/verfahrensdoku'
 
 export const Route = createFileRoute('/_app/einstellungen/verfahrensdoku')({
-  component: () => <Platzhalter titel="Verfahrensdoku" />,
+  component: VerfahrensdokuBereich,
 })

@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Platzhalter } from '@/components/Platzhalter'
+import { ApiTokensBereich } from '@/features/einstellungen/betrieb/apiTokens'
 
 export const Route = createFileRoute('/_app/einstellungen/api-tokens')({
-  component: () => <Platzhalter titel="API-Tokens (MCP)" />,
+  component: ApiTokensBereich,
 })

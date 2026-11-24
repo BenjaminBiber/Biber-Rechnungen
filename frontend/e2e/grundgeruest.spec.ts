@@ -16,7 +16,6 @@ const routen: Array<[pfad: string, titel: string]> = [
   [`${beleg}/historie`, 'Bürowelt Krämer KG'],
   [`${beleg}/dateien`, 'Bürowelt Krämer KG'],
   [`${beleg}/dubletten`, 'Bürowelt Krämer KG'],
-  [`${beleg}/aufteilen`, 'Beleg aufteilen'],
   ['/hochladen', 'Hochladen & Import'],
   ['/korrespondenten', 'Korrespondenten'],
   [`/korrespondenten/${korrespondentIds.bueroweltKraemer}`, 'Bürowelt Krämer KG'],
@@ -32,11 +31,11 @@ const routen: Array<[pfad: string, titel: string]> = [
   ['/einstellungen/document-intelligence', 'Einstellungen'],
   ['/einstellungen/mail', 'Einstellungen'],
   ['/einstellungen/eingangsordner', 'Einstellungen'],
-  ['/einstellungen/benutzer', 'Benutzer & Freigaben'],
-  ['/einstellungen/api-tokens', 'API-Tokens (MCP)'],
-  ['/einstellungen/integritaet', 'Integrität & Sicherung'],
-  ['/einstellungen/konto', 'Mein Konto'],
-  ['/einstellungen/verfahrensdoku', 'Verfahrensdoku'],
+  ['/einstellungen/benutzer', 'Einstellungen'],
+  ['/einstellungen/api-tokens', 'Einstellungen'],
+  ['/einstellungen/integritaet', 'Einstellungen'],
+  ['/einstellungen/konto', 'Einstellungen'],
+  ['/einstellungen/verfahrensdoku', 'Einstellungen'],
 ]
 
 test.describe('Grundgerüst', () => {
