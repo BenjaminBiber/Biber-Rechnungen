@@ -32,10 +32,10 @@ const routen: Array<[pfad: string, titel: string]> = [
   ['/einstellungen/document-intelligence', 'Einstellungen'],
   ['/einstellungen/mail', 'Einstellungen'],
   ['/einstellungen/eingangsordner', 'Einstellungen'],
-  ['/einstellungen/benutzer', 'Benutzer & Freigaben'],
+  ['/einstellungen/benutzer', 'Einstellungen'],
   ['/einstellungen/api-tokens', 'Einstellungen'],
   ['/einstellungen/integritaet', 'Einstellungen'],
-  ['/einstellungen/konto', 'Mein Konto'],
+  ['/einstellungen/konto', 'Einstellungen'],
   ['/einstellungen/verfahrensdoku', 'Einstellungen'],
 ]
 

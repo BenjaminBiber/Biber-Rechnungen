@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Platzhalter } from '@/components/Platzhalter'
+import { BenutzerBereich } from '@/features/einstellungen/zugriff/BenutzerBereich'
 
 export const Route = createFileRoute('/_app/einstellungen/benutzer')({
-  component: () => <Platzhalter titel="Benutzer & Freigaben" />,
+  component: BenutzerBereich,
 })
