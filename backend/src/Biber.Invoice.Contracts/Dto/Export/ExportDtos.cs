@@ -16,10 +16,11 @@ public sealed record ExportAnfrageDto(
     bool DublettenAusschliessen,
     bool ZuPruefenAusschliessen);
 
+/// <summary>Vorschau eines Exports; <see cref="Vorsteuer"/> ist <c>null</c> bei Kleinunternehmerregelung.</summary>
 public sealed record ExportVorschauDto(
     int AnzahlBelege,
     decimal SummeBrutto,
-    decimal Vorsteuer,
+    decimal? Vorsteuer,
     int DublettenAusgeschlossen,
     int AnzahlZuPruefen,
     long? ZipGroesse,
