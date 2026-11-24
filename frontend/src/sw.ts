@@ -7,7 +7,7 @@ import { NavigationRoute, registerRoute } from 'workbox-routing'
 import { CacheFirst, NetworkFirst, StaleWhileRevalidate } from 'workbox-strategies'
 import { ablehnungsgrund } from './features/hochladen/pruefung'
 import { ablegen, alleWartendenSenden, syncTag } from './pwa/warteschlange'
-import { apiCaches, cacheNamen, istListe, istVorschau, istEinzelbeleg } from './pwa/cacheRegeln'
+import { apiCaches, cacheNamen, istAnmeldestatus, istListe, istVorschau, istEinzelbeleg } from './pwa/cacheRegeln'
 
 /**
  * Service Worker der PWA (vite-plugin-pwa, Modus `injectManifest`). Nur relative Importe – der
@@ -39,6 +39,13 @@ registerRoute(
     cacheName: cacheNamen.listen,
     plugins: [nurOk, new ExpirationPlugin({ maxEntries: 60, maxAgeSeconds: 7 * 24 * 60 * 60 })],
   }),
+  'GET',
+)
+
+// Anmeldestatus: immer vom Netz, nur offline (oder nach 3 s) der zuletzt geladene Stand.
+registerRoute(
+  ({ url, request }) => request.method === 'GET' && url.origin === self.location.origin && istAnmeldestatus(url.pathname),
+  new NetworkFirst({ cacheName: cacheNamen.anmeldung, networkTimeoutSeconds: 3, plugins: [nurOk] }),
   'GET',
 )
 

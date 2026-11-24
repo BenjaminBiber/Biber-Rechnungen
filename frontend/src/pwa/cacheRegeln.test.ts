@@ -1,12 +1,19 @@
 import { describe, expect, it } from 'vitest'
-import { istEinzelbeleg, istListe, istVorschau, wirdZwischengespeichert } from './cacheRegeln'
+import {
+  apiCaches,
+  cacheNamen,
+  istAnmeldestatus,
+  istEinzelbeleg,
+  istListe,
+  istVorschau,
+  wirdZwischengespeichert,
+} from './cacheRegeln'
 
 describe('Cache-Regeln des Service Workers', () => {
   it('ordnet Listen, Einzelbelege und Vorschaubilder ihrer Strategie zu', () => {
     for (const pfad of ['/api/belege', '/api/belege/zaehler', '/api/dashboard', '/api/korrespondenten', '/api/tags'])
       expect(istListe(pfad)).toBe(true)
     expect(istListe('/api/kategorien')).toBe(true)
-    expect(istListe('/api/auth/status')).toBe(true)
     expect(istEinzelbeleg('/api/belege/b-1')).toBe(true)
     expect(istEinzelbeleg('/api/belege/zaehler')).toBe(false)
     expect(istVorschau('/api/belege/b-1/vorschau')).toBe(true)
@@ -20,5 +27,12 @@ describe('Cache-Regeln des Service Workers', () => {
     expect(wirdZwischengespeichert('GET', '/api/belege/b-1/dateien/d-1')).toBe(false)
     expect(wirdZwischengespeichert('GET', '/api/tokens')).toBe(false)
     expect(wirdZwischengespeichert('GET', '/api/belege')).toBe(true)
+  })
+
+  it('holt den Anmeldestatus zuerst vom Netz, nicht veraltet aus dem Cache (Abmelden → Anmelden)', () => {
+    expect(istListe('/api/auth/status')).toBe(false)
+    expect(istAnmeldestatus('/api/auth/status')).toBe(true)
+    expect(wirdZwischengespeichert('GET', '/api/auth/status')).toBe(true)
+    expect(apiCaches).toContain(cacheNamen.anmeldung)
   })
 })

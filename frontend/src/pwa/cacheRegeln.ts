@@ -7,6 +7,7 @@ export const cacheNamen = {
   listen: 'api-listen',
   belege: 'api-belege',
   vorschau: 'api-vorschau',
+  anmeldung: 'api-anmeldung',
 } as const
 
 /** Alle Caches mit API-Antworten – werden beim Abmelden geleert. */
@@ -19,12 +20,19 @@ const listen = new Set([
   '/api/korrespondenten',
   '/api/tags',
   '/api/kategorien',
-  '/api/auth/status',
 ])
 
 /** Listen → StaleWhileRevalidate. */
 export function istListe(pfad: string): boolean {
   return listen.has(pfad)
+}
+
+/**
+ * `GET /api/auth/status` → NetworkFirst. Nicht StaleWhileRevalidate: nach dem Anmelden lieferte der Cache sonst
+ * den Stand „nicht angemeldet“ von vorher, und die App leitete zurück nach `/anmelden`. Offline gilt der letzte Stand.
+ */
+export function istAnmeldestatus(pfad: string): boolean {
+  return pfad === '/api/auth/status'
 }
 
 const einzelbeleg = /^\/api\/belege\/(?!zaehler$|massenaktion$)[^/]+$/
@@ -44,5 +52,5 @@ export function istVorschau(pfad: string): boolean {
 /** Wird diese Anfrage überhaupt zwischengespeichert? */
 export function wirdZwischengespeichert(methode: string, pfad: string): boolean {
   if (methode.toUpperCase() !== 'GET') return false
-  return istListe(pfad) || istEinzelbeleg(pfad) || istVorschau(pfad)
+  return istListe(pfad) || istAnmeldestatus(pfad) || istEinzelbeleg(pfad) || istVorschau(pfad)
 }

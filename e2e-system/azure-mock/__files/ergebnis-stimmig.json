@@ -1,0 +1,79 @@
+{
+  "status": "succeeded",
+  "createdDateTime": "2026-10-15T08:00:00Z",
+  "lastUpdatedDateTime": "2026-10-15T08:00:01Z",
+  "analyzeResult": {
+    "apiVersion": "2024-11-30",
+    "modelId": "prebuilt-invoice",
+    "stringIndexType": "textElements",
+    "content": "Bürobedarf Schulz GmbH\nLindenstraße 12, 10115 Berlin\nRechnung Nr. SCH-2026-0815 vom 15.10.2026\nDruckerpapier 2 x 25,00\nToner 1 x 50,00",
+    "pages": [{ "pageNumber": 1, "angle": 0, "width": 8.27, "height": 11.69, "unit": "inch", "spans": [{ "offset": 0, "length": 130 }] }],
+    "documents": [
+      {
+        "docType": "invoice",
+        "confidence": 0.95,
+        "spans": [{ "offset": 0, "length": 130 }],
+        "fields": {
+          "VendorName": { "type": "string", "valueString": "Bürobedarf Schulz GmbH", "content": "Bürobedarf Schulz GmbH", "confidence": 0.95 },
+          "VendorAddress": {
+            "type": "address",
+            "content": "Lindenstraße 12, 10115 Berlin",
+            "valueAddress": { "streetAddress": "Lindenstraße 12", "postalCode": "10115", "city": "Berlin", "countryRegion": "DE" },
+            "confidence": 0.95
+          },
+          "VendorTaxId": { "type": "string", "valueString": "DE123456789", "content": "DE123456789", "confidence": 0.95 },
+          "InvoiceId": { "type": "string", "valueString": "SCH-2026-0815", "content": "SCH-2026-0815", "confidence": 0.95 },
+          "InvoiceDate": { "type": "date", "valueDate": "2026-10-15", "content": "15.10.2026", "confidence": 0.95 },
+          "SubTotal": { "type": "currency", "valueCurrency": { "amount": 100.0, "currencyCode": "EUR", "currencySymbol": "€" }, "content": "100,00 €", "confidence": 0.95 },
+          "TotalTax": { "type": "currency", "valueCurrency": { "amount": 19.0, "currencyCode": "EUR", "currencySymbol": "€" }, "content": "19,00 €", "confidence": 0.95 },
+          "InvoiceTotal": { "type": "currency", "valueCurrency": { "amount": 119.0, "currencyCode": "EUR", "currencySymbol": "€" }, "content": "119,00 €", "confidence": 0.95 },
+          "TaxDetails": {
+            "type": "array",
+            "valueArray": [
+              {
+                "type": "object",
+                "valueObject": {
+                  "Rate": { "type": "string", "valueString": "19%", "content": "19%", "confidence": 0.95 },
+                  "NetAmount": { "type": "currency", "valueCurrency": { "amount": 100.0, "currencyCode": "EUR" }, "confidence": 0.95 },
+                  "Amount": { "type": "currency", "valueCurrency": { "amount": 19.0, "currencyCode": "EUR" }, "confidence": 0.95 }
+                },
+                "confidence": 0.95
+              }
+            ],
+            "confidence": 0.95
+          },
+          "Items": {
+            "type": "array",
+            "valueArray": [
+              {
+                "type": "object",
+                "content": "Druckerpapier 2 x 25,00",
+                "valueObject": {
+                  "Description": { "type": "string", "valueString": "Druckerpapier A4", "content": "Druckerpapier A4", "confidence": 0.95 },
+                  "Quantity": { "type": "number", "valueNumber": 2, "content": "2", "confidence": 0.95 },
+                  "UnitPrice": { "type": "currency", "valueCurrency": { "amount": 25.0, "currencyCode": "EUR" }, "content": "25,00", "confidence": 0.95 },
+                  "Amount": { "type": "currency", "valueCurrency": { "amount": 50.0, "currencyCode": "EUR" }, "content": "50,00", "confidence": 0.95 },
+                  "TaxRate": { "type": "string", "valueString": "19%", "content": "19%", "confidence": 0.95 }
+                },
+                "confidence": 0.95
+              },
+              {
+                "type": "object",
+                "content": "Toner 1 x 50,00",
+                "valueObject": {
+                  "Description": { "type": "string", "valueString": "Toner schwarz", "content": "Toner schwarz", "confidence": 0.95 },
+                  "Quantity": { "type": "number", "valueNumber": 1, "content": "1", "confidence": 0.95 },
+                  "UnitPrice": { "type": "currency", "valueCurrency": { "amount": 50.0, "currencyCode": "EUR" }, "content": "50,00", "confidence": 0.95 },
+                  "Amount": { "type": "currency", "valueCurrency": { "amount": 50.0, "currencyCode": "EUR" }, "content": "50,00", "confidence": 0.95 },
+                  "TaxRate": { "type": "string", "valueString": "19%", "content": "19%", "confidence": 0.95 }
+                },
+                "confidence": 0.95
+              }
+            ],
+            "confidence": 0.95
+          }
+        }
+      }
+    ]
+  }
+}

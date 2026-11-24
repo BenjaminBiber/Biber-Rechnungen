@@ -1,0 +1,19 @@
+{
+  "priority": 1,
+  "request": {
+    "method": "POST",
+    "urlPath": "/documentintelligence/documentModels/prebuilt-invoice:analyze",
+    "bodyPatterns": [
+      {
+        "contains": "QkVSRTJFU0NBTkZFSExFUkhBRlQwMDAwMDAw"
+      }
+    ]
+  },
+  "response": {
+    "status": 202,
+    "headers": {
+      "Operation-Location": "http://azure-mock:8080/documentintelligence/documentModels/prebuilt-invoice/analyzeResults/fehlerhaft?api-version=2024-11-30",
+      "Retry-After": "0"
+    }
+  }
+}

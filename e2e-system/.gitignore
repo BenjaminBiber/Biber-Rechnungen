@@ -1,0 +1,5 @@
+node_modules/
+.zustand/
+test-results/
+playwright-report/
+*.tmp.mjs

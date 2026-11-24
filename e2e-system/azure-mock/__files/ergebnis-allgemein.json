@@ -1,0 +1,79 @@
+{
+  "status": "succeeded",
+  "createdDateTime": "{{now}}",
+  "lastUpdatedDateTime": "{{now}}",
+  "analyzeResult": {
+    "apiVersion": "2024-11-30",
+    "modelId": "prebuilt-invoice",
+    "stringIndexType": "textElements",
+    "content": "Werkzeughandel Krause GmbH\nHafenweg 3, 20457 Hamburg\nRechnung Nr. E2E-{{request.pathSegments.[4]}}\nSchraubendreher-Satz\nBohrer-Set",
+    "pages": [{ "pageNumber": 1, "angle": 0, "width": 8.27, "height": 11.69, "unit": "inch", "spans": [{ "offset": 0, "length": 100 }] }],
+    "documents": [
+      {
+        "docType": "invoice",
+        "confidence": 0.95,
+        "spans": [{ "offset": 0, "length": 100 }],
+        "fields": {
+          "VendorName": { "type": "string", "valueString": "Werkzeughandel Krause GmbH", "content": "Werkzeughandel Krause GmbH", "confidence": 0.95 },
+          "VendorAddress": {
+            "type": "address",
+            "content": "Hafenweg 3, 20457 Hamburg",
+            "valueAddress": { "streetAddress": "Hafenweg 3", "postalCode": "20457", "city": "Hamburg", "countryRegion": "DE" },
+            "confidence": 0.95
+          },
+          "VendorTaxId": { "type": "string", "valueString": "DE987654321", "content": "DE987654321", "confidence": 0.95 },
+          "InvoiceId": { "type": "string", "valueString": "E2E-{{request.pathSegments.[4]}}", "content": "E2E-{{request.pathSegments.[4]}}", "confidence": 0.95 },
+          "InvoiceDate": { "type": "date", "valueDate": "{{now format='yyyy-MM-dd'}}", "content": "{{now format='dd.MM.yyyy'}}", "confidence": 0.95 },
+          "SubTotal": { "type": "currency", "valueCurrency": { "amount": 50.0, "currencyCode": "EUR", "currencySymbol": "€" }, "content": "50,00 €", "confidence": 0.95 },
+          "TotalTax": { "type": "currency", "valueCurrency": { "amount": 9.5, "currencyCode": "EUR", "currencySymbol": "€" }, "content": "9,50 €", "confidence": 0.95 },
+          "InvoiceTotal": { "type": "currency", "valueCurrency": { "amount": 59.5, "currencyCode": "EUR", "currencySymbol": "€" }, "content": "59,50 €", "confidence": 0.95 },
+          "TaxDetails": {
+            "type": "array",
+            "valueArray": [
+              {
+                "type": "object",
+                "valueObject": {
+                  "Rate": { "type": "string", "valueString": "19%", "content": "19%", "confidence": 0.95 },
+                  "NetAmount": { "type": "currency", "valueCurrency": { "amount": 50.0, "currencyCode": "EUR" }, "confidence": 0.95 },
+                  "Amount": { "type": "currency", "valueCurrency": { "amount": 9.5, "currencyCode": "EUR" }, "confidence": 0.95 }
+                },
+                "confidence": 0.95
+              }
+            ],
+            "confidence": 0.95
+          },
+          "Items": {
+            "type": "array",
+            "valueArray": [
+              {
+                "type": "object",
+                "content": "Schraubendreher-Satz 1 x 30,00",
+                "valueObject": {
+                  "Description": { "type": "string", "valueString": "Schraubendreher-Satz", "content": "Schraubendreher-Satz", "confidence": 0.95 },
+                  "Quantity": { "type": "number", "valueNumber": 1, "content": "1", "confidence": 0.95 },
+                  "UnitPrice": { "type": "currency", "valueCurrency": { "amount": 30.0, "currencyCode": "EUR" }, "content": "30,00", "confidence": 0.95 },
+                  "Amount": { "type": "currency", "valueCurrency": { "amount": 30.0, "currencyCode": "EUR" }, "content": "30,00", "confidence": 0.95 },
+                  "TaxRate": { "type": "string", "valueString": "19%", "content": "19%", "confidence": 0.95 }
+                },
+                "confidence": 0.95
+              },
+              {
+                "type": "object",
+                "content": "Bohrer-Set 1 x 20,00",
+                "valueObject": {
+                  "Description": { "type": "string", "valueString": "Bohrer-Set", "content": "Bohrer-Set", "confidence": 0.95 },
+                  "Quantity": { "type": "number", "valueNumber": 1, "content": "1", "confidence": 0.95 },
+                  "UnitPrice": { "type": "currency", "valueCurrency": { "amount": 20.0, "currencyCode": "EUR" }, "content": "20,00", "confidence": 0.95 },
+                  "Amount": { "type": "currency", "valueCurrency": { "amount": 20.0, "currencyCode": "EUR" }, "content": "20,00", "confidence": 0.95 },
+                  "TaxRate": { "type": "string", "valueString": "19%", "content": "19%", "confidence": 0.95 }
+                },
+                "confidence": 0.95
+              }
+            ],
+            "confidence": 0.95
+          }
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,62 @@
+# Override für die End-to-End-Tests (über docker-compose.yml und docker/compose.test.yml gelegt, siehe compose.sh):
+# Azure Document Intelligence und das IMAP-Postfach als Container nachgebildet, dazu ein Hilfscontainer
+# mit Eingang und Ablage für die Tests. Pfade sind relativ zum Repo-Hauptordner (Ordner der ersten Datei).
+services:
+  api:
+    depends_on:
+      azure-mock:
+        condition: service_healthy
+      mail:
+        condition: service_healthy
+      kosit:
+        condition: service_healthy
+    environment:
+      DocumentIntelligence__Endpunkt: http://azure-mock:8080/
+      DocumentIntelligence__Schluessel: e2e-schluessel
+      DocumentIntelligence__TimeoutSekunden: "30"
+      Imap__Host: mail
+      Imap__Port: "3143"
+      Imap__Benutzer: rechnungen
+      Imap__Passwort: e2e-passwort
+      Imap__Ssl: "false"
+
+  azure-mock:
+    image: wiremock/wiremock:3.13.1
+    command: ["--port", "8080", "--disable-banner"]
+    volumes:
+      - ./e2e-system/azure-mock:/home/wiremock:ro
+    ports:
+      # Für das Journal (/__admin/requests) aus den Tests.
+      - "8089:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/__admin/health || exit 1"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+
+  mail:
+    image: greenmail/standalone:2.1.5
+    environment:
+      GREENMAIL_OPTS: >-
+        -Dgreenmail.setup.test.smtp -Dgreenmail.setup.test.imap
+        -Dgreenmail.hostname=0.0.0.0
+        -Dgreenmail.users=rechnungen:e2e-passwort@e2e.local
+        -Dgreenmail.verbose=false
+    ports:
+      # SMTP zum Einliefern der Testmails; die REST-API zeigt, in welchem Ordner eine Mail liegt.
+      - "3025:3025"
+      - "8090:8080"
+    healthcheck:
+      test: ["CMD", "bash", "-c", "</dev/tcp/localhost/3143"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+
+  # Hilfscontainer: Tests legen über `docker compose exec` Dateien in den Eingang und lesen die Ablage.
+  werkzeug:
+    image: alpine:3.22
+    command: ["sleep", "infinity"]
+    init: true
+    volumes:
+      - eingang:/eingang
+      - ablage:/ablage

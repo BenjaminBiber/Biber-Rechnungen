@@ -1,0 +1,55 @@
+{
+  "status": "succeeded",
+  "createdDateTime": "{{now}}",
+  "lastUpdatedDateTime": "{{now}}",
+  "analyzeResult": {
+    "apiVersion": "2024-11-30",
+    "modelId": "prebuilt-invoice",
+    "stringIndexType": "textElements",
+    "content": "Sammelscan\nZwei Rechnungen in einer Datei",
+    "pages": [
+      { "pageNumber": 1, "angle": 0, "width": 8.27, "height": 11.69, "unit": "inch", "spans": [{ "offset": 0, "length": 10 }] },
+      { "pageNumber": 2, "angle": 0, "width": 8.27, "height": 11.69, "unit": "inch", "spans": [{ "offset": 10, "length": 10 }] },
+      { "pageNumber": 3, "angle": 0, "width": 8.27, "height": 11.69, "unit": "inch", "spans": [{ "offset": 20, "length": 10 }] },
+      { "pageNumber": 4, "angle": 0, "width": 8.27, "height": 11.69, "unit": "inch", "spans": [{ "offset": 30, "length": 10 }] }
+    ],
+    "documents": [
+      {
+        "docType": "invoice",
+        "confidence": 0.9,
+        "spans": [{ "offset": 0, "length": 40 }],
+        "fields": {
+          "VendorName": { "type": "string", "valueString": "Druckerei Weber", "content": "Druckerei Weber", "confidence": 0.9 },
+          "VendorAddress": {
+            "type": "address",
+            "content": "Marktplatz 1, 80331 München",
+            "valueAddress": { "streetAddress": "Marktplatz 1", "postalCode": "80331", "city": "München", "countryRegion": "DE" },
+            "confidence": 0.9
+          },
+          "VendorTaxId": { "type": "string", "valueString": "DE555666777", "content": "DE555666777", "confidence": 0.9 },
+          "InvoiceId": { "type": "string", "valueString": "DW-4711", "content": "DW-4711", "confidence": 0.9 },
+          "InvoiceDate": { "type": "date", "valueDate": "{{now format='yyyy-MM-dd'}}", "content": "{{now format='dd.MM.yyyy'}}", "confidence": 0.9 },
+          "SubTotal": { "type": "currency", "valueCurrency": { "amount": 80.0, "currencyCode": "EUR" }, "content": "80,00 €", "confidence": 0.9 },
+          "TotalTax": { "type": "currency", "valueCurrency": { "amount": 15.2, "currencyCode": "EUR" }, "content": "15,20 €", "confidence": 0.9 },
+          "InvoiceTotal": { "type": "currency", "valueCurrency": { "amount": 95.2, "currencyCode": "EUR" }, "content": "95,20 €", "confidence": 0.9 },
+          "Items": {
+            "type": "array",
+            "valueArray": [
+              {
+                "type": "object",
+                "content": "Flyer 1 x 80,00",
+                "valueObject": {
+                  "Description": { "type": "string", "valueString": "Flyer", "content": "Flyer", "confidence": 0.9 },
+                  "Quantity": { "type": "number", "valueNumber": 1, "content": "1", "confidence": 0.9 },
+                  "Amount": { "type": "currency", "valueCurrency": { "amount": 80.0, "currencyCode": "EUR" }, "content": "80,00", "confidence": 0.9 }
+                },
+                "confidence": 0.9
+              }
+            ],
+            "confidence": 0.9
+          }
+        }
+      }
+    ]
+  }
+}
