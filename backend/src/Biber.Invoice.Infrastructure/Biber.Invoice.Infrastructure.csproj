@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Biber.Invoice.Contracts\Biber.Invoice.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
+    <PackageReference Include="Hangfire.Core" />
+    <PackageReference Include="Hangfire.PostgreSql" />
+    <PackageReference Include="ZUGFeRD-csharp" />
+    <PackageReference Include="PdfPig" />
+    <PackageReference Include="PDFsharp" />
+    <PackageReference Include="Docnet.Core" />
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" />
+    <PackageReference Include="Azure.AI.DocumentIntelligence" />
+    <PackageReference Include="MailKit" />
+    <PackageReference Include="Microsoft.ML" />
+    <PackageReference Include="ClosedXML" />
+    <PackageReference Include="Markdig" />
+    <PackageReference Include="QuestPDF" />
+  </ItemGroup>
+
+</Project>
