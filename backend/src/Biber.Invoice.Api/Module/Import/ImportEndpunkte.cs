@@ -49,7 +49,16 @@ public sealed class ImportEndpunkte : IEndpunktModul
         // Das Standardlimit für Multipart-Inhalte (128 MB) wäre kleiner als 20 Dateien à 50 MB.
         anfrage.HttpContext.Features.Set<IFormFeature>(
             new FormFeature(anfrage, new FormOptions { MultipartBodyLengthLimit = MaxAnfrageGroesse }));
-        var form = await anfrage.ReadFormAsync(ct);
+        IFormCollection form;
+        try
+        {
+            form = await anfrage.ReadFormAsync(ct);
+        }
+        catch (InvalidDataException)
+        {
+            return Ungueltig("dateien", "Das Formular ist ungültig oder unvollständig.");
+        }
+
         var dateien = form.Files.GetFiles("dateien");
         if (dateien.Count == 0)
         {
