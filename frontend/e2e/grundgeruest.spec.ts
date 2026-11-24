@@ -33,10 +33,10 @@ const routen: Array<[pfad: string, titel: string]> = [
   ['/einstellungen/mail', 'Einstellungen'],
   ['/einstellungen/eingangsordner', 'Einstellungen'],
   ['/einstellungen/benutzer', 'Einstellungen'],
-  ['/einstellungen/api-tokens', 'API-Tokens (MCP)'],
-  ['/einstellungen/integritaet', 'Integrität & Sicherung'],
+  ['/einstellungen/api-tokens', 'Einstellungen'],
+  ['/einstellungen/integritaet', 'Einstellungen'],
   ['/einstellungen/konto', 'Einstellungen'],
-  ['/einstellungen/verfahrensdoku', 'Verfahrensdoku'],
+  ['/einstellungen/verfahrensdoku', 'Einstellungen'],
 ]
 
 test.describe('Grundgerüst', () => {
