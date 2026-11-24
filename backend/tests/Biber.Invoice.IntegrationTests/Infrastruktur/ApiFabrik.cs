@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Npgsql;
@@ -98,6 +99,9 @@ public sealed class ApiFabrik : WebApplicationFactory<Program>, IAsyncLifetime
             TablesToIgnore = [new Table("__EFMigrationsHistory")],
         });
         await _respawner.ResetAsync(verbindung);
+
+        // Zwischengespeicherte Einstellungen gehören zur geleerten Datenbank und dürfen den nächsten Test nicht beeinflussen.
+        (Services.GetService<IMemoryCache>() as MemoryCache)?.Clear();
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
