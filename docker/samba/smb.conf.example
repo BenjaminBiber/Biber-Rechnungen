@@ -1,0 +1,54 @@
+# Beispielkonfiguration für den VORHANDENEN Samba-Container des Betreibers.
+# Biber-Rechnungen startet selbst keinen Samba; diese Datei (bzw. die beiden
+# Freigaben daraus) wird in die Konfiguration des vorhandenen Containers übernommen.
+# Pfade entsprechen PFAD_EINGANG und PFAD_ABLAGE aus .env (im Samba-Container gemountet).
+
+[global]
+   # Name der Arbeitsgruppe im Windows-Netz
+   workgroup = WORKGROUP
+   # Eigenständiger Server, Benutzer werden lokal in Samba gepflegt
+   server role = standalone server
+   # Nur angemeldete Benutzer, kein Gastzugang
+   map to guest = never
+   # Mindestens SMB2 (ältere Scanner ggf. auf SMB2 umstellen)
+   server min protocol = SMB2
+   # Kein Druckerdienst
+   load printers = no
+   disable spoolss = yes
+
+[Rechnungen-Eingang]
+   # Eingangsordner: Scanner und Benutzer legen hier Belege ab, die App holt sie ab
+   comment = Eingang Biber-Rechnungen (Scanner)
+   # Gleicher Host-Ordner wie PFAD_EINGANG
+   path = /srv/rechnungen/eingang
+   # Benutzer dürfen lesen und schreiben
+   read only = no
+   browseable = yes
+   # Nur Mitglieder dieser Gruppe (Scanner-Konto und Benutzer) haben Zugriff
+   valid users = @rechnungen
+   # Alle Dateien gehören dem Konto, das der UID aus APP_UID entspricht,
+   # damit die API sie lesen und nach der Übernahme löschen darf
+   force user = rechnungen
+   # Gruppe entsprechend APP_GID
+   force group = rechnungen
+   # Neue Dateien: Besitzer und Gruppe lesen und schreiben
+   create mask = 0660
+   # Neue Ordner: Besitzer und Gruppe dürfen hineinschreiben
+   directory mask = 0770
+
+[Rechnungen-Ablage]
+   # Unveränderbare Belegablage: nur lesen, zusätzlich WORM
+   comment = Ablage Biber-Rechnungen (nur lesen)
+   # Gleicher Host-Ordner wie PFAD_ABLAGE; die App schreibt über ihren Bind-Mount, nicht über SMB
+   path = /srv/rechnungen/ablage
+   # Über die Freigabe ist kein Schreiben möglich
+   read only = yes
+   browseable = yes
+   # Nur Mitglieder der Gruppe dürfen lesen
+   valid users = @rechnungen
+   # Schreibrechte ausdrücklich niemandem gewähren
+   write list =
+   # WORM-Modul: abgelegte Dateien lassen sich über die Freigabe nicht ändern oder löschen
+   vfs objects = worm
+   # Ohne Karenzzeit: Schutz greift sofort
+   worm:grace_period = 0
