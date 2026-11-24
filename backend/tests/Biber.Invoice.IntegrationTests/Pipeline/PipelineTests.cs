@@ -6,6 +6,7 @@ using Biber.Invoice.Domain.Enums;
 using Biber.Invoice.Domain.Pipeline;
 using Biber.Invoice.Infrastructure.Module.Formaterkennung;
 using Biber.Invoice.Infrastructure.Module.HashDublette;
+using Biber.Invoice.Infrastructure.Module.KorrespondentZuordnung;
 using Biber.Invoice.Infrastructure.Module.Pipeline;
 using Biber.Invoice.Infrastructure.Persistenz;
 using Biber.Invoice.IntegrationTests.Infrastruktur;
@@ -26,13 +27,14 @@ public sealed class PipelineTests(ApiFabrik fabrik)
     /// <summary>
     /// Diese Tests prüfen den Orchestrator mit eigenen Test-Schritten; die echte Formaterkennung würde
     /// die Platzhalter-Dateien ablehnen, der echte Dubletten-Check die mehrfach importierten Bytes
-    /// (der hat <see cref="HashDubletteTests"/>) – beide werden deshalb entfernt.
+    /// (der hat <see cref="HashDubletteTests"/>) – beide werden deshalb entfernt, ebenso die echte Korrespondent-Zuordnung.
     /// </summary>
     private ApiFabrik NurOrchestrator() =>
         fabrik.MitSofortVerarbeitung().MitDiensten(d =>
         {
             foreach (var eintrag in d.Where(e => e.ServiceType == typeof(IPipelineSchritt)
-                && (e.ImplementationType == typeof(FormaterkennungSchritt) || e.ImplementationType == typeof(HashDubletteSchritt))).ToList())
+                && (e.ImplementationType == typeof(FormaterkennungSchritt) || e.ImplementationType == typeof(HashDubletteSchritt)
+                    || e.ImplementationType == typeof(KorrespondentZuordnungSchritt))).ToList())
             {
                 d.Remove(eintrag);
             }
