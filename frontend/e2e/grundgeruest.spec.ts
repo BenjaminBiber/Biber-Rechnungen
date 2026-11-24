@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { artikelIds, stammartikelIds } from '../src/mocks/fixtures/ids'
 
 /** Jede Platzhalter-Route mit der Überschrift, die sie zeigt (`/anmelden` prüft anmeldung.spec.ts). */
 const routen: Array<[pfad: string, titel: string]> = [
@@ -16,8 +17,8 @@ const routen: Array<[pfad: string, titel: string]> = [
   ['/korrespondenten', 'Korrespondenten'],
   ['/korrespondenten/k-1', 'Korrespondent'],
   ['/artikel', 'Artikel'],
-  ['/artikel/a-1', 'Artikel-Detail'],
-  ['/artikel/stammartikel/s-1', 'Stammartikel'],
+  [`/artikel/${artikelIds.a2}`, 'Ordner breit 8 cm, blau'],
+  [`/artikel/stammartikel/${stammartikelIds.kopierpapier}`, 'Kopierpapier A4 80 g'],
   ['/tags', 'Tags & Kategorien'],
   ['/export', 'Export'],
   ['/einstellungen/allgemein', 'Allgemein'],
