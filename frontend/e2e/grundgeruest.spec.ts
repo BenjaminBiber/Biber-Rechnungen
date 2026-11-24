@@ -16,7 +16,6 @@ const routen: Array<[pfad: string, titel: string]> = [
   [`${beleg}/historie`, 'Historie'],
   [`${beleg}/dateien`, 'Dateien'],
   [`${beleg}/dubletten`, 'Dubletten'],
-  [`${beleg}/aufteilen`, 'Beleg aufteilen'],
   ['/hochladen', 'Hochladen & Import'],
   ['/korrespondenten', 'Korrespondenten'],
   [`/korrespondenten/${korrespondentIds.bueroweltKraemer}`, 'Bürowelt Krämer KG'],
