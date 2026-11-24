@@ -1,0 +1,122 @@
+/*
+ * Design-Tokens „Paperless-Indigo“ (docs/design/README.md).
+ * Die Werte unter @theme werden zu CSS-Variablen am :root und zu Tailwind-Klassen
+ * (z. B. bg-akzent, text-gedaempft, rounded-karte, shadow-popover, font-mono).
+ * [data-theme="dark"] überschreibt dieselben Variablen für das dunkle Farbschema.
+ * `static`: alle Variablen werden ausgegeben, auch wenn keine Tailwind-Klasse sie nutzt.
+ */
+
+@theme static {
+  /* Akzent und Seitenleiste */
+  --color-akzent: #2f2d86;
+  --color-akzent-hover: #24226b;
+  --color-akzent-aktiv: #45439a;
+  --color-akzent-zart: #f1f1f9;
+  --color-akzent-text: #2f2d86;
+  --color-auf-akzent: #ffffff;
+  --color-seitenleiste: #2f2d86;
+
+  /* Flächen und Linien */
+  --color-flaeche: #f4f5f7;
+  --color-karte: #ffffff;
+  --color-rand: #e3e6eb;
+  --color-linie: #eef0f3;
+  --color-eingabe-rand: #d5d9e0;
+  --color-tabellenkopf: #fafbfc;
+  --color-hover: #f0f2f5;
+  --color-segment: #e9ecf1;
+  --color-schalter-aus: #c9ced6;
+
+  /* Text */
+  --color-text: #151922;
+  --color-gedaempft: #5e6676;
+  --color-gedaempft-stark: #4a5262;
+
+  /* Statustöne: Fläche und Text, immer zusammen mit Text verwenden */
+  --color-blau-flaeche: #e7e7f4;
+  --color-blau-text: #2f2d86;
+  --color-orange-flaeche: #fdf0e3;
+  --color-orange-text: #a44a06;
+  --color-gruen-flaeche: #e5f4ec;
+  --color-gruen-text: #17703f;
+  --color-rot-flaeche: #fdecea;
+  --color-rot-text: #b42318;
+  --color-grau-flaeche: #eef0f3;
+  --color-grau-text: #4a5262;
+  --color-petrol-flaeche: #e1f3f4;
+  --color-petrol-text: #0e6168;
+  --color-lila-flaeche: #f0eafb;
+  --color-lila-text: #5b2ea6;
+
+  /* Gefährliche Aktionen */
+  --color-gefahr: #b42318;
+  --color-gefahr-hover: #941d14;
+
+  /* Radien */
+  --radius-karte: 12px;
+  --radius-button: 8px;
+  --radius-eingabe: 8px;
+  --radius-chip: 11px;
+  --radius-segment: 9px;
+
+  /* Schatten */
+  --shadow-segment: 0 1px 2px rgba(0, 0, 0, 0.12);
+  --shadow-blatt: 0 1px 4px rgba(21, 25, 34, 0.18);
+  --shadow-popover: 0 16px 40px rgba(20, 26, 42, 0.18);
+  --shadow-dialog: 0 24px 60px rgba(21, 25, 34, 0.35);
+  --shadow-leiste-unten: 0 -8px 24px rgba(21, 25, 34, 0.18);
+
+  /* Schriften */
+  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --color-akzent: #5f5dc8;
+  --color-akzent-hover: #4d4bb3;
+  --color-akzent-aktiv: #7472d6;
+  --color-akzent-zart: #22223a;
+  --color-akzent-text: #a9a7f0;
+  --color-auf-akzent: #ffffff;
+  --color-seitenleiste: #1b1a4a;
+
+  --color-flaeche: #0f1218;
+  --color-karte: #171b23;
+  --color-rand: #2a303b;
+  --color-linie: #222731;
+  --color-eingabe-rand: #39404d;
+  --color-tabellenkopf: #1c212a;
+  --color-hover: #222833;
+  --color-segment: #222833;
+  --color-schalter-aus: #4a5262;
+
+  --color-text: #e6e8ec;
+  --color-gedaempft: #9aa2b1;
+  --color-gedaempft-stark: #b4bac6;
+
+  --color-blau-flaeche: #26264a;
+  --color-blau-text: #b9b8f2;
+  --color-orange-flaeche: #3a2714;
+  --color-orange-text: #f3b27a;
+  --color-gruen-flaeche: #15301f;
+  --color-gruen-text: #7fd3a3;
+  --color-rot-flaeche: #3b1a17;
+  --color-rot-text: #f59a91;
+  --color-grau-flaeche: #262b35;
+  --color-grau-text: #c2c8d2;
+  --color-petrol-flaeche: #11312f;
+  --color-petrol-text: #7dd3d9;
+  --color-lila-flaeche: #2d2142;
+  --color-lila-text: #c8b1f2;
+
+  --color-gefahr: #d0453a;
+  --color-gefahr-hover: #b42318;
+
+  --shadow-segment: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-blatt: 0 1px 4px rgba(0, 0, 0, 0.5);
+  --shadow-popover: 0 16px 40px rgba(0, 0, 0, 0.5);
+  --shadow-dialog: 0 24px 60px rgba(0, 0, 0, 0.6);
+  --shadow-leiste-unten: 0 -8px 24px rgba(0, 0, 0, 0.5);
+}

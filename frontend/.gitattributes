@@ -1,0 +1,5 @@
+# Prettier erwartet LF; ohne diese Regel erzeugt core.autocrlf unter Windows CRLF
+# und `npm run lint` (prettier --check) schlägt nach dem Auschecken fehl.
+* text=auto eol=lf
+*.woff2 binary
+*.png binary

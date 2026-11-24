@@ -1,0 +1,14 @@
+node_modules
+dist
+*.local
+*.tsbuildinfo
+
+# Wird von `tsr generate` bzw. dem Vite-Plugin erzeugt – nicht einchecken,
+# sonst kollidieren parallele Routen-Tickets.
+src/routeTree.gen.ts
+
+# Playwright
+test-results
+playwright-report
+blob-report
+playwright/.cache
