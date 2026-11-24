@@ -6,8 +6,6 @@ namespace Biber.Invoice.Contracts;
 /// </summary>
 public static class ApiRouten
 {
-    public const string Basis = "/api";
-
     public static class Auth
     {
         public const string Status = "/api/auth/status";
