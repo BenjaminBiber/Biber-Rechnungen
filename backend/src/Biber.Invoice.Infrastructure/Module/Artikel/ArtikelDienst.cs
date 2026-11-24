@@ -363,7 +363,7 @@ public sealed class ArtikelDienst(BiberDbContext db, TimeProvider zeit) : IArtik
             .Select(z =>
             {
                 var a = artikel[z.ArtikelId];
-                var umgerechnet = a.GrundpreisMenge is not null &&a.UmrechnungFaktor is > 0;
+                var umgerechnet = a.GrundpreisMenge is not null && a.UmrechnungFaktor is > 0;
                 return new Kauf(
                     a,
                     z.BelegId,
