@@ -89,7 +89,7 @@ public sealed class PipelineTests(ApiFabrik fabrik)
         var vorgang = await f.ImportiereAsync("rechnung.pdf", Pdf);
 
         protokoll.ShouldBe(["Dubletten-Check", "Korrespondent", "Prüfungen"]);
-        vorgang.Schritte.Select(s => s.Name).ShouldBe(["Dubletten-Check", "E-Rechnung lesen", "KoSIT-Validierung", "Daten übernehmen", "Vorschau", "Korrespondent", "Prüfungen"]);
+        vorgang.Schritte.Select(s => s.Name).ShouldBe(["Dubletten-Check", "E-Rechnung lesen", "KoSIT-Validierung", "Daten übernehmen", "Vorschau", "Korrespondent", "Fachliche Dublette", "Prüfungen"]);
         vorgang.Status.ShouldBe(ImportStatus.Fertig);
     }
 
@@ -109,7 +109,7 @@ public sealed class PipelineTests(ApiFabrik fabrik)
         vorgang.Status.ShouldBe(ImportStatus.Dublette);
         vorgang.Ergebnis.ShouldBe("Dublette von 26-0912");
         protokoll.ShouldBe(["Dubletten-Check"]);
-        vorgang.Schritte.Select(s => s.Status).ShouldBe(["ok", "offen", "offen", "offen", "offen", "offen"]);
+        vorgang.Schritte.Select(s => s.Status).ShouldBe(["ok", "offen", "offen", "offen", "offen", "offen", "offen"]);
     }
 
     [Theory]
