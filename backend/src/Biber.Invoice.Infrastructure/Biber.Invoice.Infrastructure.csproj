@@ -11,6 +11,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" />
     <PackageReference Include="Hangfire.Core" />
     <!-- AddHangfire/AddHangfireServer und Job-Aktivierung über den DI-Container (PipelineModul) -->
     <PackageReference Include="Hangfire.AspNetCore" />
