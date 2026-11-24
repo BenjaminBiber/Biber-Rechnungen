@@ -14,6 +14,7 @@ import { useBelegAuswahl } from './auswahl'
 import { sucheValidieren, zuAbfrage } from './suche'
 
 const belegeText = (n: number) => (n === 1 ? '1 Beleg' : `${n} Belege`)
+const belegenText = (n: number) => (n === 1 ? '1 Beleg' : `${n} Belegen`)
 
 const knopf =
   'inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-white/25 bg-white/10 px-3 text-[13px] font-medium text-auf-akzent hover:bg-white/20 [&_.material-symbols-outlined]:text-[18px]'
@@ -70,8 +71,8 @@ export function Massenaktionen() {
   function tagsAendern(neu: string[]) {
     const hinzu = neu.filter((id) => !gemeinsameTags.includes(id))
     const weg = gemeinsameTags.filter((id) => !neu.includes(id))
-    if (hinzu.length) ausfuehren({ aktion: 'TagsSetzen', tagIds: hinzu }, (n) => `Tags bei ${belegeText(n)} gesetzt`)
-    if (weg.length) ausfuehren({ aktion: 'TagsEntfernen', tagIds: weg }, (n) => `Tags bei ${belegeText(n)} entfernt`)
+    if (hinzu.length) ausfuehren({ aktion: 'TagsSetzen', tagIds: hinzu }, (n) => `Tags bei ${belegenText(n)} gesetzt`)
+    if (weg.length) ausfuehren({ aktion: 'TagsEntfernen', tagIds: weg }, (n) => `Tags bei ${belegenText(n)} entfernt`)
   }
 
   function alsBezahlt(tagId: string) {
@@ -116,7 +117,7 @@ export function Massenaktionen() {
             wert={null}
             onAendern={(kategorieId) =>
               kategorieId &&
-              ausfuehren({ aktion: 'KategorieSetzen', kategorieId }, (n) => `Kategorie bei ${belegeText(n)} gesetzt`)
+              ausfuehren({ aktion: 'KategorieSetzen', kategorieId }, (n) => `Kategorie bei ${belegenText(n)} gesetzt`)
             }
             ausloeser={
               <Knopf icon="folder" disabled={massenaktion.isPending}>
