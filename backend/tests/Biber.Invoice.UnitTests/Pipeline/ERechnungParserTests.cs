@@ -136,6 +136,22 @@ public sealed class ERechnungParserTests
     }
 
     [Fact]
+    public void Textzeilen_mit_Menge_und_Betrag_0_haengen_an_der_vorherigen_Position()
+    {
+        var e = Lesen("textzeilen.xml");
+
+        // Zeile 2 (Name „ohne“, Beschreibung „incl. Montage“) und Zeile 4 (nur Name) sind reine Textzeilen;
+        // der Werbekugelschreiber hat Betrag 0, aber Menge 1, und bleibt eine eigene Position.
+        e.Positionen.ShouldBe(
+        [
+            new ExtrahiertePosition(1, "Kabel – NYM-J 3x1,5 – incl. Montage", 50m, "m", 1.20m, 60.00m, 19m),
+            new ExtrahiertePosition(3, "Schrauben – Lieferung frei Baustelle", 2.5m, "kg", 8.00m, 20.00m, 19m),
+            new ExtrahiertePosition(5, "Werbekugelschreiber", 1m, "Stück", 0.00m, 0.00m, 19m),
+        ]);
+        e.Netto.ShouldBe(80.00m);
+    }
+
+    [Fact]
     public void Zwei_Steuersaetze_ergeben_zwei_Steuerzeilen()
     {
         var e = Lesen("zwei-steuersaetze.xml");

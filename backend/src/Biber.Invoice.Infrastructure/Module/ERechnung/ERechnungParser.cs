@@ -107,8 +107,24 @@ public sealed class ERechnungParser : IERechnungParser
         var empfaenger = Partei(
             r.Buyer, r.BuyerContact, r.BuyerElectronicAddress, r.BuyerTaxRegistration, r.DebitorBankAccounts);
 
-        var positionen = r.TradeLineItems
-            .Select((p, i) => new ExtrahiertePosition(
+        var positionen = new List<ExtrahiertePosition>();
+        foreach (var (p, i) in r.TradeLineItems.Select((p, i) => (p, i)))
+        {
+            // Manche Warenwirtschaften schreiben Folgezeilen des Positionstexts (z. B. „incl. Montage“) als eigene
+            // Position mit Menge 0 und Betrag 0. Die gehört als Zusatztext zur vorherigen Position.
+            if (positionen.Count > 0 && IstNull(p.BilledQuantity) && IstNull(p.LineTotalAmount))
+            {
+                var zusatz = Leer(p.Description) ?? Leer(p.Name);
+                if (zusatz is not null)
+                {
+                    var vorige = positionen[^1];
+                    positionen[^1] = vorige with { Text = vorige.Text.Length == 0 ? zusatz : $"{vorige.Text} – {zusatz}" };
+                }
+
+                continue;
+            }
+
+            positionen.Add(new ExtrahiertePosition(
                 Nr: int.TryParse(p.AssociatedDocument?.LineID, out var nr) ? nr : i + 1,
                 Text: PositionsText(p.Name, p.Description),
                 Menge: p.BilledQuantity,
@@ -116,8 +132,8 @@ public sealed class ERechnungParser : IERechnungParser
                 Einheit: EinheitKlartext(p.UnitCode?.ToString().TrimStart('_')),
                 Einzelpreis: p.NetUnitPrice,
                 Gesamt: p.LineTotalAmount,
-                Steuersatz: p.TaxPercent))
-            .ToList();
+                Steuersatz: p.TaxPercent));
+        }
 
         var steuerzeilen = r.Taxes
             .Select(t => new ExtrahierteSteuerzeile(t.Percent, t.BasisAmount, t.TaxAmount))
@@ -196,6 +212,8 @@ public sealed class ERechnungParser : IERechnungParser
         var b = Leer(beschreibung);
         return n is null ? b ?? "" : b is null || b == n ? n : $"{n} – {b}";
     }
+
+    private static bool IstNull(decimal? wert) => wert is null or 0m;
 
     private static string? Leer(string? text) => string.IsNullOrWhiteSpace(text) ? null : text.Trim();
 

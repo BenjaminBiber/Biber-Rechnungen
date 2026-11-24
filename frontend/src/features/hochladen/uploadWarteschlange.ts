@@ -275,6 +275,17 @@ export const warteschlange = {
     if (!eintrag || eintrag.status === 'laedt' || eintrag.status === 'wartet') return
     setzen(id, ausVorgang(vorgang))
   },
+  /**
+   * Der Server kennt den Vorgang nicht (mehr), z. B. nach Zurücksetzen der Datenbank. Ohne diese Meldung
+   * bliebe der Eintrag bis zum Aufräumen auf „In Verarbeitung“ und ließe sich nicht entfernen.
+   */
+  vorgangUnbekannt(id: string) {
+    const eintrag = eintraege.find((e) => e.id === id)
+    if (!eintrag || eintrag.status !== 'verarbeitung') return
+    const meldung = 'Import-Vorgang nicht mehr vorhanden.'
+    void ablage.aktualisieren(id, { status: 'fehler', meldung }).catch(() => {})
+    setzen(id, { status: 'fehler', meldung, wiederholbar: false })
+  },
   /** Abgleich mit der IndexedDB und Nachsenden wartender Einträge. */
   nachsenden,
   /**

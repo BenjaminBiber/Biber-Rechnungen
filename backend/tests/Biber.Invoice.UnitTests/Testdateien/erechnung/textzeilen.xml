@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rsm:CrossIndustryInvoice xmlns:a="urn:un:unece:uncefact:data:standard:QualifiedDataType:100" xmlns:rsm="urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100" xmlns:qdt="urn:un:unece:uncefact:data:standard:QualifiedDataType:100" xmlns:ram="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:udt="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100">
+  <rsm:ExchangedDocumentContext>
+    <ram:BusinessProcessSpecifiedDocumentContextParameter>
+      <ram:ID>urn:fdc:peppol.eu:2017:poacc:billing:01:1.0</ram:ID>
+    </ram:BusinessProcessSpecifiedDocumentContextParameter>
+    <ram:GuidelineSpecifiedDocumentContextParameter>
+      <ram:ID>urn:cen.eu:en16931:2017</ram:ID>
+    </ram:GuidelineSpecifiedDocumentContextParameter>
+  </rsm:ExchangedDocumentContext>
+  <rsm:ExchangedDocument>
+    <ram:ID>ZF-2026-0008</ram:ID>
+    <ram:TypeCode>380</ram:TypeCode>
+    <ram:IssueDateTime>
+      <udt:DateTimeString format="102">20260505</udt:DateTimeString>
+    </ram:IssueDateTime>
+  </rsm:ExchangedDocument>
+  <rsm:SupplyChainTradeTransaction>
+    <ram:IncludedSupplyChainTradeLineItem>
+      <ram:AssociatedDocumentLineDocument>
+        <ram:LineID>1</ram:LineID>
+      </ram:AssociatedDocumentLineDocument>
+      <ram:SpecifiedTradeProduct>
+        <ram:Name>Kabel</ram:Name>
+        <ram:Description>NYM-J 3x1,5</ram:Description>
+      </ram:SpecifiedTradeProduct>
+      <ram:SpecifiedLineTradeAgreement>
+        <ram:NetPriceProductTradePrice>
+          <ram:ChargeAmount>1.20</ram:ChargeAmount>
+        </ram:NetPriceProductTradePrice>
+      </ram:SpecifiedLineTradeAgreement>
+      <ram:SpecifiedLineTradeDelivery>
+        <ram:BilledQuantity unitCode="MTR">50.0000</ram:BilledQuantity>
+      </ram:SpecifiedLineTradeDelivery>
+      <ram:SpecifiedLineTradeSettlement>
+        <ram:ApplicableTradeTax>
+          <ram:TypeCode>VAT</ram:TypeCode>
+          <ram:CategoryCode>S</ram:CategoryCode>
+          <ram:RateApplicablePercent>19.00</ram:RateApplicablePercent>
+        </ram:ApplicableTradeTax>
+        <ram:SpecifiedTradeSettlementLineMonetarySummation>
+          <ram:LineTotalAmount>60.00</ram:LineTotalAmount>
+        </ram:SpecifiedTradeSettlementLineMonetarySummation>
+      </ram:SpecifiedLineTradeSettlement>
+    </ram:IncludedSupplyChainTradeLineItem>
+    <ram:IncludedSupplyChainTradeLineItem>
+      <ram:AssociatedDocumentLineDocument>
+        <ram:LineID>2</ram:LineID>
+      </ram:AssociatedDocumentLineDocument>
+      <ram:SpecifiedTradeProduct>
+        <ram:Name>ohne</ram:Name>
+        <ram:Description>incl. Montage</ram:Description>
+      </ram:SpecifiedTradeProduct>
+      <ram:SpecifiedLineTradeAgreement>
+        <ram:NetPriceProductTradePrice>
+          <ram:ChargeAmount>0.00</ram:ChargeAmount>
+        </ram:NetPriceProductTradePrice>
+      </ram:SpecifiedLineTradeAgreement>
+      <ram:SpecifiedLineTradeDelivery>
+        <ram:BilledQuantity unitCode="H87">0.0000</ram:BilledQuantity>
+      </ram:SpecifiedLineTradeDelivery>
+      <ram:SpecifiedLineTradeSettlement>
+        <ram:ApplicableTradeTax>
+          <ram:TypeCode>VAT</ram:TypeCode>
+          <ram:CategoryCode>S</ram:CategoryCode>
+          <ram:RateApplicablePercent>19.00</ram:RateApplicablePercent>
+        </ram:ApplicableTradeTax>
+        <ram:SpecifiedTradeSettlementLineMonetarySummation>
+          <ram:LineTotalAmount>0.00</ram:LineTotalAmount>
+        </ram:SpecifiedTradeSettlementLineMonetarySummation>
+      </ram:SpecifiedLineTradeSettlement>
+    </ram:IncludedSupplyChainTradeLineItem>
+    <ram:IncludedSupplyChainTradeLineItem>
+      <ram:AssociatedDocumentLineDocument>
+        <ram:LineID>3</ram:LineID>
+      </ram:AssociatedDocumentLineDocument>
+      <ram:SpecifiedTradeProduct>
+        <ram:Name>Schrauben</ram:Name>
+      </ram:SpecifiedTradeProduct>
+      <ram:SpecifiedLineTradeAgreement>
+        <ram:NetPriceProductTradePrice>
+          <ram:ChargeAmount>8.00</ram:ChargeAmount>
+        </ram:NetPriceProductTradePrice>
+      </ram:SpecifiedLineTradeAgreement>
+      <ram:SpecifiedLineTradeDelivery>
+        <ram:BilledQuantity unitCode="KGM">2.5000</ram:BilledQuantity>
+      </ram:SpecifiedLineTradeDelivery>
+      <ram:SpecifiedLineTradeSettlement>
+        <ram:ApplicableTradeTax>
+          <ram:TypeCode>VAT</ram:TypeCode>
+          <ram:CategoryCode>S</ram:CategoryCode>
+          <ram:RateApplicablePercent>19.00</ram:RateApplicablePercent>
+        </ram:ApplicableTradeTax>
+        <ram:SpecifiedTradeSettlementLineMonetarySummation>
+          <ram:LineTotalAmount>20.00</ram:LineTotalAmount>
+        </ram:SpecifiedTradeSettlementLineMonetarySummation>
+      </ram:SpecifiedLineTradeSettlement>
+    </ram:IncludedSupplyChainTradeLineItem>
+    <ram:IncludedSupplyChainTradeLineItem>
+      <ram:AssociatedDocumentLineDocument>
+        <ram:LineID>4</ram:LineID>
+      </ram:AssociatedDocumentLineDocument>
+      <ram:SpecifiedTradeProduct>
+        <ram:Name>Lieferung frei Baustelle</ram:Name>
+      </ram:SpecifiedTradeProduct>
+      <ram:SpecifiedLineTradeAgreement>
+        <ram:NetPriceProductTradePrice>
+          <ram:ChargeAmount>0.00</ram:ChargeAmount>
+        </ram:NetPriceProductTradePrice>
+      </ram:SpecifiedLineTradeAgreement>
+      <ram:SpecifiedLineTradeDelivery>
+        <ram:BilledQuantity unitCode="H87">0.0000</ram:BilledQuantity>
+      </ram:SpecifiedLineTradeDelivery>
+      <ram:SpecifiedLineTradeSettlement>
+        <ram:ApplicableTradeTax>
+          <ram:TypeCode>VAT</ram:TypeCode>
+          <ram:CategoryCode>S</ram:CategoryCode>
+          <ram:RateApplicablePercent>19.00</ram:RateApplicablePercent>
+        </ram:ApplicableTradeTax>
+        <ram:SpecifiedTradeSettlementLineMonetarySummation>
+          <ram:LineTotalAmount>0.00</ram:LineTotalAmount>
+        </ram:SpecifiedTradeSettlementLineMonetarySummation>
+      </ram:SpecifiedLineTradeSettlement>
+    </ram:IncludedSupplyChainTradeLineItem>
+    <ram:IncludedSupplyChainTradeLineItem>
+      <ram:AssociatedDocumentLineDocument>
+        <ram:LineID>5</ram:LineID>
+      </ram:AssociatedDocumentLineDocument>
+      <ram:SpecifiedTradeProduct>
+        <ram:Name>Werbekugelschreiber</ram:Name>
+      </ram:SpecifiedTradeProduct>
+      <ram:SpecifiedLineTradeAgreement>
+        <ram:NetPriceProductTradePrice>
+          <ram:ChargeAmount>0.00</ram:ChargeAmount>
+        </ram:NetPriceProductTradePrice>
+      </ram:SpecifiedLineTradeAgreement>
+      <ram:SpecifiedLineTradeDelivery>
+        <ram:BilledQuantity unitCode="H87">1.0000</ram:BilledQuantity>
+      </ram:SpecifiedLineTradeDelivery>
+      <ram:SpecifiedLineTradeSettlement>
+        <ram:ApplicableTradeTax>
+          <ram:TypeCode>VAT</ram:TypeCode>
+          <ram:CategoryCode>S</ram:CategoryCode>
+          <ram:RateApplicablePercent>19.00</ram:RateApplicablePercent>
+        </ram:ApplicableTradeTax>
+        <ram:SpecifiedTradeSettlementLineMonetarySummation>
+          <ram:LineTotalAmount>0.00</ram:LineTotalAmount>
+        </ram:SpecifiedTradeSettlementLineMonetarySummation>
+      </ram:SpecifiedLineTradeSettlement>
+    </ram:IncludedSupplyChainTradeLineItem>
+    <ram:ApplicableHeaderTradeAgreement>
+      <ram:BuyerReference>BESTELLUNG-1</ram:BuyerReference>
+      <ram:SellerTradeParty>
+        <ram:Name>Muster Bürobedarf GmbH</ram:Name>
+        <ram:DefinedTradeContact>
+          <ram:PersonName>Erika Muster</ram:PersonName>
+          <ram:DepartmentName>Vertrieb</ram:DepartmentName>
+          <ram:TelephoneUniversalCommunication>
+            <ram:CompleteNumber>+49 30 123456</ram:CompleteNumber>
+          </ram:TelephoneUniversalCommunication>
+          <ram:EmailURIUniversalCommunication>
+            <ram:URIID>rechnung@muster-buero.de</ram:URIID>
+          </ram:EmailURIUniversalCommunication>
+        </ram:DefinedTradeContact>
+        <ram:PostalTradeAddress>
+          <ram:PostcodeCode>10115</ram:PostcodeCode>
+          <ram:LineOne>Lieferweg 1</ram:LineOne>
+          <ram:CityName>Berlin</ram:CityName>
+          <ram:CountryID>DE</ram:CountryID>
+        </ram:PostalTradeAddress>
+        <ram:URIUniversalCommunication>
+          <ram:URIID schemeID="EM">rechnung@muster-buero.de</ram:URIID>
+        </ram:URIUniversalCommunication>
+        <ram:SpecifiedTaxRegistration>
+          <ram:ID schemeID="VA">DE123456789</ram:ID>
+        </ram:SpecifiedTaxRegistration>
+        <ram:SpecifiedTaxRegistration>
+          <ram:ID schemeID="FC">30/123/45678</ram:ID>
+        </ram:SpecifiedTaxRegistration>
+      </ram:SellerTradeParty>
+      <ram:BuyerTradeParty>
+        <ram:Name>Biber Handwerk e.K.</ram:Name>
+        <ram:DefinedTradeContact>
+          <ram:PersonName>Max Biber</ram:PersonName>
+          <ram:TelephoneUniversalCommunication>
+            <ram:CompleteNumber>+49 89 987654</ram:CompleteNumber>
+          </ram:TelephoneUniversalCommunication>
+          <ram:EmailURIUniversalCommunication>
+            <ram:URIID>einkauf@biber-handwerk.de</ram:URIID>
+          </ram:EmailURIUniversalCommunication>
+        </ram:DefinedTradeContact>
+        <ram:PostalTradeAddress>
+          <ram:PostcodeCode>80331</ram:PostcodeCode>
+          <ram:LineOne>Hauptstraße 5</ram:LineOne>
+          <ram:CityName>München</ram:CityName>
+          <ram:CountryID>DE</ram:CountryID>
+        </ram:PostalTradeAddress>
+        <ram:URIUniversalCommunication>
+          <ram:URIID schemeID="EM">einkauf@biber-handwerk.de</ram:URIID>
+        </ram:URIUniversalCommunication>
+        <ram:SpecifiedTaxRegistration>
+          <ram:ID schemeID="VA">DE987654321</ram:ID>
+        </ram:SpecifiedTaxRegistration>
+      </ram:BuyerTradeParty>
+    </ram:ApplicableHeaderTradeAgreement>
+    <ram:ApplicableHeaderTradeDelivery>
+      <ram:ActualDeliverySupplyChainEvent>
+        <ram:OccurrenceDateTime>
+          <udt:DateTimeString format="102">20260502</udt:DateTimeString>
+        </ram:OccurrenceDateTime>
+      </ram:ActualDeliverySupplyChainEvent>
+    </ram:ApplicableHeaderTradeDelivery>
+    <ram:ApplicableHeaderTradeSettlement>
+      <ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>
+      <ram:SpecifiedTradeSettlementPaymentMeans>
+        <ram:TypeCode>58</ram:TypeCode>
+        <ram:Information>Überweisung</ram:Information>
+        <ram:PayeePartyCreditorFinancialAccount>
+          <ram:IBANID>DE02120300000000202051</ram:IBANID>
+          <ram:AccountName>Muster Bürobedarf GmbH</ram:AccountName>
+        </ram:PayeePartyCreditorFinancialAccount>
+        <ram:PayeeSpecifiedCreditorFinancialInstitution>
+          <ram:BICID>BYLADEM1001</ram:BICID>
+        </ram:PayeeSpecifiedCreditorFinancialInstitution>
+      </ram:SpecifiedTradeSettlementPaymentMeans>
+      <ram:ApplicableTradeTax>
+        <ram:CalculatedAmount>15.20</ram:CalculatedAmount>
+        <ram:TypeCode>VAT</ram:TypeCode>
+        <ram:BasisAmount>80.00</ram:BasisAmount>
+        <ram:CategoryCode>S</ram:CategoryCode>
+        <ram:RateApplicablePercent>19.00</ram:RateApplicablePercent>
+      </ram:ApplicableTradeTax>
+      <ram:SpecifiedTradePaymentTerms>
+        <ram:Description>Zahlbar innerhalb 30 Tagen</ram:Description>
+        <ram:DueDateDateTime>
+          <udt:DateTimeString format="102">20260604</udt:DateTimeString>
+        </ram:DueDateDateTime>
+      </ram:SpecifiedTradePaymentTerms>
+      <ram:SpecifiedTradeSettlementHeaderMonetarySummation>
+        <ram:LineTotalAmount>80.00</ram:LineTotalAmount>
+        <ram:ChargeTotalAmount>0.00</ram:ChargeTotalAmount>
+        <ram:AllowanceTotalAmount>0.00</ram:AllowanceTotalAmount>
+        <ram:TaxBasisTotalAmount>80.00</ram:TaxBasisTotalAmount>
+        <ram:TaxTotalAmount currencyID="EUR">15.20</ram:TaxTotalAmount>
+        <ram:GrandTotalAmount>95.20</ram:GrandTotalAmount>
+        <ram:TotalPrepaidAmount>0.00</ram:TotalPrepaidAmount>
+        <ram:DuePayableAmount>95.20</ram:DuePayableAmount>
+      </ram:SpecifiedTradeSettlementHeaderMonetarySummation>
+    </ram:ApplicableHeaderTradeSettlement>
+  </rsm:SupplyChainTradeTransaction>
+</rsm:CrossIndustryInvoice>

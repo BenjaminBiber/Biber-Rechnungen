@@ -1,11 +1,43 @@
+import { cpSync, createReadStream, existsSync, statSync } from 'node:fs'
+import { join, normalize, resolve } from 'node:path'
 import { fileURLToPath, URL } from 'node:url'
 import tailwindcss from '@tailwindcss/vite'
 import { tanstackRouter } from '@tanstack/router-plugin/vite'
 import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 const backend = 'http://localhost:8080'
+
+/** Hilfsdateien von pdf.js, die es zur Laufzeit nachlädt (siehe PdfSeite.tsx). */
+const pdfjsVerzeichnisse = ['wasm', 'cmaps', 'standard_fonts', 'iccs']
+
+/**
+ * Liefert die pdf.js-Hilfsdateien unter `/pdfjs/…` aus: im Dev-Server direkt aus node_modules, im Build
+ * nach `dist/pdfjs/` kopiert. Ohne `wasm/openjpeg.wasm` fehlen z. B. JPEG2000-Bilder (oft Briefköpfe).
+ */
+function pdfjsDateien(): Plugin {
+  const quelle = resolve(fileURLToPath(new URL('.', import.meta.url)), 'node_modules/pdfjs-dist')
+  let ausgabe = ''
+  return {
+    name: 'pdfjs-dateien',
+    configResolved(config) {
+      ausgabe = resolve(config.root, config.build.outDir)
+    },
+    configureServer(server) {
+      server.middlewares.use('/pdfjs', (req, res, next) => {
+        const pfad = normalize(join(quelle, decodeURIComponent((req.url ?? '').split('?')[0])))
+        const erlaubt = pdfjsVerzeichnisse.some((v) => pfad.startsWith(join(quelle, v) + '/'))
+        if (!erlaubt || !existsSync(pfad) || !statSync(pfad).isFile()) return next()
+        if (pfad.endsWith('.wasm')) res.setHeader('Content-Type', 'application/wasm')
+        createReadStream(pfad).pipe(res)
+      })
+    },
+    closeBundle() {
+      for (const v of pdfjsVerzeichnisse) cpSync(join(quelle, v), join(ausgabe, 'pdfjs', v), { recursive: true })
+    },
+  }
+}
 
 /** Dateitypen, die das Share-Target aus anderen Apps annimmt (wie die Dropzone). */
 const geteilteTypen = ['application/pdf', 'text/xml', 'application/xml', 'image/png', 'image/jpeg', 'image/tiff']
@@ -16,6 +48,7 @@ export default defineConfig({
     tanstackRouter({ target: 'react', autoCodeSplitting: true }),
     react(),
     tailwindcss(),
+    pdfjsDateien(),
     VitePWA({
       // In Vitest gibt es keinen Service Worker.
       disable: !!process.env.VITEST,
