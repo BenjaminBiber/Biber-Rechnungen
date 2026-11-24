@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Platzhalter } from '@/components/Platzhalter'
+import { IntegritaetBereich } from '@/features/einstellungen/betrieb/integritaet'
 
 export const Route = createFileRoute('/_app/einstellungen/integritaet')({
-  component: () => <Platzhalter titel="Integrität & Sicherung" />,
+  component: IntegritaetBereich,
 })

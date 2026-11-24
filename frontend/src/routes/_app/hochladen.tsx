@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Platzhalter } from '@/components/Platzhalter'
+import { HochladenSeite } from '@/features/hochladen/HochladenSeite'
 
 export const Route = createFileRoute('/_app/hochladen')({
-  component: () => <Platzhalter titel="Hochladen" />,
+  component: HochladenSeite,
 })

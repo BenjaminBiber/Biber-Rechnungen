@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Platzhalter } from '@/components/Platzhalter'
+import { MailBereich } from '@/features/einstellungen/eingang/mail'
 
 export const Route = createFileRoute('/_app/einstellungen/mail')({
-  component: () => <Platzhalter titel="E-Mail-Import" />,
+  component: MailBereich,
 })
