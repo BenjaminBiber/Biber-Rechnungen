@@ -27,7 +27,7 @@ public sealed class HashDubletteTests(ApiFabrik fabrik)
         vorgang.Status.ShouldBe(ImportStatus.Dublette);
         vorgang.Ergebnis.ShouldBe("Identische Datei (SHA-256) wie Beleg RE-2026-0912 vom 10.01.2026 – als Dublette verknüpft, nicht doppelt gezählt.");
         vorgang.BeendetAm.ShouldBe(f.Zeit.GetUtcNow());
-        vorgang.Schritte.Select(s => s.Status).ShouldBe(["ok", "offen", "offen"]);
+        vorgang.Schritte.Select(s => s.Status).ShouldBe(["ok", "offen", "offen", "offen", "offen"]);
         vorgang.BelegId.ShouldNotBeNull();
         vorgang.BelegId.ShouldNotBe(original.Id);
 
