@@ -211,6 +211,22 @@ public sealed class AuditTests(ApiFabrik fabrik)
     }
 
     [Fact]
+    public async Task Historie_nennt_Auto_Matching_als_Erkennung()
+    {
+        var lieferant = await fabrik.SpeichernAsync(Testdaten.Korrespondent("Hoster GmbH"));
+        var beleg = await fabrik.SpeichernAsync(Testdaten.Beleg());
+
+        await AendernAsync(fabrik, beleg.Id, b =>
+        {
+            b.KorrespondentId = lieferant.Id;
+            b.KorrespondentErkennung = KorrespondentErkennung.Auto;
+        });
+
+        var texte = (await HistorieAsync(beleg.Id)).Select(h => h.Text).ToList();
+        texte.ShouldContain("Korrespondent zugeordnet: Hoster GmbH (über Auto-Matching)");
+    }
+
+    [Fact]
     public async Task Historie_fuer_unbekannten_Beleg_ist_404()
     {
         var antwort = await fabrik.ErzeugeClient(Rolle.NurLesen).GetAsync($"/api/belege/{Guid.NewGuid()}/historie");

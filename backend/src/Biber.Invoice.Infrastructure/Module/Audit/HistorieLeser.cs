@@ -266,6 +266,7 @@ public sealed class HistorieLeser(BiberDbContext db)
         KorrespondentErkennung.Iban => "IBAN",
         KorrespondentErkennung.Name => "Name",
         KorrespondentErkennung.Manuell => "manuelle Zuordnung",
+        KorrespondentErkennung.Auto => "Auto-Matching",
         _ => "keine Erkennung",
     };
 }

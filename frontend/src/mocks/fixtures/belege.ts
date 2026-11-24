@@ -17,6 +17,9 @@ export const mockHeute = '2026-11-24'
 
 type TagSchluessel = keyof typeof tagIds
 
+/** Der Beleg, dessen Korrespondent im Mock per Auto-Matching zugeordnet wurde (Erkennung „Auto“). */
+const autoBeleg = 'b12'
+
 type Zeile = {
   schluessel: keyof typeof belegIds
   korrespondent: keyof typeof korrespondentIds
@@ -546,7 +549,7 @@ function historie(
       14,
       'korrespondent',
       'Korrespondent zugeordnet',
-      `Korrespondent zugeordnet: ${korrespondent} (über USt-IdNr.)`,
+      `Korrespondent zugeordnet: ${korrespondent} (über ${zeile.schluessel === autoBeleg ? 'Auto-Matching' : 'USt-IdNr.'})`,
     ),
     system(3, 14, 'auslesen', 'Ausgelesen', ausgelesen),
     system(
@@ -599,7 +602,7 @@ function baueBeleg(zeile: Zeile): BelegDetail {
     leistungsdatum: zeile.schluessel === 'b6' ? null : zeile.datum,
     belegart: 'Rechnung',
     status: 'Fertig',
-    korrespondentErkennung: korrespondent.ustIdNr ? 'UstIdNr' : 'Name',
+    korrespondentErkennung: zeile.schluessel === autoBeleg ? 'Auto' : korrespondent.ustIdNr ? 'UstIdNr' : 'Name',
     kategorieManuell: zeile.schluessel === 'b2',
     defaultKategorie: korrespondent.defaultKategorie ?? null,
     leistungVon: null,
