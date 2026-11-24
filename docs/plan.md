@@ -75,10 +75,10 @@ Alles läuft auf dem vorhandenen Docker-Host, auf dem auch der Samba-Container u
 
 ```
 /backend
-  Biber.Rechnungen.sln
-  src/Biber.Rechnungen.Api           Endpunkte, Auth, MCP, Hosting
-  src/Biber.Rechnungen.Domain        Entitäten, Regeln (Plausibilität, Normalisierung)
-  src/Biber.Rechnungen.Infrastructure  EF Core, Dateiablage, DI-Client, IMAP, KoSIT-Client, ML.NET
+  Biber.Invoice.sln
+  src/Biber.Invoice.Api           Endpunkte, Auth, MCP, Hosting
+  src/Biber.Invoice.Domain        Entitäten, Regeln (Plausibilität, Normalisierung)
+  src/Biber.Invoice.Infrastructure  EF Core, Dateiablage, DI-Client, IMAP, KoSIT-Client, ML.NET
   tests/…
 /frontend                            Vite-App
 /docker
