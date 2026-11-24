@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using Biber.Invoice.Contracts;
 using Biber.Invoice.Contracts.Dienste;
 using Biber.Invoice.Contracts.Dto;
@@ -33,7 +32,7 @@ public sealed class BenachrichtigungTests(ApiFabrik fabrik) : IAsyncLifetime
         var client = fabrik.ErzeugeClient(Rolle.Benutzer);
 
         var liste = await HoleListeAsync(client);
-        var zaehler = await client.GetFromJsonAsync<BenachrichtigungZaehlerDto>(ApiRouten.Benachrichtigungen.Zaehler);
+        var zaehler = await client.GetJsonAsync<BenachrichtigungZaehlerDto>(ApiRouten.Benachrichtigungen.Zaehler);
 
         var eintrag = liste.Eintraege.ShouldHaveSingleItem();
         eintrag.Titel.ShouldBe("Import fehlgeschlagen");
@@ -266,13 +265,13 @@ public sealed class BenachrichtigungTests(ApiFabrik fabrik) : IAsyncLifetime
     private static async Task<SeiteDto<BenachrichtigungDto>> HoleListeAsync(
         HttpClient client, bool nurUngelesen = false, int seite = 1)
     {
-        var liste = await client.GetFromJsonAsync<SeiteDto<BenachrichtigungDto>>(
+        var liste = await client.GetJsonAsync<SeiteDto<BenachrichtigungDto>>(
             $"{ApiRouten.Benachrichtigungen.Liste}?nurUngelesen={nurUngelesen}&seite={seite}");
         return liste.ShouldNotBeNull();
     }
 
     private static async Task<int> Zaehler(HttpClient client) =>
-        (await client.GetFromJsonAsync<BenachrichtigungZaehlerDto>(ApiRouten.Benachrichtigungen.Zaehler))
+        (await client.GetJsonAsync<BenachrichtigungZaehlerDto>(ApiRouten.Benachrichtigungen.Zaehler))
         .ShouldNotBeNull().Ungelesen;
 
     private async Task<int> HoleGelesenZahlAsync(Rolle rolle)

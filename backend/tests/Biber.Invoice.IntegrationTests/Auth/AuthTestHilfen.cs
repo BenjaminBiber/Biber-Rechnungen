@@ -1,7 +1,4 @@
-using System.Net.Http.Json;
 using System.Security.Cryptography;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Biber.Invoice.Contracts;
 using Biber.Invoice.Contracts.Dto.Auth;
 using Biber.Invoice.Domain.Entitaeten;
@@ -22,11 +19,6 @@ internal static class AuthTestHilfen
 
     /// <summary>Fester TOTP-Schlüssel (Base32) für Benutzer mit aktivem TOTP.</summary>
     public const string TotpSchluessel = "JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP";
-
-    public static JsonSerializerOptions Json { get; } = new(JsonSerializerDefaults.Web)
-    {
-        Converters = { new JsonStringEnumConverter() },
-    };
 
     /// <summary>Client mit eigenem Cookie-Speicher, der Umleitungen nicht folgt.</summary>
     public static HttpClient Client(this ApiFabrik fabrik) =>
@@ -94,17 +86,17 @@ internal static class AuthTestHilfen
     public static async Task<AnmeldeStatus> AnmeldenAsync(
         this HttpClient client, string email, string passwort = Passwort, bool angemeldetBleiben = false)
     {
-        var antwort = await client.PostAsJsonAsync(
-            ApiRouten.Auth.Anmelden, new AnmeldenDto(email, passwort, angemeldetBleiben), Json);
+        var antwort = await client.PostJsonAsync(
+            ApiRouten.Auth.Anmelden, new AnmeldenDto(email, passwort, angemeldetBleiben));
         antwort.EnsureSuccessStatusCode();
-        return (await antwort.Content.ReadFromJsonAsync<AnmeldeErgebnisDto>(Json))!.Status;
+        return (await antwort.Content.LesenAsync<AnmeldeErgebnisDto>())!.Status;
     }
 
     public static async Task<AnmeldeStatus> TotpAsync(this HttpClient client, string code, bool geraetVertrauen = false)
     {
-        var antwort = await client.PostAsJsonAsync(ApiRouten.Auth.Totp, new TotpDto(code, geraetVertrauen), Json);
+        var antwort = await client.PostJsonAsync(ApiRouten.Auth.Totp, new TotpDto(code, geraetVertrauen));
         antwort.EnsureSuccessStatusCode();
-        return (await antwort.Content.ReadFromJsonAsync<AnmeldeErgebnisDto>(Json))!.Status;
+        return (await antwort.Content.LesenAsync<AnmeldeErgebnisDto>())!.Status;
     }
 
     /// <summary>Client, der mit Passwort (und bei aktivem TOTP mit Code) angemeldet ist.</summary>

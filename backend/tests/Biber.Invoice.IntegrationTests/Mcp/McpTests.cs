@@ -308,9 +308,9 @@ public sealed class McpTests(ApiFabrik fabrik) : IAsyncLifetime
     private async Task<Token> TokenAsync(Rolle rolle, params string[] scopes)
     {
         var antwort = await fabrik.ErzeugeClient(rolle)
-            .PostAsJsonAsync(ApiRouten.Tokens.Liste, new ApiTokenAnlegenDto($"Claude {Guid.NewGuid():N}"[..20], scopes));
+            .PostJsonAsync(ApiRouten.Tokens.Liste, new ApiTokenAnlegenDto($"Claude {Guid.NewGuid():N}"[..20], scopes));
         antwort.StatusCode.ShouldBe(HttpStatusCode.Created);
-        var erstellt = (await antwort.Content.ReadFromJsonAsync<ApiTokenErstelltDto>()).ShouldNotBeNull();
+        var erstellt = (await antwort.Content.LesenAsync<ApiTokenErstelltDto>()).ShouldNotBeNull();
         return new Token(erstellt.Token.Id, erstellt.Klartext);
     }
 

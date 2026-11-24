@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using Biber.Invoice.Contracts;
 using Biber.Invoice.Contracts.Dienste;
 using Biber.Invoice.Contracts.Dto;
@@ -39,7 +38,7 @@ public sealed class RegistrierungTests(ApiFabrik basis) : IAsyncLifetime
 
         (await Registrieren(client)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
 
-        var status = await client.GetFromJsonAsync<AuthStatusDto>(ApiRouten.Auth.Status, AuthTestHilfen.Json);
+        var status = await client.GetJsonAsync<AuthStatusDto>(ApiRouten.Auth.Status);
         status.ShouldNotBeNull().RegistrierungOffen.ShouldBeFalse();
         (await BenutzerAsync(NeueEmail)).ShouldBeNull();
     }
@@ -49,7 +48,7 @@ public sealed class RegistrierungTests(ApiFabrik basis) : IAsyncLifetime
     {
         await RegistrierungOeffnenAsync();
 
-        var status = await _fabrik.Client().GetFromJsonAsync<AuthStatusDto>(ApiRouten.Auth.Status, AuthTestHilfen.Json);
+        var status = await _fabrik.Client().GetJsonAsync<AuthStatusDto>(ApiRouten.Auth.Status);
 
         status.ShouldNotBeNull().RegistrierungOffen.ShouldBeTrue();
     }
@@ -110,11 +109,11 @@ public sealed class RegistrierungTests(ApiFabrik basis) : IAsyncLifetime
         var benutzerId = (await BenutzerAsync(NeueEmail))!.Id;
         var admin = await AdminAsync();
 
-        var antwort = await admin.PostAsJsonAsync(
-            Pfad(ApiRouten.Benutzer.Freigeben, benutzerId), new BenutzerFreigebenDto(Rolle.NurLesen), AuthTestHilfen.Json);
+        var antwort = await admin.PostJsonAsync(
+            Pfad(ApiRouten.Benutzer.Freigeben, benutzerId), new BenutzerFreigebenDto(Rolle.NurLesen));
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var dto = (await antwort.Content.ReadFromJsonAsync<BenutzerDto>(AuthTestHilfen.Json)).ShouldNotBeNull();
+        var dto = (await antwort.Content.LesenAsync<BenutzerDto>()).ShouldNotBeNull();
         dto.Freigegeben.ShouldBeTrue();
         dto.Rolle.ShouldBe(Rolle.NurLesen);
         var nurLesen = _fabrik.Client();
@@ -177,7 +176,7 @@ public sealed class RegistrierungTests(ApiFabrik basis) : IAsyncLifetime
         var antwort = await Registrieren(_fabrik.Client(), passwort: "elf-zeichen");
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        var problem = (await antwort.Content.ReadFromJsonAsync<Microsoft.AspNetCore.Http.HttpValidationProblemDetails>())
+        var problem = (await antwort.Content.LesenAsync<Microsoft.AspNetCore.Http.HttpValidationProblemDetails>())
             .ShouldNotBeNull();
         problem.Errors.ShouldContainKey("passwort");
         (await BenutzerAsync(NeueEmail)).ShouldBeNull();
@@ -201,8 +200,8 @@ public sealed class RegistrierungTests(ApiFabrik basis) : IAsyncLifetime
         var admin = await AdminAsync();
         var vorhanden = await _fabrik.BenutzerAnlegenAsync(Rolle.Benutzer, email: "aktiv@example.org");
 
-        var antwort = await admin.PostAsJsonAsync(
-            Pfad(ApiRouten.Benutzer.Freigeben, vorhanden.Id), new BenutzerFreigebenDto(Rolle.Admin), AuthTestHilfen.Json);
+        var antwort = await admin.PostJsonAsync(
+            Pfad(ApiRouten.Benutzer.Freigeben, vorhanden.Id), new BenutzerFreigebenDto(Rolle.Admin));
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.Conflict);
     }
@@ -225,8 +224,8 @@ public sealed class RegistrierungTests(ApiFabrik basis) : IAsyncLifetime
         await _fabrik.BenutzerAnlegenAsync(Rolle.Benutzer, email: "benutzer@example.org");
         var normal = await _fabrik.AngemeldetAsync(await BestehendenAsync("benutzer@example.org"));
 
-        (await normal.PostAsJsonAsync(
-                Pfad(ApiRouten.Benutzer.Freigeben, benutzerId), new BenutzerFreigebenDto(Rolle.Admin), AuthTestHilfen.Json))
+        (await normal.PostJsonAsync(
+                Pfad(ApiRouten.Benutzer.Freigeben, benutzerId), new BenutzerFreigebenDto(Rolle.Admin)))
             .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
         (await normal.PostAsync(Pfad(ApiRouten.Benutzer.Ablehnen, benutzerId), null))
             .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
@@ -255,7 +254,7 @@ public sealed class RegistrierungTests(ApiFabrik basis) : IAsyncLifetime
         string email = NeueEmail,
         string name = "Neue Person",
         string passwort = AuthTestHilfen.Passwort) =>
-        client.PostAsJsonAsync(ApiRouten.Auth.Registrieren, new RegistrierenDto(name, email, passwort), AuthTestHilfen.Json);
+        client.PostJsonAsync(ApiRouten.Auth.Registrieren, new RegistrierenDto(name, email, passwort));
 
     private async Task RegistrierungOeffnenAsync()
     {
@@ -292,8 +291,8 @@ public sealed class RegistrierungTests(ApiFabrik basis) : IAsyncLifetime
 
     private static async Task<List<BenachrichtigungDto>> ListeAsync(HttpClient client)
     {
-        var seite = await client.GetFromJsonAsync<SeiteDto<BenachrichtigungDto>>(
-            ApiRouten.Benachrichtigungen.Liste, AuthTestHilfen.Json);
+        var seite = await client.GetJsonAsync<SeiteDto<BenachrichtigungDto>>(
+            ApiRouten.Benachrichtigungen.Liste);
         return [.. seite.ShouldNotBeNull().Eintraege];
     }
 }

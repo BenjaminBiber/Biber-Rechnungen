@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using Biber.Invoice.Contracts;
 using Biber.Invoice.Contracts.Dto;
 using Biber.Invoice.Contracts.Dto.Tags;
@@ -34,13 +33,13 @@ public sealed class TagTests(ApiFabrik fabrik) : IAsyncLifetime
         new(name, "gruen", inbox, zahlung, matching ?? OhneRegel);
 
     private async Task<TagDto[]> ListeAsync() =>
-        (await Client.GetFromJsonAsync<TagDto[]>(ApiRouten.Tags.Liste)).ShouldNotBeNull();
+        (await Client.GetJsonAsync<TagDto[]>(ApiRouten.Tags.Liste)).ShouldNotBeNull();
 
     private async Task<TagDto> AnlegenAsync(TagAendernDto dto)
     {
-        var antwort = await Client.PostAsJsonAsync(ApiRouten.Tags.Liste, dto);
+        var antwort = await Client.PostJsonAsync(ApiRouten.Tags.Liste, dto);
         antwort.StatusCode.ShouldBe(HttpStatusCode.Created);
-        return (await antwort.Content.ReadFromJsonAsync<TagDto>()).ShouldNotBeNull();
+        return (await antwort.Content.LesenAsync<TagDto>()).ShouldNotBeNull();
     }
 
     private static string Einzeln(Guid id) => ApiRouten.Tags.Einzeln.Replace("{id}", id.ToString());
@@ -61,9 +60,9 @@ public sealed class TagTests(ApiFabrik fabrik) : IAsyncLifetime
     {
         var tag = await AnlegenAsync(Dto("Reise"));
 
-        var geaendert = await Client.PutAsJsonAsync(Einzeln(tag.Id), Dto("Reisen", zahlung: true));
+        var geaendert = await Client.PutJsonAsync(Einzeln(tag.Id), Dto("Reisen", zahlung: true));
         geaendert.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var dto = (await geaendert.Content.ReadFromJsonAsync<TagDto>()).ShouldNotBeNull();
+        var dto = (await geaendert.Content.LesenAsync<TagDto>()).ShouldNotBeNull();
         dto.Name.ShouldBe("Reisen");
         dto.IstZahlungsTag.ShouldBeTrue();
 
@@ -91,7 +90,7 @@ public sealed class TagTests(ApiFabrik fabrik) : IAsyncLifetime
     {
         await AnlegenAsync(Dto("Telefon"));
 
-        var antwort = await Client.PostAsJsonAsync(ApiRouten.Tags.Liste, Dto("TELEFON"));
+        var antwort = await Client.PostJsonAsync(ApiRouten.Tags.Liste, Dto("TELEFON"));
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.Conflict);
     }
@@ -99,7 +98,7 @@ public sealed class TagTests(ApiFabrik fabrik) : IAsyncLifetime
     [Fact]
     public async Task Inbox_und_Zahlung_zugleich_ergibt_400()
     {
-        var antwort = await Client.PostAsJsonAsync(ApiRouten.Tags.Liste, Dto("Beides", inbox: true, zahlung: true));
+        var antwort = await Client.PostJsonAsync(ApiRouten.Tags.Liste, Dto("Beides", inbox: true, zahlung: true));
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
@@ -118,7 +117,7 @@ public sealed class TagTests(ApiFabrik fabrik) : IAsyncLifetime
     [Fact]
     public async Task System_Tag_aendern_oder_loeschen_ergibt_409()
     {
-        (await Client.PutAsJsonAsync(Einzeln(SystemIds.TagZuPruefen), Dto("anders")))
+        (await Client.PutJsonAsync(Einzeln(SystemIds.TagZuPruefen), Dto("anders")))
             .StatusCode.ShouldBe(HttpStatusCode.Conflict);
         (await Client.DeleteAsync(Einzeln(SystemIds.TagZuPruefen)))
             .StatusCode.ShouldBe(HttpStatusCode.Conflict);
@@ -135,18 +134,18 @@ public sealed class TagTests(ApiFabrik fabrik) : IAsyncLifetime
     [Fact]
     public async Task Ungueltiger_Regex_ergibt_400_mit_Feld()
     {
-        var antwort = await Client.PostAsJsonAsync(ApiRouten.Tags.Liste,
+        var antwort = await Client.PostJsonAsync(ApiRouten.Tags.Liste,
             Dto("Regex", matching: new MatchingDto(MatchingAlgorithmus.Regex, "([a-z", false)));
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        var problem = (await antwort.Content.ReadFromJsonAsync<ValidationProblemDetails>()).ShouldNotBeNull();
+        var problem = (await antwort.Content.LesenAsync<ValidationProblemDetails>()).ShouldNotBeNull();
         problem.Errors.Keys.ShouldContain("matching.muster");
     }
 
     [Fact]
     public async Task Fehlendes_Muster_ergibt_400()
     {
-        var antwort = await Client.PostAsJsonAsync(ApiRouten.Tags.Liste,
+        var antwort = await Client.PostJsonAsync(ApiRouten.Tags.Liste,
             Dto("Leer", matching: new MatchingDto(MatchingAlgorithmus.EinWort, " ", false)));
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -167,8 +166,8 @@ public sealed class TagTests(ApiFabrik fabrik) : IAsyncLifetime
         var client = fabrik.ErzeugeClient(Rolle.NurLesen);
 
         (await client.GetAsync(ApiRouten.Tags.Liste)).StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await client.PostAsJsonAsync(ApiRouten.Tags.Liste, Dto("Verboten"))).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
-        (await client.PutAsJsonAsync(Einzeln(SystemIds.TagInbox), Dto("Verboten"))).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await client.PostJsonAsync(ApiRouten.Tags.Liste, Dto("Verboten"))).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await client.PutJsonAsync(Einzeln(SystemIds.TagInbox), Dto("Verboten"))).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
         (await client.DeleteAsync(Einzeln(SystemIds.TagInbox))).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 }

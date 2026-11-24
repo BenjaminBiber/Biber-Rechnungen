@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using Biber.Invoice.Contracts;
 using Biber.Invoice.Contracts.Dto;
 using Biber.Invoice.Contracts.Dto.Tags;
@@ -28,9 +27,9 @@ public sealed class MatchingEndpunktTests(ApiFabrik fabrik) : IAsyncLifetime
 
     private async Task<MatchingTestErgebnisDto> TestenAsync(MatchingTestDto dto)
     {
-        var antwort = await Client.PostAsJsonAsync(ApiRouten.Matching.Testen, dto);
+        var antwort = await Client.PostJsonAsync(ApiRouten.Matching.Testen, dto);
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
-        return (await antwort.Content.ReadFromJsonAsync<MatchingTestErgebnisDto>()).ShouldNotBeNull();
+        return (await antwort.Content.LesenAsync<MatchingTestErgebnisDto>()).ShouldNotBeNull();
     }
 
     [Fact]
@@ -93,16 +92,16 @@ public sealed class MatchingEndpunktTests(ApiFabrik fabrik) : IAsyncLifetime
         var b = await fabrik.SpeichernAsync(Testdaten.Beleg(volltext: "Hosting Februar"));
         await fabrik.SpeichernAsync(Testdaten.Beleg(volltext: "Strom"));
 
-        var antwort = await Client.PostAsJsonAsync(ApiRouten.Matching.Anwenden, new MatchingAnwendenDto("Tag", tag.Id));
+        var antwort = await Client.PostJsonAsync(ApiRouten.Matching.Anwenden, new MatchingAnwendenDto("Tag", tag.Id));
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await antwort.Content.ReadFromJsonAsync<AnzahlGeaendertDto>())!.Geaendert.ShouldBe(2);
+        (await antwort.Content.LesenAsync<AnzahlGeaendertDto>())!.Geaendert.ShouldBe(2);
         using var scope = fabrik.ErzeugeScope();
         var db = scope.ServiceProvider.GetRequiredService<BiberDbContext>();
         (await db.BelegTags.Where(t => t.TagId == tag.Id).Select(t => t.BelegId).ToListAsync()).ShouldBe([a.Id, b.Id], ignoreOrder: true);
 
-        var nochmal = await Client.PostAsJsonAsync(ApiRouten.Matching.Anwenden, new MatchingAnwendenDto("Tag", tag.Id));
-        (await nochmal.Content.ReadFromJsonAsync<AnzahlGeaendertDto>())!.Geaendert.ShouldBe(0);
+        var nochmal = await Client.PostJsonAsync(ApiRouten.Matching.Anwenden, new MatchingAnwendenDto("Tag", tag.Id));
+        (await nochmal.Content.LesenAsync<AnzahlGeaendertDto>())!.Geaendert.ShouldBe(0);
     }
 
     [Fact]
@@ -115,9 +114,9 @@ public sealed class MatchingEndpunktTests(ApiFabrik fabrik) : IAsyncLifetime
         var leer = await fabrik.SpeichernAsync(Testdaten.Beleg(volltext: "Hosting"));
         await fabrik.SpeichernAsync(Testdaten.Beleg(kategorieId: andere.Id, volltext: "Hosting"));
 
-        var antwort = await Client.PostAsJsonAsync(ApiRouten.Matching.Anwenden, new MatchingAnwendenDto("Kategorie", kategorie.Id));
+        var antwort = await Client.PostJsonAsync(ApiRouten.Matching.Anwenden, new MatchingAnwendenDto("Kategorie", kategorie.Id));
 
-        (await antwort.Content.ReadFromJsonAsync<AnzahlGeaendertDto>())!.Geaendert.ShouldBe(1);
+        (await antwort.Content.LesenAsync<AnzahlGeaendertDto>())!.Geaendert.ShouldBe(1);
         using var scope = fabrik.ErzeugeScope();
         var db = scope.ServiceProvider.GetRequiredService<BiberDbContext>();
         (await db.Belege.Where(x => x.KategorieId == kategorie.Id).Select(x => x.Id).ToListAsync()).ShouldBe([leer.Id]);
@@ -126,7 +125,7 @@ public sealed class MatchingEndpunktTests(ApiFabrik fabrik) : IAsyncLifetime
     [Fact]
     public async Task Anwenden_auf_Korrespondent_ergibt_400()
     {
-        var antwort = await Client.PostAsJsonAsync(ApiRouten.Matching.Anwenden, new MatchingAnwendenDto("Korrespondent", Guid.NewGuid()));
+        var antwort = await Client.PostJsonAsync(ApiRouten.Matching.Anwenden, new MatchingAnwendenDto("Korrespondent", Guid.NewGuid()));
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
@@ -134,11 +133,11 @@ public sealed class MatchingEndpunktTests(ApiFabrik fabrik) : IAsyncLifetime
     [Fact]
     public async Task Ungueltiger_Regex_ergibt_400()
     {
-        var antwort = await Client.PostAsJsonAsync(ApiRouten.Matching.Testen,
+        var antwort = await Client.PostJsonAsync(ApiRouten.Matching.Testen,
             new MatchingTestDto("Tag", null, new MatchingDto(MatchingAlgorithmus.Regex, "([kaputt", false)));
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        var problem = (await antwort.Content.ReadFromJsonAsync<ValidationProblemDetails>()).ShouldNotBeNull();
+        var problem = (await antwort.Content.LesenAsync<ValidationProblemDetails>()).ShouldNotBeNull();
         problem.Errors.Keys.ShouldContain("matching.muster");
     }
 
@@ -147,9 +146,9 @@ public sealed class MatchingEndpunktTests(ApiFabrik fabrik) : IAsyncLifetime
     {
         var client = fabrik.ErzeugeClient(Rolle.NurLesen);
 
-        (await client.PostAsJsonAsync(ApiRouten.Matching.Testen, new MatchingTestDto("Tag", null, EinWort("x"))))
+        (await client.PostJsonAsync(ApiRouten.Matching.Testen, new MatchingTestDto("Tag", null, EinWort("x"))))
             .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
-        (await client.PostAsJsonAsync(ApiRouten.Matching.Anwenden, new MatchingAnwendenDto("Tag", Guid.NewGuid())))
+        (await client.PostJsonAsync(ApiRouten.Matching.Anwenden, new MatchingAnwendenDto("Tag", Guid.NewGuid())))
             .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 }

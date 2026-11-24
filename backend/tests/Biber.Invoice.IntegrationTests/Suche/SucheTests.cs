@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using Biber.Invoice.Contracts;
 using Biber.Invoice.Contracts.Dto.Sonstiges;
 using Biber.Invoice.Domain.Entitaeten;
@@ -180,6 +179,6 @@ public sealed class SucheTests(ApiFabrik fabrik)
     {
         var antwort = await fabrik.ErzeugeClient().GetAsync($"{ApiRouten.Suche.Global}?q={Uri.EscapeDataString(q)}");
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK, await antwort.Content.ReadAsStringAsync());
-        return (await antwort.Content.ReadFromJsonAsync<SuchergebnisDto>())!;
+        return (await antwort.Content.LesenAsync<SuchergebnisDto>())!;
     }
 }

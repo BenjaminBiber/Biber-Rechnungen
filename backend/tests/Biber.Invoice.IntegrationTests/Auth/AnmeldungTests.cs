@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using Biber.Invoice.Contracts;
 using Biber.Invoice.Contracts.Dto.Auth;
 using Biber.Invoice.Contracts.Dto.Konto;
@@ -23,17 +22,16 @@ public sealed class AnmeldungTests(ApiFabrik basis) : IAsyncLifetime
     {
         var client = _fabrik.Client();
         (await StatusAsync(client)).Eingerichtet.ShouldBeFalse();
-        var vorschlag = await client.GetFromJsonAsync<TotpEinrichtungDto>(ApiRouten.Auth.TotpVorschlag, AuthTestHilfen.Json);
+        var vorschlag = await client.GetJsonAsync<TotpEinrichtungDto>(ApiRouten.Auth.TotpVorschlag);
         vorschlag.ShouldNotBeNull().Schluessel.Length.ShouldBe(32);
         vorschlag.OtpAuthUri.ShouldBe($"otpauth://totp/Biber-Rechnungen:Admin?secret={vorschlag.Schluessel}&issuer=Biber-Rechnungen");
 
-        var antwort = await client.PostAsJsonAsync(
+        var antwort = await client.PostJsonAsync(
             ApiRouten.Auth.Ersteinrichtung,
-            new ErsteinrichtungDto("Martin Keller", "m.keller@firma.de", AuthTestHilfen.Passwort, vorschlag.Schluessel),
-            AuthTestHilfen.Json);
+            new ErsteinrichtungDto("Martin Keller", "m.keller@firma.de", AuthTestHilfen.Passwort, vorschlag.Schluessel));
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.Created);
-        var admin = (await antwort.Content.ReadFromJsonAsync<BenutzerDto>(AuthTestHilfen.Json)).ShouldNotBeNull();
+        var admin = (await antwort.Content.LesenAsync<BenutzerDto>()).ShouldNotBeNull();
         admin.Rolle.ShouldBe(Rolle.Admin);
         admin.Freigegeben.ShouldBeTrue();
         admin.TotpAktiv.ShouldBeTrue();
@@ -45,10 +43,9 @@ public sealed class AnmeldungTests(ApiFabrik basis) : IAsyncLifetime
         status.RegistrierungOffen.ShouldBeFalse();
         status.GoogleAktiv.ShouldBeFalse();
 
-        var zweite = await _fabrik.Client().PostAsJsonAsync(
+        var zweite = await _fabrik.Client().PostJsonAsync(
             ApiRouten.Auth.Ersteinrichtung,
-            new ErsteinrichtungDto("Zweiter", "zweiter@firma.de", AuthTestHilfen.Passwort, vorschlag.Schluessel),
-            AuthTestHilfen.Json);
+            new ErsteinrichtungDto("Zweiter", "zweiter@firma.de", AuthTestHilfen.Passwort, vorschlag.Schluessel));
         zweite.StatusCode.ShouldBe(HttpStatusCode.Conflict);
         (await client.GetAsync(ApiRouten.Auth.TotpVorschlag)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
     }
@@ -56,10 +53,9 @@ public sealed class AnmeldungTests(ApiFabrik basis) : IAsyncLifetime
     [Fact]
     public async Task Ersteinrichtung_mit_kurzem_Passwort_liefert_400()
     {
-        var antwort = await _fabrik.Client().PostAsJsonAsync(
+        var antwort = await _fabrik.Client().PostJsonAsync(
             ApiRouten.Auth.Ersteinrichtung,
-            new ErsteinrichtungDto("Martin Keller", "m.keller@firma.de", "zu-kurz", AuthTestHilfen.TotpSchluessel),
-            AuthTestHilfen.Json);
+            new ErsteinrichtungDto("Martin Keller", "m.keller@firma.de", "zu-kurz", AuthTestHilfen.TotpSchluessel));
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await antwort.Content.ReadAsStringAsync()).ShouldContain("passwort");
@@ -119,7 +115,7 @@ public sealed class AnmeldungTests(ApiFabrik basis) : IAsyncLifetime
         var admin = await _fabrik.BenutzerAnlegenAsync(Rolle.Admin, mitTotp: true);
         var angemeldet = await _fabrik.AngemeldetAsync(admin);
         var codes = await (await angemeldet.PostAsync(ApiRouten.Konto.Wiederherstellungscodes, null))
-            .Content.ReadFromJsonAsync<WiederherstellungscodesDto>(AuthTestHilfen.Json);
+            .Content.LesenAsync<WiederherstellungscodesDto>();
         codes.ShouldNotBeNull().Codes.Length.ShouldBe(8);
 
         var erster = _fabrik.Client();
@@ -132,7 +128,7 @@ public sealed class AnmeldungTests(ApiFabrik basis) : IAsyncLifetime
         (await WiederherstellungscodeAsync(zweiter, codes.Codes[0])).ShouldBe(AnmeldeStatus.Ungueltig);
         (await zweiter.GetAsync(ApiRouten.Konto.Eigenes)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
 
-        var konto = await erster.GetFromJsonAsync<KontoDto>(ApiRouten.Konto.Eigenes, AuthTestHilfen.Json);
+        var konto = await erster.GetJsonAsync<KontoDto>(ApiRouten.Konto.Eigenes);
         konto.ShouldNotBeNull().Wiederherstellungscodes.ShouldBe(7);
     }
 
@@ -178,8 +174,8 @@ public sealed class AnmeldungTests(ApiFabrik basis) : IAsyncLifetime
     {
         var benutzer = await _fabrik.BenutzerAnlegenAsync(Rolle.Benutzer);
         var client = _fabrik.Client();
-        var antwort = await client.PostAsJsonAsync(
-            ApiRouten.Auth.Anmelden, new AnmeldenDto(benutzer.Email!, AuthTestHilfen.Passwort, false), AuthTestHilfen.Json);
+        var antwort = await client.PostJsonAsync(
+            ApiRouten.Auth.Anmelden, new AnmeldenDto(benutzer.Email!, AuthTestHilfen.Passwort, false));
         var cookie = SitzungsCookie(antwort);
 
         (await client.PostAsync(ApiRouten.Auth.Abmelden, null)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
@@ -195,10 +191,10 @@ public sealed class AnmeldungTests(ApiFabrik basis) : IAsyncLifetime
     {
         var benutzer = await _fabrik.BenutzerAnlegenAsync(Rolle.Benutzer);
 
-        var fluechtig = SetCookie(await _fabrik.Client().PostAsJsonAsync(
-            ApiRouten.Auth.Anmelden, new AnmeldenDto(benutzer.Email!, AuthTestHilfen.Passwort, false), AuthTestHilfen.Json));
-        var dauerhaft = SetCookie(await _fabrik.Client().PostAsJsonAsync(
-            ApiRouten.Auth.Anmelden, new AnmeldenDto(benutzer.Email!, AuthTestHilfen.Passwort, true), AuthTestHilfen.Json));
+        var fluechtig = SetCookie(await _fabrik.Client().PostJsonAsync(
+            ApiRouten.Auth.Anmelden, new AnmeldenDto(benutzer.Email!, AuthTestHilfen.Passwort, false)));
+        var dauerhaft = SetCookie(await _fabrik.Client().PostJsonAsync(
+            ApiRouten.Auth.Anmelden, new AnmeldenDto(benutzer.Email!, AuthTestHilfen.Passwort, true)));
 
         fluechtig.ShouldContain("httponly", Case.Insensitive);
         fluechtig.ShouldContain("samesite=lax", Case.Insensitive);
@@ -216,12 +212,12 @@ public sealed class AnmeldungTests(ApiFabrik basis) : IAsyncLifetime
     }
 
     private static async Task<AuthStatusDto> StatusAsync(HttpClient client) =>
-        (await client.GetFromJsonAsync<AuthStatusDto>(ApiRouten.Auth.Status, AuthTestHilfen.Json)).ShouldNotBeNull();
+        (await client.GetJsonAsync<AuthStatusDto>(ApiRouten.Auth.Status)).ShouldNotBeNull();
 
     private static async Task<AnmeldeStatus> WiederherstellungscodeAsync(HttpClient client, string code)
     {
-        var antwort = await client.PostAsJsonAsync(ApiRouten.Auth.Wiederherstellungscode, new CodeDto(code), AuthTestHilfen.Json);
-        return (await antwort.Content.ReadFromJsonAsync<AnmeldeErgebnisDto>(AuthTestHilfen.Json))!.Status;
+        var antwort = await client.PostJsonAsync(ApiRouten.Auth.Wiederherstellungscode, new CodeDto(code));
+        return (await antwort.Content.LesenAsync<AnmeldeErgebnisDto>())!.Status;
     }
 
     private static string SetCookie(HttpResponseMessage antwort) =>

@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using Biber.Invoice.Contracts;
 using Biber.Invoice.Contracts.Dto;
 using Biber.Invoice.Contracts.Dto.Korrespondenten;
@@ -137,7 +136,7 @@ public sealed class KorrespondentTests(ApiFabrik fabrik) : IAsyncLifetime
         });
         var client = fabrik.ErzeugeClient(Rolle.NurLesen);
 
-        var detail = (await client.GetFromJsonAsync<KorrespondentDetailDto>(Einzeln(k.Id))).ShouldNotBeNull();
+        var detail = (await client.GetJsonAsync<KorrespondentDetailDto>(Einzeln(k.Id))).ShouldNotBeNull();
 
         var z = detail.Kennzahlen;
         z.KostenJahr.ShouldBe(650m);
@@ -153,7 +152,7 @@ public sealed class KorrespondentTests(ApiFabrik fabrik) : IAsyncLifetime
         detail.LetzteBelege[0].Id.ShouldBe(jul.Id);
         detail.AutoTrainiertAm.ShouldBe(new DateTimeOffset(2026, 6, 1, 3, 0, 0, TimeSpan.Zero));
 
-        var vorjahr = (await client.GetFromJsonAsync<KorrespondentDetailDto>(Einzeln(k.Id) + "?jahr=2025")).ShouldNotBeNull();
+        var vorjahr = (await client.GetJsonAsync<KorrespondentDetailDto>(Einzeln(k.Id) + "?jahr=2025")).ShouldNotBeNull();
         vorjahr.Kennzahlen.KostenJahr.ShouldBe(600m);
         vorjahr.Kennzahlen.AenderungVorjahr.ShouldBeNull();
         (await client.GetAsync(Einzeln(Guid.NewGuid()))).StatusCode.ShouldBe(HttpStatusCode.NotFound);
@@ -169,7 +168,7 @@ public sealed class KorrespondentTests(ApiFabrik fabrik) : IAsyncLifetime
         await BelegMitPositionAsync(k.Id, papier.Id, new DateOnly(2026, 3, 5), 5.00m);
         var client = fabrik.ErzeugeClient(Rolle.NurLesen);
 
-        var detail = (await client.GetFromJsonAsync<KorrespondentDetailDto>(Einzeln(k.Id))).ShouldNotBeNull();
+        var detail = (await client.GetJsonAsync<KorrespondentDetailDto>(Einzeln(k.Id))).ShouldNotBeNull();
 
         detail.AnzahlArtikel.ShouldBe(2);
         var artikel = detail.Artikel.ShouldHaveSingleItem();
@@ -185,7 +184,7 @@ public sealed class KorrespondentTests(ApiFabrik fabrik) : IAsyncLifetime
         var kategorie = await fabrik.SpeichernAsync(Testdaten.Kategorie("Büro"));
         var client = fabrik.ErzeugeClient(Rolle.Benutzer);
 
-        var antwort = await client.PostAsJsonAsync(ApiRouten.Korrespondenten.Liste, Eingabe("Neuer Lieferant") with
+        var antwort = await client.PostJsonAsync(ApiRouten.Korrespondenten.Liste, Eingabe("Neuer Lieferant") with
         {
             UstIdNr = "de 123 456 789",
             Ibans = ["de89 3704 0044 0532 0130 00", GueltigeIban],
@@ -196,7 +195,7 @@ public sealed class KorrespondentTests(ApiFabrik fabrik) : IAsyncLifetime
         });
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.Created);
-        var detail = (await antwort.Content.ReadFromJsonAsync<KorrespondentDetailDto>()).ShouldNotBeNull();
+        var detail = (await antwort.Content.LesenAsync<KorrespondentDetailDto>()).ShouldNotBeNull();
         detail.UstIdNr.ShouldBe("DE123456789");
         detail.Ibans.ShouldBe([GueltigeIban]);
         detail.Aliase.ShouldBe(["NL"]);
@@ -214,9 +213,9 @@ public sealed class KorrespondentTests(ApiFabrik fabrik) : IAsyncLifetime
     {
         var client = fabrik.ErzeugeClient(Rolle.Benutzer);
 
-        var iban = await client.PostAsJsonAsync(ApiRouten.Korrespondenten.Liste, Eingabe("X") with { Ibans = ["DE89370400440532013001"] });
-        var name = await client.PostAsJsonAsync(ApiRouten.Korrespondenten.Liste, Eingabe(" "));
-        var kategorie = await client.PostAsJsonAsync(ApiRouten.Korrespondenten.Liste, Eingabe("Y") with { DefaultKategorieId = Guid.NewGuid() });
+        var iban = await client.PostJsonAsync(ApiRouten.Korrespondenten.Liste, Eingabe("X") with { Ibans = ["DE89370400440532013001"] });
+        var name = await client.PostJsonAsync(ApiRouten.Korrespondenten.Liste, Eingabe(" "));
+        var kategorie = await client.PostJsonAsync(ApiRouten.Korrespondenten.Liste, Eingabe("Y") with { DefaultKategorieId = Guid.NewGuid() });
 
         iban.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await iban.Content.ReadAsStringAsync()).ShouldContain("ibans");
@@ -230,7 +229,7 @@ public sealed class KorrespondentTests(ApiFabrik fabrik) : IAsyncLifetime
         await fabrik.SpeichernAsync(Testdaten.Korrespondent("Erster", "DE123456789"));
         var client = fabrik.ErzeugeClient(Rolle.Benutzer);
 
-        var antwort = await client.PostAsJsonAsync(ApiRouten.Korrespondenten.Liste, Eingabe("Zweiter") with { UstIdNr = "DE 123456789" });
+        var antwort = await client.PostJsonAsync(ApiRouten.Korrespondenten.Liste, Eingabe("Zweiter") with { UstIdNr = "DE 123456789" });
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.Conflict);
         (await antwort.Content.ReadAsStringAsync()).ShouldContain("Erster");
@@ -244,11 +243,11 @@ public sealed class KorrespondentTests(ApiFabrik fabrik) : IAsyncLifetime
         await fabrik.SpeichernAsync(k);
         var client = fabrik.ErzeugeClient(Rolle.Benutzer);
 
-        var antwort = await client.PutAsJsonAsync(Einzeln(k.Id), Eingabe("Geprüft"));
-        var unbekannt = await client.PutAsJsonAsync(Einzeln(Guid.NewGuid()), Eingabe("Egal"));
+        var antwort = await client.PutJsonAsync(Einzeln(k.Id), Eingabe("Geprüft"));
+        var unbekannt = await client.PutJsonAsync(Einzeln(Guid.NewGuid()), Eingabe("Egal"));
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await antwort.Content.ReadFromJsonAsync<KorrespondentDetailDto>()).ShouldNotBeNull().Name.ShouldBe("Geprüft");
+        (await antwort.Content.LesenAsync<KorrespondentDetailDto>()).ShouldNotBeNull().Name.ShouldBe("Geprüft");
         (await ListeAsync(client, "")).ShouldHaveSingleItem().IstNeu.ShouldBeFalse();
         unbekannt.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
@@ -284,11 +283,11 @@ public sealed class KorrespondentTests(ApiFabrik fabrik) : IAsyncLifetime
         });
         var client = fabrik.ErzeugeClient(Rolle.Benutzer);
 
-        var antwort = await client.PostAsJsonAsync(
+        var antwort = await client.PostJsonAsync(
             ApiRouten.Korrespondenten.Zusammenfuehren, new KorrespondentenZusammenfuehrenDto(behalten.Id, [quelle.Id]));
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var detail = (await antwort.Content.ReadFromJsonAsync<KorrespondentDetailDto>()).ShouldNotBeNull();
+        var detail = (await antwort.Content.LesenAsync<KorrespondentDetailDto>()).ShouldNotBeNull();
         detail.Aliase.ShouldBe(["Buerowelt Kraemer", "BWK"]);
         detail.Ibans.ShouldBe([GueltigeIban, ZweiteIban]);
         detail.UstIdNr.ShouldBe("DE999999999");
@@ -314,9 +313,9 @@ public sealed class KorrespondentTests(ApiFabrik fabrik) : IAsyncLifetime
         var beleg = await fabrik.SpeichernAsync(Testdaten.Beleg(korrespondentId: quelle.Id));
         var client = fabrik.ErzeugeClient(Rolle.Benutzer);
 
-        var selbst = await client.PostAsJsonAsync(ApiRouten.Korrespondenten.Zusammenfuehren, new KorrespondentenZusammenfuehrenDto(behalten.Id, [behalten.Id]));
-        var unbekannt = await client.PostAsJsonAsync(ApiRouten.Korrespondenten.Zusammenfuehren, new KorrespondentenZusammenfuehrenDto(behalten.Id, [quelle.Id, Guid.NewGuid()]));
-        var unbekanntBehalten = await client.PostAsJsonAsync(ApiRouten.Korrespondenten.Zusammenfuehren, new KorrespondentenZusammenfuehrenDto(Guid.NewGuid(), [quelle.Id]));
+        var selbst = await client.PostJsonAsync(ApiRouten.Korrespondenten.Zusammenfuehren, new KorrespondentenZusammenfuehrenDto(behalten.Id, [behalten.Id]));
+        var unbekannt = await client.PostJsonAsync(ApiRouten.Korrespondenten.Zusammenfuehren, new KorrespondentenZusammenfuehrenDto(behalten.Id, [quelle.Id, Guid.NewGuid()]));
+        var unbekanntBehalten = await client.PostJsonAsync(ApiRouten.Korrespondenten.Zusammenfuehren, new KorrespondentenZusammenfuehrenDto(Guid.NewGuid(), [quelle.Id]));
 
         selbst.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         unbekannt.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -333,16 +332,16 @@ public sealed class KorrespondentTests(ApiFabrik fabrik) : IAsyncLifetime
         var k = await fabrik.SpeichernAsync(Testdaten.Korrespondent());
         var client = fabrik.ErzeugeClient(Rolle.NurLesen);
 
-        (await client.PostAsJsonAsync(ApiRouten.Korrespondenten.Liste, Eingabe("X"))).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
-        (await client.PutAsJsonAsync(Einzeln(k.Id), Eingabe("X"))).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
-        (await client.PostAsJsonAsync(ApiRouten.Korrespondenten.Zusammenfuehren, new KorrespondentenZusammenfuehrenDto(k.Id, [Guid.NewGuid()])))
+        (await client.PostJsonAsync(ApiRouten.Korrespondenten.Liste, Eingabe("X"))).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await client.PutJsonAsync(Einzeln(k.Id), Eingabe("X"))).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await client.PostJsonAsync(ApiRouten.Korrespondenten.Zusammenfuehren, new KorrespondentenZusammenfuehrenDto(k.Id, [Guid.NewGuid()])))
             .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
     private static string Einzeln(Guid id) => ApiRouten.Korrespondenten.Einzeln.Replace("{id}", id.ToString(), StringComparison.Ordinal);
 
     private static async Task<List<KorrespondentListeneintragDto>> ListeAsync(HttpClient client, string query) =>
-        (await client.GetFromJsonAsync<List<KorrespondentListeneintragDto>>(ApiRouten.Korrespondenten.Liste + query)).ShouldNotBeNull();
+        (await client.GetJsonAsync<List<KorrespondentListeneintragDto>>(ApiRouten.Korrespondenten.Liste + query)).ShouldNotBeNull();
 
     private static KorrespondentAendernDto Eingabe(string name) => new(
         name, [], null, null, null, [], null, null, true, false, null, new MatchingDto(MatchingAlgorithmus.Keiner, null, false));

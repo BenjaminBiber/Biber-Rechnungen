@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using Biber.Invoice.Contracts;
 using Biber.Invoice.Contracts.Dienste;
 using Biber.Invoice.Contracts.Dto.Einstellungen;
@@ -82,7 +81,7 @@ public sealed class AufbewahrungTests(ApiFabrik fabrik) : IAsyncLifetime
         fabrik.Zeit.Setze(ErsterFreierTag);
 
         var antwort = await fabrik.ErzeugeClient()
-            .PostAsJsonAsync(ApiRouten.Aufbewahrung.Loeschen, new LoeschenDto(2026, "löschen"));
+            .PostJsonAsync(ApiRouten.Aufbewahrung.Loeschen, new LoeschenDto(2026, "löschen"));
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await AnzahlBelegeAsync()).ShouldBe(1);
@@ -95,7 +94,7 @@ public sealed class AufbewahrungTests(ApiFabrik fabrik) : IAsyncLifetime
         fabrik.Zeit.Setze(LetzterSperrtag);
 
         var antwort = await fabrik.ErzeugeClient()
-            .PostAsJsonAsync(ApiRouten.Aufbewahrung.Loeschen, new LoeschenDto(2026, "LÖSCHEN"));
+            .PostJsonAsync(ApiRouten.Aufbewahrung.Loeschen, new LoeschenDto(2026, "LÖSCHEN"));
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.Conflict);
         (await AnzahlBelegeAsync()).ShouldBe(1);
@@ -127,10 +126,10 @@ public sealed class AufbewahrungTests(ApiFabrik fabrik) : IAsyncLifetime
         fabrik.Zeit.Setze(ErsterFreierTag);
 
         var antwort = await fabrik.ErzeugeClient()
-            .PostAsJsonAsync(ApiRouten.Aufbewahrung.Loeschen, new LoeschenDto(2026, "LÖSCHEN"));
+            .PostJsonAsync(ApiRouten.Aufbewahrung.Loeschen, new LoeschenDto(2026, "LÖSCHEN"));
 
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var ergebnis = (await antwort.Content.ReadFromJsonAsync<LoeschErgebnisDto>()).ShouldNotBeNull();
+        var ergebnis = (await antwort.Content.LesenAsync<LoeschErgebnisDto>()).ShouldNotBeNull();
         ergebnis.Geloescht.ShouldBe(1);
         ergebnis.Pfade.ShouldBe([ablagePfad]);
         File.Exists(original).ShouldBeTrue();
@@ -195,12 +194,12 @@ public sealed class AufbewahrungTests(ApiFabrik fabrik) : IAsyncLifetime
         var client = fabrik.ErzeugeClient(rolle);
 
         (await client.GetAsync(ApiRouten.Aufbewahrung.Loeschbar)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
-        (await client.PostAsJsonAsync(ApiRouten.Aufbewahrung.Loeschen, new LoeschenDto(2026, "LÖSCHEN")))
+        (await client.PostJsonAsync(ApiRouten.Aufbewahrung.Loeschen, new LoeschenDto(2026, "LÖSCHEN")))
             .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
     private static async Task<LoeschbarDto[]> LoeschbarAsync(HttpClient client) =>
-        (await client.GetFromJsonAsync<LoeschbarDto[]>(ApiRouten.Aufbewahrung.Loeschbar)).ShouldNotBeNull();
+        (await client.GetJsonAsync<LoeschbarDto[]>(ApiRouten.Aufbewahrung.Loeschbar)).ShouldNotBeNull();
 
     private async Task<int> AnzahlBelegeAsync()
     {
