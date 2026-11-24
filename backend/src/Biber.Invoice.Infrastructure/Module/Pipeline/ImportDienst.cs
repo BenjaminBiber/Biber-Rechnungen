@@ -70,18 +70,20 @@ public sealed class ImportDienst(
         vorgang.Sha256 = datei.Sha256;
         vorgang.Groesse = datei.Groesse;
         db.ImportVorgaenge.Add(vorgang);
+        await db.SaveChangesAsync(ct);
 
         // ImportVorgang hat kein Feld für die Herkunft einer Aufteilung; der Beleg trägt sie deshalb von Anfang an.
+        // Vorgang und Beleg verweisen gegenseitig aufeinander, daher in zwei Schritten speichern.
         if (herkunft.AufgeteiltAusBelegId is { } aufgeteiltAus)
         {
             var beleg = VerarbeitungsJob.NeuerBeleg(vorgang, jetzt);
             beleg.Status = BelegStatus.Importiert;
             beleg.AufgeteiltAusBelegId = aufgeteiltAus;
             db.Belege.Add(beleg);
+            await db.SaveChangesAsync(ct);
             vorgang.BelegId = beleg.Id;
+            await db.SaveChangesAsync(ct);
         }
-
-        await db.SaveChangesAsync(ct);
         planer.Einplanen(vorgang.Id);
         return await AbbildenAsync(vorgang, ct);
     }
