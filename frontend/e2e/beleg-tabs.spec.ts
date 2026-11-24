@@ -4,11 +4,17 @@ import { expect, test } from '@playwright/test'
 const beleg = '/belege/b0000000-0000-4000-8000-000000000002'
 
 test.describe('Beleg-Detail: Tabs', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, isMobile }) => {
     await page.goto(beleg)
     await expect(page.getByRole('heading', { level: 1, name: 'Bürowelt Krämer KG' })).toBeVisible()
-    // Erst wenn die PDF-Seite steht, liegt alles an seinem Platz (mobil steht der Viewer über den Tabs).
-    await expect(page.getByRole('region', { name: 'Original' }).locator('canvas')).toBeVisible()
+    if (isMobile) {
+      // Mobil (Design MobilBelegDetail) gibt es keinen PDF-Viewer; die Tabs liegen hinter dem Aufklapp-Knopf.
+      await page.getByRole('button', { name: 'Positionen, Prüfung, Historie und Dateien' }).click()
+      await expect(page.getByRole('navigation', { name: 'Belegdaten' })).toBeVisible()
+    } else {
+      // Erst wenn die PDF-Seite steht, liegt alles an seinem Platz.
+      await expect(page.getByRole('region', { name: 'Original' }).locator('canvas')).toBeVisible()
+    }
   })
 
   test('alle fünf Tabs laden', async ({ page }) => {
