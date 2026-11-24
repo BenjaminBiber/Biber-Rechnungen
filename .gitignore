@@ -21,6 +21,7 @@ coverage/
 
 # Laufzeitdaten (lokale Entwicklung)
 /data/
+.daten/
 
 # Tools
 graphify-out/
