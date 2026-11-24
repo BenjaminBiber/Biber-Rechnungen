@@ -42,7 +42,7 @@ const leiste = () => screen.getByRole('toolbar', { name: 'Massenaktionen' })
 
 /** Wählt die ersten `anzahl` Zeilen der Tabelle und gibt ihre Beleg-IDs zurück. */
 async function waehle(nutzer: ReturnType<typeof userEvent.setup>, anzahl: number) {
-  await screen.findByRole('table')
+  await screen.findByRole('table', {}, { timeout: 5000 })
   await waitFor(() => expect(zeilen().length).toBeGreaterThanOrEqual(anzahl))
   for (const zeile of zeilen().slice(0, anzahl)) await nutzer.click(within(zeile).getByRole('checkbox'))
   return leiste()

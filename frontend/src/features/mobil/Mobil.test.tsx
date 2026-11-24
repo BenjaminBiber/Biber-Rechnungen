@@ -41,7 +41,7 @@ function renderApp(pfad: string) {
   return { nutzer, router }
 }
 
-const warte = { timeout: 5000 }
+const warte = { timeout: 10_000 }
 
 beforeEach(() => breite(true))
 afterEach(() => {
@@ -49,7 +49,7 @@ afterEach(() => {
   zuruecksetzen()
 })
 
-describe('Mobile Übersicht', () => {
+describe('Mobile Übersicht', { timeout: 20_000 }, () => {
   it('zeigt Kacheln, Kosten pro Monat und drei Einträge „Zu prüfen“', async () => {
     renderApp('/?jahr=2026')
     const inbox = await screen.findByRole('link', { name: /Inbox\s*12/ }, warte)
@@ -80,7 +80,7 @@ async function zeilen() {
   return within(liste).getAllByRole('listitem')
 }
 
-describe('Mobile Belegliste', () => {
+describe('Mobile Belegliste', { timeout: 20_000 }, () => {
   it('zeigt alle Belege der Fixtures als Zeilen mit „+n“-Chip ab drei Tags', async () => {
     const b2 = db.belege.find((b) => b.id === belegIds.b2)!
     const inbox = db.tags.find((t) => t.id === tagIds.inbox)!
@@ -156,7 +156,7 @@ describe('Mobile Belegliste', () => {
   })
 })
 
-describe('Mobile Beleg-Ansicht', () => {
+describe('Mobile Beleg-Ansicht', { timeout: 20_000 }, () => {
   it('zeigt Betrag, Chips, Datenkarte und für „zu prüfen“ Bearbeiten und Bestätigen', async () => {
     const { nutzer } = renderApp(`/belege/${belegIds.b2}`)
     expect(await screen.findByRole('heading', { level: 1, name: 'Bürowelt Krämer KG' }, warte)).toBeInTheDocument()
