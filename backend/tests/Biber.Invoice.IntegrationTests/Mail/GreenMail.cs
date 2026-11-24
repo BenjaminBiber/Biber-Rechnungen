@@ -91,7 +91,14 @@ public sealed class GreenMail : IAsyncLifetime
     public async Task ZuruecksetzenAsync()
     {
         using var http = new HttpClient { BaseAddress = new Uri($"http://{Host}:{_container.GetMappedPublicPort(ApiPort)}") };
-        (await http.PostAsync("/api/service/reset", null)).EnsureSuccessStatusCode();
+        try
+        {
+            (await http.PostAsync("/api/service/reset", null)).EnsureSuccessStatusCode();
+        }
+        catch (HttpRequestException ex) when (ex.InnerException is HttpIOException)
+        {
+            // GreenMail startet beim Reset neu und schließt die Verbindung dabei teils vor der Antwort.
+        }
         await BereitAsync();
     }
 
