@@ -162,6 +162,16 @@ internal sealed class OpenApiErzeuger
                 schema["default"] = standard;
             }
 
+            if (abfrage.Minimum is { } minimum)
+            {
+                schema["minimum"] = minimum;
+            }
+
+            if (abfrage.Maximum is { } maximum)
+            {
+                schema["maximum"] = maximum;
+            }
+
             var eintrag = new JsonObject { ["name"] = abfrage.Name, ["in"] = "query", ["required"] = abfrage.Pflicht, ["schema"] = schema };
             parameter.Add(eintrag);
         }
@@ -243,6 +253,19 @@ internal sealed class OpenApiErzeuger
         if (endpunkt.Pfad.Contains('{'))
         {
             antworten["404"] = Verweis("#/components/responses/NichtGefunden");
+        }
+
+        foreach (var fehler in endpunkt.Fehler)
+        {
+            var antwort = Problem(fehler.Beschreibung);
+            if (fehler is { Erweiterung: { } feld, ErweiterungsTyp: { } typ })
+            {
+                var schema = antwort["content"]!["application/problem+json"]!["schema"]!.AsObject();
+                schema["properties"]![feld] = BasisSchema(typ);
+                schema["required"] = new JsonArray(feld);
+            }
+
+            antworten[fehler.Status.ToString(System.Globalization.CultureInfo.InvariantCulture)] = antwort;
         }
 
         return antworten;

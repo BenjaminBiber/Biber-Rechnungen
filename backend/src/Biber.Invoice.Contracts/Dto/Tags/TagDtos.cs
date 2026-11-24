@@ -12,6 +12,9 @@ public sealed record TagDto(
 
 public sealed record TagAendernDto(string Name, string Farbe, bool IstInbox, bool IstZahlungsTag, MatchingDto Matching);
 
+/// <summary>Beim Löschen einer Kategorie betroffene Einträge.</summary>
+public sealed record KategorieGeloeschtDto(int Belege, int Korrespondenten);
+
 /// <summary>Kategorie mit Kennzahlen des gewählten Jahres.</summary>
 public sealed record KategorieDto(
     Guid Id,
