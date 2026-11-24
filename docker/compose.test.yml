@@ -1,0 +1,23 @@
+# Override für lokale Tests und CI: Pfade als benannte Volumes statt Bind-Mounts,
+# damit kein Host-Verzeichnis nötig ist.
+#   docker compose --env-file .env.test -f docker-compose.yml -f docker/compose.test.yml up -d --build --wait
+services:
+  api:
+    volumes: !override
+      - eingang:/srv/rechnungen/eingang
+      - staging:/srv/rechnungen/staging
+      - ablage:/srv/rechnungen/ablage
+      - daten:/srv/rechnungen/daten
+      - backup:/srv/rechnungen/backup:ro
+      - ./docs/verfahrensdokumentation:/app/verfahrensdokumentation:ro
+
+  db-backup:
+    volumes: !override
+      - backup:/backup
+
+volumes:
+  eingang:
+  staging:
+  ablage:
+  daten:
+  backup:

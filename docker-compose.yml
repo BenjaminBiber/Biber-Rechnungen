@@ -1,0 +1,84 @@
+name: biber-rechnungen
+
+services:
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/src/Biber.Invoice.Api/Dockerfile
+      args:
+        APP_UID: ${APP_UID:-1000}
+        APP_GID: ${APP_GID:-1000}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${API_PORT:-8080}:8080"
+    environment:
+      ConnectionStrings__Datenbank: "Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
+      DocumentIntelligence__Endpunkt: ${AZURE_DI_ENDPUNKT:-}
+      DocumentIntelligence__Schluessel: ${AZURE_DI_SCHLUESSEL:-}
+      Imap__Host: ${IMAP_HOST:-}
+      Imap__Port: ${IMAP_PORT:-993}
+      Imap__Benutzer: ${IMAP_BENUTZER:-}
+      Imap__Passwort: ${IMAP_PASSWORT:-}
+      Imap__Ssl: ${IMAP_SSL:-true}
+      Google__ClientId: ${GOOGLE_CLIENT_ID:-}
+      Google__ClientSecret: ${GOOGLE_CLIENT_SECRET:-}
+      Kosit__BasisUrl: http://kosit:8080
+      Anwendung__OeffentlicheUrl: ${OEFFENTLICHE_URL:-}
+    volumes:
+      - ${PFAD_EINGANG}:/srv/rechnungen/eingang
+      - ${PFAD_STAGING}:/srv/rechnungen/staging
+      - ${PFAD_ABLAGE}:/srv/rechnungen/ablage
+      - ${PFAD_DATEN}:/srv/rechnungen/daten
+      - ${PFAD_BACKUP}:/srv/rechnungen/backup:ro
+      - ./docs/verfahrensdokumentation:/app/verfahrensdokumentation:ro
+    networks:
+      - default
+      - intern
+
+  kosit:
+    build: ./docker/kosit
+    restart: unless-stopped
+    networks:
+      - intern
+
+  db-backup:
+    build: ./docker/db-backup
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGHOST: postgres
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB}
+      BACKUP_ZEIT: "02:00"
+      BACKUP_TAGE: "30"
+    volumes:
+      - ${PFAD_BACKUP}:/backup
+
+networks:
+  default:
+  intern:
+    internal: true
+
+volumes:
+  pgdata:
