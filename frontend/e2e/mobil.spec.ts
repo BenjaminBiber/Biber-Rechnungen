@@ -1,11 +1,11 @@
 import { expect, test, type Page } from '@playwright/test'
 
 async function scrolltNichtHorizontal(page: Page) {
-  const { scrollWidth, clientWidth } = await page.evaluate(() => ({
-    scrollWidth: document.documentElement.scrollWidth,
-    clientWidth: document.documentElement.clientWidth,
-  }))
-  expect(scrollWidth).toBeLessThanOrEqual(clientWidth)
+  // Erst messen, wenn die Schrift steht, und bis zum Timeout nachmessen – das Layout kann sich noch setzen.
+  await page.evaluate(() => document.fonts.ready)
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth))
+    .toBeLessThanOrEqual(0)
 }
 
 test.describe('Mobile Ansichten', () => {

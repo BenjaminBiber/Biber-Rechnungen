@@ -147,12 +147,13 @@ test('App-Shell und zuletzt geladene Liste sind offline verfügbar', async ({ pa
   await serviceWorkerBereit(page)
   // Einmal unter Kontrolle des Service Workers laden, damit die Liste im Cache landet.
   await page.reload()
-  const erster = belege[0].titel
-  await expect(page.getByText(erster).first()).toBeVisible()
+  // Die mobile Belegliste zeigt je Eintrag den Korrespondenten, nicht den Titel.
+  const erster = page.getByRole('list', { name: 'Belege' }).getByText(belege[0].korrespondent.name)
+  await expect(erster).toBeVisible()
 
   await offline(context, api, true)
   await page.goto('/belege')
-  await expect(page.getByText(erster).first()).toBeVisible()
+  await expect(erster).toBeVisible()
   await offline(context, api, false)
 })
 
@@ -225,15 +226,18 @@ test('POST-Anfragen landen nie im Cache', async ({ page, context }) => {
     fetch('/api/belege/massenaktion', { method: 'POST', body: '{}', headers: { 'Content-Type': 'application/json' } }),
   )
   await expect.poll(() => api.anfragen).toContain('POST /api/belege/massenaktion')
-  const gecachte = await page.evaluate(async () => {
-    const urls: string[] = []
-    for (const name of await caches.keys()) {
-      if (name.startsWith('workbox-precache')) continue
-      for (const anfrage of await (await caches.open(name)).keys()) urls.push(`${anfrage.method} ${anfrage.url}`)
-    }
-    return urls
-  })
-  expect(gecachte.some((u) => u.includes('/api/belege'))).toBe(true)
+  const cacheInhalt = () =>
+    page.evaluate(async () => {
+      const urls: string[] = []
+      for (const name of await caches.keys()) {
+        if (name.startsWith('workbox-precache')) continue
+        for (const anfrage of await (await caches.open(name)).keys()) urls.push(`${anfrage.method} ${anfrage.url}`)
+      }
+      return urls
+    })
+  // Der Service Worker schreibt die Antwort erst nach dem Ausliefern in den Cache – darauf warten.
+  await expect.poll(async () => (await cacheInhalt()).some((u) => u.includes('/api/belege'))).toBe(true)
+  const gecachte = await cacheInhalt()
   expect(gecachte.filter((u) => !u.startsWith('GET '))).toEqual([])
   expect(gecachte.filter((u) => u.includes('massenaktion') || u.includes('/api/import/upload'))).toEqual([])
 })
