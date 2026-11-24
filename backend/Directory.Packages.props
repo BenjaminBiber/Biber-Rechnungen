@@ -21,8 +21,9 @@
     <PackageVersion Include="PdfPig" Version="0.1.16" />
     <PackageVersion Include="PDFsharp" Version="6.5.0" />
     <PackageVersion Include="Docnet.Core" Version="2.6.0" />
-    <!-- SixLabors.ImageSharp fehlt noch: 3.1.x hat bekannte Sicherheitslücken, ab 3.2 bricht der
-         Release-Build ohne Six-Labors-Lizenzschlüssel ab. Entscheidung offen. -->
+    <!-- Bildbibliothek SkiaSharp statt SixLabors.ImageSharp (Entscheidung MCA-F0001) -->
+    <PackageVersion Include="SkiaSharp" Version="4.157.0" />
+    <PackageVersion Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="4.157.0" />
     <PackageVersion Include="Azure.AI.DocumentIntelligence" Version="1.0.0" />
     <PackageVersion Include="MailKit" Version="5.0.0" />
     <PackageVersion Include="Microsoft.ML" Version="6.0.0" />

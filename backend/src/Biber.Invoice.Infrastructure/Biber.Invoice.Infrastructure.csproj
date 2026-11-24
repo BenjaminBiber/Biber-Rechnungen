@@ -17,6 +17,8 @@
     <PackageReference Include="PdfPig" />
     <PackageReference Include="PDFsharp" />
     <PackageReference Include="Docnet.Core" />
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" />
     <PackageReference Include="Azure.AI.DocumentIntelligence" />
     <PackageReference Include="MailKit" />
     <PackageReference Include="Microsoft.ML" />
