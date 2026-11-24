@@ -1,5 +1,6 @@
 # Secrets / lokale Konfiguration
 .env
+.env.test
 *.env.local
 appsettings.*.local.json
 
