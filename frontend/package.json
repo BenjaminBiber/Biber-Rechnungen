@@ -14,6 +14,7 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "preview:mock": "tsr generate && vite build --mode mock && vite preview --port 4173 --strictPort",
+    "preview:pwa": "tsr generate && vite build --outDir node_modules/.vorschau-pwa && vite preview --outDir node_modules/.vorschau-pwa --port 4174 --strictPort",
     "e2e": "playwright test",
     "gen:api": "openapi-typescript ../docs/api/openapi.json -o src/api/schema.d.ts"
   },

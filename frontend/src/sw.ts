@@ -1,5 +1,6 @@
 /// <reference lib="webworker" />
 import { CacheableResponsePlugin } from 'workbox-cacheable-response'
+import { clientsClaim } from 'workbox-core'
 import { ExpirationPlugin } from 'workbox-expiration'
 import { cleanupOutdatedCaches, createHandlerBoundToURL, precacheAndRoute } from 'workbox-precaching'
 import { NavigationRoute, registerRoute } from 'workbox-routing'
@@ -13,6 +14,10 @@ import { apiCaches, cacheNamen, istListe, istVorschau, istEinzelbeleg } from './
  * Service Worker wird getrennt von der App gebaut.
  */
 declare const self: ServiceWorkerGlobalScope & { __WB_MANIFEST: (string | { url: string; revision: string | null })[] }
+
+// Beim ersten Aktivieren sofort die offene Seite übernehmen, damit schon ihre Listen im Cache landen.
+// Updates warten trotzdem auf „Aktualisieren“ (registerType: prompt → skipWaiting erst auf Nachricht).
+clientsClaim()
 
 // App-Shell: alle Build-Dateien inkl. Schrift und Icons.
 precacheAndRoute(self.__WB_MANIFEST)
