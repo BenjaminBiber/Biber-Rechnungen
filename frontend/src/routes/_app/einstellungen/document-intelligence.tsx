@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Platzhalter } from '@/components/Platzhalter'
+import { DocumentIntelligenceBereich } from '@/features/einstellungen/eingang/documentIntelligence'
 
 export const Route = createFileRoute('/_app/einstellungen/document-intelligence')({
-  component: () => <Platzhalter titel="Document Intelligence" />,
+  component: DocumentIntelligenceBereich,
 })
