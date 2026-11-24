@@ -1,28 +1,26 @@
 using Biber.Invoice.Domain.Pipeline;
-using PdfSharp.Pdf;
-using PdfSharp.Pdf.IO;
+using UglyToad.PdfPig;
+using UglyToad.PdfPig.Writer;
 
 namespace Biber.Invoice.Infrastructure.Module.Aufteilen;
 
-/// <summary>Teilt PDFs mit PDFsharp; das Quell-PDF wird nur im Import-Modus gelesen.</summary>
+/// <summary>Teilt PDFs mit PdfPig; das Quell-PDF wird nur gelesen, die Seiten werden in ein neues PDF kopiert.</summary>
 public sealed class PdfTeiler : IPdfTeiler
 {
     public byte[] Extrahieren(Stream pdf, IReadOnlyList<int> seiten)
     {
-        using var quelle = PdfReader.Open(pdf, PdfDocumentOpenMode.Import);
-        using var ziel = new PdfDocument();
+        using var quelle = PdfDocument.Open(pdf);
+        using var ziel = new PdfDocumentBuilder();
         foreach (var seite in seiten)
         {
-            if (seite < 1 || seite > quelle.PageCount)
+            if (seite < 1 || seite > quelle.NumberOfPages)
             {
-                throw new ArgumentOutOfRangeException(nameof(seiten), seite, $"Das PDF hat {quelle.PageCount} Seiten.");
+                throw new ArgumentOutOfRangeException(nameof(seiten), seite, $"Das PDF hat {quelle.NumberOfPages} Seiten.");
             }
 
-            ziel.AddPage(quelle.Pages[seite - 1]);
+            ziel.AddPage(quelle, seite);
         }
 
-        using var ausgabe = new MemoryStream();
-        ziel.Save(ausgabe, false);
-        return ausgabe.ToArray();
+        return ziel.Build();
     }
 }
