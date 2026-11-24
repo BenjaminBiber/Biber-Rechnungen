@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { BelegListeneintrag } from '@/api/typen'
 import { Chip, type ChipTon } from '@/components/Chip'
 import { Icon } from '@/components/Icon'
-import { zuAbfrage, type ListenZustand } from '@/features/belege/liste/suche'
+import { ansichtTitel, zuAbfrage, type ListenZustand } from '@/features/belege/liste/suche'
 import { formatDatum, formatEuro } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { FilterSheet, type FilterAuswahl } from './FilterSheet'
@@ -28,6 +28,7 @@ export function MobilBelege({ zustand }: { zustand: ListenZustand }) {
 
   return (
     <main className="flex w-full min-w-0 flex-col text-text">
+      <h1 className="sr-only">{ansichtTitel[aktuell.ansicht]}</h1>
       <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-linie bg-flaeche px-4 py-2.5">
         <Suchfeld wert={suche.suche ?? ''} onSuche={(s) => setze({ suche: s || undefined })} />
         <button

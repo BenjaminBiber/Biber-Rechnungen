@@ -40,6 +40,7 @@ function Inhalt({ daten, jahr }: { daten: Dashboard; jahr: number }) {
   const { inbox, zuPruefen, offen, ueberfaellig, kostenJahr } = daten
   return (
     <main className="flex w-full min-w-0 flex-col gap-3.5 px-4 pt-4 pb-6 text-text">
+      <h1 className="sr-only">Dashboard</h1>
       <div className="grid grid-cols-2 gap-2.5">
         <Link to="/belege" search={{ ansicht: 'Inbox' } as never} className={kachel}>
           <span className="flex items-center gap-1.5 text-[13px] text-akzent-text">

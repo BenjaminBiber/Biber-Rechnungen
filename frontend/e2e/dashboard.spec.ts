@@ -10,7 +10,8 @@ const karten = [
 ]
 
 test.describe('Dashboard', () => {
-  test('lädt mit allen Karten', async ({ page }) => {
+  test('lädt mit allen Karten', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'mobil: e2e/mobil.spec.ts')
     await page.goto('/?jahr=2026')
     await expect(page.getByRole('heading', { level: 1, name: 'Dashboard' })).toBeVisible()
     for (const titel of ['Offen', 'Überfällig', 'Inbox', 'Zu prüfen']) {
@@ -30,7 +31,8 @@ test.describe('Dashboard', () => {
     await expect(page.getByRole('heading', { level: 1, name: 'Zu prüfen' })).toBeVisible()
   })
 
-  test('hat keine horizontale Bildlaufleiste', async ({ page }) => {
+  test('hat keine horizontale Bildlaufleiste', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'mobil: e2e/mobil.spec.ts')
     await page.goto('/?jahr=2026')
     await expect(page.getByRole('heading', { level: 2, name: 'Document Intelligence' })).toBeVisible()
     const ueberstand = await page.evaluate(

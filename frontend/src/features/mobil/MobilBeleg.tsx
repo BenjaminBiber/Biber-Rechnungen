@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router'
+import { Link, useLocation } from '@tanstack/react-router'
 import { useState, type ReactNode } from 'react'
 import { belegDateiUrl, useBeleg } from '@/api/belege'
 import { istApiFehler } from '@/api/client'
@@ -53,7 +53,11 @@ function Inhalt({
   darfBearbeiten: boolean
   children: ReactNode
 }) {
-  const [modus, setModus] = useState<'ansicht' | 'details' | 'bearbeiten'>('ansicht')
+  // Ein Tab (z. B. …/positionen, auch aus dem Mehr-Menü) klappt die Details auf.
+  const pfad = useLocation({ select: (l) => l.pathname })
+  const aufTab = !pfad.replace(/\/$/, '').endsWith(beleg.id)
+  const [gewaehlt, setModus] = useState<'ansicht' | 'details' | 'bearbeiten'>('ansicht')
+  const modus = aufTab && gewaehlt === 'ansicht' ? 'details' : gewaehlt
   const [vorschau, setVorschau] = useState(false)
   const datei = original(beleg)
   const originalUrl = datei ? belegDateiUrl(beleg.id, datei.id, true) : null
