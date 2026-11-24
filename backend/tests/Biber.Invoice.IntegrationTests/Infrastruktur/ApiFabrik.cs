@@ -95,7 +95,8 @@ public sealed class ApiFabrik : WebApplicationFactory<Program>, IAsyncLifetime
         _respawner ??= await Respawner.CreateAsync(verbindung, new RespawnerOptions
         {
             DbAdapter = DbAdapter.Postgres,
-            TablesToIgnore = [new Table("__EFMigrationsHistory")],
+            // hangfire.schema hält die Schema-Version; geleert installiert Hangfire bei jedem Start neu und scheitert.
+            TablesToIgnore = [new Table("__EFMigrationsHistory"), new Table("hangfire", "schema")],
         });
         await _respawner.ResetAsync(verbindung);
     }
