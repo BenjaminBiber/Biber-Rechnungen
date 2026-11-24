@@ -114,7 +114,7 @@ export const systemRouten: Route[] = [
     if (!eingabe.scopes.length || eingabe.scopes.some((s) => !tokenScopes.includes(s)))
       return ungueltig('scopes', 'Mindestens einen gültigen Scope wählen.')
     const id = neueId()
-    const klartext = `biber_${id.replace(/-/g, '').slice(-24)}`
+    const klartext = `brk_${id.replace(/-/g, '').slice(-24)}`
     const token: ApiToken = {
       id,
       name: eingabe.name,
