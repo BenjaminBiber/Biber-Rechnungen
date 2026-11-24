@@ -60,7 +60,7 @@ public sealed class HashDubletteTests(ApiFabrik fabrik)
 
         vorgang.Status.ShouldBe(ImportStatus.Fertig);
         vorgang.Schritte.ShouldAllBe(s => s.Status == "ok");
-        File.Exists(vorgang.StagingPfad!).ShouldBeTrue();
+        vorgang.StagingPfad.ShouldBeNull(); // die Ablage hat die Datei übernommen
         (await BelegAsync(f, vorgang.BelegId!.Value)).DuplikatVonId.ShouldBeNull();
     }
 
