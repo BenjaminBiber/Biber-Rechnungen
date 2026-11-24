@@ -97,12 +97,9 @@ function Herausloesen({ detail }: { detail: PreisDetail }) {
           <AlertDialogAction
             onClick={() =>
               artikel &&
-              entfernen.mutate(
-                { id: detail.id, artikelId: artikel.id },
-                {
-                  onSuccess: () => toast.erfolg(`„${artikel.name}“ herausgelöst`),
-                  onError: (f: Error) => toast.fehler(f.message),
-                },
+              entfernen.mutateAsync({ id: detail.id, artikelId: artikel.id }).then(
+                () => toast.erfolg(`„${artikel.name}“ herausgelöst`),
+                (f: Error) => toast.fehler(f.message),
               )
             }
           >

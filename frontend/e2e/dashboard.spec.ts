@@ -27,7 +27,7 @@ test.describe('Dashboard', () => {
     await page.goto('/?jahr=2026')
     await page.getByRole('link', { name: /^Zu prüfen \d/ }).click()
     await expect(page).toHaveURL(/\/belege\?ansicht=ZuPruefen$/)
-    await expect(page.getByRole('heading', { level: 1, name: 'Belege' })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1, name: 'Zu prüfen' })).toBeVisible()
   })
 
   test('hat keine horizontale Bildlaufleiste', async ({ page }) => {
