@@ -50,4 +50,27 @@ node docs/pruefe-doku.mjs
 npx --yes markdownlint-cli2 "README.md" "docs/betrieb.md" "docs/verfahrensdokumentation/*.md" "docker/**/*.md"
 ```
 
+## Release
+
+Ein Release baut die drei eigenen Images und pusht sie nach Docker Hub, damit der Stack (z. B. in Portainer) ohne eigenen Build läuft.
+
+1. Auf GitHub **Actions → Release → Run workflow** öffnen.
+2. Branch `main` lassen (auf anderen Branches bricht der Workflow ab) und die Stufe wählen: `patch` (Standard), `minor` oder `major`.
+3. Der Workflow prüft Branch und Secrets, berechnet die Version, lässt die CI (Backend, Frontend, Docker-Smoke-Test) laufen, baut und pusht die Images und legt erst danach den Git-Tag `vX.Y.Z` und das GitHub-Release mit automatisch erzeugten Notes an. Ist ein Schritt rot, wird nichts veröffentlicht.
+
+Nötige Repository-Secrets (Settings → Secrets and variables → Actions):
+
+- `DOCKERHUB_USERNAME`: Docker-Hub-Benutzer
+- `DOCKERHUB_PASSWORD`: Passwort, besser ein Docker-Hub-Access-Token mit Schreibrecht
+
+| Dienst | Image | Tags |
+| --- | --- | --- |
+| api (mit Frontend) | `benjamin/biber-rechnungen-api` | `latest`, `X.Y.Z` |
+| kosit | `benjamin/biber-rechnungen-kosit` | `latest`, `X.Y.Z` |
+| db-backup | `benjamin/biber-rechnungen-db-backup` | `latest`, `X.Y.Z` |
+
+Versionierung: Quelle sind die Git-Tags `vX.Y.Z`; ohne Tag startet die Zählung bei `0.0.0`. `major` setzt Minor und Patch auf 0, `minor` setzt Patch auf 0. Es gibt keinen Commit zurück auf `main`, `frontend/package.json` bleibt bei `0.0.0`. Das api-Image trägt die Version als Assembly-Version (Build-Argument `APP_VERSION`); ein lokaler Build ohne Argument ergibt `0.0.0`. Die Rechnung lässt sich lokal prüfen: `bash .github/scripts/naechste-version.test.sh`.
+
+Die Images laufen als Benutzer mit UID/GID `1000`. Die Host-Ordner (z. B. `/srv/rechnungen`) müssen deshalb UID/GID `1000` gehören.
+
 Stack: .NET 10 (Minimal APIs, EF Core, Hangfire) · PostgreSQL · React (Vite, TypeScript) · Docker Compose
