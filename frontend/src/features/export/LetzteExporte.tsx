@@ -38,8 +38,7 @@ export function LetzteExporte() {
                 <td>{lauf.bezeichnung}</td>
                 <td>{lauf.inhalt}</td>
                 <td className="text-right tabular-nums">{lauf.anzahlBelege}</td>
-                {/* Der Export-Lauf nennt keinen Benutzer. */}
-                <td className="gedaempft">—</td>
+                <td>{lauf.erstelltVon}</td>
                 <td>
                   <a
                     className="btn btn-klein"

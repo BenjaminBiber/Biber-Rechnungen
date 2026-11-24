@@ -32,6 +32,7 @@ public sealed record ExportKategorieZeileDto(string Kategorie, string? EuerZeile
 public sealed record ExportLaufDto(
     Guid Id,
     DateTimeOffset ErstelltAm,
+    string ErstelltVon,
     string Bezeichnung,
     string Inhalt,
     int AnzahlBelege,

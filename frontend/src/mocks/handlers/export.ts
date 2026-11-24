@@ -64,6 +64,7 @@ export const exportRouten: Route[] = [
     const lauf: ExportLauf = {
       id,
       erstelltAm: new Date().toISOString(),
+      erstelltVon: 'M. Keller',
       bezeichnung: anfrage.bezeichnung,
       inhalt: teile.join(', '),
       anzahlBelege: vorschau(anfrage).anzahlBelege,

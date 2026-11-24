@@ -127,6 +127,16 @@ describe('Export', () => {
     expect(screen.getByRole('button', { name: 'Export erstellen' })).toBeDisabled()
   })
 
+  it('zeigt in „Letzte Exporte“ den Ersteller in der Spalte „Von“', async () => {
+    rendern()
+    const tabelle = within(await screen.findByRole('region', { name: 'Letzte Exporte' }))
+    await waitFor(() => expect(tabelle.getAllByRole('row')).toHaveLength(4))
+    const spalte = tabelle.getAllByRole('columnheader').findIndex((k) => k.textContent === 'Von')
+    for (const zeile of tabelle.getAllByRole('row').slice(1)) {
+      expect(within(zeile).getAllByRole('cell')[spalte]).toHaveTextContent('M. Keller')
+    }
+  })
+
   it('Erstellen sendet die vollständige Anfrage, startet den Download und ergänzt die Tabelle', async () => {
     const klick = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
     const { koerper, ende } = mitschneiden('/api/export')
