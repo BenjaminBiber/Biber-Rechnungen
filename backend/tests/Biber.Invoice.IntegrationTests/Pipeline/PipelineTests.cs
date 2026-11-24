@@ -308,6 +308,24 @@ public sealed class PipelineTests(ApiFabrik fabrik)
     }
 
     [Fact]
+    public async Task ExtraktionUebernehmen_ohne_Seitenzahl_behaelt_die_der_Formaterkennung()
+    {
+        var beleg = new Beleg { Id = Guid.NewGuid(), Seitenanzahl = 3 };
+        var kontext = new VerarbeitungsKontext
+        {
+            Vorgang = new ImportVorgang { Id = Guid.NewGuid(), Dateiname = "scan.tif", Status = ImportStatus.InVerarbeitung },
+            Beleg = beleg,
+            DateiPfad = "scan.tif",
+            Dateiname = "scan.tif",
+            Extraktion = Extraktion() with { Seiten = 0 },
+        };
+
+        await new ExtraktionUebernehmenSchritt(TimeProvider.System).AusfuehrenAsync(kontext, CancellationToken.None);
+
+        beleg.Seitenanzahl.ShouldBe(3);
+    }
+
+    [Fact]
     public async Task ErneutVerarbeiten_laeuft_ab_Formaterkennung_mit_dem_Original_aus_der_Ablage()
     {
         var protokoll = new ConcurrentQueue<string>();

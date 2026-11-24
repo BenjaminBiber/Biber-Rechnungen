@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Headers;
+using System.Security.Cryptography;
 using System.Text;
 using Biber.Invoice.Domain.Entitaeten;
 using Biber.Invoice.Domain.Enums;
@@ -117,6 +118,62 @@ public sealed class VorschauTests(ApiFabrik fabrik)
     }
 
     [Fact]
+    public async Task Schritt_legt_Vorschau_fuer_TIFF_an()
+    {
+        var beleg = await fabrik.SpeichernAsync(Testdaten.Beleg());
+        var staging = Path.Combine(fabrik.TempOrdner, "staging", $"{beleg.Id}.tif");
+        Directory.CreateDirectory(Path.GetDirectoryName(staging)!);
+        await File.WriteAllBytesAsync(staging, await File.ReadAllBytesAsync(TiffPfad("einseitig.tif")));
+
+        await SchrittAusfuehrenAsync(beleg, staging);
+
+        using var scope = fabrik.ErzeugeScope();
+        var db = scope.ServiceProvider.GetRequiredService<BiberDbContext>();
+        var datei = await db.BelegDateien.SingleAsync(d => d.BelegId == beleg.Id);
+        datei.Rolle.ShouldBe(DateiRolle.Vorschau);
+        datei.MimeType.ShouldBe("image/webp");
+        using var bild = SKBitmap.Decode(await File.ReadAllBytesAsync(Path.Combine(fabrik.TempOrdner, "daten", datei.Pfad)));
+        bild.Width.ShouldBe(600);
+    }
+
+    [Fact]
+    public async Task TIFF_Beleg_liefert_eine_Vorschau_und_Original_bleibt_unveraendert()
+    {
+        var inhalt = await File.ReadAllBytesAsync(TiffPfad("einseitig.tif"));
+        var beleg = await BelegMitOriginalAsync(inhalt, "tif");
+        var original = Path.Combine(fabrik.TempOrdner, "ablage", "2026", "01", $"{beleg.Id}.tif");
+        var hashVorher = Convert.ToHexString(SHA256.HashData(await File.ReadAllBytesAsync(original)));
+
+        var antwort = await fabrik.ErzeugeClient().GetAsync($"/api/belege/{beleg.Id}/vorschau?breite=300");
+
+        antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
+        antwort.Content.Headers.ContentType!.MediaType.ShouldBe("image/webp");
+        using var bild = SKBitmap.Decode(await antwort.Content.ReadAsByteArrayAsync());
+        bild.Width.ShouldBe(300);
+        bild.Height.ShouldBe(150);
+        Convert.ToHexString(SHA256.HashData(await File.ReadAllBytesAsync(original))).ShouldBe(hashVorher);
+    }
+
+    [Fact]
+    public async Task Mehrseitiges_TIFF_liefert_Seite_2_und_404_fuer_ungueltige_Seite()
+    {
+        var beleg = await BelegMitOriginalAsync(await File.ReadAllBytesAsync(TiffPfad("mehrseitig.tif")), "tif");
+        var client = fabrik.ErzeugeClient();
+
+        var antwort = await client.GetAsync($"/api/belege/{beleg.Id}/vorschau?seite=2&breite=400");
+
+        antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using var bild = SKBitmap.Decode(await antwort.Content.ReadAsByteArrayAsync());
+        bild.Width.ShouldBe(400);
+        bild.Height.ShouldBe(400); // Seite 2 ist quadratisch und grün, Seiten 1 und 3 sind 2:1
+        var mitte = bild.GetPixel(200, 200);
+        mitte.Green.ShouldBeGreaterThan((byte)200);
+        mitte.Red.ShouldBeLessThan((byte)50);
+        (await client.GetAsync($"/api/belege/{beleg.Id}/vorschau?seite=0")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await client.GetAsync($"/api/belege/{beleg.Id}/vorschau?seite=4")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
     public async Task XML_Beleg_liefert_404()
     {
         var beleg = await BelegMitOriginalAsync("<Invoice/>"u8.ToArray(), "xml");
@@ -181,6 +238,8 @@ public sealed class VorschauTests(ApiFabrik fabrik)
         });
         return await fabrik.SpeichernAsync(beleg);
     }
+
+    private static string TiffPfad(string name) => Path.Combine(AppContext.BaseDirectory, "Testdateien", "tiff", name);
 
     private static bool IstWebp(byte[] bytes) =>
         bytes.Length > 12 && bytes.AsSpan(0, 4).SequenceEqual("RIFF"u8) && bytes.AsSpan(8, 4).SequenceEqual("WEBP"u8);
