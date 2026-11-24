@@ -20,6 +20,10 @@ configure({ asyncUtilTimeout: 3000 })
 // jsdom kennt kein Scrollen; der Router stellt die Scroll-Position wieder her.
 window.scrollTo = () => {}
 
+// jsdom kennt keine Blob-URLs; Downloads (Export) legen eine an.
+URL.createObjectURL ??= () => 'blob:test'
+URL.revokeObjectURL ??= () => {}
+
 // Jede Anfrage ohne Handler lässt den Test scheitern – so fallen fehlende Mocks sofort auf.
 // (MSW 3 heißt die Option `onUnhandledFrame`, früher `onUnhandledRequest`.)
 beforeAll(() => server.listen({ onUnhandledFrame: 'error' }))

@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { useId, useMemo, useState, type ReactNode } from 'react'
 import { useEinstellungen } from '@/api/einstellungen'
-import { exportDateiUrl, useExportErzeugen, useExportVorschau } from '@/api/export'
+import { exportDateiHerunterladen, useExportErzeugen, useExportVorschau } from '@/api/export'
 import { useKorrespondenten } from '@/api/korrespondenten'
 import { useKategorien, useTags } from '@/api/tags'
 import type { ExportAnfrage } from '@/api/typen'
@@ -13,6 +13,7 @@ import { useToast } from '@/components/toast'
 import { formatDatum, formatEuro } from '@/lib/format'
 import { datumEinlesen } from '@/lib/zeitraum'
 import { exportBezeichnung, schnellwahl } from './bezeichnung'
+import { exportFehlertext } from './fehler'
 import { LetzteExporte } from './LetzteExporte'
 import { MehrfachAuswahl } from './MehrfachAuswahl'
 
@@ -116,14 +117,9 @@ function ExportFormular({ vorbelegung, heute }: { vorbelegung: ExportVorbelegung
     toast.info(`Export ${anfrage.bezeichnung} wird erstellt …`)
     try {
       const lauf = await erzeugen.mutateAsync(anfrage)
-      const link = document.createElement('a')
-      link.href = exportDateiUrl(lauf.id)
-      link.download = ''
-      document.body.append(link)
-      link.click()
-      link.remove()
-    } catch {
-      toast.fehler(`Export ${anfrage.bezeichnung} konnte nicht erstellt werden.`, { erneut: () => void erstellen() })
+      await exportDateiHerunterladen(lauf.id)
+    } catch (f) {
+      toast.fehler(exportFehlertext(f, anfrage.bezeichnung), { erneut: () => void erstellen() })
     }
   }
 

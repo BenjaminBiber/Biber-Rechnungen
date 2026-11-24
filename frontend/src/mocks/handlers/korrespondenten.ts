@@ -10,7 +10,17 @@ import { platzhalterPng } from '../dateien'
 import { db, neueId } from '../db'
 import { logoFuer, type KorrespondentDatensatz } from '../fixtures/korrespondenten'
 import { istBezahlt, listeneintrag } from './belege'
-import { abfrage, datei, jsonKoerper, keinInhalt, nichtGefunden, route, ungueltig, type Route } from './gemeinsam'
+import {
+  abfrage,
+  datei,
+  jsonKoerper,
+  keinInhalt,
+  nichtGefunden,
+  problem,
+  route,
+  ungueltig,
+  type Route,
+} from './gemeinsam'
 
 export function korrespondentEintrag(k: KorrespondentDatensatz): KorrespondentListeneintrag {
   return {
@@ -67,10 +77,22 @@ function finde(id: string): KorrespondentDatensatz | undefined {
   return db.korrespondenten.find((k) => k.id === id)
 }
 
-function pruefe(eingabe: KorrespondentAendern): Response | undefined {
+const ustNormalisiert = (ust: string) => ust.replace(/\s+/g, '').toUpperCase()
+
+/** Prüft wie die API; eine schon vergebene USt-IdNr. ist 409 mit `korrespondentId` des vorhandenen. */
+function pruefe(eingabe: KorrespondentAendern, eigeneId?: string): Response | undefined {
   if (!eingabe.name?.trim()) return ungueltig('name', 'Name ist erforderlich.')
   if (eingabe.defaultKategorieId && !db.kategorien.some((k) => k.id === eingabe.defaultKategorieId))
     return ungueltig('defaultKategorieId', 'Unbekannte Kategorie.')
+  const ust = eingabe.ustIdNr?.trim() ? ustNormalisiert(eingabe.ustIdNr) : null
+  const vorhanden = ust
+    ? db.korrespondenten.find((k) => k.id !== eigeneId && k.ustIdNr && ustNormalisiert(k.ustIdNr) === ust)
+    : undefined
+  if (vorhanden)
+    return problem(409, 'Konflikt', undefined, {
+      detail: `Die USt-IdNr. ${ust} gehört bereits zu „${vorhanden.name}“.`,
+      korrespondentId: vorhanden.id,
+    })
   return undefined
 }
 
@@ -208,7 +230,7 @@ export const korrespondentenRouten: Route[] = [
     const k = finde(params.id)
     if (!k) return nichtGefunden('Korrespondent')
     const eingabe = await jsonKoerper<KorrespondentAendern>(request)
-    const fehler = pruefe(eingabe)
+    const fehler = pruefe(eingabe, k.id)
     if (fehler) return fehler
     const neu = uebernehme(k, eingabe)
     db.korrespondenten = db.korrespondenten.map((x) => (x.id === k.id ? neu : x))

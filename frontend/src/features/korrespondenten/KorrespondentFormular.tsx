@@ -58,7 +58,6 @@ function startwerte(k?: KorrespondentDetail): Werte {
 }
 
 const leer = (text: string) => text.trim() || null
-const normalisiert = (ust: string) => ust.replace(/\s+/g, '').toUpperCase()
 
 function Feld({ label, fehler, children, id }: { label: string; fehler?: string; children: ReactNode; id: string }) {
   return (
@@ -97,18 +96,18 @@ export function KorrespondentFormular({
   const aendern = useKorrespondentAendern()
   const [werte, setWerte] = useState<Werte>(() => startwerte(korrespondent))
   const [fehler, setFehler] = useState<Fehler>({})
-  const [konflikt, setKonflikt] = useState<{ ustIdNr: string; vorhanden?: KorrespondentListeneintrag } | null>(null)
+  const [konflikt, setKonflikt] = useState<{ ustIdNr: string; vorhandenId?: string; name?: string } | null>(null)
   const laeuft = anlegen.isPending || aendern.isPending
 
   const setze = <S extends keyof Werte>(schluessel: S, wert: Werte[S]) =>
     setWerte((alt) => ({ ...alt, [schluessel]: wert }))
 
-  /** Vorhandenen Korrespondenten mit derselben USt-IdNr. aus geladenen Listen suchen. */
-  const findeVorhanden = (ust: string) =>
+  /** Name des vorhandenen Korrespondenten für den Linktext, falls er in einer geladenen Liste steht. */
+  const nameAusListen = (vorhandenId: string) =>
     queryClient
       .getQueriesData<KorrespondentListeneintrag[]>({ queryKey: korrespondentenKeys.alle })
       .flatMap(([, liste]) => (Array.isArray(liste) ? liste : []))
-      .find((k) => k.id !== korrespondent?.id && k.ustIdNr && normalisiert(k.ustIdNr) === normalisiert(ust))
+      .find((k) => k.id === vorhandenId)?.name
 
   const absenden = (e: FormEvent) => {
     e.preventDefault()
@@ -143,8 +142,12 @@ export function KorrespondentFormular({
       },
       onError: (f: Error) => {
         if (istApiFehler(f) && f.status === 409) {
-          const ust = werte.ustIdNr.trim()
-          setKonflikt({ ustIdNr: ust, vorhanden: findeVorhanden(ust) })
+          const vorhandenId = typeof f.problem.korrespondentId === 'string' ? f.problem.korrespondentId : undefined
+          setKonflikt({
+            ustIdNr: werte.ustIdNr.trim(),
+            vorhandenId,
+            name: vorhandenId ? nameAusListen(vorhandenId) : undefined,
+          })
         } else if (istApiFehler(f) && f.fehler) {
           const feld: Fehler = {}
           for (const [schluessel, texte] of Object.entries(f.fehler))
@@ -190,9 +193,9 @@ export function KorrespondentFormular({
           {konflikt && (
             <p role="alert" className="m-0 rounded-[8px] bg-[var(--color-orange-flaeche)] p-3 text-sm">
               Die USt-IdNr. {konflikt.ustIdNr} ist schon vergeben.{' '}
-              {konflikt.vorhanden ? (
-                <Link to="/korrespondenten/$korrespondentId" params={{ korrespondentId: konflikt.vorhanden.id }}>
-                  Zu {konflikt.vorhanden.name}
+              {konflikt.vorhandenId ? (
+                <Link to="/korrespondenten/$korrespondentId" params={{ korrespondentId: konflikt.vorhandenId }}>
+                  {konflikt.name ? `Zu ${konflikt.name}` : 'Vorhandenen Korrespondenten öffnen'}
                 </Link>
               ) : (
                 <Link to="/korrespondenten" search={{ suche: konflikt.ustIdNr }}>

@@ -20,7 +20,7 @@ public sealed record BenachrichtigungZaehlerDto(int Ungelesen);
 /// <summary>Belege eines Jahres, deren Aufbewahrungsfrist abgelaufen ist.</summary>
 public sealed record LoeschbarDto(int Jahr, int Anzahl, DateOnly FristEnde);
 
-/// <summary>Löschen der DB-Daten eines Jahres; <see cref="Bestaetigung"/> ist die eingetippte Jahreszahl.</summary>
+/// <summary>Löschen der DB-Daten eines Jahres; <see cref="Bestaetigung"/> ist das eingetippte Wort LÖSCHEN.</summary>
 public sealed record LoeschenDto(int Jahr, string Bestaetigung);
 
 /// <summary>Ergebnis der Löschung; <see cref="Pfade"/> löscht der Admin auf dem Host vom WORM-Share.</summary>

@@ -14,6 +14,3 @@ public sealed record Ergebnis<T>(T? Wert, Fehler? Fehler)
     public static implicit operator Ergebnis<T>(T wert) => new(wert, null);
     public static implicit operator Ergebnis<T>(Fehler fehler) => new(default, fehler);
 }
-
-/// <summary>Beim Löschen einer Kategorie betroffene Einträge.</summary>
-public sealed record KategorieGeloeschtDto(int Belege, int Korrespondenten);

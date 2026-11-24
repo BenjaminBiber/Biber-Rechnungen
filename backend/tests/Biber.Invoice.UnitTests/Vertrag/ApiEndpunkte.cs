@@ -41,9 +41,16 @@ internal sealed record Endpunkt(string Methode, string Pfad, string? Richtlinie,
 
     /// <summary>Record, dessen Eigenschaften einzeln als Query-Parameter kommen.</summary>
     public Type? QueryObjekt { get; init; }
+
+    /// <summary>Fachliche Fehlerantworten (409, 410) zusätzlich zu 400/401/403/404.</summary>
+    public Fehlerantwort[] Fehler { get; init; } = [];
 }
 
-internal sealed record Abfrage(string Name, Type Typ, object? Standard = null, string[]? Werte = null, bool Pflicht = false);
+internal sealed record Abfrage(
+    string Name, Type Typ, object? Standard = null, string[]? Werte = null, bool Pflicht = false, int? Minimum = null, int? Maximum = null);
+
+/// <summary>ProblemDetails-Antwort; <see cref="Erweiterung"/> ist ein zusätzliches Feld vom Typ <see cref="ErweiterungsTyp"/>.</summary>
+internal sealed record Fehlerantwort(int Status, string Beschreibung, string? Erweiterung = null, Type? ErweiterungsTyp = null);
 
 /// <summary>Die vollständige HTTP-Schnittstelle; Quelle für <c>docs/api/openapi.json</c>.</summary>
 internal static class ApiEndpunkte
@@ -58,6 +65,11 @@ internal static class ApiEndpunkte
 
     private static readonly Abfrage Jahr = new("jahr", typeof(int?));
     private static readonly Abfrage Seite = new("seite", typeof(int), 1);
+
+    private static readonly Fehlerantwort[] UstIdVergeben =
+        [new(409, "USt-IdNr. ist schon vergeben; korrespondentId nennt den vorhandenen Korrespondenten", "korrespondentId", typeof(Guid))];
+
+    private static readonly Fehlerantwort[] ArtikelVergeben = [new(409, "Ein Artikel gehört schon zu einem anderen Stammartikel")];
 
     public static readonly IReadOnlyList<Endpunkt> Alle =
     [
@@ -99,7 +111,7 @@ internal static class ApiEndpunkte
         Get(Belege.Aehnliche, R.Lesen, "Ähnliche Belege") with { Query = [new("anzahl", typeof(int), 5)], Antwort = typeof(BelegListeneintragDto[]) },
         Get(Belege.Historie, R.Lesen, "Änderungsprotokoll des Belegs") with { Antwort = typeof(AuditEintragDto[]) },
         Get(Belege.Datei, R.Lesen, "Datei des Belegs herunterladen oder anzeigen") with { Query = [new("inline", typeof(bool), false)], Datei = "application/octet-stream" },
-        Get(Belege.Vorschau, R.Lesen, "Vorschaubild einer Seite") with { Query = [new("seite", typeof(int), 1)], Datei = "image/png" },
+        Get(Belege.Vorschau, R.Lesen, "Vorschaubild einer Seite") with { Query = [new("seite", typeof(int), 1), new("breite", typeof(int), 600, Minimum: 200, Maximum: 1600)], Datei = "image/png" },
         Get(Belege.Visualisierung, R.Lesen, "XRechnung-Visualisierung") with { Datei = "text/html" },
         Get(Ansichten.Liste, R.Lesen, "Gespeicherte Ansichten") with { Antwort = typeof(GespeicherteAnsichtDto[]) },
         Post(Ansichten.Liste, R.Lesen, "Ansicht speichern") with { Body = typeof(GespeicherteAnsichtAnlegenDto), Antwort = typeof(GespeicherteAnsichtDto), Status = 201 },
@@ -128,9 +140,9 @@ internal static class ApiEndpunkte
             Query = [new("suche", typeof(string)), new("typ", typeof(string), "Alle", ["Lieferanten", "Kunden", "Alle"]), Jahr],
             Antwort = typeof(KorrespondentListeneintragDto[]),
         },
-        Post(Korrespondenten.Liste, R.Bearbeiten, "Korrespondent anlegen") with { Body = typeof(KorrespondentAendernDto), Antwort = typeof(KorrespondentDetailDto), Status = 201 },
+        Post(Korrespondenten.Liste, R.Bearbeiten, "Korrespondent anlegen") with { Body = typeof(KorrespondentAendernDto), Antwort = typeof(KorrespondentDetailDto), Status = 201, Fehler = UstIdVergeben },
         Get(Korrespondenten.Einzeln, R.Lesen, "Korrespondent-Detail") with { Query = [Jahr], Antwort = typeof(KorrespondentDetailDto) },
-        Put(Korrespondenten.Einzeln, R.Bearbeiten, "Korrespondent ändern") with { Body = typeof(KorrespondentAendernDto), Antwort = typeof(KorrespondentDetailDto) },
+        Put(Korrespondenten.Einzeln, R.Bearbeiten, "Korrespondent ändern") with { Body = typeof(KorrespondentAendernDto), Antwort = typeof(KorrespondentDetailDto), Fehler = UstIdVergeben },
         Post(Korrespondenten.Zusammenfuehren, R.Bearbeiten, "Korrespondenten zusammenführen") with { Body = typeof(KorrespondentenZusammenfuehrenDto), Antwort = typeof(KorrespondentDetailDto) },
         Get(Korrespondenten.Logo, R.Lesen, "Logo-Bild") with { Datei = "image/png" },
         Put(Korrespondenten.Logo, R.Bearbeiten, "Logo hochladen") with { Multipart = "datei", Antwort = typeof(LogoDto) },
@@ -145,7 +157,7 @@ internal static class ApiEndpunkte
         Get(Kategorien.Liste, R.Lesen, "Kategorien") with { Query = [Jahr], Antwort = typeof(KategorieDto[]) },
         Post(Kategorien.Liste, R.Bearbeiten, "Kategorie anlegen") with { Body = typeof(KategorieAendernDto), Antwort = typeof(KategorieDto), Status = 201 },
         Put(Kategorien.Einzeln, R.Bearbeiten, "Kategorie ändern") with { Body = typeof(KategorieAendernDto), Antwort = typeof(KategorieDto) },
-        Delete(Kategorien.Einzeln, R.Bearbeiten, "Kategorie löschen"),
+        Delete(Kategorien.Einzeln, R.Bearbeiten, "Kategorie löschen") with { Status = 200, Antwort = typeof(KategorieGeloeschtDto) },
         Post(Matching.Testen, R.Bearbeiten, "Matching-Regel gegen den Bestand testen") with { Body = typeof(MatchingTestDto), Antwort = typeof(MatchingTestErgebnisDto) },
         Post(Matching.Anwenden, R.Bearbeiten, "Matching-Regel auf alle Belege anwenden") with { Body = typeof(MatchingAnwendenDto), Antwort = typeof(AnzahlGeaendertDto) },
         Get(Matching.AutoStatus, R.Lesen, "Trainingsstand des Auto-Matchings") with { Antwort = typeof(AutoMatchingStatusDto[]) },
@@ -154,9 +166,9 @@ internal static class ApiEndpunkte
         Get(Artikel.Liste, R.Lesen, "Artikel suchen") with { QueryObjekt = typeof(ArtikelFilterDto), Antwort = typeof(SeiteDto<ArtikelListeneintragDto>) },
         Get(Artikel.Einzeln, R.Lesen, "Preisdetail eines Artikels") with { Query = [Jahr], Antwort = typeof(PreisDetailDto) },
         Get(Stammartikel.Liste, R.Lesen, "Stammartikel") with { Antwort = typeof(StammartikelListeneintragDto[]) },
-        Post(Stammartikel.Liste, R.Bearbeiten, "Stammartikel anlegen") with { Body = typeof(StammartikelAendernDto), Antwort = typeof(StammartikelListeneintragDto), Status = 201 },
+        Post(Stammartikel.Liste, R.Bearbeiten, "Stammartikel anlegen") with { Body = typeof(StammartikelAendernDto), Antwort = typeof(StammartikelListeneintragDto), Status = 201, Fehler = ArtikelVergeben },
         Get(Stammartikel.Einzeln, R.Lesen, "Preisdetail eines Stammartikels") with { Query = [Jahr], Antwort = typeof(PreisDetailDto) },
-        Put(Stammartikel.Einzeln, R.Bearbeiten, "Stammartikel ändern") with { Body = typeof(StammartikelAendernDto), Antwort = typeof(StammartikelListeneintragDto) },
+        Put(Stammartikel.Einzeln, R.Bearbeiten, "Stammartikel ändern") with { Body = typeof(StammartikelAendernDto), Antwort = typeof(StammartikelListeneintragDto), Fehler = ArtikelVergeben },
         Delete(Stammartikel.Artikel, R.Bearbeiten, "Artikel aus dem Stammartikel lösen"),
 
         // Auswertung und System
@@ -170,9 +182,19 @@ internal static class ApiEndpunkte
 
         // Export
         Post(Export.Vorschau, R.Bearbeiten, "Vorschau eines Exports") with { Body = typeof(ExportAnfrageDto), Antwort = typeof(ExportVorschauDto) },
-        Post(Export.Erzeugen, R.Bearbeiten, "Export erzeugen") with { Body = typeof(ExportAnfrageDto), Antwort = typeof(ExportLaufDto), Status = 201 },
+        Post(Export.Erzeugen, R.Bearbeiten, "Export erzeugen") with
+        {
+            Body = typeof(ExportAnfrageDto),
+            Antwort = typeof(ExportLaufDto),
+            Status = 201,
+            Fehler = [new(409, "Originaldateien seit dem Import verändert; pfade nennt sie", "pfade", typeof(string[]))],
+        },
         Get(Export.Laeufe, R.Lesen, "Bisherige Exporte") with { Antwort = typeof(ExportLaufDto[]) },
-        Get(Export.LaufDatei, R.Lesen, "Export herunterladen") with { Datei = "application/octet-stream" },
+        Get(Export.LaufDatei, R.Lesen, "Export herunterladen") with
+        {
+            Datei = "application/octet-stream",
+            Fehler = [new(410, "Exportdatei fehlt auf dem Datenträger")],
+        },
 
         // Einstellungen
         Get(Einstellungen.Alle, R.Lesen, "Alle Einstellungen") with { Antwort = typeof(EinstellungenDto) },
@@ -198,7 +220,7 @@ internal static class ApiEndpunkte
         Post(Benachrichtigungen.Gelesen, R.Lesen, "Benachrichtigung als gelesen markieren") with { Status = 204 },
         Post(Benachrichtigungen.AlleGelesen, R.Lesen, "Alle Benachrichtigungen als gelesen markieren") with { Status = 204 },
         Get(Aufbewahrung.Loeschbar, R.Admin, "Jahre mit abgelaufener Aufbewahrungsfrist") with { Antwort = typeof(LoeschbarDto[]) },
-        Post(Aufbewahrung.Loeschen, R.Admin, "Belege eines Jahres löschen") with { Body = typeof(LoeschenDto), Antwort = typeof(LoeschErgebnisDto) },
+        Post(Aufbewahrung.Loeschen, R.Admin, "Belege eines Jahres löschen") with { Body = typeof(LoeschenDto), Antwort = typeof(LoeschErgebnisDto), Fehler = [new(409, "Keine Belege mit abgelaufener Aufbewahrungsfrist")] },
         Get(Integritaet.Laeufe, R.Lesen, "Läufe der Integritätsprüfung") with { Antwort = typeof(IntegritaetsLaufDto[]) },
         Post(Integritaet.Starten, R.Admin, "Integritätsprüfung starten") with { Status = 202 },
         Get(Suche.Global, R.Lesen, "Globale Suche (Befehlspalette)") with { Query = [new("q", typeof(string), Pflicht: true)], Antwort = typeof(SuchergebnisDto) },
