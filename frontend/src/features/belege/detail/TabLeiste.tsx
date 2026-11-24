@@ -20,7 +20,7 @@ export function TabLeiste({ beleg }: { beleg: BelegDetail }) {
   ] as const
 
   return (
-    <nav aria-label="Belegdaten" className="flex gap-0.5 overflow-x-auto border-b border-rand px-3">
+    <nav aria-label="Belegdaten" className="relative flex gap-0.5 overflow-x-auto border-b border-rand px-3">
       {tabs.map((tab) => (
         <Link
           key={tab.to}

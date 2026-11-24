@@ -4,6 +4,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useEffect, type ReactNode } from 'react'
 import { onTestFinished } from 'vitest'
+import { alleEntfernen } from '@/components/toast/toast-store'
 import { belegIds } from '@/mocks/fixtures/ids'
 import { server } from '@/mocks/server'
 import { routeTree } from '@/routeTree.gen'
@@ -36,6 +37,7 @@ export const b2 = belegIds.b2
 
 /** Rendert die echte App ab `pfad` (Standard: Beleg b2 „Bürowelt Krämer KG“). */
 export function renderBelegDetail(pfad = `/belege/${b2}`) {
+  alleEntfernen()
   const nutzer = userEvent.setup()
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
   const router = createRouter({

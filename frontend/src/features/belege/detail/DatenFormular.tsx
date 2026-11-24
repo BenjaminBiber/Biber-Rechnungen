@@ -348,7 +348,8 @@ export function DatenFormular({
           {betragFeld('steuer', 'USt')}
           {betragFeld('brutto', 'Brutto')}
         </div>
-        <div className="mt-3 overflow-x-auto">
+        {/* `relative`: sonst entkommt der absolut positionierte sr-only-Text dem Clipping und verbreitert die Seite. */}
+        <div className="relative mt-3 overflow-x-auto">
           <table className="tabelle text-[13px]" aria-label="Steuerzeilen">
             <thead>
               <tr>

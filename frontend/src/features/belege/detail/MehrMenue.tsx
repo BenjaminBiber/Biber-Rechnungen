@@ -50,7 +50,6 @@ export function MehrMenue({ beleg, darfBearbeiten }: { beleg: BelegDetail; darfB
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        aria-label="Beleg-Aktionen"
         className="w-[290px]"
         onCloseAutoFocus={(e) => {
           if (fokusBehalten.current) e.preventDefault()

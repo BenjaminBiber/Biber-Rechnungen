@@ -59,7 +59,7 @@ function ErkannteFelder({ beleg }: { beleg: BelegDetail }) {
   const quelle = quellen[beleg.extraktion.quelle]
   const konfidenz = beleg.extraktion.konfidenz ?? beleg.konfidenz
   return (
-    <div className="overflow-x-auto p-4">
+    <div className="relative overflow-x-auto p-4">
       <table className="tabelle" aria-label="Erkannte Felder">
         <thead>
           <tr>
