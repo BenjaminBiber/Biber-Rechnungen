@@ -20,8 +20,10 @@ export function useListenNavigation(anzahl: number, onWaehlen: (index: number) =
   const aktivSicher = aktiv < anzahl ? aktiv : -1
 
   function bewegen(schritt: 1 | -1) {
+    // Ohne Markierung beginnt ↓ beim ersten, ↑ beim letzten Eintrag.
+    const start = aktivSicher >= 0 ? aktivSicher : schritt === 1 ? -1 : anzahl
     for (let i = 1; i <= anzahl; i++) {
-      const kandidat = (aktivSicher + schritt * i + anzahl * 2) % anzahl
+      const kandidat = (((start + schritt * i) % anzahl) + anzahl) % anzahl
       if (waehlbar(kandidat)) return setAktiv(kandidat)
     }
   }
