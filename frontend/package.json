@@ -15,7 +15,7 @@
     "test": "vitest run",
     "preview:mock": "tsr generate && vite build --mode mock && vite preview --port 4173 --strictPort",
     "e2e": "playwright test",
-    "gen:api": "node -e \"console.log('gen:api: wird vom API-Client-Ticket gefüllt')\""
+    "gen:api": "openapi-typescript ../docs/api/openapi.json -o src/api/schema.d.ts"
   },
   "dependencies": {
     "@fontsource/ibm-plex-mono": "^5.3.0",

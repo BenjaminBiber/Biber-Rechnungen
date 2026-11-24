@@ -1,0 +1,143 @@
+import { HttpResponse } from 'msw'
+import type {
+  ApiToken,
+  ApiTokenAnlegen,
+  ApiTokenErstellt,
+  BenachrichtigungZaehler,
+  IntegritaetsLauf,
+  LoeschErgebnis,
+  Loeschen,
+  Suchergebnis,
+} from '@/api/typen'
+import { beispielPdf } from '../dateien'
+import { db, neueId } from '../db'
+import { tokenScopes } from '../fixtures/tokens'
+import { listeneintrag } from './belege'
+import {
+  abfrage,
+  angenommen,
+  datei,
+  jsonKoerper,
+  keinInhalt,
+  nichtGefunden,
+  problem,
+  route,
+  seite,
+  ungueltig,
+  wahr,
+  zahl,
+  type Route,
+} from './gemeinsam'
+import { korrespondentEintrag } from './korrespondenten'
+
+/** Benachrichtigungen, Aufbewahrung, Integrität, Suche, API-Tokens und Verfahrensdoku. */
+export const systemRouten: Route[] = [
+  route('get', '/api/benachrichtigungen', 'Lesen', ({ request }) => {
+    const parameter = abfrage(request)
+    const nurUngelesen = wahr(parameter, 'nurUngelesen') ?? false
+    const liste = db.benachrichtigungen
+      .filter((b) => !nurUngelesen || !b.gelesen)
+      .sort((a, b) => b.erstelltAm.localeCompare(a.erstelltAm))
+    return HttpResponse.json(seite(liste, zahl(parameter, 'seite') ?? 1, 20))
+  }),
+
+  route('get', '/api/benachrichtigungen/zaehler', 'Lesen', () =>
+    HttpResponse.json<BenachrichtigungZaehler>({ ungelesen: db.benachrichtigungen.filter((b) => !b.gelesen).length }),
+  ),
+
+  route('post', '/api/benachrichtigungen/{id}/gelesen', 'Lesen', ({ params }) => {
+    const eintrag = db.benachrichtigungen.find((b) => b.id === params.id)
+    if (!eintrag) return nichtGefunden('Benachrichtigung')
+    eintrag.gelesen = true
+    return keinInhalt()
+  }),
+
+  route('post', '/api/benachrichtigungen/alle-gelesen', 'Lesen', () => {
+    db.benachrichtigungen = db.benachrichtigungen.map((b) => ({ ...b, gelesen: true }))
+    return keinInhalt()
+  }),
+
+  route('get', '/api/aufbewahrung/loeschbar', 'Admin', () => HttpResponse.json(db.loeschbar)),
+
+  route('post', '/api/aufbewahrung/loeschen', 'Admin', async ({ request }) => {
+    const { jahr, bestaetigung } = await jsonKoerper<Loeschen>(request)
+    const eintrag = db.loeschbar.find((l) => l.jahr === jahr)
+    if (!eintrag) return problem(409, `Der Jahrgang ${jahr} ist noch nicht löschbar`)
+    if (bestaetigung !== `${jahr} LÖSCHEN`) return ungueltig('bestaetigung', `Bitte „${jahr} LÖSCHEN“ eingeben.`)
+    db.loeschbar = db.loeschbar.filter((l) => l.jahr !== jahr)
+    const geloeschte = db.belege.filter((b) => b.rechnungsdatum?.startsWith(String(jahr)))
+    db.belege = db.belege.filter((b) => !geloeschte.includes(b))
+    return HttpResponse.json<LoeschErgebnis>({
+      geloescht: eintrag.anzahl,
+      pfade: geloeschte.flatMap((b) => b.dateien.map((d) => d.pfad)),
+    })
+  }),
+
+  route('get', '/api/integritaet/laeufe', 'Lesen', () => HttpResponse.json(db.integritaetsLaeufe)),
+
+  route('post', '/api/integritaet/starten', 'Admin', () => {
+    const lauf: IntegritaetsLauf = {
+      id: neueId(),
+      gestartetAm: new Date().toISOString(),
+      dauerSekunden: 1,
+      anzahlDateien: db.belege.reduce((s, b) => s + b.dateien.length, 0),
+      anzahlAbweichungen: 0,
+      abweichungen: [],
+    }
+    db.integritaetsLaeufe = [lauf, ...db.integritaetsLaeufe]
+    return angenommen()
+  }),
+
+  route('get', '/api/suche', 'Lesen', ({ request }) => {
+    const q = abfrage(request).get('q')?.trim().toLocaleLowerCase('de') ?? ''
+    const passt = (...texte: (string | null | undefined)[]) =>
+      !!q && texte.some((t) => t?.toLocaleLowerCase('de').includes(q))
+    return HttpResponse.json<Suchergebnis>({
+      belege: db.belege
+        .filter((b) => passt(b.titel, b.rechnungsnummer, b.korrespondent?.name, b.auszug))
+        .slice(0, 5)
+        .map(listeneintrag),
+      korrespondenten: db.korrespondenten
+        .filter((k) => passt(k.name, ...k.aliase))
+        .slice(0, 5)
+        .map(korrespondentEintrag),
+      artikel: db.artikel.filter((a) => passt(a.name)).slice(0, 5),
+      stammartikel: db.stammartikel.filter((s) => passt(s.name)).slice(0, 5),
+    })
+  }),
+
+  route('get', '/api/tokens', 'Lesen', () => HttpResponse.json(db.tokens)),
+
+  route('post', '/api/tokens', 'Bearbeiten', async ({ request }) => {
+    const eingabe = await jsonKoerper<ApiTokenAnlegen>(request)
+    if (!eingabe.name?.trim()) return ungueltig('name', 'Name ist erforderlich.')
+    if (!eingabe.scopes.length || eingabe.scopes.some((s) => !tokenScopes.includes(s)))
+      return ungueltig('scopes', 'Mindestens einen gültigen Scope wählen.')
+    const id = neueId()
+    const klartext = `biber_${id.replace(/-/g, '').slice(-24)}`
+    const token: ApiToken = {
+      id,
+      name: eingabe.name,
+      endung: klartext.slice(-4),
+      scopes: eingabe.scopes,
+      erstelltAm: new Date().toISOString(),
+      zuletztGenutztAm: null,
+      widerrufenAm: null,
+    }
+    db.tokens.push(token)
+    return HttpResponse.json<ApiTokenErstellt>({ token, klartext }, { status: 201 })
+  }),
+
+  route('post', '/api/tokens/{id}/widerrufen', 'Bearbeiten', ({ params }) => {
+    const token = db.tokens.find((t) => t.id === params.id)
+    if (!token) return nichtGefunden('Token')
+    token.widerrufenAm ??= new Date().toISOString()
+    return keinInhalt()
+  }),
+
+  route('get', '/api/verfahrensdoku', 'Lesen', () => HttpResponse.json(db.verfahrensdoku)),
+
+  route('get', '/api/verfahrensdoku/pdf', 'Lesen', () =>
+    datei(beispielPdf, 'application/pdf', `Verfahrensdokumentation_${db.verfahrensdoku.version}.pdf`),
+  ),
+]
