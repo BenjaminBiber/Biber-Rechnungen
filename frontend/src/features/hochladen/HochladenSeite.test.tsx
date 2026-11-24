@@ -37,8 +37,11 @@ describe('Hochladen', () => {
     await waitFor(() => expect(anfragen.filter((a) => a.methode === 'POST')).toHaveLength(2))
     // Der Mock lässt den Vorgang bei jedem Abruf einen Schritt weiterlaufen; die Zwischenstände prüft „Upload-Liste“.
 
-    const links = await screen.findAllByRole('link', { name: 'Beleg öffnen' }, { timeout: 15000 })
-    expect(links).toHaveLength(2)
+    // Beide Uploads laufen unabhängig (erst IndexedDB, dann Netz) – auf beide Links warten.
+    await waitFor(() => expect(screen.getAllByRole('link', { name: 'Beleg öffnen' })).toHaveLength(2), {
+      timeout: 15000,
+    })
+    const links = screen.getAllByRole('link', { name: 'Beleg öffnen' })
     expect(links[0].getAttribute('href')).toMatch(/^\/belege\//)
     expect(screen.getAllByText('Fertig')).toHaveLength(2)
     ende()
@@ -124,6 +127,12 @@ describe('Upload-Liste', () => {
       '/belege/b0000000-0000-4000-8000-000000000001',
     )
     expect(screen.getByRole('button', { name: 'Erneut' })).toBeInTheDocument()
+  })
+
+  it('zeigt wartende Einträge mit dem Chip „wartet (offline)“', async () => {
+    renderListe([{ ...basis, id: '5', name: 'offline.pdf', status: 'wartet', prozent: 0 }])
+    expect(await screen.findByText('wartet (offline)')).toBeInTheDocument()
+    expect(screen.getByText('Wird gesendet, sobald die Verbindung wieder da ist.')).toBeInTheDocument()
   })
 })
 
