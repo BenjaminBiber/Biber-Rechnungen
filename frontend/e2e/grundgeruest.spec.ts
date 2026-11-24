@@ -63,10 +63,10 @@ test.describe('Grundgerüst', () => {
     await expect(page.getByRole('heading', { level: 1, name: 'Seite nicht gefunden' })).toBeVisible()
   })
 
-  test('Schrift und Icons sind lokal eingebunden', async ({ page }) => {
+  test('Schrift und Icons sind lokal eingebunden', async ({ page, baseURL }) => {
     const fremdeAnfragen: string[] = []
     page.on('request', (r) => {
-      if (!r.url().startsWith('http://localhost:4173')) fremdeAnfragen.push(r.url())
+      if (!r.url().startsWith(baseURL!)) fremdeAnfragen.push(r.url())
     })
     await page.goto('/')
     await expect(page.getByRole('heading', { level: 1, name: 'Dashboard' })).toBeVisible()

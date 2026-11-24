@@ -31,9 +31,13 @@ test.describe('Belege: Massenaktionen und Zeilenmenü', () => {
     const titel = await erste.getByRole('link').innerText()
     await expect(erste.locator('.chip', { hasText: /^bezahlt$/ })).toHaveCount(0)
 
-    await erste.getByRole('button', { name: /^Aktionen für/ }).click()
+    // Ganz per Tastatur: steht der Mauszeiger über dem aufklappenden Menü, kann ein Hover das Untermenü wieder schließen.
+    await erste.getByRole('button', { name: /^Aktionen für/ }).press('Enter')
     await page.getByRole('menuitem', { name: /Als bezahlt markieren/ }).press('ArrowRight')
-    await page.getByRole('menuitem', { name: 'bezahlt', exact: true }).click()
+    // Ein Mausklick ins gerade aufklappende Untermenü scheiterte an „element is not stable“.
+    const bezahlt = page.getByRole('menuitem', { name: 'bezahlt', exact: true })
+    await expect(bezahlt).toBeFocused()
+    await bezahlt.press('Enter')
     await expect(page.getByText('Als „bezahlt“ markiert')).toBeVisible()
 
     // In der Ansicht „Alle“ trägt der Beleg den Chip „bezahlt“ (Wechsel in der App – der Mock-Zustand bleibt).

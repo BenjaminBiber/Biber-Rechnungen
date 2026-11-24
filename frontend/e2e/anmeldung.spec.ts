@@ -18,7 +18,7 @@ test('abgemeldet: Anmelden mit TOTP führt zum Dashboard', async ({ page }) => {
   await page.keyboard.type('123456')
   await page.getByRole('button', { name: 'Anmelden' }).click()
 
-  await expect(page).toHaveURL(/:4173\/$/)
+  await expect(page).toHaveURL(/^http:\/\/[^/]+\/$/)
   await expect(page.getByRole('heading', { level: 1, name: 'Dashboard', exact: true })).toBeVisible()
 })
 
@@ -33,7 +33,7 @@ test('nicht eingerichtet: Ersteinrichtung wird erzwungen', async ({ page }) => {
 
 test('angemeldet: /anmelden leitet nach /', async ({ page }) => {
   await page.goto('/anmelden')
-  await expect(page).toHaveURL(/:4173\/$/)
+  await expect(page).toHaveURL(/^http:\/\/[^/]+\/$/)
 })
 
 test('Indigo-Feld nur auf breiten Bildschirmen', async ({ page, isMobile }) => {
