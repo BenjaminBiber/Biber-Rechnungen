@@ -11,4 +11,5 @@ public enum PruefungArt
     NeuerKorrespondent,
     Konfidenz,
     Kosit,
+    Bankverbindung,
 }

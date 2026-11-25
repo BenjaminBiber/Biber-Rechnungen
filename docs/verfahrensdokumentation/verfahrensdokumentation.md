@@ -101,7 +101,7 @@ Ein Beleg kann seitenweise **aufgeteilt** werden: Die Teile entstehen als neue D
 
 ### 3.3 Prüfungen
 
-Folgende neun Plausibilitätsprüfungen laufen für jeden Beleg; jede ist auf der Einstellungsseite ein- und ausschaltbar. Jedes Ergebnis wird als Prüfbefund mit Zeitpunkt gespeichert.
+Folgende zehn Plausibilitätsprüfungen laufen für jeden Beleg; jede ist auf der Einstellungsseite ein- und ausschaltbar. Jedes Ergebnis wird als Prüfbefund mit Zeitpunkt gespeichert.
 
 | Nr. | Prüfung | Inhalt |
 | --- | --- | --- |
@@ -114,6 +114,7 @@ Folgende neun Plausibilitätsprüfungen laufen für jeden Beleg; jede ist auf de
 | 7 | Neuer Korrespondent | erster Beleg eines Lieferanten |
 | 8 | Erkennungssicherheit | Konfidenz von Document Intelligence unter Schwelle (Standard 0,8) |
 | 9 | KoSIT-Validierung | E-Rechnung verletzt die XRechnung-Regeln |
+| 10 | Bankverbindung bekannt | IBAN der Eingangsrechnung weicht von den beim Korrespondenten hinterlegten ab; sie wird erst mit dem Bestätigen des Belegs hinterlegt |
 
 ### 3.4 Ablagepfad und Unveränderbarkeit
 

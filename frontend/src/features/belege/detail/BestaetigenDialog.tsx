@@ -71,6 +71,13 @@ export function BestaetigenDialog({ beleg }: { beleg: BelegDetail }) {
               ))}
             </ul>
             <span>„Zu prüfen“ wird entfernt. Befunde und deine Bestätigung bleiben in der Historie.</span>
+            {befunde.some((b) => b.pruefung === 'Bankverbindung') && (
+              <span>
+                <strong>Abweichende IBAN:</strong> Mit dem Bestätigen wird sie beim Korrespondenten hinterlegt und gilt
+                künftig als bekannt. Bestätige nur, wenn der Lieferant die neue Bankverbindung auf anderem Weg bestätigt
+                hat.
+              </span>
+            )}
             <div>
               <label className="label" htmlFor={begruendungId}>
                 Begründung (optional, wird protokolliert)

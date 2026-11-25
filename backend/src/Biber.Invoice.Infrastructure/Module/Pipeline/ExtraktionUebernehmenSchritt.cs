@@ -1,6 +1,7 @@
 using Biber.Invoice.Domain.Entitaeten;
 using Biber.Invoice.Domain.Enums;
 using Biber.Invoice.Domain.Pipeline;
+using Biber.Invoice.Infrastructure.Module.KorrespondentZuordnung.Domain.Regeln;
 
 namespace Biber.Invoice.Infrastructure.Module.Pipeline;
 
@@ -44,6 +45,14 @@ public sealed class ExtraktionUebernehmenSchritt(TimeProvider zeit) : IPipelineS
         }
 
         beleg.ExtraktionsQuelle = e.Quelle;
+        beleg.Bankverbindungen =
+        [
+            .. (e.Aussteller?.Bankverbindungen ?? [])
+                .Select(b => (Iban: KennungNormalisierer.Iban(b.Iban), Bic: KennungNormalisierer.Bic(b.Bic)))
+                .Where(b => b.Iban is not null)
+                .DistinctBy(b => b.Iban)
+                .Select(b => new Bankverbindung(b.Iban!, b.Bic)),
+        ];
         beleg.DiKonfidenz = e.Konfidenz;
         beleg.ExtrahiertAm = zeit.GetUtcNow();
 

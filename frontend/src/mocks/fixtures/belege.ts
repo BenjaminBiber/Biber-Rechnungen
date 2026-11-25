@@ -328,6 +328,7 @@ const pruefNamen: Record<PruefungArt, string> = {
   NeuerKorrespondent: 'Neuer Korrespondent',
   Konfidenz: 'Erkennungssicherheit',
   Kosit: 'KoSIT-Validierung',
+  Bankverbindung: 'Bankverbindung bekannt',
 }
 
 /** Fehlgeschlagene Prüfungen der fünf Belege „zu prüfen“ (`Main.dc.html`, Liste „Zu prüfen“). */
@@ -356,6 +357,7 @@ function befunde(zeile: Zeile, istERechnung: boolean): PruefBefund[] {
     NeuerKorrespondent: zeile.schluessel === 'b2' ? 'Bekannt seit 03/2024 · 31 Belege' : 'Korrespondent bekannt',
     Konfidenz: 'Konfidenz über der Schwelle 0,80',
     Kosit: 'XRechnung gültig',
+    Bankverbindung: 'IBAN ist beim Korrespondenten hinterlegt',
   }
   const reihenfolge = Object.keys(pruefNamen) as PruefungArt[]
   const fehlgeschlageneArten = new Set(fehler.map(([art]) => art))

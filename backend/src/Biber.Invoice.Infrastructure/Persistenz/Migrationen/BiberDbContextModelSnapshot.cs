@@ -224,6 +224,11 @@ namespace Biber.Invoice.Infrastructure.Persistenz.Migrationen
                         .HasColumnType("uuid")
                         .HasColumnName("aufgeteilt_aus_beleg_id");
 
+                    b.Property<string>("Bankverbindungen")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("bankverbindungen");
+
                     b.Property<string>("Belegart")
                         .IsRequired()
                         .HasMaxLength(20)

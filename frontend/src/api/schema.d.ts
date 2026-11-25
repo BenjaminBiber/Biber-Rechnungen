@@ -2593,7 +2593,7 @@ export interface components {
         /** @enum {string} */
         PruefErgebnis: "Ok" | "Fehlgeschlagen" | "NichtAnwendbar";
         /** @enum {string} */
-        PruefungArt: "Positionssumme" | "NettoSteuerBrutto" | "Pflichtfelder" | "Datum" | "Paragraph14" | "Dublette" | "NeuerKorrespondent" | "Konfidenz" | "Kosit";
+        PruefungArt: "Positionssumme" | "NettoSteuerBrutto" | "Pflichtfelder" | "Datum" | "Paragraph14" | "Dublette" | "NeuerKorrespondent" | "Konfidenz" | "Kosit" | "Bankverbindung";
         RegistrierenDto: {
             name: string;
             email: string;

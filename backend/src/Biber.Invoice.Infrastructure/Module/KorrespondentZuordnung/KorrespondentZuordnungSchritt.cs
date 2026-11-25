@@ -11,7 +11,7 @@ namespace Biber.Invoice.Infrastructure.Module.KorrespondentZuordnung;
 /// <summary>
 /// Schritt 4: Ordnet dem Beleg den Aussteller als Korrespondenten zu – Rangfolge USt-IdNr., IBAN, Name/Alias,
 /// Matching-Regel – und legt sonst einen neuen, ungeprüften Korrespondenten an. Beim Treffer werden fehlende
-/// Angaben ergänzt, nie überschrieben.
+/// Angaben ergänzt, nie überschrieben; eine weitere IBAN wird nicht automatisch übernommen.
 /// </summary>
 public sealed class KorrespondentZuordnungSchritt(BiberDbContext db, TimeProvider zeit) : IPipelineSchritt
 {
@@ -50,7 +50,7 @@ public sealed class KorrespondentZuordnungSchritt(BiberDbContext db, TimeProvide
         }
         else
         {
-            Ergaenzen(treffer, aussteller, kontext.Vorgang.MailAbsender);
+            Ergaenzen(treffer, aussteller, kontext.Vorgang.MailAbsender, istNeu: false);
         }
 
         beleg.KorrespondentId = treffer.Id;
@@ -108,12 +108,15 @@ public sealed class KorrespondentZuordnungSchritt(BiberDbContext db, TimeProvide
             Geprueft = false,
             ErstelltAm = zeit.GetUtcNow(),
         };
-        Ergaenzen(korrespondent, aussteller, kontext.Vorgang.MailAbsender);
+        Ergaenzen(korrespondent, aussteller, kontext.Vorgang.MailAbsender, istNeu: true);
         return korrespondent;
     }
 
-    /// <summary>Füllt leere Kennungen und ergänzt Bankverbindungen; vorhandene Werte bleiben.</summary>
-    private static void Ergaenzen(Korrespondent korrespondent, ExtrahiertePartei aussteller, string? mailAbsender)
+    /// <summary>
+    /// Füllt leere Kennungen; vorhandene Werte bleiben. IBANs werden nur übernommen, solange der Korrespondent
+    /// noch keine hat – eine abweichende IBAN meldet die Prüfung „Bankverbindung“ und übernimmt erst das Bestätigen.
+    /// </summary>
+    private static void Ergaenzen(Korrespondent korrespondent, ExtrahiertePartei aussteller, string? mailAbsender, bool istNeu)
     {
         if (string.IsNullOrWhiteSpace(korrespondent.UstIdNr))
         {
@@ -125,43 +128,12 @@ public sealed class KorrespondentZuordnungSchritt(BiberDbContext db, TimeProvide
             korrespondent.Steuernummer = Leer(aussteller.Steuernummer);
         }
 
-        BankverbindungenErgaenzen(korrespondent, aussteller);
+        BankverbindungenAbgleich.Ergaenzen(
+            korrespondent, aussteller.Bankverbindungen, neueUebernehmen: istNeu || korrespondent.Bankverbindungen.Count == 0);
 
         if (string.IsNullOrWhiteSpace(korrespondent.Domain))
         {
             korrespondent.Domain = DomainErmitteln(aussteller, mailAbsender);
-        }
-    }
-
-    /// <summary>Hängt unbekannte IBANs an und trägt einen fehlenden BIC zu einer bekannten IBAN nach.</summary>
-    private static void BankverbindungenErgaenzen(Korrespondent korrespondent, ExtrahiertePartei aussteller)
-    {
-        var liste = korrespondent.Bankverbindungen.ToList();
-        var geaendert = false;
-        foreach (var erkannt in aussteller.Bankverbindungen)
-        {
-            if (KennungNormalisierer.Iban(erkannt.Iban) is not { } iban)
-            {
-                continue;
-            }
-
-            var bic = KennungNormalisierer.Bic(erkannt.Bic);
-            var index = liste.FindIndex(b => KennungNormalisierer.Iban(b.Iban) == iban);
-            if (index < 0)
-            {
-                liste.Add(new Bankverbindung(iban, bic));
-                geaendert = true;
-            }
-            else if (bic is not null && string.IsNullOrWhiteSpace(liste[index].Bic))
-            {
-                liste[index] = liste[index] with { Bic = bic };
-                geaendert = true;
-            }
-        }
-
-        if (geaendert)
-        {
-            korrespondent.Bankverbindungen = liste; // neue Liste, damit EF die Änderung sieht
         }
     }
 

@@ -37,7 +37,7 @@ public sealed class EinstellungenTests(ApiFabrik fabrik) : IAsyncLifetime
         dto.Pruefungen.KonfidenzSchwelle.ShouldBe(0.8m);
         dto.Di.Monatslimit.ShouldBe(500);
         dto.Aufbewahrung.Jahre.ShouldBe(8);
-        dto.Pruefungen.Aktiv.Count.ShouldBe(9);
+        dto.Pruefungen.Aktiv.Count.ShouldBe(10);
         dto.Pruefungen.Aktiv.Values.ShouldAllBe(aktiv => aktiv);
         dto.Allgemein.InboxTagId.ShouldBe(SystemIds.TagInbox); // Seed-Tag „Inbox“
     }

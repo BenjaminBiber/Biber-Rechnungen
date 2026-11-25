@@ -4,6 +4,7 @@ using Biber.Invoice.Contracts.Dto.Belege;
 using Biber.Invoice.Domain.Entitaeten;
 using Biber.Invoice.Domain.Enums;
 using Biber.Invoice.Domain.Pipeline;
+using Biber.Invoice.Infrastructure.Module.Korrespondenten;
 using Biber.Invoice.Infrastructure.Persistenz;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -366,9 +367,17 @@ public sealed class BelegBearbeitungsDienst(
         beleg.BestaetigtAm = jetzt;
         beleg.BestaetigtVonId = benutzer.Id;
         if (beleg.KorrespondentId is { } korrespondentId
-            && await db.Korrespondenten.FirstOrDefaultAsync(k => k.Id == korrespondentId, ct) is { Geprueft: false } korrespondent)
+            && await db.Korrespondenten.FirstOrDefaultAsync(k => k.Id == korrespondentId, ct) is { } korrespondent)
         {
             korrespondent.Geprueft = true;
+            if (beleg.Richtung == Richtung.Eingang)
+            {
+                // Erst das Bestätigen macht eine abweichende IBAN des Belegs beim Korrespondenten bekannt.
+                BankverbindungenAbgleich.Ergaenzen(
+                    korrespondent,
+                    beleg.Bankverbindungen.Where(b => KorrespondentNormalisierung.IstIban(b.Iban)),
+                    neueUebernehmen: true);
+            }
         }
 
         db.AuditEintraege.Add(new AuditEintrag

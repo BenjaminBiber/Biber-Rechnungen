@@ -24,6 +24,7 @@ public sealed class BelegKonfiguration : IEntityTypeConfiguration<Beleg>
         builder.Property(b => b.Rechnungsnummer).HasMaxLength(200);
         builder.Property(b => b.Waehrung).HasMaxLength(3).HasDefaultValue("EUR");
         builder.Property(b => b.DiKonfidenz).HasPrecision(5, 4);
+        builder.Property(b => b.Bankverbindungen).AlsJsonb();
 
         builder.Property<NpgsqlTsVector>(Suchvektor)
             .HasColumnType("tsvector")

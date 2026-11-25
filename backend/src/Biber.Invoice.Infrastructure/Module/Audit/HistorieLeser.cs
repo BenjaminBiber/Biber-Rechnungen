@@ -31,6 +31,7 @@ public sealed class HistorieLeser(BiberDbContext db, IEinstellungen einstellunge
         [nameof(Beleg.ExtrahiertAm)] = "Ausgelesen am",
         [nameof(Beleg.Seitenanzahl)] = "Seitenanzahl",
         [nameof(Beleg.DuplikatVonId)] = "Dublette von",
+        [nameof(Beleg.Bankverbindungen)] = "Bankverbindung",
         [nameof(Beleg.AufgeteiltAusBelegId)] = "Aufgeteilt aus",
         [nameof(Beleg.BestaetigtVonId)] = "Bestätigt von",
         [nameof(Beleg.Titel)] = "Titel",

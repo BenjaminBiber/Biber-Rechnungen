@@ -34,6 +34,10 @@ public class Beleg
     public DateTimeOffset? ExtrahiertAm { get; set; }
     public int Seitenanzahl { get; set; }
     public string? Volltext { get; set; }
+
+    /// <summary>Bankverbindungen des Ausstellers, wie sie auf dem Beleg stehen (IBAN ohne Leerzeichen, groß).</summary>
+    public List<Bankverbindung> Bankverbindungen { get; set; } = [];
+
     public Guid? DuplikatVonId { get; set; }
     public Guid? AufgeteiltAusBelegId { get; set; }
     public DateTimeOffset? BestaetigtAm { get; set; }

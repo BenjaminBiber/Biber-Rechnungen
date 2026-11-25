@@ -6,11 +6,11 @@ import { b2, kopfGeladen, renderBelegDetail } from '../testHilfe'
 vi.mock('react-pdf', () => import('../testHilfe').then((m) => m.reactPdfMock))
 
 describe('Tab Prüfung', () => {
-  it('zeigt neun Befunde: fehlgeschlagen → ok → nicht anwendbar', async () => {
+  it('zeigt zehn Befunde: fehlgeschlagen → ok → nicht anwendbar', async () => {
     renderBelegDetail(`/belege/${b2}/pruefung`)
     await kopfGeladen()
     const eintraege = within(await screen.findByRole('list')).getAllByRole('listitem')
-    expect(eintraege).toHaveLength(9)
+    expect(eintraege).toHaveLength(10)
     const ergebnisse = eintraege.map((e) => e.querySelector('.chip')?.textContent)
     expect(ergebnisse).toEqual([
       'fehlgeschlagen',
@@ -21,11 +21,12 @@ describe('Tab Prüfung', () => {
       'ok',
       'ok',
       'ok',
+      'ok',
       'nicht anwendbar',
     ])
     expect(eintraege[0]).toHaveTextContent('Summe der Positionen = Netto')
     expect(eintraege[0]).toHaveTextContent('report')
-    expect(eintraege[8]).toHaveTextContent('remove_circle_outline')
+    expect(eintraege[9]).toHaveTextContent('remove_circle_outline')
   })
 
   it('zeigt ohne Befunde „Noch nicht geprüft“', async () => {

@@ -24,6 +24,7 @@ export const einstellungen: Einstellungen = {
       NeuerKorrespondent: true,
       Konfidenz: true,
       Kosit: true,
+      Bankverbindung: true,
     },
     summenToleranz: 0.02,
     maxAlterJahre: 2,

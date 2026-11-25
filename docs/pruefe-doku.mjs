@@ -32,6 +32,7 @@ const PRUEFUNGEN = [
   "Neuer Korrespondent",
   "Erkennungssicherheit",
   "KoSIT-Validierung",
+  "Bankverbindung bekannt",
 ];
 
 function envVariablen() {
@@ -90,7 +91,7 @@ const pruefungen = [
     },
   ],
   [
-    "Alle sieben MCP-Tools und alle neun Prüfungen stehen in der Verfahrensdokumentation",
+    "Alle sieben MCP-Tools und alle zehn Prüfungen stehen in der Verfahrensdokumentation",
     () => {
       const text = lies(VERFAHREN);
       return [

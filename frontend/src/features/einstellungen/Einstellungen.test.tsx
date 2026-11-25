@@ -112,7 +112,7 @@ describe('Einstellungen', { timeout: 20000 }, () => {
   it('Prüfungen: Schwelle „0,85“ wird als 0.85 gesendet, Schalter aus als false', async () => {
     const { user, anfragen, ende } = renderSeite('/einstellungen/pruefungen')
     await formular('Prüfungen & Schwellen')
-    expect(screen.getAllByRole('switch')).toHaveLength(9)
+    expect(screen.getAllByRole('switch')).toHaveLength(10)
     const konfidenz = screen.getByLabelText('Erkennungssicherheit (Konfidenz) Schwelle')
     expect(konfidenz).toHaveValue('0,80')
     expect(screen.getByLabelText('Datum plausibel Schwelle')).toHaveValue('2')

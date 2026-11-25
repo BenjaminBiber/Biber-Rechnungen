@@ -8916,7 +8916,8 @@
           "Dublette",
           "NeuerKorrespondent",
           "Konfidenz",
-          "Kosit"
+          "Kosit",
+          "Bankverbindung"
         ]
       },
       "RegistrierenDto": {

@@ -56,6 +56,27 @@ describe('Bestätigen', () => {
     await waitFor(() => expect(within(kopfChips()).queryByText('zu prüfen')).not.toBeInTheDocument())
   })
 
+  it('weist bei abweichender IBAN auf die Übernahme beim Korrespondenten hin', async () => {
+    db.belege = db.belege.map((b) =>
+      b.id === b2
+        ? {
+            ...b,
+            befunde: b.befunde.map((x) =>
+              x.pruefung === 'Bankverbindung'
+                ? { ...x, ergebnis: 'Fehlgeschlagen' as const, detail: 'Abweichende IBAN DE02 1203 0000 0000 2020 51' }
+                : x,
+            ),
+          }
+        : b,
+    )
+    const { nutzer } = renderBelegDetail()
+    await kopfGeladen()
+    await nutzer.click(screen.getByRole('button', { name: 'Bestätigen' }))
+
+    const dialog = await screen.findByRole('alertdialog', { name: 'Beleg mit 3 offenen Befunden bestätigen?' })
+    expect(dialog).toHaveTextContent('Mit dem Bestätigen wird sie beim Korrespondenten hinterlegt')
+  })
+
   it('„Zurück zum Beleg“ schließt den Dialog ohne Anfrage', async () => {
     const { anfragen } = anfragenMitschneiden()
     const { nutzer } = renderBelegDetail()

@@ -19,6 +19,9 @@ internal static class PruefFormat
     /// <summary>„19.11.2026“.</summary>
     public static string Datum(DateOnly datum) => datum.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
 
+    /// <summary>„DE89 3704 0044 0532 0130 00“.</summary>
+    public static string Iban(string iban) => string.Join(' ', iban.Chunk(4).Select(gruppe => new string(gruppe)));
+
     /// <summary>„A“, „A und B“, „A, B und C“.</summary>
     public static string Aufzaehlung(IReadOnlyList<string> teile) => teile.Count switch
     {

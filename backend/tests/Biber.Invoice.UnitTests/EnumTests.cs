@@ -20,7 +20,7 @@ public sealed class EnumTests
         { "DateiRolle", ["Original", "EingebettetesXml", "Visualisierung", "Vorschau"] },
         { "LogoQuelle", ["Keine", "Upload", "Pdf", "Favicon"] },
         { "MatchingAlgorithmus", ["Keiner", "EinWort", "AlleWoerter", "Exakt", "Regex", "Unscharf", "Auto"] },
-        { "PruefungArt", ["Positionssumme", "NettoSteuerBrutto", "Pflichtfelder", "Datum", "Paragraph14", "Dublette", "NeuerKorrespondent", "Konfidenz", "Kosit"] },
+        { "PruefungArt", ["Positionssumme", "NettoSteuerBrutto", "Pflichtfelder", "Datum", "Paragraph14", "Dublette", "NeuerKorrespondent", "Konfidenz", "Kosit", "Bankverbindung"] },
         { "PruefErgebnis", ["Ok", "Fehlgeschlagen", "NichtAnwendbar"] },
         { "KorrespondentErkennung", ["Keine", "UstIdNr", "Iban", "Name", "Manuell", "Auto"] },
         { "UstStatus", ["Unbekannt", "Regelbesteuerung", "Kleinunternehmer"] },

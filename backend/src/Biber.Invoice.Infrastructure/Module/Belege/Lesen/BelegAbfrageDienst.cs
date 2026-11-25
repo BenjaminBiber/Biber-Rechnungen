@@ -250,6 +250,7 @@ public sealed partial class BelegAbfrageDienst(BiberDbContext db, IEinstellungen
         PruefungArt.NeuerKorrespondent => "Neuer Korrespondent",
         PruefungArt.Konfidenz => "Erkennungssicherheit",
         PruefungArt.Kosit => "KoSIT-Validierung",
+        PruefungArt.Bankverbindung => "Bankverbindung bekannt",
         _ => art.ToString(),
     };
 

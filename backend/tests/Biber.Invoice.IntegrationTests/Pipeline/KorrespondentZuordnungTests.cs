@@ -128,7 +128,7 @@ public sealed class KorrespondentZuordnungTests(ApiFabrik fabrik)
     }
 
     [Fact]
-    public async Task Beim_Treffer_wird_neue_IBAN_ergaenzt_und_vorhandene_UstIdNr_bleibt()
+    public async Task Beim_Treffer_bleiben_UstIdNr_und_IBANs_und_eine_abweichende_IBAN_wird_nicht_uebernommen()
     {
         var alteIban = Iban();
         var neueIban = Iban();
@@ -138,12 +138,24 @@ public sealed class KorrespondentZuordnungTests(ApiFabrik fabrik)
         await fabrik.SpeichernAsync(k);
 
         // Treffer über die alte IBAN; die Extraktion nennt eine andere USt-IdNr. und eine zweite IBAN.
+        // Die zweite IBAN meldet die Prüfung „Bankverbindung“; übernommen wird sie erst beim Bestätigen.
         await AusfuehrenAsync(Partei(k.Name, ustIdNr: UstIdNr(), ibans: [alteIban, neueIban], steuernummer: "99/999/99999"));
 
         var gespeichert = await KorrespondentAsync(k.Id);
         gespeichert.UstIdNr.ShouldBe(ust);
-        gespeichert.Bankverbindungen.ShouldBe([new Bankverbindung(alteIban), new Bankverbindung(neueIban)]);
+        gespeichert.Bankverbindungen.ShouldBe([new Bankverbindung(alteIban)]);
         gespeichert.Steuernummer.ShouldBe("99/999/99999");
+    }
+
+    [Fact]
+    public async Task Beim_Treffer_ohne_hinterlegte_IBAN_wird_die_erste_uebernommen()
+    {
+        var iban = Iban();
+        var k = await fabrik.SpeichernAsync(Testdaten.Korrespondent());
+
+        await AusfuehrenAsync(Partei(k.Name, ibans: [iban], bic: "COBADEFFXXX"));
+
+        (await KorrespondentAsync(k.Id)).Bankverbindungen.ShouldBe([new Bankverbindung(iban, "COBADEFFXXX")]);
     }
 
     [Fact]

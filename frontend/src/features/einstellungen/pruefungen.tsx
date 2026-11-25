@@ -57,6 +57,7 @@ const pruefungen: Pruefung[] = [
     schwelle: 'konfidenzSchwelle',
   },
   { art: 'Kosit', name: 'KoSIT-Validierung', detail: 'nur für XRechnung / ZUGFeRD' },
+  { art: 'Bankverbindung', name: 'Bankverbindung bekannt', detail: 'IBAN weicht von den hinterlegten ab' },
 ]
 
 const zahlFormat = (wert: number, stellen: number) =>

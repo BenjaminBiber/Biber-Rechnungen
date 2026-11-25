@@ -8,6 +8,7 @@ public sealed class PruefLaufTests
 {
     private static readonly IPruefung[] Alle =
     [
+        new BankverbindungPruefung(),
         new KositPruefung(),
         new KonfidenzPruefung(),
         new NeuerKorrespondentPruefung(),
@@ -20,7 +21,7 @@ public sealed class PruefLaufTests
     ];
 
     [Fact]
-    public void Alle_neun_Pruefungen_in_fester_Reihenfolge()
+    public void Alle_zehn_Pruefungen_in_fester_Reihenfolge()
     {
         var befunde = PruefLauf.Ausfuehren(PruefDaten.Eingabe(), Alle);
 
@@ -40,7 +41,7 @@ public sealed class PruefLaufTests
 
         var befunde = PruefLauf.Ausfuehren(PruefDaten.Eingabe(beleg, einstellungen), Alle);
 
-        befunde.Count.ShouldBe(8);
+        befunde.Count.ShouldBe(9);
         befunde.ShouldNotContain(b => b.Art == PruefungArt.Konfidenz);
     }
 
@@ -49,6 +50,6 @@ public sealed class PruefLaufTests
     {
         var befunde = PruefLauf.Ausfuehren(PruefDaten.Eingabe(einstellungen: new PruefEinstellungen { Aktiv = new Dictionary<PruefungArt, bool>() }), Alle);
 
-        befunde.Count.ShouldBe(9);
+        befunde.Count.ShouldBe(10);
     }
 }
