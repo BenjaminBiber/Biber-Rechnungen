@@ -99,9 +99,9 @@ public sealed class KorrespondentTests(ApiFabrik fabrik) : IAsyncLifetime
 
         liste.Select(e => e.Id).ShouldBe([neu.Id, kraemer.Id]);
         liste[0].IstNeu.ShouldBeTrue();
-        liste[0].Hinweis.ShouldBe("kein Logo · noch nicht geprüft · vermutlich Dublette von ‚Bürowelt Krämer KG‘");
+        liste[0].Hinweis.ShouldBe("noch nicht geprüft · vermutlich Dublette von ‚Bürowelt Krämer KG‘");
         liste[1].IstNeu.ShouldBeFalse();
-        liste[1].Hinweis.ShouldBe("kein Logo · vermutlich Dublette von ‚Buerowelt Kraemer‘");
+        liste[1].Hinweis.ShouldBe("vermutlich Dublette von ‚Buerowelt Kraemer‘");
     }
 
     [Fact]

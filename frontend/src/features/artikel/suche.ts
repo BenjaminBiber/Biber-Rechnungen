@@ -1,4 +1,4 @@
-import type { ArtikelAbfrage, PreisaenderungFilter } from '@/api/typen'
+import type { ArtikelAbfrage, PreisaenderungFilter, StammartikelListeneintrag } from '@/api/typen'
 
 /** Suchparameter der Artikelseite (`/artikel?reiter=…`). */
 export type ArtikelSuche = {
@@ -43,6 +43,25 @@ export function zuAbfrage(suche: ArtikelSuche): ArtikelAbfrage {
     seite: suche.seite,
     seitengroesse: ARTIKEL_SEITENGROESSE,
   } as ArtikelSuche) as ArtikelAbfrage
+}
+
+/**
+ * Filtert die (vollständig geladenen) Stammartikel im Browser – die Stammartikel-Liste kennt keine Filter am
+ * Server: Suche im Namen, Korrespondent (per Name, weil die Liste nur Namen trägt) und Preisänderung.
+ */
+export function stammartikelFiltern(
+  eintraege: StammartikelListeneintrag[],
+  suche: ArtikelSuche,
+  korrespondentName: string | undefined,
+): StammartikelListeneintrag[] {
+  const begriff = suche.suche?.trim().toLocaleLowerCase('de')
+  return eintraege.filter(
+    (s) =>
+      (!begriff || s.name.toLocaleLowerCase('de').includes(begriff)) &&
+      (!suche.korrespondentId || (!!korrespondentName && s.korrespondenten.includes(korrespondentName))) &&
+      (suche.preisaenderung !== 'Gestiegen' || (s.aenderung ?? 0) > 0) &&
+      (suche.preisaenderung !== 'Gefallen' || (s.aenderung ?? 0) < 0),
+  )
 }
 
 /** Kurzname eines Händlers für knappe Angaben: „Bürowelt Krämer KG“ → „Bürowelt“, „Druckerei Weller“ → „Weller“. */

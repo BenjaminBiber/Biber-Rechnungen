@@ -1,9 +1,10 @@
 import { Link } from '@tanstack/react-router'
 import type { TopKorrespondent } from '@/api/typen'
 import { formatEuro } from '@/lib/format'
+import { KorrespondentLogo, type LogoTon } from '@/components/KorrespondentLogo'
 import { DashboardKarte } from './gemeinsam'
 
-const toene = ['petrol', 'blau', 'grau', 'orange', 'lila']
+const toene: LogoTon[] = ['petrol', 'blau', 'grau', 'orange', 'lila']
 
 /** Fünf größte Korrespondenten des Jahres mit Balken relativ zum größten. */
 export function TopKorrespondenten({ eintraege, jahr }: { eintraege: TopKorrespondent[]; jahr: number }) {
@@ -26,13 +27,7 @@ export function TopKorrespondenten({ eintraege, jahr }: { eintraege: TopKorrespo
             className="flex flex-col gap-1.5 text-text no-underline hover:text-text"
           >
             <span className="flex items-center gap-2.5">
-              <span
-                className="flex size-[30px] flex-none items-center justify-center rounded-[7px] text-xs font-bold"
-                style={{ background: `var(--color-${ton}-flaeche)`, color: `var(--color-${ton}-text)` }}
-                aria-hidden="true"
-              >
-                {e.logo.initialen}
-              </span>
+              <KorrespondentLogo logo={e.logo} groesse={30} ton={ton} />
               <span className="min-w-0 flex-1 truncate text-sm">{e.korrespondent.name}</span>
               <span className="num text-sm font-semibold">{formatEuro(e.summe)}</span>
             </span>

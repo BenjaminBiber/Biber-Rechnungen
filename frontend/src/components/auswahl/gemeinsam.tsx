@@ -90,6 +90,7 @@ export function Option({
   gewaehlt,
   aktiv,
   deaktiviert,
+  hinweis,
   onWaehlen,
   children,
 }: {
@@ -97,6 +98,8 @@ export function Option({
   gewaehlt: boolean
   aktiv: boolean
   deaktiviert?: boolean
+  /** Tooltip, z. B. warum die Option gesperrt ist. */
+  hinweis?: string
   onWaehlen: () => void
   children: ReactNode
 }) {
@@ -106,9 +109,10 @@ export function Option({
       role="option"
       aria-selected={gewaehlt}
       aria-disabled={deaktiviert || undefined}
+      title={hinweis}
       className={`flex h-[38px] cursor-pointer items-center gap-2.5 rounded-md px-2.5 text-sm ${
         aktiv ? 'bg-hover' : ''
-      } ${deaktiviert ? 'cursor-default text-gedaempft' : ''}`}
+      } ${deaktiviert ? '!cursor-not-allowed opacity-45' : ''}`}
       // Tastatur läuft über das Suchfeld (aria-activedescendant); die Option ist nur per Klick fokussierbar.
       tabIndex={-1}
       onClick={deaktiviert ? undefined : onWaehlen}

@@ -11,15 +11,18 @@ export function ZeitraumAuswahl({
   onAendern,
   ausloeser,
   heute = new Date(),
+  anfangsOffen = false,
 }: {
   wert: Zeitraum
   onAendern: (z: Zeitraum) => void
   ausloeser: ReactNode
   /** Nur für Tests. */
   heute?: Date
+  /** Beim ersten Anzeigen gleich geöffnet (z. B. frisch hinzugefügte Filter-Pill). */
+  anfangsOffen?: boolean
 }) {
   const id = useId()
-  const [offen, setOffen] = useState(false)
+  const [offen, setOffen] = useState(anfangsOffen)
   const [von, setVon] = useState('')
   const [bis, setBis] = useState('')
   const [fehler, setFehler] = useState<string | null>(null)

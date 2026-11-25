@@ -518,27 +518,14 @@ public sealed class BelegSchreibTests(ApiFabrik fabrik) : IAsyncLifetime
         var korrespondent = await fabrik.SpeichernAsync(Testdaten.Korrespondent());
         var anderer = await BelegAsync();
         var beleg = await BelegAsync(b => b.Tags = [new BelegTag { TagId = SystemIds.TagZuPruefen, GesetztAm = Jetzt }]);
-        var relativ = $"2026/test/{Guid.NewGuid():N}.pdf";
-        var pfad = Path.Combine(fabrik.TempOrdner, "ablage", relativ);
-        Directory.CreateDirectory(Path.GetDirectoryName(pfad)!);
-        var inhalt = RandomNumberGenerator.GetBytes(4096);
-        await File.WriteAllBytesAsync(pfad, inhalt);
-        await fabrik.SpeichernAsync(new BelegDatei
-        {
-            Id = Guid.NewGuid(),
-            BelegId = beleg.Id,
-            Rolle = DateiRolle.Original,
-            Pfad = relativ,
-            Sha256 = Convert.ToHexStringLower(SHA256.HashData(inhalt)),
-            MimeType = "application/pdf",
-            Groesse = inhalt.Length,
-            AbgelegtAm = Jetzt,
-        });
+        var (_, inhalt) = await AblageDateiAsync(beleg.Id, $"2026/test/{Guid.NewGuid():N}.pdf");
         var client = Client();
 
         (await client.PutJsonAsync(Route(ApiRouten.Belege.Einzeln, beleg.Id),
             Aenderung(beleg) with { KorrespondentId = korrespondent.Id, KategorieId = kategorie.Id, Titel = "Neu" }))
             .StatusCode.ShouldBe(HttpStatusCode.OK);
+        var relativ = (await LadenAsync(beleg.Id)).Dateien.ShouldHaveSingleItem().Pfad;
+        var pfad = Path.Combine(fabrik.TempOrdner, "ablage", relativ);
         (await client.PutJsonAsync(Route(ApiRouten.Belege.Positionen, beleg.Id),
             new PositionAendernDto[] { new(1, "Papier", 1m, "Stk", 100m, 100m, 19m) })).StatusCode.ShouldBe(HttpStatusCode.OK);
         (await client.PostJsonAsync(Route(ApiRouten.Belege.Tags, beleg.Id), new TagZuordnenDto(_zahlungsTagId)))
@@ -555,7 +542,119 @@ public sealed class BelegSchreibTests(ApiFabrik fabrik) : IAsyncLifetime
         datei.Pfad.ShouldBe(relativ);
     }
 
+    // ---------- Ablage folgt dem Korrespondenten, solange „zu prüfen“ ----------
+
+    [Fact]
+    public async Task Korrespondent_gewechselt_bei_zu_pruefen_verschiebt_Original_und_XML_in_den_neuen_Ordner()
+    {
+        var neu = await fabrik.SpeichernAsync(Testdaten.Korrespondent($"Bürowelt {Guid.NewGuid():N}"[..20]));
+        var beleg = await BelegAsync(b =>
+        {
+            b.Rechnungsnummer = "RE-4711";
+            b.Rechnungsdatum = new DateOnly(2026, 3, 9);
+            b.Tags = [new BelegTag { TagId = SystemIds.TagZuPruefen, GesetztAm = Jetzt }];
+        });
+        var alterOrdner = $"2026/_Unbekannt_{Guid.NewGuid():N}";
+        var (altPdf, pdf) = await AblageDateiAsync(beleg.Id, $"{alterOrdner}/2026-03-09_RE-4711.pdf");
+        var (altXml, xml) = await AblageDateiAsync(beleg.Id, $"{alterOrdner}/2026-03-09_RE-4711.xml", DateiRolle.EingebettetesXml);
+
+        (await Client().PutJsonAsync(Route(ApiRouten.Belege.Einzeln, beleg.Id), Aenderung(beleg) with { KorrespondentId = neu.Id }))
+            .StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var ordner = $"2026/{neu.Name.Replace("ü", "ue").Replace(' ', '_')}";
+        var dateien = (await LadenAsync(beleg.Id)).Dateien;
+        var original = dateien.Single(d => d.Rolle == DateiRolle.Original);
+        var eingebettet = dateien.Single(d => d.Rolle == DateiRolle.EingebettetesXml);
+        original.Pfad.ShouldBe($"{ordner}/2026-03-09_RE-4711.pdf");
+        eingebettet.Pfad.ShouldBe($"{ordner}/2026-03-09_RE-4711.xml");
+        original.Sha256.ShouldBe(Convert.ToHexStringLower(SHA256.HashData(pdf)));
+
+        var ablage = Path.Combine(fabrik.TempOrdner, "ablage");
+        (await File.ReadAllBytesAsync(Path.Combine(ablage, original.Pfad))).ShouldBe(pdf);
+        (await File.ReadAllBytesAsync(Path.Combine(ablage, eingebettet.Pfad))).ShouldBe(xml);
+        File.Exists(altPdf).ShouldBeFalse();
+        File.Exists(altXml).ShouldBeFalse();
+        Directory.Exists(Path.Combine(ablage, alterOrdner)).ShouldBeFalse();
+        if (OperatingSystem.IsWindows())
+        {
+            File.GetAttributes(Path.Combine(ablage, original.Pfad)).HasFlag(FileAttributes.ReadOnly).ShouldBeTrue();
+        }
+    }
+
+    [Fact]
+    public async Task Verschieben_haengt_bei_belegtem_Zielpfad_ein_Suffix_an()
+    {
+        var neu = await fabrik.SpeichernAsync(Testdaten.Korrespondent($"Ziel {Guid.NewGuid():N}"));
+        var beleg = await BelegAsync(b =>
+        {
+            b.Rechnungsnummer = "RE-1";
+            b.Rechnungsdatum = new DateOnly(2026, 4, 1);
+            b.Tags = [new BelegTag { TagId = SystemIds.TagZuPruefen, GesetztAm = Jetzt }];
+        });
+        var ordner = $"2026/{neu.Name.Replace(' ', '_')}";
+        var belegt = Path.Combine(fabrik.TempOrdner, "ablage", ordner, "2026-04-01_RE-1.pdf");
+        Directory.CreateDirectory(Path.GetDirectoryName(belegt)!);
+        await File.WriteAllBytesAsync(belegt, [1, 2, 3]);
+        await AblageDateiAsync(beleg.Id, $"2026/alt_{Guid.NewGuid():N}/2026-04-01_RE-1.pdf");
+
+        (await Client().PutJsonAsync(Route(ApiRouten.Belege.Einzeln, beleg.Id), Aenderung(beleg) with { KorrespondentId = neu.Id }))
+            .StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        (await LadenAsync(beleg.Id)).Dateien.ShouldHaveSingleItem().Pfad.ShouldBe($"{ordner}/2026-04-01_RE-1_2.pdf");
+        (await File.ReadAllBytesAsync(belegt)).ShouldBe([1, 2, 3]);
+    }
+
+    [Fact]
+    public async Task Bestaetigter_Beleg_bleibt_beim_Korrespondentenwechsel_am_alten_Ort()
+    {
+        var neu = await fabrik.SpeichernAsync(Testdaten.Korrespondent());
+        var beleg = await BelegAsync();
+        var relativ = $"2026/alt_{Guid.NewGuid():N}/datei.pdf";
+        var (pfad, inhalt) = await AblageDateiAsync(beleg.Id, relativ);
+
+        (await Client().PutJsonAsync(Route(ApiRouten.Belege.Einzeln, beleg.Id), Aenderung(beleg) with { KorrespondentId = neu.Id }))
+            .StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        (await LadenAsync(beleg.Id)).Dateien.ShouldHaveSingleItem().Pfad.ShouldBe(relativ);
+        (await File.ReadAllBytesAsync(pfad)).ShouldBe(inhalt);
+    }
+
+    [Fact]
+    public async Task Ohne_Korrespondentenwechsel_bleibt_die_Datei_auch_bei_zu_pruefen_liegen()
+    {
+        var beleg = await BelegAsync(b => b.Tags = [new BelegTag { TagId = SystemIds.TagZuPruefen, GesetztAm = Jetzt }]);
+        var relativ = $"2026/alt_{Guid.NewGuid():N}/datei.pdf";
+        await AblageDateiAsync(beleg.Id, relativ);
+
+        (await Client().PutJsonAsync(Route(ApiRouten.Belege.Einzeln, beleg.Id), Aenderung(beleg) with { Titel = "Neu" }))
+            .StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        (await LadenAsync(beleg.Id)).Dateien.ShouldHaveSingleItem().Pfad.ShouldBe(relativ);
+    }
+
     // ---------- Hilfen ----------
+
+    /// <summary>Legt eine schreibgeschützte Ablage-Datei mit Zufallsinhalt an und speichert die <see cref="BelegDatei"/>.</summary>
+    private async Task<(string Pfad, byte[] Inhalt)> AblageDateiAsync(Guid belegId, string relativ, DateiRolle rolle = DateiRolle.Original)
+    {
+        var pfad = Path.Combine(fabrik.TempOrdner, "ablage", relativ);
+        Directory.CreateDirectory(Path.GetDirectoryName(pfad)!);
+        var inhalt = RandomNumberGenerator.GetBytes(4096);
+        await File.WriteAllBytesAsync(pfad, inhalt);
+        File.SetAttributes(pfad, File.GetAttributes(pfad) | FileAttributes.ReadOnly);
+        await fabrik.SpeichernAsync(new BelegDatei
+        {
+            Id = Guid.NewGuid(),
+            BelegId = belegId,
+            Rolle = rolle,
+            Pfad = relativ,
+            Sha256 = Convert.ToHexStringLower(SHA256.HashData(inhalt)),
+            MimeType = rolle == DateiRolle.Original ? "application/pdf" : "application/xml",
+            Groesse = inhalt.Length,
+            AbgelegtAm = Jetzt,
+        });
+        return (pfad, inhalt);
+    }
 
     private HttpClient Client(Rolle rolle = Rolle.Admin) => ClientFuer(fabrik, rolle);
 

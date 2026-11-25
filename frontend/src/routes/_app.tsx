@@ -1,7 +1,8 @@
 import { createFileRoute, Link, Outlet, redirect, useRouterState } from '@tanstack/react-router'
-import { useEffect } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { authKeys } from '@/api/auth'
 import { api, daten } from '@/api/client'
+import { Fehlerseite, SeiteNichtGefunden } from '@/components/fehler/Fehlerseiten'
 import { Icon } from '@/components/Icon'
 import { Logo } from '@/components/Logo'
 import { Befehlspalette } from '@/components/shell/Befehlspalette'
@@ -11,6 +12,7 @@ import { BottomNavigation } from '@/components/shell/BottomNavigation'
 import { Kopfleiste } from '@/components/shell/Kopfleiste'
 import { seitentitel } from '@/components/shell/navigation'
 import { Seitenleiste } from '@/components/shell/Seitenleiste'
+import { SeitenpanelZiel } from '@/components/shell/Seitenpanel'
 import { ToastBereich } from '@/components/toast'
 import { EinstellungenNavigation } from '@/features/einstellungen/EinstellungenNavigation'
 import { useIstMobil } from '@/lib/useIstMobil'
@@ -26,6 +28,10 @@ export const Route = createFileRoute('/_app')({
     if (!status.eingerichtet || !status.angemeldet) throw redirect({ to: '/anmelden' })
   },
   component: AppLayout,
+  // Unbekannte Adressen unterhalb der Shell: 404 mit Seitenleiste statt Vollbild.
+  notFoundComponent: () => <SeiteNichtGefunden />,
+  // Scheitert schon die Statusabfrage oben, gibt es keine Shell – Fehler im Vollbild.
+  errorComponent: (props) => <Fehlerseite {...props} vollbild />,
 })
 
 /** Mobile Kopfzeile (MobilDashboard.dc.html): Biber-Logo, Seitentitel, Suche, Avatar. */
@@ -55,11 +61,24 @@ function MobilKopfzeile() {
   )
 }
 
+/**
+ * Seiteninhalt mit eigener Suspense-Grenze: Suspendiert etwas darin (z. B. react-pdf beim Laden),
+ * blendet React nur den Inhalt aus – sonst griffe die Grenze der Route und Navigation samt Kopfleiste flackerten weg.
+ */
+function Inhalt() {
+  return (
+    <Suspense fallback={null}>
+      <Outlet />
+    </Suspense>
+  )
+}
+
 function AppLayout() {
   const istMobil = useIstMobil()
   const { oeffnen } = useBefehlspalette()
   const pfad = useRouterState({ select: (s) => s.location.pathname })
   const inEinstellungen = pfad === '/einstellungen' || pfad.startsWith('/einstellungen/')
+  const [panelZiel, setPanelZiel] = useState<HTMLDivElement | null>(null)
 
   useEffect(() => {
     const beiTaste = (e: KeyboardEvent) => {
@@ -73,19 +92,31 @@ function AppLayout() {
   }, [oeffnen])
 
   return (
-    <div className="flex min-h-screen bg-flaeche">
-      {!istMobil && <Seitenleiste />}
-      {/* Einstellungen.dc.html: Bereichsnavigation als eigene Spalte neben der Seitenleiste, über die volle Höhe */}
-      {!istMobil && inEinstellungen && <EinstellungenNavigation />}
-      <div className="flex min-w-0 flex-1 flex-col">
-        {istMobil ? <MobilKopfzeile /> : <Kopfleiste />}
-        <div className={istMobil ? 'flex-1 pb-[84px]' : 'flex-1'}>
-          <Outlet />
+    <SeitenpanelZiel value={panelZiel}>
+      <div className="flex min-h-screen bg-flaeche">
+        {!istMobil && <Seitenleiste />}
+        {/* Einstellungen.dc.html: Bereichsnavigation als eigene Spalte neben der Seitenleiste, über die volle Höhe */}
+        {!istMobil && inEinstellungen && <EinstellungenNavigation />}
+        <div className="flex min-w-0 flex-1 flex-col">
+          {istMobil ? <MobilKopfzeile /> : <Kopfleiste />}
+          {istMobil ? (
+            <div className="flex-1 pb-[84px]">
+              <Inhalt />
+            </div>
+          ) : (
+            <div className="flex flex-1">
+              <div className="min-w-0 flex-1">
+                <Inhalt />
+              </div>
+              {/* Seitenpanels (z. B. Belegvorschau) fahren hier unter der Kopfleiste von rechts ein; der Inhalt rückt zur Seite. */}
+              <div ref={setPanelZiel} className="flex flex-none" />
+            </div>
+          )}
         </div>
+        {istMobil && <BottomNavigation />}
+        <Befehlspalette />
+        <ToastBereich />
       </div>
-      {istMobil && <BottomNavigation />}
-      <Befehlspalette />
-      <ToastBereich />
-    </div>
+    </SeitenpanelZiel>
   )
 }

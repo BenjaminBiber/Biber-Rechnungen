@@ -5,7 +5,8 @@ import { Icon } from '@/components/Icon'
 import { Checkbox } from '@/components/ui/checkbox'
 import { formatDatum, formatEuro } from '@/lib/format'
 import { matchingKurztext } from '@/lib/matching'
-import { KorrespondentLogo, type KorrespondentenTyp } from './gemeinsam'
+import { KorrespondentLogo } from '@/components/KorrespondentLogo'
+import type { KorrespondentenTyp } from './gemeinsam'
 
 function Steuerkennung({ k }: { k: KorrespondentListeneintrag }) {
   if (k.ustIdNr) return <span className="mono">{k.ustIdNr}</span>

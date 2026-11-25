@@ -1,6 +1,7 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { authKeys } from '@/api/auth'
 import { api, daten } from '@/api/client'
+import { Fehlerseite } from '@/components/fehler/Fehlerseiten'
 import { AnmeldeRahmen } from '@/features/anmeldung/AnmeldeRahmen'
 import { AnmeldenFormular } from '@/features/anmeldung/AnmeldenFormular'
 import { Ersteinrichtung } from '@/features/anmeldung/Ersteinrichtung'
@@ -37,6 +38,7 @@ export const Route = createFileRoute('/anmelden')({
     if (search.schritt === 'ersteinrichtung') throw redirect({ to: '/anmelden', search: {} })
   },
   component: AnmeldenSeite,
+  errorComponent: (props) => <Fehlerseite {...props} vollbild />,
 })
 
 function AnmeldenSeite() {

@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { ADMIN, ADMIN_SITZUNG, belegLesen, hochladenUndWarten } from '../hilfen/system'
+import { belegTabOeffnen } from '../hilfen/belegTabs'
 
 test.use({ storageState: ADMIN_SITZUNG })
 
@@ -30,8 +31,7 @@ test('fehlerhafter Scan → „zu prüfen“ mit Gründen → korrigieren → be
   await expect(page.getByText(/Konfidenz 0,74 liegt unter der Schwelle/)).toBeVisible()
 
   // Fehlende Position ergänzen → Differenz 0.
-  const tabs = page.getByRole('navigation', { name: 'Belegdaten' })
-  await tabs.getByRole('link', { name: /^Positionen/ }).click()
+  await belegTabOeffnen(page, /^Positionen/)
   const vergleich = page.getByTestId('summenvergleich')
   await expect(vergleich).toContainText('Differenz 2,00')
   await page.getByRole('button', { name: '+ Position hinzufügen' }).click()
@@ -43,7 +43,7 @@ test('fehlerhafter Scan → „zu prüfen“ mit Gründen → korrigieren → be
   await expect(vergleich).toContainText('Differenz 0,00')
 
   // Kategorie ändern.
-  await tabs.getByRole('link', { name: 'Daten' }).click()
+  await belegTabOeffnen(page, 'Daten')
   const daten = page.getByRole('form', { name: 'Daten' })
   await daten.getByLabel('Kategorie').click()
   await page.getByRole('listbox', { name: 'Kategorien' }).getByRole('option', { name: kategorieName }).click()
@@ -57,11 +57,11 @@ test('fehlerhafter Scan → „zu prüfen“ mit Gründen → korrigieren → be
   await dialog.getByLabel('Begründung (optional, wird protokolliert)').fill('Gegen Original geprüft')
   await dialog.getByRole('button', { name: 'Trotzdem bestätigen' }).click()
   await expect(page.getByText('Beleg bestätigt')).toBeVisible()
-  const kopf = page.getByRole('heading', { level: 1 }).locator('..')
-  await expect(kopf.getByText('zu prüfen')).toHaveCount(0)
+  const tags = page.getByRole('form', { name: 'Daten' }).getByText('Tags', { exact: true }).locator('..')
+  await expect(tags.getByText('zu prüfen')).toHaveCount(0)
 
   // Jede Korrektur in der Historie: mit altem und neuem Wert und Benutzer.
-  await tabs.getByRole('link', { name: 'Historie' }).click()
+  await belegTabOeffnen(page, 'Historie')
   await expect(page.getByText('Lückenloses Änderungsprotokoll · nicht änderbar oder löschbar')).toBeVisible()
   const eintraege = page.getByRole('listitem')
   const vonAdmin = eintraege.filter({ hasText: ADMIN.name })

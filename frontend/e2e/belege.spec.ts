@@ -22,11 +22,8 @@ test.describe('Belege', () => {
     await expect(page.getByRole('table')).toBeVisible()
   })
 
-  test('Ansicht „Zu prüfen“ über das Ansicht-Menü', async ({ page }) => {
-    await page.goto('/belege')
-    await expect(page.getByRole('table').getByRole('row')).toHaveCount(13)
-    await page.getByRole('button', { name: /^Ansicht/ }).click()
-    await page.getByRole('menuitemradio', { name: /^Zu prüfen/ }).click()
+  test('Ansicht „Zu prüfen“ aus der URL', async ({ page }) => {
+    await page.goto('/belege?ansicht=ZuPruefen')
     await expect(page.getByRole('heading', { level: 1, name: 'Zu prüfen' })).toBeVisible()
     await expect(page).toHaveURL(/ansicht=ZuPruefen/)
     await expect(page.getByRole('table').getByRole('row')).toHaveCount(6)
@@ -45,7 +42,7 @@ test.describe('Belege', () => {
     await expect(page.getByRole('radio', { name: 'Große Karten' })).toHaveAttribute('aria-checked', 'true')
     await expect(page.getByRole('article')).toHaveCount(2)
     await expect(page.getByRole('article').first()).toContainText('Jahresabrechnung Strom')
-    await expect(page.getByRole('button', { name: 'Zahlstatus, aktiv: 1' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Zahlstatus: Überfällig' })).toBeVisible()
     await expect(page.getByRole('button', { name: /^Sortierung: Brutto, absteigend/ })).toBeVisible()
 
     await page.getByRole('button', { name: 'Filter zurücksetzen' }).click()

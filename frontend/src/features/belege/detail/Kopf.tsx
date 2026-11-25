@@ -1,93 +1,63 @@
 import { Link } from '@tanstack/react-router'
-import { useErneutAuslesen } from '@/api/belege'
-import type { BelegDetail } from '@/api/typen'
+import type { BelegDetail, BelegeAbfrage } from '@/api/typen'
 import { Chip, type ChipTon } from '@/components/Chip'
 import { Icon } from '@/components/Icon'
-import { useToast } from '@/components/toast'
-import { formatDatum, formatEuro } from '@/lib/format'
+import { KorrespondentLogo } from '@/components/KorrespondentLogo'
 import { BestaetigenDialog } from './BestaetigenDialog'
 import { istPdf, istZuPruefen, original } from './gemeinsam'
 import { MehrMenue } from './MehrMenue'
+import { Blaettern, ZurueckKnopf } from './Navigation'
 
-function Logo({ beleg }: { beleg: BelegDetail }) {
-  return beleg.logo.url ? (
-    <img src={beleg.logo.url} alt="" className="size-[52px] flex-none rounded-karte object-contain" />
-  ) : (
-    <span
-      aria-hidden
-      className="flex size-[52px] flex-none items-center justify-center rounded-karte bg-orange-flaeche text-[17px] font-bold text-orange-text"
-    >
-      {beleg.logo.initialen}
-    </span>
-  )
-}
-
-/** Kopf des Beleg-Details: Logo, Korrespondent, Chips, Eckdaten und Aktionen. */
-export function Kopf({ beleg, darfBearbeiten }: { beleg: BelegDetail; darfBearbeiten: boolean }) {
-  const toast = useToast()
-  const erneutAuslesen = useErneutAuslesen()
+/** Kopf des Beleg-Details: Zurück, Logo, Korrespondent, Chips, Blättern und Aktionen (Eckdaten stehen in den Feldern). */
+export function Kopf({
+  beleg,
+  aus,
+  darfBearbeiten,
+  onOriginalZeigen,
+}: {
+  beleg: BelegDetail
+  aus?: BelegeAbfrage
+  darfBearbeiten: boolean
+  /** Gesetzt, solange das Original-Panel geschlossen ist: blendet es wieder ein. */
+  onOriginalZeigen?: () => void
+}) {
   const aufteilbar = istPdf(original(beleg)) && beleg.seitenanzahl > 1
 
-  async function auslesen() {
-    try {
-      await erneutAuslesen.mutateAsync(beleg.id)
-      toast.info('Beleg wird erneut ausgelesen')
-    } catch {
-      toast.fehler('Erneut auslesen fehlgeschlagen')
-    }
-  }
-
-  const eckdaten = [
-    beleg.rechnungsdatum && formatDatum(beleg.rechnungsdatum),
-    beleg.faelligkeitsdatum && `fällig ${formatDatum(beleg.faelligkeitsdatum)}`,
-  ].filter(Boolean)
-
   return (
-    <div className="flex flex-wrap items-center gap-4">
-      <Logo beleg={beleg} />
-      <div className="min-w-0 flex-[1_1_320px]">
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="m-0 text-[22px] font-semibold">{beleg.korrespondent?.name ?? beleg.titel}</h1>
-          <Chip ton="grau">{beleg.belegart}</Chip>
-          {beleg.tags
-            .filter((t) => !t.istSystem)
-            .map((t) => (
-              <Chip key={t.id} ton={t.farbe as ChipTon}>
-                {t.name}
-              </Chip>
-            ))}
-          {beleg.tags
-            .filter((t) => t.istSystem)
-            .map((t) => (
-              <Chip key={t.id} ton="orange" icon="report">
-                {t.name}
-              </Chip>
-            ))}
-        </div>
-        <div className="gedaempft mt-1 text-sm">
-          {beleg.rechnungsnummer && (
-            <>
-              Nr. <span className="mono text-text">{beleg.rechnungsnummer}</span>
-              {' · '}
-            </>
-          )}
-          {eckdaten.map((teil) => `${teil} · `)}
-          {beleg.brutto !== null && beleg.brutto !== undefined && (
-            <strong className="text-text">{formatEuro(beleg.brutto, beleg.waehrung)}</strong>
-          )}
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+      <div className="flex min-w-0 flex-[1_1_320px] items-center gap-3">
+        <ZurueckKnopf aus={aus} />
+        <KorrespondentLogo logo={beleg.logo} groesse={36} ton="orange" />
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="m-0 text-[22px] font-semibold">{beleg.korrespondent?.name ?? beleg.titel}</h1>
+            {/* Laptop-Breiten: ohne Chips – Belegart und Tags stehen im Formular darunter. */}
+            <span className="contents max-2xl:hidden">
+              <Chip ton="grau">{beleg.belegart}</Chip>
+              {beleg.tags
+                .filter((t) => !t.istSystem)
+                .map((t) => (
+                  <Chip key={t.id} ton={t.farbe as ChipTon}>
+                    {t.name}
+                  </Chip>
+                ))}
+              {beleg.tags
+                .filter((t) => t.istSystem)
+                .map((t) => (
+                  <Chip key={t.id} ton="orange" icon="report">
+                    {t.name}
+                  </Chip>
+                ))}
+            </span>
+          </div>
         </div>
       </div>
-      <div className="flex flex-wrap gap-2">
-        {darfBearbeiten && (
-          <button
-            type="button"
-            className="btn"
-            onClick={() => void auslesen()}
-            disabled={erneutAuslesen.isPending}
-            aria-busy={erneutAuslesen.isPending}
-          >
-            <Icon name="refresh" />
-            Erneut auslesen
+      {aus && <Blaettern belegId={beleg.id} aus={aus} />}
+      <div className="ml-auto flex flex-wrap justify-end gap-2">
+        {onOriginalZeigen && (
+          <button type="button" className="btn" onClick={onOriginalZeigen}>
+            <Icon name="picture_as_pdf" />
+            Original anzeigen
           </button>
         )}
         {darfBearbeiten && aufteilbar && (

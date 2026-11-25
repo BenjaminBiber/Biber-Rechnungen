@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { ADMIN_SITZUNG, belegLesen, testdatei } from '../hilfen/system'
 import { ablageDateien, ablageLesen, sha256 } from '../hilfen/werkzeug'
+import { belegTabOeffnen } from '../hilfen/belegTabs'
 
 test.use({ storageState: ADMIN_SITZUNG })
 
@@ -32,25 +33,26 @@ test('Scan hochladen → „Fertig“ → Beleg mit Kopfdaten und Positionen →
   expect(beleg.positionen.map((p: { text: string }) => p.text)).toEqual(['Druckerpapier A4', 'Toner schwarz'])
 
   // Tag „Inbox“; „zu prüfen“ nur wegen des neuen Korrespondenten.
-  const kopf = page.getByRole('heading', { level: 1 }).locator('..')
-  await expect(kopf.getByText('Inbox')).toBeVisible()
+  // Auf Laptop-Breiten stehen die Tags nur im Formular, nicht im Kopf.
+  const tags = daten.getByText('Tags', { exact: true }).locator('..')
+  await expect(tags.getByText('Inbox')).toBeVisible()
   const fehlgeschlagen = beleg.befunde.filter((b: { ergebnis: string }) => b.ergebnis === 'Fehlgeschlagen')
   expect(fehlgeschlagen.map((b: { pruefung: string }) => b.pruefung)).toEqual(['NeuerKorrespondent'])
 
-  await page.getByRole('navigation', { name: 'Belegdaten' }).getByRole('link', { name: /^Positionen/ }).click()
+  await belegTabOeffnen(page, /^Positionen/)
   await expect(page.getByRole('cell', { name: 'Druckerpapier A4', exact: true }).first()).toBeVisible()
   await expect(page.getByRole('cell', { name: 'Toner schwarz', exact: true }).first()).toBeVisible()
   await expect(page.getByTestId('summenvergleich')).toContainText('Differenz 0,00')
 
   // Neuen Korrespondenten bestätigen → „zu prüfen“ verschwindet, der Korrespondent gilt als geprüft.
-  await page.getByRole('navigation', { name: 'Belegdaten' }).getByRole('link', { name: 'Daten' }).click()
-  await expect(kopf.getByText('zu prüfen')).toBeVisible()
+  await belegTabOeffnen(page, 'Daten')
+  await expect(tags.getByText('zu prüfen')).toBeVisible()
   await page.getByRole('button', { name: 'Bestätigen', exact: true }).click()
   const dialog = page.getByRole('alertdialog', { name: 'Beleg mit 1 offenen Befund bestätigen?' })
   await expect(dialog.getByText('Neuer Korrespondent')).toBeVisible()
   await dialog.getByRole('button', { name: 'Trotzdem bestätigen' }).click()
   await expect(page.getByText('Beleg bestätigt')).toBeVisible()
-  await expect(kopf.getByText('zu prüfen')).toHaveCount(0)
+  await expect(tags.getByText('zu prüfen')).toHaveCount(0)
   const bestaetigt = await belegLesen(page.request, belegId)
   expect(bestaetigt.tags.map((t: { name: string }) => t.name)).not.toContain('zu prüfen')
 

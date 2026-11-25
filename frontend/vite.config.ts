@@ -1,5 +1,5 @@
 import { cpSync, createReadStream, existsSync, statSync } from 'node:fs'
-import { join, normalize, resolve } from 'node:path'
+import { join, normalize, resolve, sep } from 'node:path'
 import { fileURLToPath, URL } from 'node:url'
 import tailwindcss from '@tailwindcss/vite'
 import { tanstackRouter } from '@tanstack/router-plugin/vite'
@@ -27,7 +27,8 @@ function pdfjsDateien(): Plugin {
     configureServer(server) {
       server.middlewares.use('/pdfjs', (req, res, next) => {
         const pfad = normalize(join(quelle, decodeURIComponent((req.url ?? '').split('?')[0])))
-        const erlaubt = pdfjsVerzeichnisse.some((v) => pfad.startsWith(join(quelle, v) + '/'))
+        // `sep` statt '/', sonst greift die Prüfung unter Windows (Backslash-Pfade) nie.
+        const erlaubt = pdfjsVerzeichnisse.some((v) => pfad.startsWith(join(quelle, v) + sep))
         if (!erlaubt || !existsSync(pfad) || !statSync(pfad).isFile()) return next()
         if (pfad.endsWith('.wasm')) res.setHeader('Content-Type', 'application/wasm')
         createReadStream(pfad).pipe(res)

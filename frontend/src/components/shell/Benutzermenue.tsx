@@ -43,12 +43,12 @@ export function Benutzermenue({ kompakt = false }: { kompakt?: boolean }) {
       <PopoverTrigger
         aria-label="Benutzermenü"
         className={cn(
-          'flex h-10 cursor-pointer items-center gap-1.5 rounded-lg border-0 font-semibold text-text hover:bg-hover',
-          kompakt ? 'w-10 justify-center px-0' : 'px-2',
+          'flex cursor-pointer items-center gap-1.5 rounded-lg border-0 font-semibold text-text hover:bg-hover',
+          kompakt ? 'h-10 w-10 justify-center px-0' : 'h-8 px-2',
           offen ? 'bg-hover' : 'bg-transparent',
         )}
       >
-        <Icon name="account_circle" className="text-[24px] [vertical-align:0]" />
+        <Icon name="account_circle" className={cn(kompakt ? 'text-[24px]' : 'text-[22px]', '[vertical-align:0]')} />
         {!kompakt && <span className="text-sm">{kurzname(name)}</span>}
       </PopoverTrigger>
       <PopoverContent align="end" sideOffset={8} aria-label="Benutzermenü" className="popover-animiert w-[280px] p-1.5">

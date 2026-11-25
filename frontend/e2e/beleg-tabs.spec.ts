@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { belegTabOeffnen } from './hilfen/belegTabs'
 
 /** Beleg b2 „Bürowelt Krämer KG · 2026-48817“ aus den Mock-Fixtures. */
 const beleg = '/belege/b0000000-0000-4000-8000-000000000002'
@@ -18,30 +19,25 @@ test.describe('Beleg-Detail: Tabs', () => {
   })
 
   test('alle fünf Tabs laden', async ({ page }) => {
-    const tabs = page.getByRole('navigation', { name: 'Belegdaten' })
-
-    await tabs.getByRole('link', { name: /^Positionen/ }).click()
+    await belegTabOeffnen(page, /^Positionen/)
     await expect(page.getByRole('cell', { name: 'Kopierpapier A4 80 g, 5 × 500 Bl.' })).toBeVisible()
 
-    await tabs.getByRole('link', { name: /^Prüfung/ }).click()
+    await belegTabOeffnen(page, /^Prüfung/)
     await expect(page.getByText('Summe der Positionen = Netto')).toBeVisible()
 
-    await tabs.getByRole('link', { name: 'Historie' }).click()
+    await belegTabOeffnen(page, 'Historie')
     await expect(page.getByText('Lückenloses Änderungsprotokoll · nicht änderbar oder löschbar')).toBeVisible()
     await expect(page.getByText('Kategorie geändert')).toBeVisible()
 
-    await tabs.getByRole('link', { name: /^Dateien/ }).click()
+    await belegTabOeffnen(page, /^Dateien/)
     await expect(page.getByRole('article', { name: 'Original' })).toContainText('Prüfsumme ok')
 
-    await tabs.getByRole('link', { name: 'Dubletten' }).click()
+    await belegTabOeffnen(page, 'Dubletten')
     await expect(page.getByText('Datei-Abgleich (SHA-256)')).toBeVisible()
   })
 
   test('fehlende Position ergänzen → Differenz 0,00 €', async ({ page }) => {
-    await page
-      .getByRole('navigation', { name: 'Belegdaten' })
-      .getByRole('link', { name: /^Positionen/ })
-      .click()
+    await belegTabOeffnen(page, /^Positionen/)
     const vergleich = page.getByTestId('summenvergleich')
     await expect(vergleich).toContainText('Differenz 2,00')
     await page.getByRole('button', { name: '+ Position hinzufügen' }).click()

@@ -22,16 +22,16 @@ export function OffenKarte({
         </Link>
       }
     >
-      <div className="flex gap-2.5">
-        <div className="flex-1 rounded-[10px] bg-[var(--color-flaeche)] p-3">
+      <div className="flex flex-wrap gap-2.5">
+        <div className="grow rounded-[10px] bg-[var(--color-flaeche)] p-3">
           <div className="gedaempft text-xs">Offen</div>
-          <div className="num text-left text-lg font-semibold">
+          <div className="num whitespace-nowrap text-left text-lg font-semibold">
             {offen.anzahl} · {formatEuro(offen.betrag ?? 0)}
           </div>
         </div>
-        <div className="flex-1 rounded-[10px] bg-[var(--color-rot-flaeche)] p-3 text-[var(--color-rot-text)]">
+        <div className="grow rounded-[10px] bg-[var(--color-rot-flaeche)] p-3 text-[var(--color-rot-text)]">
           <div className="text-xs">Überfällig</div>
-          <div className="num text-left text-lg font-semibold">
+          <div className="num whitespace-nowrap text-left text-lg font-semibold">
             {ueberfaellig.anzahl} · {formatEuro(ueberfaellig.betrag ?? 0)}
           </div>
         </div>

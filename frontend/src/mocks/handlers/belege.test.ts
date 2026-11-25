@@ -102,7 +102,7 @@ describe('Belege-Handler', () => {
     expect(datei.headers.get('Content-Type')).toBe('application/pdf')
     expect((await datei.text()).startsWith('%PDF')).toBe(true)
     const vorschau = await fetch(`${basis}/belege/${belegIds.b2}/vorschau`)
-    expect(vorschau.headers.get('Content-Type')).toBe('image/png')
+    expect(vorschau.headers.get('Content-Type')).toBe('image/svg+xml')
     const historie = await holeJson<unknown[]>(`/belege/${belegIds.b2}/historie`)
     expect(historie).toHaveLength(8)
   })

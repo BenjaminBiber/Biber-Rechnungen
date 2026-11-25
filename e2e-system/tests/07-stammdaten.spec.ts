@@ -35,10 +35,8 @@ test('Tag „bezahlt“ als Zahlungs-Tag → Beleg bezahlt markieren → verschw
   const zeile = page.getByRole('row').filter({ hasText: 'SCH-2026-0815' })
   await expect(zeile).toBeVisible()
   await zeile.getByRole('button', { name: /^Aktionen für/ }).click()
-  await page.getByRole('menuitem', { name: /Als bezahlt markieren/ }).focus()
-  await page.keyboard.press('ArrowRight')
-  await expect(page.getByRole('menuitem', { name: 'bezahlt', exact: true })).toBeFocused()
-  await page.keyboard.press('Enter')
+  // Mit genau einem Zahlungs-Tag ist „Als bezahlt markieren“ ein direkter Eintrag ohne Untermenü.
+  await page.getByRole('menuitem', { name: 'Als bezahlt markieren' }).click()
   await expect(page.getByText('Als „bezahlt“ markiert')).toBeVisible()
 
   expect((await zaehler(page.request)).offen).toBe(offenVorher - 1)

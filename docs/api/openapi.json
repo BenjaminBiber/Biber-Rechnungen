@@ -1025,7 +1025,7 @@
             "required": false,
             "schema": {
               "type": "boolean",
-              "default": false
+              "default": true
             }
           },
           {
@@ -1362,7 +1362,7 @@
             "required": false,
             "schema": {
               "type": "boolean",
-              "default": false
+              "default": true
             }
           },
           {
@@ -6123,7 +6123,7 @@
           },
           "dublettenAusschliessen": {
             "type": "boolean",
-            "default": false
+            "default": true
           },
           "sortierung": {
             "$ref": "#/components/schemas/BelegSortierung"
@@ -6360,7 +6360,15 @@
           "Faelligkeit",
           "Brutto",
           "Korrespondent",
-          "ErstelltAm"
+          "ErstelltAm",
+          "Rechnungsnummer",
+          "Titel",
+          "Kategorie",
+          "Netto",
+          "Seiten",
+          "Herkunft",
+          "Leistungsdatum",
+          "Konfidenz"
         ]
       },
       "BelegStatus": {

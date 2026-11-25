@@ -14,12 +14,14 @@ export function PreisaenderungenKarte({ eintraege }: { eintraege: Preisaenderung
             <span className="block truncate font-medium">{e.name}</span>
             <span className="gedaempft block truncate text-xs">{e.korrespondent}</span>
           </span>
-          <span className="num text-[13px]">
-            {e.preisAlt != null ? formatEuro(e.preisAlt) : '–'} → {e.preisNeu != null ? formatEuro(e.preisNeu) : '–'}
+          <span className="flex shrink-0 flex-col items-end gap-1">
+            <span className="num whitespace-nowrap text-[13px]">
+              {e.preisAlt != null ? formatEuro(e.preisAlt) : '–'} → {e.preisNeu != null ? formatEuro(e.preisNeu) : '–'}
+            </span>
+            <Chip ton={e.aenderung > 0 ? 'orange' : 'gruen'} icon={e.aenderung > 0 ? 'trending_up' : 'trending_down'}>
+              {formatProzent(e.aenderung / 100, true)}
+            </Chip>
           </span>
-          <Chip ton={e.aenderung > 0 ? 'orange' : 'gruen'} icon={e.aenderung > 0 ? 'trending_up' : 'trending_down'}>
-            {formatProzent(e.aenderung / 100, true)}
-          </Chip>
         </div>
       ))}
     </DashboardKarte>

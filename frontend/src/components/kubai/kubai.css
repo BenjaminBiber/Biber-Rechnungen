@@ -1,0 +1,20 @@
+/* Darstellung der Kubai-Icons: Außenkonturen als 2er-Strich, der per Maske halbiert wird. */
+.kubai-icon {
+  display: inline-block;
+  line-height: 0;
+}
+.kubai-icon svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.kubai-icon .ol {
+  fill: none;
+  stroke-width: 2;
+}
+.kubai-icon .ln {
+  fill: none;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}

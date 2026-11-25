@@ -17,10 +17,10 @@ async function oeffneMenue(pfad?: string, name?: string) {
 const eintraege = () => screen.getAllByRole('menuitem').map((e) => e.textContent)
 
 describe('Mehr-Menü', () => {
-  it('zeigt bei einem gescannten Beleg alle Einträge außer „XML herunterladen“', async () => {
+  it('zeigt bei einem gescannten Beleg alle Einträge außer „XML herunterladen“ (Herunterladen ist die Hauptaktion)', async () => {
     await oeffneMenue()
     expect(eintraege()).toEqual([
-      'downloadOriginal herunterladen',
+      'refreshErneut auslesen',
       'folder_copyAblagepfad kopieren',
       'linkLink kopieren',
       'content_copyAls Dublette markieren …',
@@ -28,11 +28,14 @@ describe('Mehr-Menü', () => {
       'swap_horizBelegart ändern',
       'lockLöschengesperrt bis 31.12.2034',
     ])
-    expect(screen.getByRole('menuitem', { name: /Original herunterladen/ })).toHaveAttribute(
-      'href',
-      expect.stringContaining(`/api/belege/${b2}/dateien/`),
-    )
+    expect(screen.queryByRole('menuitem', { name: /Original herunterladen/ })).not.toBeInTheDocument()
     expect(screen.getByRole('menuitem', { name: /Löschen/ })).toHaveAttribute('aria-disabled', 'true')
+  })
+
+  it('„Erneut auslesen“ stößt das Auslesen an', async () => {
+    const { nutzer } = await oeffneMenue()
+    await nutzer.click(screen.getByRole('menuitem', { name: /Erneut auslesen/ }))
+    expect(await screen.findByText('Beleg wird erneut ausgelesen')).toBeInTheDocument()
   })
 
   it('bietet bei E-Rechnungen „XML herunterladen“ an', async () => {
@@ -82,10 +85,11 @@ describe('Mehr-Menü', () => {
     szenario.rolle('NurLesen')
     await oeffneMenue()
     expect(eintraege()).toEqual([
-      'downloadOriginal herunterladen',
       'folder_copyAblagepfad kopieren',
       'linkLink kopieren',
       'lockLöschengesperrt bis 31.12.2034',
     ])
+    // Bei offenem Menü ist der Rest der Seite aria-hidden.
+    expect(screen.getByRole('link', { name: 'Original herunterladen', hidden: true })).toHaveAttribute('download')
   })
 })

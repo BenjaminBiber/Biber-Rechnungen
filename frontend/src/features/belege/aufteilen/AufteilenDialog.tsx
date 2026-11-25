@@ -95,7 +95,7 @@ export function AufteilenDialog({
                         <span className={`chip ${ton.chip} absolute -top-[11px] left-1.5`}>{teilBuchstabe(teil)}</span>
                       )}
                       <img
-                        src={`${belegVorschauUrl(beleg.id, seite)}&breite=200`}
+                        src={belegVorschauUrl(beleg.id, seite, 200)}
                         alt={`Seite ${seite}`}
                         loading="lazy"
                         className="aspect-[1/1.414] w-full object-contain"

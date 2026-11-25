@@ -12,11 +12,13 @@ namespace Biber.Invoice.Infrastructure.Module.Belege.Schreiben;
 
 /// <summary>
 /// Manuelle Korrektur eines Belegs: Kopf, Steuerzeilen, Positionen, Tags, Bestätigen, Dublette, erneutes Auslesen
-/// und Massenaktionen. Die Originaldatei in der Ablage wird nie angefasst (A3). „zu prüfen“ setzt nur die Pipeline
+/// und Massenaktionen. Der Inhalt der Originaldatei in der Ablage wird nie angefasst (A3); nur solange der Beleg
+/// „zu prüfen“ ist, zieht sie beim Wechsel des Korrespondenten in dessen Ordner um. „zu prüfen“ setzt nur die Pipeline
 /// und entfernt nur das Bestätigen (B3); nach einer Korrektur werden lediglich die Befunde neu berechnet.
 /// </summary>
 public sealed class BelegBearbeitungsDienst(
     BiberDbContext db,
+    IAblageSchreiber ablage,
     IBelegAbfrageDienst abfrage,
     IPruefDienst pruefDienst,
     IVerarbeitungsStarter starter,
@@ -47,6 +49,7 @@ public sealed class BelegBearbeitungsDienst(
         var korrespondent = await PruefeAenderungAsync(aenderung, ct);
 
         var korrespondentGewechselt = aenderung.KorrespondentId != beleg.KorrespondentId;
+        var zuPruefen = await db.BelegTags.AnyAsync(t => t.BelegId == id && t.TagId == SystemIds.TagZuPruefen, ct);
         if (korrespondentGewechselt)
         {
             beleg.KorrespondentId = aenderung.KorrespondentId;
@@ -99,7 +102,24 @@ public sealed class BelegBearbeitungsDienst(
         }
 
         await pruefDienst.PruefenAsync(beleg, null, ct);
-        await db.SaveChangesAsync(ct);
+
+        // Nur ungeprüfte Belege ziehen um; bestätigte bleiben dort, wo sie abgelegt wurden.
+        var verschoben = korrespondentGewechselt && zuPruefen ? await ablage.VerschiebenAsync(beleg, ct) : [];
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch
+        {
+            ablage.Zuruecknehmen(verschoben);
+            throw;
+        }
+
+        foreach (var v in verschoben)
+        {
+            log.LogInformation("Ablage von Beleg {Beleg} verschoben: {Von} → {Nach}", id, v.Von, v.Nach);
+        }
+
         log.LogInformation("Beleg {Beleg} manuell korrigiert", id);
         return await abfrage.AbrufenAsync(id, ct);
     }

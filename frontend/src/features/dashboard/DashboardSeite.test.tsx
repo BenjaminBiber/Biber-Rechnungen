@@ -121,21 +121,6 @@ describe('Dashboard', () => {
     expect(screen.getAllByText('812,50 €')).toHaveLength(2)
   })
 
-  it('färbt den DI-Verbrauch ab der Warnschwelle orange', async () => {
-    renderDashboard()
-    expect(await screen.findByText('412 / 500 Seiten · 82 %')).toBeInTheDocument()
-    expect(screen.getByTestId('di-balken')).toHaveAttribute('data-warnung', 'true')
-    expect(screen.getByText('Warnschwelle erreicht')).toBeInTheDocument()
-  })
-
-  it('zeigt unter der Warnschwelle keinen Hinweis, bei Pause „Warteschlange pausiert“', async () => {
-    db.diVerbrauch = { ...db.diVerbrauch, seiten: 200, prozent: 40, pausiert: true }
-    renderDashboard()
-    expect(await screen.findByText('200 / 500 Seiten · 40 %')).toBeInTheDocument()
-    expect(screen.getByTestId('di-balken')).toHaveAttribute('data-warnung', 'false')
-    expect(screen.getByText('Warteschlange pausiert')).toBeInTheDocument()
-  })
-
   it('zeigt den Fehlerzustand der Systemkarte', async () => {
     szenario.fehler('/api/system/status', 500)
     renderDashboard()

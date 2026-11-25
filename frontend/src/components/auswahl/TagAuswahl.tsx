@@ -12,12 +12,18 @@ export function TagAuswahl({
   ausloeser,
   nurZahlungsTags = false,
   neuAnlegenErlaubt = false,
+  anfangsOffen = false,
+  systemTagsWaehlbar = false,
 }: {
   gewaehlt: string[]
   onAendern: (ids: string[]) => void
   ausloeser: ReactNode
   nurZahlungsTags?: boolean
   neuAnlegenErlaubt?: boolean
+  /** Beim ersten Anzeigen gleich geöffnet (z. B. frisch hinzugefügte Filter-Pill). */
+  anfangsOffen?: boolean
+  /** System-Tags (z. B. „zu prüfen“) vergibt die Verarbeitung; wählbar sind sie nur zum Filtern. */
+  systemTagsWaehlbar?: boolean
 }) {
   const listId = useId()
   const [suche, setSuche] = useState('')
@@ -55,11 +61,11 @@ export function TagAuswahl({
   const navigation = useListenNavigation(
     anzahl,
     (i) => (i < treffer.length ? umschalten(treffer[i].id) : void neuAnlegen()),
-    (i) => i >= treffer.length || !treffer[i].istSystem,
+    (i) => i >= treffer.length || systemTagsWaehlbar || !treffer[i].istSystem,
   )
 
   return (
-    <Popover>
+    <Popover defaultOpen={anfangsOffen}>
       <PopoverTrigger asChild>{ausloeser}</PopoverTrigger>
       <PopoverContent className="p-3">
         <Suchfeld
@@ -79,7 +85,8 @@ export function TagAuswahl({
                 id={`${listId}-${i}`}
                 gewaehlt={an}
                 aktiv={navigation.aktiv === i}
-                deaktiviert={tag.istSystem}
+                deaktiviert={tag.istSystem && !systemTagsWaehlbar}
+                hinweis={tag.istSystem && !systemTagsWaehlbar ? 'System-Tag – wird automatisch vergeben' : undefined}
                 onWaehlen={() => umschalten(tag.id)}
               >
                 <Icon name={an ? 'check_box' : 'check_box_outline_blank'} />

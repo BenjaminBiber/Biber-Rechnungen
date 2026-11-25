@@ -5,7 +5,7 @@ import { MenueKnopf } from './bausteine'
 import { spaltenDefinitionen, type SpaltenSchluessel } from './spaltenDefinitionen'
 
 /**
- * Popover „Spalten anpassen“: Checkbox je Spalte (Korrespondent fest), Reihenfolge per Pfeiltasten am
+ * Popover „Spalten anpassen“ (nur in der Tabelle): Checkbox je Spalte (Korrespondent fest), Reihenfolge per Pfeiltasten am
  * Griff oder per Ziehen. Angezeigt werden erst die sichtbaren Spalten in ihrer Reihenfolge, dann die übrigen.
  */
 export function Spalten({
@@ -38,7 +38,7 @@ export function Spalten({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <MenueKnopf icon="view_column" label="Anzeigen" aria-haspopup="dialog" />
+        <MenueKnopf icon="view_column" label="Spalten" aria-haspopup="dialog" />
       </PopoverTrigger>
       <PopoverContent role="dialog" aria-label="Spalten" className="w-[260px] p-1.5">
         <ul className="m-0 list-none p-0">

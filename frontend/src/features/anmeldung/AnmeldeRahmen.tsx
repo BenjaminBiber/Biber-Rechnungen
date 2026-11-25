@@ -22,7 +22,7 @@ export function AnmeldeRahmen({ children }: { children: ReactNode }) {
               'linear-gradient(180deg, rgba(52, 51, 79, 0.5) 0%, rgba(110, 112, 122, 0.18) 22%, rgba(110, 112, 122, 0.18) 100%)',
           }}
         />
-        <div className="relative flex items-center gap-3 self-start bg-seitenleiste py-7 pr-14 pl-6 whitespace-nowrap sm:py-10 sm:pr-[72px] sm:pl-14 [clip-path:polygon(0_0,100%_0,100%_calc(100%_-_40px),calc(100%_-_40px)_100%,0_100%)]">
+        <div className="relative flex items-center gap-3 self-start bg-seitenleiste py-5 pr-8 pl-6 whitespace-nowrap [clip-path:polygon(0_0,100%_0,100%_calc(100%_-_24px),calc(100%_-_24px)_100%,0_100%)] sm:py-7 sm:pr-10 sm:pl-8 sm:[clip-path:polygon(0_0,100%_0,100%_calc(100%_-_32px),calc(100%_-_32px)_100%,0_100%)]">
           <Logo className="h-8 w-[53px] text-white" />
           <span className="text-[22px] font-semibold text-white">Biber-Rechnungen</span>
         </div>

@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState, type ReactElement, type ReactNode } from 'react'
 import { useKorrespondenten } from '@/api/korrespondenten'
 import { useKategorien } from '@/api/tags'
 import type { ImportQuelle, Zahlstatus } from '@/api/typen'
@@ -6,6 +6,7 @@ import { BetragAuswahl } from '@/components/auswahl/BetragAuswahl'
 import { Option, Suchfeld, useListenNavigation } from '@/components/auswahl/gemeinsam'
 import { TagAuswahl } from '@/components/auswahl/TagAuswahl'
 import { ZeitraumAuswahl } from '@/components/auswahl/ZeitraumAuswahl'
+import { FilterPills, type PillFilter } from '@/components/filter/FilterPills'
 import { Icon } from '@/components/Icon'
 import {
   DropdownMenu,
@@ -17,7 +18,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { MenueKnopf } from './bausteine'
+import { filterWert, useNamen, type Namen } from './filterWerte'
 import {
   filterZurueckgesetzt,
   quelleIcon,
@@ -25,121 +26,189 @@ import {
   quelleText,
   zahlstatusText,
   zahlstatusWerte,
+  type BelegeSuche,
   type ListenZustand,
 } from './suche'
 
 export const SUCHE_ENTPRELLT_MS = 300
 
-/** Anzahl gesetzter Filter je Knopf (für Plakette und Hervorhebung). */
-function anzahl(liste?: unknown[]): number {
-  return liste?.length ?? 0
+type LeistenFilter = 'tags' | 'korrespondent' | 'kategorie' | 'datum' | 'betrag' | 'zahlstatus' | 'herkunft'
+
+/** Filter der Leiste in der Reihenfolge des Menüs „Filter hinzufügen“. */
+const leistenFilter: LeistenFilter[] = [
+  'tags',
+  'korrespondent',
+  'kategorie',
+  'datum',
+  'betrag',
+  'zahlstatus',
+  'herkunft',
+]
+
+const filterInfo: Record<LeistenFilter, { titel: string; icon: string }> = {
+  tags: { titel: 'Tags', icon: 'sell' },
+  korrespondent: { titel: 'Korrespondent', icon: 'storefront' },
+  kategorie: { titel: 'Kategorie', icon: 'category' },
+  datum: { titel: 'Rechnungsdatum', icon: 'calendar_month' },
+  betrag: { titel: 'Betrag', icon: 'euro' },
+  zahlstatus: { titel: 'Zahlstatus', icon: 'paid' },
+  herkunft: { titel: 'Herkunft', icon: 'input' },
 }
 
-/**
- * Filterleiste: Suchfeld mit Umschalter „Titel & Inhalt“ / „Rechnungsnr.“ (entprellt), sieben Filter
- * (Tags, Korrespondent, Kategorie, Rechnungsdatum, Betrag, Zahlstatus, Herkunft) und „Filter zurücksetzen“.
- */
-export function Filterleiste({ zustand }: { zustand: ListenZustand }) {
+/** Kurztext des gesetzten Werts („Hostwerk Süd GmbH“, „2 gewählt“, „Netto ab 200 €“ …), leer wenn nicht gesetzt. */
+function wertVon(art: LeistenFilter, suche: BelegeSuche, namen: Namen, heute: Date): string {
+  if (art === 'betrag') {
+    const netto = suche.betragArt === 'Netto'
+    const text = filterWert(netto ? 'netto' : 'brutto', suche, namen, heute)
+    return text && netto ? `Netto ${text}` : text
+  }
+  return filterWert(art, suche, namen, heute)
+}
+
+/** Suchparameter, die das Entfernen einer Filter-Pill löscht. */
+function ohneFilter(art: LeistenFilter): Partial<BelegeSuche> {
+  switch (art) {
+    case 'tags':
+      return { tags: undefined }
+    case 'korrespondent':
+      return { korrespondenten: undefined }
+    case 'kategorie':
+      return { kategorien: undefined }
+    case 'datum':
+      return { von: undefined, bis: undefined }
+    case 'betrag':
+      return { betragVon: undefined, betragBis: undefined, betragArt: undefined }
+    case 'zahlstatus':
+      return { zahlstatus: undefined }
+    case 'herkunft':
+      return { quellen: undefined }
+  }
+}
+
+/** Filterleiste aller Darstellungen (Tabelle und Karten) als Filter-Pills. */
+export function Filterleiste({ zustand, heute = new Date() }: { zustand: ListenZustand; heute?: Date }) {
   const { suche, setze, ersetze } = zustand
-  const mitBetrag = suche.betragVon !== undefined || suche.betragBis !== undefined
+  const namen = useNamen()
+
+  function auswahl(art: LeistenFilter, ausloeser: ReactElement, anfangsOffen: boolean) {
+    switch (art) {
+      case 'tags':
+        return (
+          <TagAuswahl
+            systemTagsWaehlbar
+            anfangsOffen={anfangsOffen}
+            gewaehlt={suche.tags ?? []}
+            onAendern={(ids) => setze({ tags: ids.length ? ids : undefined })}
+            ausloeser={ausloeser}
+          />
+        )
+      case 'korrespondent':
+        return (
+          <MehrfachAuswahl
+            art="korrespondent"
+            anfangsOffen={anfangsOffen}
+            gewaehlt={suche.korrespondenten ?? []}
+            onAendern={(ids) => setze({ korrespondenten: ids.length ? ids : undefined })}
+            ausloeser={ausloeser}
+          />
+        )
+      case 'kategorie':
+        return (
+          <MehrfachAuswahl
+            art="kategorie"
+            anfangsOffen={anfangsOffen}
+            gewaehlt={suche.kategorien ?? []}
+            onAendern={(ids) => setze({ kategorien: ids.length ? ids : undefined })}
+            ausloeser={ausloeser}
+          />
+        )
+      case 'datum':
+        return (
+          <ZeitraumAuswahl
+            anfangsOffen={anfangsOffen}
+            wert={{ von: suche.von ?? null, bis: suche.bis ?? null }}
+            onAendern={(z) => setze({ von: z.von ?? undefined, bis: z.bis ?? undefined })}
+            ausloeser={ausloeser}
+          />
+        )
+      case 'betrag':
+        return (
+          <BetragAuswahl
+            anfangsOffen={anfangsOffen}
+            wert={{ von: suche.betragVon ?? null, bis: suche.betragBis ?? null, art: suche.betragArt ?? 'Brutto' }}
+            onAendern={(b) =>
+              setze({
+                betragVon: b.von ?? undefined,
+                betragBis: b.bis ?? undefined,
+                betragArt: b.art === 'Brutto' || (b.von === null && b.bis === null) ? undefined : b.art,
+              })
+            }
+            ausloeser={ausloeser}
+          />
+        )
+      case 'zahlstatus':
+        return (
+          <DropdownMenu defaultOpen={anfangsOffen}>
+            <DropdownMenuTrigger asChild>{ausloeser}</DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuRadioGroup
+                value={suche.zahlstatus ?? ''}
+                onValueChange={(wert) => setze({ zahlstatus: (wert || undefined) as Zahlstatus | undefined })}
+              >
+                {zahlstatusWerte.map((z) => (
+                  <DropdownMenuRadioItem key={z} value={z}>
+                    {zahlstatusText[z]}
+                  </DropdownMenuRadioItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuRadioItem value="">Alle</DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )
+      case 'herkunft':
+        return (
+          <DropdownMenu defaultOpen={anfangsOffen}>
+            <DropdownMenuTrigger asChild>{ausloeser}</DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              {quellenWerte.map((q) => (
+                <DropdownMenuCheckboxItem
+                  key={q}
+                  checked={suche.quellen?.includes(q) ?? false}
+                  onSelect={(e) => e.preventDefault()}
+                  onCheckedChange={(an) => {
+                    const alt = suche.quellen ?? []
+                    const liste: ImportQuelle[] = an ? [...alt, q] : alt.filter((x) => x !== q)
+                    setze({ quellen: liste.length ? liste : undefined })
+                  }}
+                >
+                  <Icon name={quelleIcon[q]} />
+                  {quelleText[q]}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )
+    }
+  }
 
   return (
-    <div role="search" aria-label="Filter" className="karte flex flex-wrap items-center gap-2 p-3">
-      <Suchzeile zustand={zustand} />
-      <span className="flex-1" />
-      <TagAuswahl
-        gewaehlt={suche.tags ?? []}
-        onAendern={(ids) => setze({ tags: ids.length ? ids : undefined })}
-        ausloeser={<MenueKnopf icon="sell" label="Tags" aktiv={!!suche.tags} anzahl={anzahl(suche.tags)} />}
-      />
-      <MehrfachAuswahl
-        art="korrespondent"
-        gewaehlt={suche.korrespondenten ?? []}
-        onAendern={(ids) => setze({ korrespondenten: ids.length ? ids : undefined })}
-      />
-      <MehrfachAuswahl
-        art="kategorie"
-        gewaehlt={suche.kategorien ?? []}
-        onAendern={(ids) => setze({ kategorien: ids.length ? ids : undefined })}
-      />
-      <ZeitraumAuswahl
-        wert={{ von: suche.von ?? null, bis: suche.bis ?? null }}
-        onAendern={(z) => setze({ von: z.von ?? undefined, bis: z.bis ?? undefined })}
-        ausloeser={
-          <MenueKnopf
-            icon="calendar_month"
-            label="Rechnungsdatum"
-            aktiv={!!(suche.von || suche.bis)}
-            anzahl={suche.von || suche.bis ? 1 : 0}
-          />
-        }
-      />
-      <BetragAuswahl
-        wert={{ von: suche.betragVon ?? null, bis: suche.betragBis ?? null, art: suche.betragArt ?? 'Brutto' }}
-        onAendern={(b) =>
-          setze({
-            betragVon: b.von ?? undefined,
-            betragBis: b.bis ?? undefined,
-            betragArt: b.art === 'Brutto' || (b.von === null && b.bis === null) ? undefined : b.art,
-          })
-        }
-        ausloeser={<MenueKnopf icon="euro" label="Betrag" aktiv={mitBetrag} anzahl={mitBetrag ? 1 : 0} />}
-      />
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <MenueKnopf icon="paid" label="Zahlstatus" aktiv={!!suche.zahlstatus} anzahl={suche.zahlstatus ? 1 : 0} />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
-          <DropdownMenuRadioGroup
-            value={suche.zahlstatus ?? ''}
-            onValueChange={(wert) => setze({ zahlstatus: (wert || undefined) as Zahlstatus | undefined })}
-          >
-            {zahlstatusWerte.map((z) => (
-              <DropdownMenuRadioItem key={z} value={z}>
-                {zahlstatusText[z]}
-              </DropdownMenuRadioItem>
-            ))}
-            <DropdownMenuSeparator />
-            <DropdownMenuRadioItem value="">Alle</DropdownMenuRadioItem>
-          </DropdownMenuRadioGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <MenueKnopf icon="input" label="Herkunft" aktiv={!!suche.quellen} anzahl={anzahl(suche.quellen)} />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
-          {quellenWerte.map((q) => (
-            <DropdownMenuCheckboxItem
-              key={q}
-              checked={suche.quellen?.includes(q) ?? false}
-              onSelect={(e) => e.preventDefault()}
-              onCheckedChange={(an) => {
-                const alt = suche.quellen ?? []
-                const neu: ImportQuelle[] = an ? [...alt, q] : alt.filter((x) => x !== q)
-                setze({ quellen: neu.length ? neu : undefined })
-              }}
-            >
-              <Icon name={quelleIcon[q]} />
-              {quelleText[q]}
-            </DropdownMenuCheckboxItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
-      <button
-        type="button"
-        onClick={() => ersetze(filterZurueckgesetzt(suche))}
-        className="inline-flex h-8 cursor-pointer items-center gap-1 rounded-[7px] border border-eingabe-rand bg-karte px-2.5 text-[13px] font-medium text-gedaempft hover:bg-hover"
-      >
-        <Icon name="close" className="text-[16px]" />
-        Filter zurücksetzen
-      </button>
-    </div>
+    <FilterPills
+      filter={leistenFilter.map((art): PillFilter => ({
+        schluessel: art,
+        ...filterInfo[art],
+        wert: wertVon(art, suche, namen, heute),
+        auswahl: (ausloeser, anfangsOffen) => auswahl(art, ausloeser, anfangsOffen),
+        entfernen: () => setze(ohneFilter(art)),
+      }))}
+      weitereAktiv={!!suche.suche}
+      onZuruecksetzen={() => ersetze(filterZurueckgesetzt(suche))}
+    />
   )
 }
 
-/** Suchfeld mit Feldwahl; schreibt den Begriff erst nach 300 ms Ruhe in die URL. */
-function Suchzeile({ zustand: { suche, setze } }: { zustand: ListenZustand }) {
+/** Suchfeld mit Feldwahl (Kopfzeile); schreibt den Begriff erst nach 300 ms Ruhe in die URL. */
+export function Suchzeile({ zustand: { suche, setze } }: { zustand: ListenZustand }) {
   const suchfeld = suche.suchfeld ?? 'TitelInhalt'
   const [text, setText] = useState(suche.suche ?? '')
   const [stand, setStand] = useState(suche.suche)
@@ -161,7 +230,11 @@ function Suchzeile({ zustand: { suche, setze } }: { zustand: ListenZustand }) {
 
   const label = suchfeld === 'Rechnungsnummer' ? 'Rechnungsnr.' : 'Titel & Inhalt'
   return (
-    <div className="flex h-[34px] max-w-[460px] flex-[1_1_340px] overflow-hidden rounded-[7px] border border-akzent">
+    <div
+      role="search"
+      aria-label="Belege durchsuchen"
+      className="flex h-[34px] max-w-[520px] min-w-0 flex-[1_1_320px] overflow-hidden rounded-[7px] border border-akzent"
+    >
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
@@ -200,10 +273,14 @@ function MehrfachAuswahl({
   art,
   gewaehlt,
   onAendern,
+  ausloeser,
+  anfangsOffen = false,
 }: {
   art: 'korrespondent' | 'kategorie'
   gewaehlt: string[]
   onAendern: (ids: string[]) => void
+  ausloeser: ReactNode
+  anfangsOffen?: boolean
 }) {
   const listId = useId()
   const [suche, setSuche] = useState('')
@@ -218,18 +295,10 @@ function MehrfachAuswahl({
   }
 
   const navigation = useListenNavigation(treffer.length, (i) => umschalten(treffer[i].id))
-  const label = art === 'korrespondent' ? 'Korrespondent' : 'Kategorie'
 
   return (
-    <Popover onOpenChange={(offen) => !offen && setSuche('')}>
-      <PopoverTrigger asChild>
-        <MenueKnopf
-          icon={art === 'korrespondent' ? 'storefront' : 'category'}
-          label={label}
-          aktiv={gewaehlt.length > 0}
-          anzahl={gewaehlt.length}
-        />
-      </PopoverTrigger>
+    <Popover defaultOpen={anfangsOffen} onOpenChange={(offen) => !offen && setSuche('')}>
+      <PopoverTrigger asChild>{ausloeser}</PopoverTrigger>
       <PopoverContent className="w-80 p-3">
         <Suchfeld
           wert={suche}

@@ -1813,7 +1813,7 @@ export interface components {
             betragArt: components["schemas"]["BetragArt"];
             zahlstatus?: components["schemas"]["Zahlstatus"] | null;
             quellen: components["schemas"]["ImportQuelle"][];
-            /** @default false */
+            /** @default true */
             dublettenAusschliessen: boolean;
             sortierung: components["schemas"]["BelegSortierung"];
             /** @default true */
@@ -1882,7 +1882,7 @@ export interface components {
             gesamt: number;
         };
         /** @enum {string} */
-        BelegSortierung: "Rechnungsdatum" | "Faelligkeit" | "Brutto" | "Korrespondent" | "ErstelltAm";
+        BelegSortierung: "Rechnungsdatum" | "Faelligkeit" | "Brutto" | "Korrespondent" | "ErstelltAm" | "Rechnungsnummer" | "Titel" | "Kategorie" | "Netto" | "Seiten" | "Herkunft" | "Leistungsdatum" | "Konfidenz";
         /** @enum {string} */
         BelegStatus: "Importiert" | "InVerarbeitung" | "Fertig" | "Fehler";
         /** @enum {string} */

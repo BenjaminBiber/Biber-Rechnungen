@@ -50,6 +50,14 @@ async function tabelle() {
   await waitFor(() => expect(zeilen().length).toBeGreaterThan(0))
 }
 
+const filterleiste = () => screen.getByRole('search', { name: 'Filter' })
+
+/** Fügt eine Filter-Pill hinzu; ihre Auswahl öffnet sich dabei von selbst. */
+async function filterHinzufuegen(nutzer: ReturnType<typeof userEvent.setup>, titel: string) {
+  await nutzer.click(within(filterleiste()).getByRole('button', { name: 'Filter hinzufügen' }))
+  await nutzer.click(await screen.findByRole('menuitem', { name: titel }))
+}
+
 describe('Artikelseite', () => {
   it('zeigt neun Artikel mit Chips in der richtigen Farbe', async () => {
     renderArtikel()
@@ -86,15 +94,18 @@ describe('Artikelseite', () => {
     expect(router.state.location.search).toMatchObject({ suche: 'papier' })
     await waitFor(() => expect(zeilen()).toHaveLength(2))
 
-    await nutzer.click(screen.getByRole('button', { name: 'Filter zurücksetzen' }))
+    await nutzer.click(within(filterleiste()).getByRole('button', { name: 'Filter zurücksetzen' }))
     await waitFor(() => expect(zeilen()).toHaveLength(9))
 
-    await nutzer.click(screen.getByRole('switch', { name: 'Ohne Stammartikel' }))
+    await filterHinzufuegen(nutzer, 'Zuordnung')
+    await nutzer.click(await screen.findByRole('menuitemradio', { name: 'Ohne Stammartikel' }))
     await waitFor(() => expect(letzte().get('ohneStammartikel')).toBe('true'))
     await waitFor(() => expect(zeilen()).toHaveLength(3))
-    await nutzer.click(screen.getByRole('switch', { name: 'Ohne Stammartikel' }))
+    expect(within(filterleiste()).getByRole('button', { name: 'Zuordnung: ohne Stammartikel' })).toBeInTheDocument()
+    await nutzer.click(within(filterleiste()).getByRole('button', { name: 'Filter Zuordnung entfernen' }))
+    await waitFor(() => expect(letzte().get('ohneStammartikel')).toBeNull())
 
-    await nutzer.click(screen.getByRole('button', { name: /Preisänderung/ }))
+    await filterHinzufuegen(nutzer, 'Preisänderung')
     await nutzer.click(await screen.findByRole('menuitemradio', { name: 'Gefallen' }))
     await waitFor(() => expect(letzte().get('preisaenderung')).toBe('Gefallen'))
     await waitFor(() => expect(zeilen()).toHaveLength(3))
@@ -104,10 +115,36 @@ describe('Artikelseite', () => {
   it('Korrespondent-Filter setzt korrespondentId', async () => {
     const { nutzer, letzte } = renderArtikel()
     await tabelle()
-    await nutzer.click(screen.getByRole('button', { name: /Korrespondent/ }))
+    await filterHinzufuegen(nutzer, 'Korrespondent')
     await nutzer.click(await screen.findByRole('option', { name: /Druckerei Weller/ }))
     await waitFor(() => expect(letzte().get('korrespondentId')).toBe(korrespondentIds.druckereiWeller))
     await waitFor(() => expect(zeilen()).toHaveLength(1))
+    expect(within(filterleiste()).getByRole('button', { name: 'Korrespondent: Druckerei Weller' })).toBeInTheDocument()
+  })
+
+  it('gesetzte Filter erscheinen als Pills', async () => {
+    renderArtikel(`/artikel?preisaenderung=Gestiegen&ohneStammartikel=true`)
+    await tabelle()
+    expect(within(filterleiste()).getByRole('button', { name: 'Preisänderung: Gestiegen' })).toBeInTheDocument()
+    expect(within(filterleiste()).getByRole('button', { name: 'Zuordnung: ohne Stammartikel' })).toBeInTheDocument()
+  })
+
+  it('Stammartikel: Suche, Korrespondent und Preisänderung filtern die Karten', async () => {
+    const { nutzer } = renderArtikel(`/artikel?reiter=stammartikel&korrespondentId=${korrespondentIds.druckereiWeller}`)
+    await waitFor(() => expect(screen.getAllByRole('article')).toHaveLength(1))
+    expect(screen.getByRole('article', { name: 'Kopierpapier A4 80 g' })).toBeInTheDocument()
+    expect(within(filterleiste()).getByRole('button', { name: 'Korrespondent: Druckerei Weller' })).toBeInTheDocument()
+    // „Ohne Stammartikel“ gibt es im Reiter Stammartikel nicht.
+    await nutzer.click(within(filterleiste()).getByRole('button', { name: 'Filter hinzufügen' }))
+    expect(screen.queryByRole('menuitem', { name: 'Zuordnung' })).not.toBeInTheDocument()
+    await nutzer.click(await screen.findByRole('menuitem', { name: 'Preisänderung' }))
+    await nutzer.click(await screen.findByRole('menuitemradio', { name: 'Gefallen' }))
+    expect(await screen.findByText('Keine Stammartikel für diese Filter')).toBeInTheDocument()
+
+    await nutzer.click(within(filterleiste()).getByRole('button', { name: 'Filter zurücksetzen' }))
+    await waitFor(() => expect(screen.getAllByRole('article')).toHaveLength(4))
+    await nutzer.type(screen.getByRole('searchbox', { name: 'Stammartikel suchen' }), 'server')
+    await waitFor(() => expect(screen.getAllByRole('article')).toHaveLength(1))
   })
 
   it('Reiterwechsel zeigt vier Stammartikel-Karten', async () => {

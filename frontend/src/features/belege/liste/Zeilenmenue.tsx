@@ -85,6 +85,11 @@ export function Zeilenmenue({ beleg }: { beleg: BelegListeneintrag }) {
   const [detailNoetig, setDetailNoetig] = useState(false)
   const tagKnopf = useRef<HTMLButtonElement>(null)
   const kategorieKnopf = useRef<HTMLButtonElement>(null)
+  /**
+   * Auswahl, die nach dem Schließen des Menüs aufgehen soll. Erst in `onCloseAutoFocus` öffnen: Radix gibt den
+   * Fokus sonst nach dem Schließen an den ⋮-Knopf zurück, und das gerade geöffnete Popover schließt sich wieder.
+   */
+  const folgeAuswahl = useRef<HTMLButtonElement | null>(null)
   const zahlungsTags = tags.filter((t) => t.istZahlungsTag)
   const tagIds = beleg.tags.map((t) => t.id)
   const pfad = { to: '/belege/$belegId', params: { belegId: beleg.id } } as const
@@ -170,7 +175,16 @@ export function Zeilenmenue({ beleg }: { beleg: BelegListeneintrag }) {
             <Icon name="more_vert" />
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent aria-label={`Aktionen für ${beleg.titel}`}>
+        <DropdownMenuContent
+          aria-label={`Aktionen für ${beleg.titel}`}
+          onCloseAutoFocus={(e) => {
+            const knopf = folgeAuswahl.current
+            if (!knopf) return
+            folgeAuswahl.current = null
+            e.preventDefault()
+            knopf.click()
+          }}
+        >
           <DropdownMenuItem onSelect={() => void navigate(pfad)}>
             <Icon name="open_in_full" />
             Öffnen
@@ -183,27 +197,52 @@ export function Zeilenmenue({ beleg }: { beleg: BelegListeneintrag }) {
           {darfBearbeiten && (
             <>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => setTimeout(() => tagKnopf.current?.click())}>
+              <DropdownMenuItem
+                onSelect={() => {
+                  folgeAuswahl.current = tagKnopf.current
+                }}
+              >
                 <Icon name="sell" />
                 Tags …<DropdownMenuShortcut>T</DropdownMenuShortcut>
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setTimeout(() => kategorieKnopf.current?.click())}>
+              <DropdownMenuItem
+                onSelect={() => {
+                  folgeAuswahl.current = kategorieKnopf.current
+                }}
+              >
                 <Icon name="folder" />
                 Kategorie …<DropdownMenuShortcut>K</DropdownMenuShortcut>
               </DropdownMenuItem>
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger>
+              {zahlungsTags.length === 1 ? (
+                <DropdownMenuItem onSelect={() => alsBezahlt(zahlungsTags[0].id, zahlungsTags[0].name)}>
                   <Icon name="payments" />
                   Als bezahlt markieren
-                </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent aria-label="Zahlungs-Tag wählen">
-                  {zahlungsTags.map((t) => (
-                    <DropdownMenuItem key={t.id} onSelect={() => alsBezahlt(t.id, t.name)}>
-                      {t.name}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <Icon name="payments" />
+                    Als bezahlt markieren
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent aria-label="Zahlungs-Tag wählen">
+                    {zahlungsTags.length === 0 ? (
+                      <>
+                        <DropdownMenuItem disabled>Noch kein Zahlungs-Tag angelegt</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => void navigate({ to: '/tags' })}>
+                          <Icon name="add" />
+                          Zahlungs-Tag anlegen …
+                        </DropdownMenuItem>
+                      </>
+                    ) : (
+                      zahlungsTags.map((t) => (
+                        <DropdownMenuItem key={t.id} onSelect={() => alsBezahlt(t.id, t.name)}>
+                          {t.name}
+                        </DropdownMenuItem>
+                      ))
+                    )}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+              )}
               {istZuPruefen(beleg) && (
                 <DropdownMenuItem onSelect={bestaetigenAusfuehren}>
                   <Icon name="check_circle" />

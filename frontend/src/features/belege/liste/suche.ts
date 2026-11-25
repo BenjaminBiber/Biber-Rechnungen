@@ -55,6 +55,14 @@ export const sortierungen: BelegSortierung[] = [
   'Faelligkeit',
   'Brutto',
   'Korrespondent',
+  'Titel',
+  'Rechnungsnummer',
+  'Kategorie',
+  'Netto',
+  'Leistungsdatum',
+  'Seiten',
+  'Herkunft',
+  'Konfidenz',
   'ErstelltAm',
 ]
 export const zahlstatusWerte: Zahlstatus[] = ['Offen', 'Bezahlt', 'Ueberfaellig']
@@ -170,7 +178,7 @@ export function zuFilter(suche: BelegeSuche): BelegFilter {
     betragArt: suche.betragArt ?? 'Brutto',
     zahlstatus: suche.zahlstatus ?? null,
     quellen: suche.quellen ?? [],
-    dublettenAusschliessen: false,
+    dublettenAusschliessen: true,
     sortierung: suche.sortierung ?? 'Rechnungsdatum',
     absteigend: suche.absteigend ?? true,
     seite: 1,
@@ -219,6 +227,14 @@ export const sortierungText: Record<BelegSortierung, string> = {
   Brutto: 'Brutto',
   Korrespondent: 'Korrespondent',
   ErstelltAm: 'Erfasst am',
+  Rechnungsnummer: 'Rechnungsnr.',
+  Titel: 'Titel',
+  Kategorie: 'Kategorie',
+  Netto: 'Netto',
+  Seiten: 'Seiten',
+  Herkunft: 'Herkunft',
+  Leistungsdatum: 'Leistungsdatum',
+  Konfidenz: 'Konfidenz',
 }
 
 export const zahlstatusText: Record<Zahlstatus, string> = {

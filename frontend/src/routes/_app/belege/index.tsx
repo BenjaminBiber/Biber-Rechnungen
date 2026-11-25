@@ -19,7 +19,7 @@ import {
   type BelegeSuche,
   type ListenZustand,
 } from '@/features/belege/liste/suche'
-import { VorschauDialog } from '@/features/belege/liste/VorschauDialog'
+import { VorschauPanel } from '@/features/belege/liste/Vorschau'
 import { Zusammenfassung } from '@/features/belege/liste/Zusammenfassung'
 import { MobilBelege } from '@/features/mobil/MobilBelege'
 import { useIstMobil } from '@/lib/useIstMobil'
@@ -85,22 +85,18 @@ function BelegeListe({ zustand }: { zustand: ListenZustand }) {
   else if (darstellung === 'gross') inhalt = <GrosseKarten eintraege={eintraege} onVorschau={setVorschau} />
   else inhalt = <BelegTabelle eintraege={eintraege} spalten={spalten} zustand={zustand} />
 
+  // Filterleiste in allen Darstellungen; bei Auswahl ersetzt sie die Massenaktionen-Leiste.
+  const leiste = auswahl.ids.length > 0 ? <Massenaktionen /> : <Filterleiste zustand={zustand} />
+
   return (
     <main className="seite flex flex-col gap-3.5 text-text">
-      <Kopfzeile
-        zustand={zustand}
-        abfrage={abfrage}
-        seitenIds={eintraege.map((b) => b.id)}
-        gesamt={liste?.gesamt ?? 0}
-        spalten={spalten}
-        onSpaltenAendern={setSpalten}
-      />
-      {auswahl.ids.length > 0 ? <Massenaktionen /> : <Filterleiste zustand={zustand} />}
+      <Kopfzeile zustand={zustand} spalten={spalten} onSpaltenAendern={setSpalten} />
+      {leiste}
       {liste && liste.gesamt > 0 && (
         <Zusammenfassung liste={liste} onSeite={(seite) => setze({ seite: seite > 1 ? seite : undefined })} />
       )}
       {inhalt}
-      <VorschauDialog beleg={vorschau} onSchliessen={() => setVorschau(null)} />
+      <VorschauPanel beleg={vorschau} onSchliessen={() => setVorschau(null)} />
     </main>
   )
 }

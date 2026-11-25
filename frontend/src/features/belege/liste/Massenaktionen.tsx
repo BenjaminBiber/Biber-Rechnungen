@@ -1,8 +1,10 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useSearch } from '@tanstack/react-router'
-import type { ReactNode } from 'react'
-import { useBelege, useMassenaktion } from '@/api/belege'
+import { useState } from 'react'
+import { belegeKeys, useBelege, useMassenaktion } from '@/api/belege'
+import { api, daten } from '@/api/client'
 import { useTags } from '@/api/tags'
-import type { Massenaktion } from '@/api/typen'
+import type { BelegListeneintrag, Massenaktion } from '@/api/typen'
 import { KategorieAuswahl } from '@/components/auswahl/KategorieAuswahl'
 import { TagAuswahl } from '@/components/auswahl/TagAuswahl'
 import { Icon } from '@/components/Icon'
@@ -12,46 +14,73 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { formatEuro } from '@/lib/format'
 import { useBelegAuswahl } from './auswahl'
 import { sucheValidieren, zuAbfrage } from './suche'
+import { istZuPruefen } from './Zeilenmenue'
 
 const belegeText = (n: number) => (n === 1 ? '1 Beleg' : `${n} Belege`)
 const belegenText = (n: number) => (n === 1 ? '1 Beleg' : `${n} Belegen`)
 
+/**
+ * Flacher, heller Knopf auf der dunklen Leiste. Ist die Leiste schmal (Container-Query), bleibt nur das Icon
+ * sichtbar; die Beschriftung bleibt für Screenreader erhalten und erscheint als Tooltip.
+ */
 const knopf =
-  '[--btn-laden-farbe:var(--color-auf-akzent)] inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-white/25 bg-white/10 px-3 text-[13px] font-medium text-auf-akzent hover:bg-white/20 [&_.material-symbols-outlined]:text-[18px]'
+  '[--btn-laden-farbe:#fff] inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md border-0 bg-transparent px-2.5 text-[13px] font-semibold whitespace-nowrap text-white hover:bg-white/10 disabled:cursor-default disabled:opacity-50 data-[state=open]:bg-white/10 @max-5xl:px-2 [&_.material-symbols-outlined]:text-[18px]'
 
-function Knopf({ icon, children, ...rest }: { icon: string; children: ReactNode } & React.ComponentProps<'button'>) {
+function Knopf({ icon, label, ...rest }: { icon: string; label: string } & React.ComponentProps<'button'>) {
   return (
-    <button type="button" className={knopf} {...rest}>
+    <button type="button" className={knopf} title={label} {...rest}>
       <Icon name={icon} />
-      {children}
+      <span className="@max-5xl:sr-only">{label}</span>
     </button>
   )
 }
 
+/** Senkrechter Trenner zwischen Knopfgruppen. */
+const Trenner = () => <span aria-hidden className="mx-1.5 h-5 w-px shrink-0 bg-white/20 @max-5xl:mx-0.5" />
+
 /**
- * Leiste bei vorhandener Auswahl (ersetzt die Filterleiste): Anzahl und Summe der gewählten Belege der Seite,
- * Tags, Kategorie, Als bezahlt markieren, Bestätigen, Exportieren, Auswahl aufheben. NurLesen sieht nur
- * Exportieren und Auswahl aufheben.
+ * Dunkle Leiste bei vorhandener Auswahl (ersetzt die Filterleiste): Anzahl, Summe der gewählten Belege und
+ * „Alle N auswählen“; Tags, Kategorie | Als bezahlt markieren, Exportieren; rechts „Bestätigen“ (nur wenn
+ * ein gewählter Beleg noch „zu prüfen“ ist) und ✕ (Auswahl aufheben). NurLesen sieht keine ändernden Aktionen.
  */
 export function Massenaktionen() {
   const auswahl = useBelegAuswahl()
   const suche = sucheValidieren(useSearch({ strict: false }) as Record<string, unknown>)
-  const { data: liste } = useBelege(zuAbfrage(suche))
+  const abfrage = zuAbfrage(suche)
+  const { data: liste } = useBelege(abfrage)
+  const queryClient = useQueryClient()
   const { data: tags = [] } = useTags()
   const { darfBearbeiten } = useRolle()
   const massenaktion = useMassenaktion()
   const navigate = useNavigate()
   const toast = useToast()
+  // Einträge aus „Alle N auswählen“ – damit Summe und „Bestätigen“ auch Belege anderer Seiten kennen.
+  const [alleEintraege, setAlleEintraege] = useState<BelegListeneintrag[]>([])
 
   const anzahl = auswahl.ids.length
-  const gewaehlt = (liste?.eintraege ?? []).filter((b) => auswahl.istGewaehlt(b.id))
+  const bekannt = new Map([...alleEintraege, ...(liste?.eintraege ?? [])].map((b) => [b.id, b]))
+  const gewaehlt = auswahl.ids.flatMap((id) => bekannt.get(id) ?? [])
   const summe = gewaehlt.reduce((s, b) => s + (b.brutto ?? 0), 0)
+  // Unbekannte Belege könnten „zu prüfen“ sein – dann lieber anbieten.
+  const etwasZuBestaetigen = gewaehlt.length < anzahl || gewaehlt.some(istZuPruefen)
   // Ausgangszustand der Tag-Auswahl: Tags, die alle gewählten Belege tragen.
   const gemeinsameTags =
     gewaehlt.length === 0
       ? []
       : gewaehlt[0].tags.map((t) => t.id).filter((id) => gewaehlt.every((b) => b.tags.some((t) => t.id === id)))
   const zahlungsTags = tags.filter((t) => t.istZahlungsTag)
+  const gesamt = liste?.gesamt ?? 0
+
+  async function alleWaehlen() {
+    if (gesamt === 0) return
+    const alleAbfrage = { ...abfrage, seite: 1, seitengroesse: gesamt }
+    const alle = await queryClient.fetchQuery({
+      queryKey: belegeKeys.liste(alleAbfrage),
+      queryFn: ({ signal }) => daten(api.GET('/api/belege', { params: { query: alleAbfrage }, signal })),
+    })
+    setAlleEintraege(alle.eintraege)
+    auswahl.alleSetzen(alle.eintraege.map((b) => b.id))
+  }
 
   function ausfuehren(eingabe: Omit<Massenaktion, 'belegIds'>, erfolg: (n: number) => string) {
     const belegIds = auswahl.ids
@@ -93,84 +122,109 @@ export function Massenaktionen() {
   }
 
   return (
-    <div
-      role="toolbar"
-      aria-label="Massenaktionen"
-      className="flex min-h-[60px] flex-wrap items-center gap-2 rounded-[10px] bg-akzent py-3 pr-3 pl-4 text-auf-akzent"
-    >
-      <span className="mr-2 text-sm font-semibold" aria-live="polite">
-        {anzahl === 1 ? '1 Beleg ausgewählt' : `${anzahl} Belege ausgewählt`}
-        <span className="num font-normal text-[#D7D6EE]"> · {formatEuro(summe)}</span>
-      </span>
-      {darfBearbeiten && (
-        <>
-          <TagAuswahl
-            gewaehlt={gemeinsameTags}
-            onAendern={tagsAendern}
-            ausloeser={
-              <Knopf icon="sell" disabled={massenaktion.isPending}>
-                Tags
-              </Knopf>
-            }
-          />
-          <KategorieAuswahl
-            wert={null}
-            onAendern={(kategorieId) =>
-              kategorieId &&
-              ausfuehren({ aktion: 'KategorieSetzen', kategorieId }, (n) => `Kategorie bei ${belegenText(n)} gesetzt`)
-            }
-            ausloeser={
-              <Knopf icon="folder" disabled={massenaktion.isPending}>
-                Kategorie
-              </Knopf>
-            }
-          />
-          {zahlungsTags.length === 1 ? (
-            <Knopf
-              icon="payments"
-              disabled={massenaktion.isPending}
-              aria-busy={massenaktion.isPending && massenaktion.variables?.aktion === 'TagsSetzen'}
-              onClick={() => alsBezahlt(zahlungsTags[0].id)}
-            >
-              Als bezahlt markieren
-            </Knopf>
-          ) : (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Knopf icon="payments" disabled={massenaktion.isPending}>
-                  Als bezahlt markieren
-                </Knopf>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" aria-label="Zahlungs-Tag wählen">
-                {zahlungsTags.map((t) => (
-                  <DropdownMenuItem key={t.id} onSelect={() => alsBezahlt(t.id)}>
-                    {t.name}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-          <Knopf
-            icon="check_circle"
+    // Der Container misst die Leistenbreite (nicht das Fenster) – mit Vorschau-Panel ist sie schmaler.
+    <div className="@container">
+      <div
+        role="toolbar"
+        aria-label="Massenaktionen"
+        className="flex min-h-[58px] flex-wrap items-center gap-1 rounded-[10px] bg-seitenleiste py-2 pr-2 pl-4 text-white"
+      >
+        <div className="mr-2 flex min-w-0 flex-col leading-tight @max-5xl:mr-0.5" aria-live="polite">
+          <span className="text-sm font-semibold">
+            {anzahl === 1 ? '1 Beleg ausgewählt' : `${anzahl} Belege ausgewählt`}
+          </span>
+          <span className="text-xs text-seitenleiste-gedaempft">
+            Summe <span className="num">{formatEuro(summe)}</span>
+            {anzahl < gesamt && (
+              <>
+                {' · '}
+                <button
+                  type="button"
+                  onClick={() => void alleWaehlen()}
+                  className="cursor-pointer border-0 bg-transparent p-0 text-xs font-semibold text-white underline underline-offset-2 hover:no-underline"
+                >
+                  Alle {gesamt} auswählen
+                </button>
+              </>
+            )}
+          </span>
+        </div>
+        <Trenner />
+        {darfBearbeiten && (
+          <>
+            <TagAuswahl
+              gewaehlt={gemeinsameTags}
+              onAendern={tagsAendern}
+              ausloeser={<Knopf icon="sell" label="Tags" disabled={massenaktion.isPending} />}
+            />
+            <KategorieAuswahl
+              wert={null}
+              onAendern={(kategorieId) =>
+                kategorieId &&
+                ausfuehren({ aktion: 'KategorieSetzen', kategorieId }, (n) => `Kategorie bei ${belegenText(n)} gesetzt`)
+              }
+              ausloeser={<Knopf icon="category" label="Kategorie" disabled={massenaktion.isPending} />}
+            />
+            <Trenner />
+            {zahlungsTags.length === 1 ? (
+              <Knopf
+                icon="paid"
+                label="Als bezahlt markieren"
+                disabled={massenaktion.isPending}
+                aria-busy={massenaktion.isPending && massenaktion.variables?.aktion === 'TagsSetzen'}
+                onClick={() => alsBezahlt(zahlungsTags[0].id)}
+              />
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Knopf icon="paid" label="Als bezahlt markieren" disabled={massenaktion.isPending} />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" aria-label="Zahlungs-Tag wählen">
+                  {zahlungsTags.length === 0 ? (
+                    <>
+                      <DropdownMenuItem disabled>Noch kein Zahlungs-Tag angelegt</DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => void navigate({ to: '/tags' })}>
+                        <Icon name="add" />
+                        Zahlungs-Tag anlegen …
+                      </DropdownMenuItem>
+                    </>
+                  ) : (
+                    zahlungsTags.map((t) => (
+                      <DropdownMenuItem key={t.id} onSelect={() => alsBezahlt(t.id)}>
+                        {t.name}
+                      </DropdownMenuItem>
+                    ))
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </>
+        )}
+        <Knopf icon="download" label="Exportieren" onClick={exportieren} />
+        <span className="flex-1" />
+        {darfBearbeiten && etwasZuBestaetigen && (
+          <button
+            type="button"
+            title="Bestätigen"
             disabled={massenaktion.isPending}
             aria-busy={massenaktion.isPending && massenaktion.variables?.aktion === 'Bestaetigen'}
             onClick={() => ausfuehren({ aktion: 'Bestaetigen' }, (n) => `${belegeText(n)} bestätigt`)}
+            className="[--btn-laden-farbe:var(--color-seitenleiste)] inline-flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border-0 bg-white px-4 text-[13px] font-semibold whitespace-nowrap text-seitenleiste hover:bg-white/90 disabled:cursor-default disabled:opacity-60 @max-2xl:px-2.5 [&_.material-symbols-outlined]:text-[18px]"
           >
-            Bestätigen
-          </Knopf>
-        </>
-      )}
-      <Knopf icon="download" onClick={exportieren}>
-        Exportieren
-      </Knopf>
-      <span className="flex-1" />
-      <button
-        type="button"
-        onClick={auswahl.leeren}
-        className="cursor-pointer border-0 bg-transparent text-[13px] font-medium text-[#D7D6EE] hover:text-auf-akzent"
-      >
-        Auswahl aufheben
-      </button>
+            <Icon name="check_circle" />
+            <span className="@max-2xl:sr-only">Bestätigen</span>
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={auswahl.leeren}
+          aria-label="Auswahl aufheben"
+          title="Auswahl aufheben"
+          className="ml-1 inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent text-white hover:bg-white/10 [&_.material-symbols-outlined]:text-[20px]"
+        >
+          <Icon name="close" />
+        </button>
+      </div>
     </div>
   )
 }

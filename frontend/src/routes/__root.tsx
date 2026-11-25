@@ -1,8 +1,10 @@
 import { createRootRouteWithContext, Outlet } from '@tanstack/react-router'
-import { Platzhalter } from '@/components/Platzhalter'
+import { Fehlerseite, SeiteNichtGefunden } from '@/components/fehler/Fehlerseiten'
 import type { RouterKontext } from '@/router'
 
+/** Wurzel: Fehlerseiten hier laufen ohne Shell (z. B. wenn der Server beim Start nicht antwortet). */
 export const Route = createRootRouteWithContext<RouterKontext>()({
   component: Outlet,
-  notFoundComponent: () => <Platzhalter titel="Seite nicht gefunden" />,
+  notFoundComponent: () => <SeiteNichtGefunden vollbild />,
+  errorComponent: (props) => <Fehlerseite {...props} vollbild />,
 })

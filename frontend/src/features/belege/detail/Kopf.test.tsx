@@ -14,18 +14,23 @@ describe('Beleg-Detail: Rahmen und Kopf', () => {
     expect(kopf).toHaveTextContent('Rechnung')
     expect(kopf).toHaveTextContent('Inbox')
     expect(kopf).toHaveTextContent('zu prüfen')
-    expect(kopf).toHaveTextContent('Nr. 2026-48817 · 19.11.2026 · fällig 03.12.2026 · 264,00 €')
-    const brotkrumen = screen.getByRole('navigation', { name: 'Brotkrumen' })
-    expect(within(brotkrumen).getByRole('link', { name: 'Belege' })).toHaveAttribute('href', '/belege')
-    expect(brotkrumen).toHaveTextContent('2026-48817')
-    expect(within(brotkrumen).queryByLabelText('Nächster Beleg')).not.toBeInTheDocument()
+    expect(kopf).not.toHaveTextContent('Nr. 2026-48817')
+    expect(kopf).not.toHaveTextContent('264,00 €')
+    expect(screen.getByRole('link', { name: 'Zurück zu Belege' })).toHaveAttribute('href', '/belege')
+    expect(screen.queryByRole('navigation', { name: 'Blättern' })).not.toBeInTheDocument()
   })
 
   it('zeigt für Benutzer bei „zu prüfen“ alle Aktionen außer „Aufteilen“ (nur eine Seite)', async () => {
     renderBelegDetail()
     await kopfGeladen()
-    expect(screen.getByRole('button', { name: 'Erneut auslesen' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Weitere Aktionen' })).toBeInTheDocument()
+    const aktionen = screen.getByRole('group', { name: 'Beleg-Aktionen' })
+    expect(within(aktionen).getByRole('link', { name: 'Original herunterladen' })).toHaveAttribute(
+      'href',
+      expect.stringContaining(`/api/belege/${b2}/dateien/`),
+    )
+    expect(within(aktionen).getByRole('link', { name: 'Original herunterladen' })).toHaveAttribute('download')
+    expect(within(aktionen).getByRole('button', { name: 'Weitere Aktionen' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Erneut auslesen' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Bestätigen' })).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Aufteilen' })).not.toBeInTheDocument()
   })
@@ -46,10 +51,11 @@ describe('Beleg-Detail: Rahmen und Kopf', () => {
     expect(screen.queryByRole('button', { name: 'Bestätigen' })).not.toBeInTheDocument()
   })
 
-  it('stößt „Erneut auslesen“ an', async () => {
+  it('stößt „Erneut auslesen“ über das Aktionsmenü an', async () => {
     const { nutzer } = renderBelegDetail()
     await kopfGeladen()
-    await nutzer.click(screen.getByRole('button', { name: 'Erneut auslesen' }))
+    await nutzer.click(screen.getByRole('button', { name: 'Weitere Aktionen' }))
+    await nutzer.click(await screen.findByRole('menuitem', { name: /Erneut auslesen/ }))
     expect(await screen.findByText('Beleg wird erneut ausgelesen')).toBeInTheDocument()
   })
 
@@ -57,13 +63,13 @@ describe('Beleg-Detail: Rahmen und Kopf', () => {
     const aus = encodeURIComponent(JSON.stringify({ ansicht: 'Inbox' }))
     renderBelegDetail(`/belege/${b2}?aus=${aus}`)
     await kopfGeladen()
-    const brotkrumen = screen.getByRole('navigation', { name: 'Brotkrumen' })
-    expect(await within(brotkrumen).findByText(/2 von 4 in Inbox/)).toBeInTheDocument()
-    expect(brotkrumen).toHaveTextContent('Belege / Inbox / 2026-48817')
-    expect(within(brotkrumen).getByRole('link', { name: 'Vorheriger Beleg' }).getAttribute('href')).toContain(
+    expect(screen.getByRole('link', { name: 'Zurück zu Inbox' }).getAttribute('href')).toContain('ansicht=Inbox')
+    const blaettern = await screen.findByRole('navigation', { name: 'Blättern' })
+    expect(blaettern).toHaveTextContent('2 von 4 in Inbox')
+    expect(within(blaettern).getByRole('link', { name: 'Vorheriger Beleg' }).getAttribute('href')).toContain(
       `/belege/${belegIds.b1}`,
     )
-    expect(within(brotkrumen).getByRole('link', { name: 'Nächster Beleg' }).getAttribute('href')).toContain(
+    expect(within(blaettern).getByRole('link', { name: 'Nächster Beleg' }).getAttribute('href')).toContain(
       `/belege/${belegIds.b5}`,
     )
   })

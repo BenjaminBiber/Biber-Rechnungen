@@ -16,6 +16,17 @@ export const gruppe =
 export const gruppeGrau =
   'inline-flex overflow-hidden rounded-[7px] border border-eingabe-rand bg-karte [&>*]:inline-flex [&>*]:h-[30px] [&>*]:cursor-pointer [&>*]:items-center [&>*]:justify-center [&>*]:gap-1.5 [&>*]:border-0 [&>*]:border-l [&>*]:border-eingabe-rand [&>*]:bg-karte [&>*]:px-[11px] [&>*]:text-[13px] [&>*]:font-medium [&>*]:whitespace-nowrap [&>*]:text-gedaempft-stark [&>*]:no-underline [&>*:first-child]:border-l-0 [&>*:hover]:bg-akzent-zart [&>*:disabled]:cursor-default [&>*:disabled]:opacity-50 [&_.material-symbols-outlined]:text-[18px] [&_.material-symbols-outlined]:[vertical-align:0]'
 
+/**
+ * Kombi-Knopf: mehrere Knöpfe in einem gemeinsamen Akzent-Rahmen, durch Linien getrennt
+ * (z. B. Split-Button „Seite auswählen | ▾“). Die Knöpfe darin nutzen `kombiTeil`.
+ */
+export const kombi =
+  'inline-flex h-8 overflow-hidden rounded-[7px] border border-akzent bg-karte [&>*+*]:border-l [&>*+*]:border-akzent'
+
+/** Ein Knopf innerhalb von `kombi`. */
+export const kombiTeil =
+  'inline-flex h-full cursor-pointer items-center gap-1.5 bg-karte px-2.5 text-sm font-medium whitespace-nowrap text-akzent-text hover:bg-akzent-zart data-[state=open]:bg-akzent-zart [&_.material-symbols-outlined]:text-[18px]'
+
 /** Menü-Knopf mit Pfeil (`.dd`); `aktiv` füllt ihn, `anzahl` zeigt eine Plakette. */
 export function MenueKnopf({
   icon,

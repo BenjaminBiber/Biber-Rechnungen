@@ -234,9 +234,12 @@ export function belegDateiUrl(belegId: string, dateiId: string, inline?: boolean
   return apiUrl(`/api/belege/${belegId}/dateien/${dateiId}`, { inline })
 }
 
-/** GET /api/belege/{id}/vorschau – PNG-Vorschau einer Seite (Standard: erste). */
-export function belegVorschauUrl(belegId: string, seite?: number): string {
-  return apiUrl(`/api/belege/${belegId}/vorschau`, { seite })
+/**
+ * GET /api/belege/{id}/vorschau – WebP-Vorschau einer Seite (Standard: erste) in `breite` Pixeln
+ * (Server: 200–1600, Standard 600; jede Breite wird serverseitig zwischengespeichert).
+ */
+export function belegVorschauUrl(belegId: string, seite?: number, breite?: number): string {
+  return apiUrl(`/api/belege/${belegId}/vorschau`, { seite, breite })
 }
 
 /** GET /api/belege/{id}/visualisierung – HTML-Darstellung einer E-Rechnung. */

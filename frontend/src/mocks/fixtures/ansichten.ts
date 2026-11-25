@@ -16,7 +16,7 @@ export const standardFilter: BelegFilter = {
   betragArt: 'Brutto',
   zahlstatus: null,
   quellen: [],
-  dublettenAusschliessen: false,
+  dublettenAusschliessen: true,
   sortierung: 'Rechnungsdatum',
   absteigend: true,
   seite: 1,

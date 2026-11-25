@@ -21,6 +21,9 @@ public sealed class GoogleEndpunkte : IEndpunktModul
 {
     private const string Anmeldemethode = "google";
 
+    /// <summary>Eintrag im geschützten state: Id des Benutzers, der die Verknüpfung gestartet hat.</summary>
+    private const string VerknuepfenFuer = "biber.verknuepfen";
+
     public void Zuordnen(IEndpointRouteBuilder app)
     {
         app.MapGet(ApiRouten.Auth.GoogleStart, StartAsync).AllowAnonymous();
@@ -41,19 +44,32 @@ public sealed class GoogleEndpunkte : IEndpunktModul
             return AuthHilfen.NichtGefunden();
         }
 
-        string? benutzerId = null;
+        Benutzer? aktueller = null;
         if (verknuepfen == true)
         {
-            benutzerId = http.User.Identity?.IsAuthenticated == true ? userManager.GetUserId(http.User) : null;
-            if (benutzerId is null)
+            aktueller = http.User.Identity?.IsAuthenticated == true ? await userManager.GetUserAsync(http.User) : null;
+            if (aktueller is null)
             {
                 return Results.Unauthorized();
             }
         }
 
-        var ziel = ApiRouten.Auth.GoogleRueckruf + (benutzerId is null ? "" : "?verknuepfen=true");
         var eigenschaften = signInManager.ConfigureExternalAuthenticationProperties(
-            GoogleDefaults.AuthenticationScheme, ziel, benutzerId);
+            GoogleDefaults.AuthenticationScheme, ApiRouten.Auth.GoogleRueckruf, aktueller?.Id.ToString());
+
+        // Google soll nie stillschweigend das gerade im Browser aktive Google-Konto nehmen.
+        eigenschaften.SetParameter(GoogleChallengeProperties.PromptParameterKey, "select_account");
+        if (aktueller is not null)
+        {
+            // Der Modus steckt im geschützten state, nicht im Cookie: ein Verknüpfen endet nie in Anmeldung
+            // oder Registrierung, auch wenn das Anmelde-Cookie den Rückweg von Google nicht übersteht.
+            eigenschaften.Items[VerknuepfenFuer] = aktueller.Id.ToString();
+            if (!string.IsNullOrEmpty(aktueller.Email))
+            {
+                eigenschaften.SetParameter(GoogleChallengeProperties.LoginHintKey, aktueller.Email);
+            }
+        }
+
         return Results.Challenge(eigenschaften, [GoogleDefaults.AuthenticationScheme]);
     }
 
@@ -64,13 +80,9 @@ public sealed class GoogleEndpunkte : IEndpunktModul
         IEinstellungen einstellungen,
         TimeProvider zeit,
         IEnumerable<IBenachrichtigungsDienst> benachrichtigungen,
-        bool? verknuepfen,
         CancellationToken ct)
     {
-        var aktueller = verknuepfen == true && http.User.Identity?.IsAuthenticated == true
-            ? await userManager.GetUserAsync(http.User)
-            : null;
-        var info = await signInManager.GetExternalLoginInfoAsync(aktueller?.Id.ToString());
+        var info = await signInManager.GetExternalLoginInfoAsync();
         await http.SignOutAsync(IdentityConstants.ExternalScheme);
         if (info is null)
         {
@@ -78,19 +90,9 @@ public sealed class GoogleEndpunkte : IEndpunktModul
         }
 
         var verknuepfter = await userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
-        if (aktueller is not null)
+        if (info.AuthenticationProperties?.Items.TryGetValue(VerknuepfenFuer, out var fuer) == true)
         {
-            if (verknuepfter is not null)
-            {
-                return Results.Redirect(verknuepfter.Id == aktueller.Id
-                    ? "/einstellungen/konto?google=verknuepft"
-                    : "/einstellungen/konto?google=vergeben");
-            }
-
-            var ergebnis = await userManager.AddLoginAsync(aktueller, Login(info));
-            return Results.Redirect(ergebnis.Succeeded
-                ? "/einstellungen/konto?google=verknuepft"
-                : "/einstellungen/konto?google=vergeben");
+            return await VerknuepfenAsync(http, userManager, info, verknuepfter, fuer);
         }
 
         if (verknuepfter is not null)
@@ -151,6 +153,36 @@ public sealed class GoogleEndpunkte : IEndpunktModul
         }
 
         return Results.Redirect("/anmelden?schritt=freigabe");
+    }
+
+    /// <summary>
+    /// Verknüpft das Google-Konto mit dem Benutzer, der die Verknüpfung gestartet hat. Ist dieser nicht mehr
+    /// (oder ein anderer) angemeldet, wird nichts verknüpft – weder Anmeldung noch Registrierung.
+    /// </summary>
+    private static async Task<IResult> VerknuepfenAsync(
+        HttpContext http,
+        UserManager<Benutzer> userManager,
+        ExternalLoginInfo info,
+        Benutzer? verknuepfter,
+        string? fuer)
+    {
+        var aktueller = http.User.Identity?.IsAuthenticated == true ? await userManager.GetUserAsync(http.User) : null;
+        if (aktueller is null || aktueller.Id.ToString() != fuer)
+        {
+            return Results.Redirect("/einstellungen/konto?google=fehlgeschlagen");
+        }
+
+        if (verknuepfter is not null)
+        {
+            return Results.Redirect(verknuepfter.Id == aktueller.Id
+                ? "/einstellungen/konto?google=verknuepft"
+                : "/einstellungen/konto?google=vergeben");
+        }
+
+        var ergebnis = await userManager.AddLoginAsync(aktueller, Login(info));
+        return Results.Redirect(ergebnis.Succeeded
+            ? "/einstellungen/konto?google=verknuepft"
+            : "/einstellungen/konto?google=vergeben");
     }
 
     /// <summary>Meldet <paramref name="benutzer"/> ohne TOTP an, sofern freigegeben und nicht gesperrt.</summary>

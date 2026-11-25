@@ -3,6 +3,7 @@ import { useKorrespondenten } from '@/api/korrespondenten'
 import type { KorrespondentListeneintrag } from '@/api/typen'
 import { Chip } from '@/components/Chip'
 import { Icon } from '@/components/Icon'
+import { KorrespondentLogo } from '@/components/KorrespondentLogo'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Option, Suchfeld, useEntprellt, useListenNavigation } from './gemeinsam'
 
@@ -29,33 +30,26 @@ export function istMoeglicheDublette(k: KorrespondentListeneintrag, alle: Korres
 }
 
 function Logo({ korrespondent }: { korrespondent: KorrespondentListeneintrag }) {
-  const { logo } = korrespondent
-  return logo.url ? (
-    <img src={logo.url} alt="" className="size-6 flex-none rounded-md object-contain" />
-  ) : (
-    <span
-      aria-hidden
-      className="flex size-6 flex-none items-center justify-center rounded-md bg-grau-flaeche text-[10px] font-bold text-grau-text"
-    >
-      {logo.initialen}
-    </span>
-  )
+  return <KorrespondentLogo logo={korrespondent.logo} groesse={24} />
 }
 
-/** Korrespondent-Auswahl (Beleg-Detail, Feld „Korrespondent“): Suche am Server, entprellt. */
+/** Korrespondent-Auswahl (Beleg-Detail, Artikel-Filter): Suche am Server, entprellt. */
 export function KorrespondentAuswahl({
   wert,
   onAendern,
   ausloeser,
   onNeuAusBelegdaten,
+  anfangsOffen = false,
 }: {
   wert: string | null
   onAendern: (id: string) => void
   ausloeser: ReactNode
   onNeuAusBelegdaten?: () => void
+  /** Beim ersten Rendern geöffnet (neu hinzugefügte Filter-Pill). */
+  anfangsOffen?: boolean
 }) {
   const listId = useId()
-  const [offen, setOffen] = useState(false)
+  const [offen, setOffen] = useState(anfangsOffen)
   const [suche, setSuche] = useState('')
   const entprellt = useEntprellt(suche.trim(), 250)
   const { data: treffer = [] } = useKorrespondenten(entprellt ? { suche: entprellt } : {})

@@ -11,6 +11,7 @@ import { KorrespondentAuswahl } from '@/components/auswahl/KorrespondentAuswahl'
 import { TagAuswahl } from '@/components/auswahl/TagAuswahl'
 import { Chip, type ChipTon } from '@/components/Chip'
 import { Icon } from '@/components/Icon'
+import { KorrespondentLogo } from '@/components/KorrespondentLogo'
 import { useToast } from '@/components/toast'
 import {
   AlertDialog,
@@ -170,8 +171,8 @@ export function DatenFormular({
   const korrespondent = korrespondenten.find((k) => k.id === werte.korrespondentId)
   const korrespondentName =
     korrespondent?.name ?? (werte.korrespondentId === beleg.korrespondent?.id ? beleg.korrespondent?.name : undefined)
-  const korrespondentInitialen =
-    korrespondent?.logo.initialen ?? (werte.korrespondentId === beleg.korrespondent?.id ? beleg.logo.initialen : '')
+  const korrespondentLogo =
+    korrespondent?.logo ?? (werte.korrespondentId === beleg.korrespondent?.id ? beleg.logo : undefined)
   const korrespondentHinweis =
     werte.korrespondentId !== (beleg.korrespondent?.id ?? null)
       ? 'manuell zugeordnet'
@@ -236,14 +237,7 @@ export function DatenFormular({
             onAendern={(k) => setze('korrespondentId', k)}
             ausloeser={
               <button type="button" id={`${id}-korrespondent`} className={auswahlKnopf} disabled={nurLesen}>
-                {korrespondentInitialen && (
-                  <span
-                    aria-hidden
-                    className="flex size-[22px] flex-none items-center justify-center rounded-[5px] bg-orange-flaeche text-[10px] font-bold text-orange-text"
-                  >
-                    {korrespondentInitialen}
-                  </span>
-                )}
+                {korrespondentLogo && <KorrespondentLogo logo={korrespondentLogo} groesse={22} ton="orange" />}
                 <span className="min-w-0 flex-1 truncate">{korrespondentName ?? 'Kein Korrespondent'}</span>
                 {!nurLesen && <Icon name="expand_more" className="text-gedaempft" />}
               </button>
@@ -350,8 +344,19 @@ export function DatenFormular({
           {betragFeld('brutto', 'Brutto')}
         </div>
         {/* `relative`: sonst entkommt der absolut positionierte sr-only-Text dem Clipping und verbreitert die Seite. */}
+        {/* Feste Spaltenanteile statt fester Feldbreiten: passt auch auf Laptop-Breiten ohne Querscrollen. */}
         <div className="relative mt-3 overflow-x-auto">
-          <table className="tabelle text-[13px]" aria-label="Steuerzeilen">
+          <table
+            className="tabelle table-fixed text-[13px] [&_td]:px-1.5! [&_td:first-child]:pl-2.5! [&_th]:px-1.5! [&_th:first-child]:pl-2.5!"
+            aria-label="Steuerzeilen"
+          >
+            <colgroup>
+              <col className="w-[19%]" />
+              <col />
+              <col />
+              <col className="w-[72px]" />
+              {!nurLesen && <col className="w-10" />}
+            </colgroup>
             <thead>
               <tr>
                 <th scope="col">Steuersatz</th>
@@ -389,7 +394,7 @@ export function DatenFormular({
                   ) : (
                     <>
                       <input
-                        className={`eingabe h-8 ${feld === 'satz' ? 'w-20' : 'num w-28'}`}
+                        className={`eingabe h-8 w-full min-w-0 ${feld === 'satz' ? '' : 'num'}`}
                         aria-label={`${label} Steuerzeile ${nr}`}
                         inputMode="decimal"
                         value={zeile[feld]}
@@ -413,7 +418,11 @@ export function DatenFormular({
                       {!pruefbar ? (
                         <span className="gedaempft">—</span>
                       ) : steuerStimmt(satz, netto, steuer) ? (
-                        <Chip ton="gruen">stimmt</Chip>
+                        <Icon
+                          name="check_circle"
+                          label="stimmt"
+                          className="align-middle text-[20px] text-gruen-text [font-variation-settings:'FILL'_1]"
+                        />
                       ) : (
                         <Chip ton="orange">weicht ab</Chip>
                       )}

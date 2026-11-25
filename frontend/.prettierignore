@@ -7,3 +7,5 @@ test-results
 public/mockServiceWorker.js
 src/routeTree.gen.ts
 src/api/schema.d.ts
+src/components/kubai/engine.js
+src/components/kubai/navIcons.js

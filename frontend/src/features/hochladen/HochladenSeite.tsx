@@ -21,7 +21,7 @@ export function HochladenSeite() {
 
   return (
     <main className="seite flex flex-col gap-5">
-      <Seitenkopf titel="Hochladen & Import" />
+      <Seitenkopf titel="Hochladen & Import" className="mb-0" />
       {anmeldungNoetig && wartend > 0 && (
         <p className="hinweis m-0" role="status">
           Bitte anmelden, um {wartend} wartende Uploads zu senden

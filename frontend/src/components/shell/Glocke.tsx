@@ -79,15 +79,15 @@ export function Glocke() {
       <PopoverTrigger
         aria-label={`Benachrichtigungen, ${ungelesen} ungelesen`}
         className={cn(
-          'relative flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border-0 text-text',
+          'relative flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-0 text-text',
           offen ? 'bg-linie' : 'bg-transparent hover:bg-hover',
         )}
       >
-        <Icon name="notifications" className="text-[24px]" />
+        <Icon name="notifications" className="text-[20px]" />
         {ungelesen > 0 && (
           <span
             data-testid="glocke-zaehler"
-            className="absolute top-1.5 right-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-[9px] border-2 border-karte bg-rot-text text-[11px] font-bold text-white"
+            className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-karte bg-rot-text text-[10px] font-bold text-white"
           >
             {ungelesen}
           </span>

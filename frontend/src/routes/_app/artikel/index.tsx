@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useArtikel, useStammartikel } from '@/api/artikel'
+import { useKorrespondenten } from '@/api/korrespondenten'
 import type { ArtikelListeneintrag } from '@/api/typen'
 import { Icon } from '@/components/Icon'
 import { useRolle } from '@/components/shell/useRolle'
@@ -8,8 +9,8 @@ import { ArtikelFilter } from '@/features/artikel/ArtikelFilter'
 import { ArtikelTabelle } from '@/features/artikel/ArtikelTabelle'
 import { StammartikelDialog } from '@/features/artikel/StammartikelDialog'
 import { StammartikelKarten } from '@/features/artikel/StammartikelKarten'
-import { ohneLeere, sucheValidieren, zuAbfrage, type ArtikelSuche } from '@/features/artikel/suche'
-import { gruppeGrau } from '@/features/belege/liste/bausteine'
+import { ohneLeere, stammartikelFiltern, sucheValidieren, zuAbfrage, type ArtikelSuche } from '@/features/artikel/suche'
+import { gruppe, gruppeGrau } from '@/features/belege/liste/bausteine'
 import { cn } from '@/lib/utils'
 
 /** Artikel mit den Reitern „Artikel“ und „Stammartikel“; Filter und Reiter stehen in der URL. */
@@ -29,6 +30,9 @@ function ArtikelSeite() {
   const liste = useArtikel(zuAbfrage(suche))
   const alleArtikel = useArtikel({ seitengroesse: 1 })
   const stammartikel = useStammartikel()
+  const korrespondenten = useKorrespondenten()
+  const korrespondentName = korrespondenten.data?.find((k) => k.id === suche.korrespondentId)?.name
+  const stammartikelTreffer = stammartikelFiltern(stammartikel.data ?? [], suche, korrespondentName)
 
   function setze(teil: Partial<ArtikelSuche>) {
     void navigate({
@@ -45,12 +49,29 @@ function ArtikelSeite() {
 
   return (
     <main className="seite flex flex-col gap-3.5 text-text">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-5 gap-y-3">
           <h1 className="m-0 text-[22px] font-semibold">Artikel</h1>
-          <p className="gedaempft m-0 mt-1 text-sm">
-            Stammartikel fassen gleiche Artikel über Händler hinweg zusammen.
-          </p>
+          <div role="tablist" aria-label="Ansicht" className={gruppe}>
+            {(
+              [
+                ['artikel', 'Artikel', anzahlArtikel],
+                ['stammartikel', 'Stammartikel', anzahlStamm],
+              ] as const
+            ).map(([wert, text, anzahl]) => (
+              <button
+                key={wert}
+                type="button"
+                role="tab"
+                aria-selected={reiter === wert}
+                onClick={() => setze({ reiter: wert === 'artikel' ? undefined : wert })}
+                className={cn(reiter === wert && '!bg-akzent !text-auf-akzent')}
+              >
+                {text}
+                {anzahl !== undefined && ` (${anzahl})`}
+              </button>
+            ))}
+          </div>
         </div>
         {darfBearbeiten && (
           <button
@@ -67,33 +88,10 @@ function ArtikelSeite() {
         )}
       </div>
 
-      <div role="tablist" aria-label="Ansicht" className="flex gap-1 border-b border-rand">
-        {(
-          [
-            ['artikel', 'Artikel', anzahlArtikel],
-            ['stammartikel', 'Stammartikel', anzahlStamm],
-          ] as const
-        ).map(([wert, text, anzahl]) => (
-          <button
-            key={wert}
-            type="button"
-            role="tab"
-            aria-selected={reiter === wert}
-            onClick={() => setze({ reiter: wert === 'artikel' ? undefined : wert })}
-            className={cn(
-              '-mb-px cursor-pointer border-0 border-b-2 bg-transparent px-3 py-2 text-sm font-medium',
-              reiter === wert ? 'border-akzent text-akzent-text' : 'border-transparent text-gedaempft hover:text-text',
-            )}
-          >
-            {text}
-            {anzahl !== undefined && ` (${anzahl})`}
-          </button>
-        ))}
-      </div>
+      <ArtikelFilter suche={suche} setze={setze} reiter={reiter} />
 
       {reiter === 'artikel' ? (
         <>
-          <ArtikelFilter suche={suche} setze={setze} />
           {liste.isPending ? (
             <Laden />
           ) : liste.isError && !liste.data ? (
@@ -118,8 +116,10 @@ function ArtikelSeite() {
         </>
       ) : stammartikel.isPending ? (
         <Laden />
+      ) : (stammartikel.data?.length ?? 0) > 0 && stammartikelTreffer.length === 0 ? (
+        <p className="karte m-0 p-6 text-center">Keine Stammartikel für diese Filter</p>
       ) : (
-        <StammartikelKarten eintraege={stammartikel.data ?? []} />
+        <StammartikelKarten eintraege={stammartikelTreffer} />
       )}
 
       {darfBearbeiten && (

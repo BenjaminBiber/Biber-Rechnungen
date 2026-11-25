@@ -284,4 +284,14 @@ describe('Mein Konto', { timeout: 20000 }, () => {
     expect((await screen.findAllByText('Google-Konto verknüpft')).length).toBeGreaterThan(0)
     ende()
   })
+
+  it('Google: verknüpftes Konto zeigt einen Haken statt des Knopfs', async () => {
+    db.konto = { ...db.konto, googleVerknuepft: true }
+    const { ende } = renderSeite('/einstellungen/konto')
+    await kontoForm()
+    expect(screen.getByRole('img', { name: 'verknüpft' })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Verknüpfen' })).not.toBeInTheDocument()
+    expect(screen.queryByText('nicht verknüpft')).not.toBeInTheDocument()
+    ende()
+  })
 })

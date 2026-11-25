@@ -1,0 +1,18 @@
+Tool: built-in image_gen with transparent background.
+Latest repair prompt (both assets): Make a precise localized repair to this image: the receipt-shaped beaver tail has a MISSING TOP-RIGHT CORNER, currently a rectangular step/notch cut out of its silhouette. Restore the complete paper tail by adding a clearly visible folded dog-ear corner: a diagonal outer edge connecting the top edge to the right edge, with a white triangular fold interior and bold black outline/crease. It must look like a COMPLETE receipt with its corner folded over, NOT a missing bite, gap or cutout. Keep the rest of the tail and its three horizontal lines. Preserve EVERYTHING ELSE exactly: beaver identity, facial expression, body, pose, handheld tool (magnifying glass or wrench), proportions, black outlines and white fills. No ground objects. Transparent background.
+
+FINAL REVISION: Handheld tools stay. Only ground objects removed.
+
+Final 404 prompt: Edit this existing beaver illustration with one precise change only: remove the loose invoice/paper lying on the ground below the beaver. KEEP the magnifying glass held in its hand exactly as shown. Preserve the beaver's exact face, expression, pose, body, paws, bold black outlines, white fills, and attached receipt-shaped tail with three lines. The receipt-shaped tail is part of its body and must remain. No other changes, no new objects. Only the beaver with its handheld tool remains, on a genuinely transparent background.
+
+Final other-errors prompt: Edit this existing beaver illustration with one precise change only: remove the entire disconnected cable and both plugs lying on the ground below the beaver. KEEP the wrench held in its hand exactly as shown. Preserve the beaver's exact face, expression, pose, body, paws, bold black outlines, white fills, and attached receipt-shaped tail with three lines. The receipt-shaped tail is part of its body and must remain. No other changes, no new objects. Only the beaver with its handheld tool remains, on a genuinely transparent background.
+
+Earlier iteration (superseded):
+Reference: biber-rechnungen-logo.svg, rendered as biber-logo-reference.png.
+Final assets: frontend/src/assets/fehler/biber-suche.png and biber-reparatur.png.
+
+Final edit prompt:
+Edit the reference illustration. Show ONLY the beaver character. Remove ALL props and objects: no magnifying glass, no loose paper, no wrench, no cable, no plugs, no ground objects, no symbols or decorations. Preserve the exact mascot identity, long left-facing snout, round ear, dot eye, large tooth, white body, bold black smooth outlines and attached receipt-shaped tail (this tail is part of its body and MUST stay). Both front paws naturally resting near belly.
+404 variant: Slightly puzzled expression with one raised eyebrow.
+Other errors variant: Slightly sheepish friendly expression with a small apologetic smile.
+Full character centered, same scale, transparent background. Flat clean graphic, no glow or shadow. No text.

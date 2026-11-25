@@ -5,6 +5,7 @@ import { istApiFehler } from '@/api/client'
 import type { BelegDetail } from '@/api/typen'
 import { Chip, type ChipTon } from '@/components/Chip'
 import { Icon } from '@/components/Icon'
+import { KorrespondentLogo } from '@/components/KorrespondentLogo'
 import { useRolle } from '@/components/shell/useRolle'
 import { BestaetigenDialog } from '@/features/belege/detail/BestaetigenDialog'
 import { DatenFormular } from '@/features/belege/detail/DatenFormular'
@@ -12,7 +13,7 @@ import { istZuPruefen, original } from '@/features/belege/detail/gemeinsam'
 import { MehrMenue } from '@/features/belege/detail/MehrMenue'
 import { TabLeiste } from '@/features/belege/detail/TabLeiste'
 import { quelleText } from '@/features/belege/liste/suche'
-import { VorschauDialog } from '@/features/belege/liste/VorschauDialog'
+import { VorschauDialog } from '@/features/belege/liste/Vorschau'
 import { formatDatum, formatEuro, formatZahl } from '@/lib/format'
 
 const kopfKnopf =
@@ -83,22 +84,13 @@ function Inhalt({
           </a>
         )}
         <span className="[&_.btn]:size-11 [&_.btn]:justify-center [&_.btn]:border-0 [&_.btn]:bg-transparent">
-          <MehrMenue beleg={beleg} darfBearbeiten={darfBearbeiten} />
+          <MehrMenue beleg={beleg} darfBearbeiten={darfBearbeiten} kompakt />
         </span>
       </div>
 
       <div className="flex flex-col gap-3.5 px-4 pt-4">
         <div className="flex items-center gap-3">
-          {beleg.logo.url ? (
-            <img src={beleg.logo.url} alt="" className="size-11 flex-none rounded-karte object-contain" />
-          ) : (
-            <span
-              aria-hidden
-              className="flex size-11 flex-none items-center justify-center rounded-karte bg-orange-flaeche text-[15px] font-bold text-orange-text"
-            >
-              {beleg.logo.initialen}
-            </span>
-          )}
+          <KorrespondentLogo logo={beleg.logo} groesse={44} ton="orange" />
           <div className="min-w-0">
             <h1 className="m-0 truncate text-[17px] font-semibold">{beleg.korrespondent?.name ?? beleg.titel}</h1>
             {beleg.rechnungsnummer && (

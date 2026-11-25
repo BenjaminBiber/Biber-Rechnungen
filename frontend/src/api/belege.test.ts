@@ -79,6 +79,7 @@ describe('Belege-Hooks', () => {
     expect(belegDateiUrl('b', 'd')).toBe('/api/belege/b/dateien/d')
     expect(belegDateiUrl('b', 'd', true)).toBe('/api/belege/b/dateien/d?inline=true')
     expect(belegVorschauUrl('b', 2)).toBe('/api/belege/b/vorschau?seite=2')
+    expect(belegVorschauUrl('b', 2, 1200)).toBe('/api/belege/b/vorschau?seite=2&breite=1200')
     expect(belegVisualisierungUrl('b')).toBe('/api/belege/b/visualisierung')
   })
 })

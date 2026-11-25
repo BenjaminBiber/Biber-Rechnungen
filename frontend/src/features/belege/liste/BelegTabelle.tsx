@@ -22,12 +22,11 @@ function zelle(schluessel: SpaltenSchluessel, beleg: BelegListeneintrag): { inha
     case 'rechnungsnummer':
       return { inhalt: beleg.rechnungsnummer ?? '–', className: 'mono whitespace-nowrap text-gedaempft-stark' }
     case 'korrespondent':
-      return { inhalt: beleg.korrespondent?.name ?? '–', className: 'min-w-[120px] 2xl:whitespace-nowrap' }
+      return { inhalt: beleg.korrespondent?.name ?? '–', className: 'min-w-[120px] min-[1760px]:whitespace-nowrap' }
     case 'titel':
       return {
         inhalt: (
           <span className="flex min-w-[160px] flex-wrap items-center gap-1.5">
-            <Icon name="visibility" className="text-[18px] text-gedaempft" />
             <Link to="/belege/$belegId" params={{ belegId: beleg.id }} className="font-medium underline">
               {beleg.titel}
             </Link>
@@ -36,7 +35,7 @@ function zelle(schluessel: SpaltenSchluessel, beleg: BelegListeneintrag): { inha
         ),
       }
     case 'kategorie':
-      return { inhalt: beleg.kategorie?.name ?? '–', className: 'min-w-[100px] 2xl:whitespace-nowrap' }
+      return { inhalt: beleg.kategorie?.name ?? '–', className: 'min-w-[100px] min-[1760px]:whitespace-nowrap' }
     case 'rechnungsdatum':
       return {
         inhalt: beleg.rechnungsdatum ? formatDatum(beleg.rechnungsdatum) : '–',
@@ -46,7 +45,7 @@ function zelle(schluessel: SpaltenSchluessel, beleg: BelegListeneintrag): { inha
       return {
         inhalt: faelligText(beleg),
         className: cn(
-          'num !text-left whitespace-normal 2xl:whitespace-nowrap',
+          'num !text-left whitespace-normal min-[1760px]:whitespace-nowrap',
           beleg.ueberfaellig ? 'font-semibold text-rot-text' : 'text-gedaempft-stark',
         ),
       }
@@ -80,13 +79,20 @@ function kopfText(label: string): ReactNode {
   const i = label.lastIndexOf('datum')
   if (i <= 0) return label
   return (
-    <span>
+    <>
       {label.slice(0, i)}
       <wbr />
       {label.slice(i)}
-    </span>
+    </>
   )
 }
+
+/**
+ * Spaltenbeschriftung wie der Sortier-Knopf (`.th-sort` im Design), auch für nicht sortierbare Spalten.
+ * Füllt die Breite bis zu den Icons am rechten Rand des Spaltenkopfs.
+ */
+const kopfStil =
+  'flex min-w-0 flex-1 items-center gap-1 rounded-md border-0 bg-transparent px-1 py-1.5 text-left text-[12px] leading-[18px] font-semibold text-text min-[1760px]:px-1.5 min-[1760px]:text-[13px]'
 
 function Spaltenkopf({
   definition,
@@ -101,41 +107,66 @@ function Spaltenkopf({
 }) {
   const sortierbar = definition.sortierung
   const aktiv = sortierbar !== undefined && sortierbar === sortierung
+  // Absteigend ist der „leere“ Zustand (grauer ↓ nur bei Hover); nur aufsteigend wird dauerhaft angezeigt.
+  const aufsteigend = aktiv && !absteigend
+  const richtung = absteigend ? 'absteigend' : 'aufsteigend'
+  // Der Sortierpfeil steht rechts im Spaltenkopf und erscheint erst bei Hover/Fokus (Platz bleibt reserviert,
+  // damit nichts springt). Aufsteigende Sortierung bleibt immer sichtbar.
+  const beiHover = 'opacity-0 group-has-[:focus-visible]:opacity-100 group-hover:opacity-100'
+  // Beträge: Beschriftung rechtsbündig über den Zahlen, direkt links neben den Icons.
+  const text = (
+    <span className={cn('min-w-0 flex-1', definition.betrag && 'text-right')}>{kopfText(definition.label)}</span>
+  )
   return (
     <th
       scope="col"
-      className={cn(definition.betrag && 'num', 'whitespace-normal 2xl:whitespace-nowrap')}
+      className="group !py-1.5 !pr-1.5 whitespace-normal min-[1760px]:whitespace-nowrap"
       aria-sort={aktiv ? (absteigend ? 'descending' : 'ascending') : sortierbar ? 'none' : undefined}
     >
-      {sortierbar ? (
-        <button
-          type="button"
-          onClick={() => onSortieren(sortierbar)}
-          className="inline-flex cursor-pointer items-center gap-1 border-0 bg-transparent p-0 text-left font-[inherit] text-inherit"
-        >
-          {kopfText(definition.label)}
-          {aktiv && <Icon name={absteigend ? 'arrow_downward' : 'arrow_upward'} className="text-[16px]" />}
-        </button>
-      ) : (
-        kopfText(definition.label)
-      )}
+      {/* Hover-Hintergrund umschließt Beschriftung und Sortierpfeil. */}
+      <div className="-ml-1 flex items-center rounded-md group-hover:bg-linie min-[1760px]:-ml-1.5 min-[1760px]:gap-0.5">
+        {sortierbar ? (
+          <button
+            type="button"
+            title="Sortieren"
+            aria-label={`${definition.label} sortieren${aktiv ? `, derzeit ${richtung}` : ''}`}
+            onClick={() => onSortieren(sortierbar)}
+            className={cn(kopfStil, 'cursor-pointer')}
+          >
+            {text}
+            <Icon
+              name={aufsteigend ? 'arrow_upward' : 'arrow_downward'}
+              className={cn(
+                'flex-none text-[16px] [vertical-align:0]',
+                // Unter 1760 px ohne Platz für den Hinweispfeil: dort zeigt nur der Hover-Hintergrund des
+                // Knopfs, dass die Spalte sortierbar ist – so passen alle Standardspalten ohne Querscrollen.
+                aufsteigend ? 'text-akzent-text' : cn('text-[#9AA4B5] max-[1760px]:!hidden', beiHover),
+              )}
+            />
+          </button>
+        ) : (
+          <span className={kopfStil}>{text}</span>
+        )}
+      </div>
     </th>
   )
 }
 
 /**
- * Belegliste als Tabelle: Auswahl, gewählte Spalten in ihrer Reihenfolge, ⋮-Menü. Klick auf einen
- * sortierbaren Spaltenkopf sortiert danach; erneuter Klick kehrt die Richtung um.
+ * Belegliste als Tabelle: Auswahl, gewählte Spalten in ihrer Reihenfolge, ⋮-Menü. Jeder Spaltenkopf trägt
+ * einen Sortier-Knopf (erster Klick aufsteigend, jeder weitere kehrt die Richtung um). Gefiltert wird über die
+ * Filterleiste über der Liste.
  */
 export function BelegTabelle({
   eintraege,
   spalten,
-  zustand: { suche, setze },
+  zustand,
 }: {
   eintraege: BelegListeneintrag[]
   spalten: SpaltenSchluessel[]
   zustand: ListenZustand
 }) {
+  const { suche, setze } = zustand
   const auswahl = useBelegAuswahl()
   const tbody = useListenKuerzel(eintraege)
   const sortierung = suche.sortierung ?? 'Rechnungsdatum'
@@ -145,7 +176,8 @@ export function BelegTabelle({
   const alleGewaehlt = seitenIds.length > 0 && seitenIds.every(auswahl.istGewaehlt)
 
   function sortieren(neu: BelegSortierung) {
-    const neuAbsteigend = neu === sortierung ? !absteigend : true
+    // Neue Spalte: erst aufsteigend; erneuter Klick schaltet zwischen aufsteigend und absteigend (leerer Zustand).
+    const neuAbsteigend = neu === sortierung ? !absteigend : false
     setze({
       sortierung: neu === 'Rechnungsdatum' ? undefined : neu,
       absteigend: neuAbsteigend ? undefined : false,

@@ -6,7 +6,6 @@ const karten = [
   'Offen & überfällig',
   'Ablage & Sicherung',
   'Größte Preisänderungen',
-  'Document Intelligence',
 ]
 
 test.describe('Dashboard', () => {
@@ -34,7 +33,7 @@ test.describe('Dashboard', () => {
   test('hat keine horizontale Bildlaufleiste', async ({ page, isMobile }) => {
     test.skip(isMobile, 'mobil: e2e/mobil.spec.ts')
     await page.goto('/?jahr=2026')
-    await expect(page.getByRole('heading', { level: 2, name: 'Document Intelligence' })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 2, name: 'Größte Preisänderungen' })).toBeVisible()
     const ueberstand = await page.evaluate(
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
     )

@@ -40,7 +40,7 @@ describe('Tab „Daten“', () => {
     const zeilen = within(screen.getByRole('table', { name: 'Steuerzeilen' })).getAllByRole('row')
     expect(zeilen).toHaveLength(2)
     expect(within(zeilen[1]).getByLabelText('Steuersatz Steuerzeile 1')).toHaveValue('19')
-    expect(within(zeilen[1]).getByText('stimmt')).toBeInTheDocument()
+    expect(within(zeilen[1]).getByRole('img', { name: 'stimmt' })).toBeInTheDocument()
     expect(formular()).toHaveTextContent(
       'Ausgelesen mit Document Intelligence (prebuilt-invoice) · 19.11.2026 08:14 · 1 Seite',
     )
@@ -151,7 +151,7 @@ describe('Tab „Daten“', () => {
     expect(within(zeile).getByText('weicht ab')).toBeInTheDocument()
     await nutzer.clear(screen.getByLabelText('Steuer Steuerzeile 2'))
     await nutzer.type(screen.getByLabelText('Steuer Steuerzeile 2'), '7,01')
-    expect(within(zeile).getByText('stimmt')).toBeInTheDocument()
+    expect(within(zeile).getByRole('img', { name: 'stimmt' })).toBeInTheDocument()
 
     await nutzer.click(screen.getByRole('button', { name: 'Steuerzeile 2 entfernen' }))
     expect(screen.queryByLabelText('Netto Steuerzeile 2')).not.toBeInTheDocument()

@@ -6,7 +6,7 @@ import type {
   KorrespondentListeneintrag,
   LogoQuelle,
 } from '@/api/typen'
-import { platzhalterPng } from '../dateien'
+import { beispielLogoSvg } from '../dateien'
 import { db, neueId } from '../db'
 import { logoFuer, type KorrespondentDatensatz } from '../fixtures/korrespondenten'
 import { istBezahlt, listeneintrag } from './belege'
@@ -241,7 +241,7 @@ export const korrespondentenRouten: Route[] = [
   route('get', '/api/korrespondenten/{id}/logo', 'Lesen', ({ params }) => {
     const k = finde(params.id)
     if (!k || k.logo.quelle === 'Keine') return nichtGefunden('Logo')
-    return datei(platzhalterPng(), 'image/png')
+    return datei(beispielLogoSvg(k.logo.initialen, k.name), 'image/svg+xml')
   }),
 
   route('put', '/api/korrespondenten/{id}/logo', 'Bearbeiten', async ({ request, params }) => {

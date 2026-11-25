@@ -1,6 +1,11 @@
+import type { KubaiIconName } from '@/components/kubai/KubaiIcon'
+
 export type NavEintrag = {
   id: string
+  /** Material-Symbol (mobile Navigation, Befehlspalette). */
   icon: string
+  /** Animiertes Icon der Seitenleiste. */
+  kubai: KubaiIconName
   label: string
   to: '/' | '/belege' | '/hochladen' | '/korrespondenten' | '/artikel' | '/tags' | '/export' | '/einstellungen'
 }
@@ -10,23 +15,34 @@ export const navGruppen: Array<{ label: string; eintraege: NavEintrag[] }> = [
   {
     label: 'Übersicht',
     eintraege: [
-      { id: 'dashboard', icon: 'space_dashboard', label: 'Dashboard', to: '/' },
-      { id: 'belege', icon: 'receipt_long', label: 'Belege', to: '/belege' },
-      { id: 'upload', icon: 'upload_file', label: 'Hochladen', to: '/hochladen' },
+      { id: 'dashboard', kubai: 'Dashboard', icon: 'space_dashboard', label: 'Dashboard', to: '/' },
+      { id: 'belege', kubai: 'Belege', icon: 'receipt_long', label: 'Belege', to: '/belege' },
+      { id: 'upload', kubai: 'Hochladen', icon: 'upload_file', label: 'Hochladen', to: '/hochladen' },
     ],
   },
   {
     label: 'Stammdaten',
     eintraege: [
-      { id: 'korrespondenten', icon: 'storefront', label: 'Korrespondenten', to: '/korrespondenten' },
-      { id: 'artikel', icon: 'inventory_2', label: 'Artikel', to: '/artikel' },
-      { id: 'tags', icon: 'sell', label: 'Tags & Kategorien', to: '/tags' },
+      {
+        id: 'korrespondenten',
+        kubai: 'Korrespondenten',
+        icon: 'storefront',
+        label: 'Korrespondenten',
+        to: '/korrespondenten',
+      },
+      { id: 'artikel', kubai: 'Artikel', icon: 'inventory_2', label: 'Artikel', to: '/artikel' },
+      { id: 'tags', kubai: 'Tags', icon: 'sell', label: 'Tags & Kategorien', to: '/tags' },
     ],
   },
-  { label: 'Auswertung', eintraege: [{ id: 'export', icon: 'download', label: 'Export', to: '/export' }] },
+  {
+    label: 'Auswertung',
+    eintraege: [{ id: 'export', kubai: 'Export', icon: 'download', label: 'Export', to: '/export' }],
+  },
   {
     label: 'System',
-    eintraege: [{ id: 'einstellungen', icon: 'settings', label: 'Einstellungen', to: '/einstellungen' }],
+    eintraege: [
+      { id: 'einstellungen', kubai: 'Einstellungen', icon: 'settings', label: 'Einstellungen', to: '/einstellungen' },
+    ],
   },
 ]
 

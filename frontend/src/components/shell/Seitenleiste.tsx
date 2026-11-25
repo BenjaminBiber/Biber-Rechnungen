@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useBelegZaehler } from '@/api/belege'
 import { Icon } from '@/components/Icon'
+import { KubaiIcon } from '@/components/kubai/KubaiIcon'
 import { Logo } from '@/components/Logo'
 import { cn } from '@/lib/utils'
 import { navGruppen } from './navigation'
@@ -31,7 +32,7 @@ function useEingeklappt(): [boolean, () => void] {
   return [eingeklappt, umschalten]
 }
 
-/** Weiches Ein-/Ausgleiten: ease-in-out (easeInOutCubic) für Breite, Pfeil und Badge. */
+/** Weiches Ein-/Ausgleiten: ease-in-out (easeInOutCubic) für Breite, Pfeil und Hinweispunkt. */
 const weich = 'ease-[cubic-bezier(0.65,0,0.35,1)] motion-reduce:transition-none'
 
 /**
@@ -40,7 +41,7 @@ const weich = 'ease-[cubic-bezier(0.65,0,0.35,1)] motion-reduce:transition-none'
  */
 export function Seitenleiste() {
   const { data: zaehler } = useBelegZaehler()
-  const inbox = zaehler?.inbox ?? 0
+  const zuPruefen = zaehler?.zuPruefen ?? 0
   const [eingeklappt, umschalten] = useEingeklappt()
 
   /** Beschriftungen blenden beim Einklappen sofort aus und beim Ausklappen leicht verzögert ein. */
@@ -91,29 +92,28 @@ export function Seitenleiste() {
               />
             </div>
             {gruppe.eintraege.map((e) => {
-              const badge = e.id === 'belege' && inbox > 0 ? inbox : undefined
+              const hinweis = e.id === 'belege' && zuPruefen > 0
               return (
                 <Link
                   key={e.id}
                   to={e.to}
                   activeOptions={{ exact: e.to === '/' }}
-                  aria-label={badge ? `${e.label}, ${badge} in der Inbox` : undefined}
+                  aria-label={hinweis ? `${e.label}, Belege zur Prüfung` : undefined}
                   title={eingeklappt ? e.label : undefined}
                   className="relative flex h-[42px] flex-none items-center overflow-hidden outline-none focus-visible:shadow-[inset_0_0_0_2px_rgba(255,255,255,0.85)] gap-3.5 rounded-[9px] pl-[13px] text-sm font-medium whitespace-nowrap text-white no-underline transition-colors duration-150 hover:bg-seitenleiste-hover hover:text-white data-[status=active]:bg-seitenleiste-aktiv"
                 >
-                  <Icon name={e.icon} className="w-[22px] flex-none text-[22px]" />
+                  <KubaiIcon name={e.kubai} className="w-[22px] flex-none" />
                   <span className={text}>{e.label}</span>
-                  {badge && (
+                  {hinweis && (
                     <span
                       aria-hidden="true"
+                      data-testid="belege-hinweis"
                       className={cn(
-                        'absolute inline-flex h-5 min-w-[22px] origin-top-right items-center justify-center rounded-[10px] bg-seitenleiste-linie px-1.5 text-xs font-semibold text-white transition-transform duration-[280ms] top-[11px] right-2.5',
+                        'absolute top-[17px] right-4 size-2 rounded-full bg-orange-400 transition-transform duration-[280ms]',
                         weich,
-                        eingeklappt ? 'translate-x-[9px] -translate-y-2 scale-[0.82]' : 'translate-0 scale-100',
+                        eingeklappt ? 'translate-x-[9px] -translate-y-2' : 'translate-0',
                       )}
-                    >
-                      {badge}
-                    </span>
+                    />
                   )}
                 </Link>
               )

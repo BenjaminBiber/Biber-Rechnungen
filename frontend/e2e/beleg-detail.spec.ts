@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { belegTabOeffnen } from './hilfen/belegTabs'
 
 /** Beleg b2 „Bürowelt Krämer KG · 2026-48817“ aus den Mock-Fixtures. */
 const beleg = '/belege/b0000000-0000-4000-8000-000000000002'
@@ -23,8 +24,9 @@ test.describe('Beleg-Detail', () => {
   })
 
   test('Bestätigen trotz Befund', async ({ page }) => {
-    const kopf = page.getByRole('heading', { level: 1 }).locator('..')
-    await expect(kopf.getByText('zu prüfen')).toBeVisible()
+    // Auf Laptop-Breiten stehen die Tags nur im Formular, nicht im Kopf.
+    const daten = page.getByRole('form', { name: 'Daten' })
+    await expect(daten.getByText('zu prüfen')).toBeVisible()
     await page.getByRole('button', { name: 'Bestätigen' }).click()
     const dialog = page.getByRole('alertdialog', { name: 'Beleg mit 2 offenen Befunden bestätigen?' })
     await expect(dialog).toBeVisible()
@@ -32,11 +34,10 @@ test.describe('Beleg-Detail', () => {
     await dialog.getByLabel('Begründung (optional, wird protokolliert)').fill('Gegen Original geprüft')
     await dialog.getByRole('button', { name: 'Trotzdem bestätigen' }).click()
     await expect(page.getByText('Beleg bestätigt')).toBeVisible()
-    await expect(kopf.getByText('zu prüfen')).toHaveCount(0)
+    await expect(daten.getByText('zu prüfen')).toHaveCount(0)
   })
 
   test('Tab-Links wechseln die URL', async ({ page }) => {
-    const tabs = page.getByRole('navigation', { name: 'Belegdaten' })
     for (const [name, pfad] of [
       [/^Positionen/, 'positionen'],
       [/^Prüfung/, 'pruefung'],
@@ -44,10 +45,10 @@ test.describe('Beleg-Detail', () => {
       [/^Dateien/, 'dateien'],
       [/^Dubletten/, 'dubletten'],
     ] as const) {
-      await tabs.getByRole('link', { name }).click()
+      await belegTabOeffnen(page, name)
       await expect(page).toHaveURL(new RegExp(`${beleg}/${pfad}$`))
     }
-    await tabs.getByRole('link', { name: 'Daten' }).click()
+    await belegTabOeffnen(page, 'Daten')
     await expect(page).toHaveURL(new RegExp(`${beleg}$`))
     await expect(page.getByRole('form', { name: 'Daten' })).toBeVisible()
   })

@@ -506,16 +506,7 @@ public sealed class KorrespondentDienst(BiberDbContext db, TimeProvider zeit) : 
 
     private static string? Hinweis(Korrespondent k, Korrespondent? dublette)
     {
-        var teile = new List<string>
-        {
-            k.LogoQuelle switch
-            {
-                LogoQuelle.Pdf => "Logo: PDF-Ausschnitt",
-                LogoQuelle.Favicon => "Logo: Favicon",
-                LogoQuelle.Upload => "Logo: Upload",
-                _ => "kein Logo",
-            },
-        };
+        var teile = new List<string>();
         if (k.Aliase.Count > 0)
         {
             teile.Add($"Alias ‚{k.Aliase[0]}‘");
@@ -536,7 +527,7 @@ public sealed class KorrespondentDienst(BiberDbContext db, TimeProvider zeit) : 
             teile.Add($"vermutlich Dublette von ‚{dublette.Name}‘");
         }
 
-        return string.Join(" · ", teile);
+        return teile.Count > 0 ? string.Join(" · ", teile) : null;
     }
 
     private static LogoDto Logo(Korrespondent k) => new(

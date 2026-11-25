@@ -28,18 +28,18 @@ export type SpaltenDefinition = {
 
 /** Alle Spalten der Tabelle in Standard-Reihenfolge; Netto, Leistungsdatum und Konfidenz sind Zusatzspalten. */
 export const spaltenDefinitionen: SpaltenDefinition[] = [
-  { schluessel: 'rechnungsnummer', label: 'Rechnungsnr.' },
+  { schluessel: 'rechnungsnummer', label: 'Rechnungsnr.', sortierung: 'Rechnungsnummer' },
   { schluessel: 'korrespondent', label: 'Korrespondent', sortierung: 'Korrespondent', fest: true },
-  { schluessel: 'titel', label: 'Titel' },
-  { schluessel: 'kategorie', label: 'Kategorie' },
+  { schluessel: 'titel', label: 'Titel', sortierung: 'Titel' },
+  { schluessel: 'kategorie', label: 'Kategorie', sortierung: 'Kategorie' },
   { schluessel: 'rechnungsdatum', label: 'Rechnungsdatum', sortierung: 'Rechnungsdatum' },
   { schluessel: 'faelligkeit', label: 'Fällig', sortierung: 'Faelligkeit' },
   { schluessel: 'brutto', label: 'Brutto', sortierung: 'Brutto', betrag: true },
-  { schluessel: 'seiten', label: 'Seiten' },
-  { schluessel: 'herkunft', label: 'Herkunft' },
-  { schluessel: 'netto', label: 'Netto', betrag: true },
-  { schluessel: 'leistungsdatum', label: 'Leistungsdatum' },
-  { schluessel: 'konfidenz', label: 'Konfidenz' },
+  { schluessel: 'seiten', label: 'Seiten', sortierung: 'Seiten' },
+  { schluessel: 'herkunft', label: 'Herkunft', sortierung: 'Herkunft' },
+  { schluessel: 'netto', label: 'Netto', sortierung: 'Netto', betrag: true },
+  { schluessel: 'leistungsdatum', label: 'Leistungsdatum', sortierung: 'Leistungsdatum' },
+  { schluessel: 'konfidenz', label: 'Konfidenz', sortierung: 'Konfidenz' },
 ]
 
 const ZUSATZ: SpaltenSchluessel[] = ['netto', 'leistungsdatum', 'konfidenz']

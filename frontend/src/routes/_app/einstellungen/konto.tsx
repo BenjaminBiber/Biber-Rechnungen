@@ -1,11 +1,13 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { KontoBereich } from '@/features/einstellungen/zugriff/KontoBereich'
+import { KontoBereich, type GoogleRueckkehr } from '@/features/einstellungen/zugriff/KontoBereich'
 
-type Suche = { google?: 'verknuepft' | 'vergeben' }
+type Suche = { google?: GoogleRueckkehr }
+
+const rueckkehr: readonly unknown[] = ['verknuepft', 'vergeben', 'fehlgeschlagen'] satisfies GoogleRueckkehr[]
 
 export const Route = createFileRoute('/_app/einstellungen/konto')({
   validateSearch: (suche: Record<string, unknown>): Suche =>
-    suche.google === 'verknuepft' || suche.google === 'vergeben' ? { google: suche.google } : {},
+    rueckkehr.includes(suche.google) ? { google: suche.google as GoogleRueckkehr } : {},
   component: function KontoSeite() {
     const { google } = Route.useSearch()
     return <KontoBereich google={google} />

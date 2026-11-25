@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useSuche } from '@/api/suche'
 import { Chip } from '@/components/Chip'
 import { Icon } from '@/components/Icon'
+import { KorrespondentLogo } from '@/components/KorrespondentLogo'
 import { Command, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { befehle, befehleFiltern, type Befehl } from '@/features/befehlspalette/befehle'
@@ -132,16 +133,7 @@ export function Befehlspalette() {
                       oeffneRoute({ to: '/korrespondenten/$korrespondentId', params: { korrespondentId: k.id } })
                     }
                   >
-                    {k.logo.url ? (
-                      <img src={k.logo.url} alt="" className="h-5 w-5 flex-none rounded object-contain" />
-                    ) : (
-                      <span
-                        aria-hidden="true"
-                        className="flex h-5 w-5 flex-none items-center justify-center rounded bg-akzent-zart text-[10px] font-semibold text-akzent-text"
-                      >
-                        {k.logo.initialen}
-                      </span>
-                    )}
+                    <KorrespondentLogo logo={k.logo} groesse={20} ton="akzent" />
                     {k.name}
                   </CommandItem>
                 ))}

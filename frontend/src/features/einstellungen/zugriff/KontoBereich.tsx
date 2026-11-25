@@ -17,6 +17,7 @@ import { Icon } from '@/components/Icon'
 import { useToast } from '@/components/toast'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { GoogleZeichen } from '@/features/anmeldung/gemeinsam'
 import { formatDatum } from '@/lib/format'
 import { Zeile } from '../Zeile'
 import { Feld, MINDEST_LAENGE, Rueckfrage, StaerkeAnzeige } from './gemeinsam'
@@ -361,11 +362,18 @@ function KontoInhalt({ konto }: { konto: Konto }) {
             </Button>
           )}
         </Zeile>
-        <Zeile titel="Google-Konto verknüpfen" beschreibung={konto.googleVerknuepft ? 'verknüpft' : 'nicht verknüpft'}>
-          {!konto.googleVerknuepft && status?.googleAktiv && (
-            <Button asChild size="klein">
-              <a href={googleStartUrl(true)}>Verknüpfen</a>
-            </Button>
+        <Zeile titel="Google-Konto verknüpfen" beschreibung={konto.googleVerknuepft ? undefined : 'nicht verknüpft'}>
+          {konto.googleVerknuepft ? (
+            <Icon name="check_circle" label="verknüpft" className="text-[22px] text-gruen-text" />
+          ) : (
+            status?.googleAktiv && (
+              <Button asChild size="klein">
+                <a href={googleStartUrl(true)}>
+                  <GoogleZeichen />
+                  Verknüpfen
+                </a>
+              </Button>
+            )
           )}
         </Zeile>
         <Zeile
@@ -425,8 +433,11 @@ function KontoInhalt({ konto }: { konto: Konto }) {
   )
 }
 
+/** Ergebnis der Google-Verknüpfung, mit dem der Server auf „Mein Konto“ zurückleitet (Suchparameter `google`). */
+export type GoogleRueckkehr = 'verknuepft' | 'vergeben' | 'fehlgeschlagen'
+
 /** Bereich „Mein Konto“ (jede Rolle). `google` stammt aus der Rückkehr der Google-Verknüpfung. */
-export function KontoBereich({ google }: { google?: 'verknuepft' | 'vergeben' }) {
+export function KontoBereich({ google }: { google?: GoogleRueckkehr }) {
   const toast = useToast()
   const { data, isError, error } = useKonto()
   const gemeldet = useRef(false)
@@ -435,7 +446,8 @@ export function KontoBereich({ google }: { google?: 'verknuepft' | 'vergeben' })
     if (!google || gemeldet.current) return
     gemeldet.current = true
     if (google === 'verknuepft') toast.erfolg('Google-Konto verknüpft')
-    else toast.fehler('Dieses Google-Konto ist bereits mit einem anderen Benutzer verknüpft')
+    else if (google === 'vergeben') toast.fehler('Dieses Google-Konto ist bereits mit einem anderen Benutzer verknüpft')
+    else toast.fehler('Google-Konto konnte nicht verknüpft werden. Bitte erneut versuchen.')
   }, [google, toast])
 
   return (

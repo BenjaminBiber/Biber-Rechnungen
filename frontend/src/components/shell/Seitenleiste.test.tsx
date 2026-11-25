@@ -25,15 +25,27 @@ describe('Seitenleiste', () => {
     }
   })
 
-  it('zeigt den Inbox-Zähler 12 an „Belege“', async () => {
+  it('zeigt einen Punkt ohne Zahl an „Belege“, wenn Belege zur Prüfung sind', async () => {
     server.use(
       http.get('*/api/belege/zaehler', () =>
         HttpResponse.json({ alle: 40, inbox: 12, zuPruefen: 3, offen: 5, ueberfaellig: 1 }),
       ),
     )
     renderMitApp(<Seitenleiste />)
-    const badge = await screen.findByLabelText(/in der Inbox$/)
-    expect(badge).toHaveTextContent('12')
+    const belege = await screen.findByRole('link', { name: 'Belege, Belege zur Prüfung' })
+    expect(within(belege).getByTestId('belege-hinweis')).toBeEmptyDOMElement()
+    expect(belege).not.toHaveTextContent(/\d/)
+  })
+
+  it('zeigt keinen Punkt, wenn nichts zur Prüfung ist', async () => {
+    server.use(
+      http.get('*/api/belege/zaehler', () =>
+        HttpResponse.json({ alle: 40, inbox: 12, zuPruefen: 0, offen: 5, ueberfaellig: 1 }),
+      ),
+    )
+    renderMitApp(<Seitenleiste />)
+    await screen.findByRole('link', { name: 'Belege' })
+    expect(screen.queryByTestId('belege-hinweis')).not.toBeInTheDocument()
   })
 
   it('klappt auf Icons ein, zeigt dann Tooltips und merkt sich den Zustand', async () => {

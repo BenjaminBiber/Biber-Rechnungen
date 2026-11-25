@@ -4,7 +4,7 @@ import { formatZahl } from '@/lib/format'
 /** Abweichung, bis zu der Netto × Satz und Steuer einer Steuerzeile als „stimmt“ gelten. */
 export const STEUER_TOLERANZ = 0.02
 
-/** Anzeigenamen der Ansichten der Belegliste (Brotkrumen „Belege / Inbox / …“). */
+/** Anzeigenamen der Ansichten der Belegliste („Zurück zu Inbox“, „3 von 12 in Inbox“). */
 export const ansichtNamen: Record<BelegAnsicht, string> = {
   Alle: 'Alle',
   Inbox: 'Inbox',

@@ -170,6 +170,8 @@ describe('Mobile Beleg-Ansicht', { timeout: 20_000 }, () => {
     expect(within(daten).getByText(/^USt 19 %$/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Original öffnen' })).toHaveAttribute('target', '_blank')
     expect(screen.getByRole('button', { name: 'Weitere Aktionen' })).toBeInTheDocument()
+    // Mobil kein geteilter Knopf: Herunterladen steht im Menü
+    expect(screen.queryByRole('link', { name: 'Original herunterladen' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Bearbeiten/ })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Bestätigen/ })).toBeInTheDocument()
 
@@ -203,7 +205,7 @@ describe('Mobile Beleg-Ansicht', { timeout: 20_000 }, () => {
     breite(false)
     renderApp(`/belege/${belegIds.b2}`)
     await screen.findByRole('heading', { level: 1, name: 'Bürowelt Krämer KG' }, warte)
-    expect(screen.getByRole('button', { name: /Erneut auslesen/ })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Original herunterladen' })).toBeInTheDocument()
     expect(screen.queryByLabelText('Betrag')).not.toBeInTheDocument()
   })
 })

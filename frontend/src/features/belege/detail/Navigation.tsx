@@ -1,14 +1,30 @@
 import { Link } from '@tanstack/react-router'
 import { useBelegNachbarn } from '@/api/belege'
-import type { BelegDetail, BelegeAbfrage } from '@/api/typen'
+import type { BelegeAbfrage } from '@/api/typen'
 import { Icon } from '@/components/Icon'
 import { ansichtNamen } from './gemeinsam'
 
 const pfeil =
-  'inline-flex size-8 items-center justify-center rounded-md text-gedaempft-stark no-underline hover:bg-hover disabled:opacity-40'
+  'inline-flex size-6 items-center justify-center rounded-md text-gedaempft-stark no-underline hover:bg-hover disabled:opacity-40'
+
+/** Zurück zur Belegliste – mit den Filtern der Liste, aus der der Beleg geöffnet wurde. */
+export function ZurueckKnopf({ aus }: { aus?: BelegeAbfrage }) {
+  const ziel = aus?.ansicht ? ansichtNamen[aus.ansicht] : 'Belege'
+  return (
+    <Link
+      to="/belege"
+      search={(aus ?? {}) as never}
+      aria-label={`Zurück zu ${ziel}`}
+      title={`Zurück zu ${ziel}`}
+      className="inline-flex size-8 flex-none items-center justify-center rounded-md text-gedaempft-stark no-underline hover:bg-hover hover:text-text"
+    >
+      <Icon name="arrow_back" className="text-[22px]" />
+    </Link>
+  )
+}
 
 /** „3 von 12 in Inbox“ mit Vor/Zurück – nur, wenn der Beleg aus der Liste geöffnet wurde. */
-function Blaettern({ belegId, aus }: { belegId: string; aus: BelegeAbfrage }) {
+export function Blaettern({ belegId, aus }: { belegId: string; aus: BelegeAbfrage }) {
   const { data } = useBelegNachbarn(belegId, aus)
   if (!data || data.position < 1) return null
   const ansicht = aus.ansicht ? ` in ${ansichtNamen[aus.ansicht]}` : ''
@@ -18,7 +34,7 @@ function Blaettern({ belegId, aus }: { belegId: string; aus: BelegeAbfrage }) {
     </Link>
   )
   return (
-    <span className="gedaempft flex items-center gap-1">
+    <nav aria-label="Blättern" className="gedaempft flex items-center gap-1 text-[13px] whitespace-nowrap">
       {data.position} von {data.gesamt}
       {ansicht}
       {data.vorherId ? (
@@ -35,23 +51,6 @@ function Blaettern({ belegId, aus }: { belegId: string; aus: BelegeAbfrage }) {
           <Icon name="chevron_right" />
         </button>
       )}
-    </span>
-  )
-}
-
-/** „Belege / <Ansicht> / <Rechnungsnr.>“ und Blättern in der Liste, aus der der Beleg kam. */
-export function Brotkrumen({ beleg, aus }: { beleg: BelegDetail; aus?: BelegeAbfrage }) {
-  const ansicht = aus?.ansicht ? ansichtNamen[aus.ansicht] : null
-  return (
-    <nav aria-label="Brotkrumen" className="flex flex-wrap items-center justify-between gap-2 text-[13px]">
-      <span>
-        <Link to="/belege" search={(aus ?? {}) as never} className="no-underline">
-          Belege
-        </Link>{' '}
-        <span className="gedaempft">/ {ansicht && `${ansicht} /`}</span>{' '}
-        <span className="mono text-xs">{beleg.rechnungsnummer ?? beleg.titel}</span>
-      </span>
-      {aus && <Blaettern belegId={beleg.id} aus={aus} />}
     </nav>
   )
 }

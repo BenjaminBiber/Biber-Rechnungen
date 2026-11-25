@@ -225,13 +225,14 @@ public sealed class BelegLeseTests(ApiFabrik fabrik) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Filter_DublettenAusschliessen()
+    public async Task Filter_DublettenAusschliessen_ist_Standard()
     {
         var original = await BelegAsync();
         await BelegAsync(b => b.DuplikatVonId = original.Id);
 
-        (await ListeAsync("")).Gesamt.ShouldBe(2);
+        Ids(await ListeAsync("")).ShouldBe([original.Id]);
         Ids(await ListeAsync("dublettenAusschliessen=true")).ShouldBe([original.Id]);
+        (await ListeAsync("dublettenAusschliessen=false")).Gesamt.ShouldBe(2);
     }
 
     [Fact]
@@ -310,14 +311,18 @@ public sealed class BelegLeseTests(ApiFabrik fabrik) : IAsyncLifetime
         var original = await BelegAsync(b => (b.Brutto, b.Faelligkeitsdatum) = (100m, new DateOnly(2026, 1, 1)));
         var dublette = await BelegAsync(b => (b.Brutto, b.Faelligkeitsdatum, b.DuplikatVonId) = (100m, new DateOnly(2026, 1, 1), original.Id));
 
-        var liste = await ListeAsync("");
+        var standard = await ListeAsync("");
+        Ids(standard).ShouldBe([original.Id]);
+        standard.SummeBrutto.ShouldBe(100m);
+
+        var liste = await ListeAsync("dublettenAusschliessen=false");
         liste.Gesamt.ShouldBe(2);
         liste.SummeBrutto.ShouldBe(100m);
         var eintrag = liste.Eintraege.Single(e => e.Id == dublette.Id);
         eintrag.IstDublette.ShouldBeTrue();
         eintrag.Ueberfaellig.ShouldBeFalse();
-        Ids(await ListeAsync("ansicht=Offen")).ShouldBe([original.Id]);
-        Ids(await ListeAsync("zahlstatus=Ueberfaellig")).ShouldBe([original.Id]);
+        Ids(await ListeAsync("ansicht=Offen&dublettenAusschliessen=false")).ShouldBe([original.Id]);
+        Ids(await ListeAsync("zahlstatus=Ueberfaellig&dublettenAusschliessen=false")).ShouldBe([original.Id]);
     }
 
     // ---------- Sortierung, Blättern, Summe ----------
@@ -346,6 +351,39 @@ public sealed class BelegLeseTests(ApiFabrik fabrik) : IAsyncLifetime
 
         Ids(await ListeAsync("sortierung=Korrespondent&absteigend=false")).ShouldBe([b2.Id, b1.Id]);
         Ids(await ListeAsync("sortierung=Faelligkeit&absteigend=false")).ShouldBe([b1.Id, b2.Id]);
+    }
+
+    [Fact]
+    public async Task Sortierung_nach_jeder_Tabellenspalte()
+    {
+        var bau = await fabrik.SpeichernAsync(Testdaten.Kategorie("Bau"));
+        var miete = await fabrik.SpeichernAsync(Testdaten.Kategorie("Miete"));
+        var zeppelin = await fabrik.SpeichernAsync(Testdaten.Korrespondent("Zeppelin AG"));
+        var eins = await BelegAsync(b =>
+        {
+            (b.Rechnungsnummer, b.Titel, b.KategorieId, b.Netto) = ("R-200", "Anker", miete.Id, 50m);
+            (b.Seitenanzahl, b.Quelle, b.Leistungsdatum, b.DiKonfidenz) = (3, ImportQuelle.Upload, new DateOnly(2026, 2, 1), 0.9m);
+        });
+        var zwei = await BelegAsync(b =>
+        {
+            (b.Rechnungsnummer, b.Titel, b.KategorieId, b.Netto) = ("R-100", null, bau.Id, 80m);
+            (b.Seitenanzahl, b.Quelle, b.Leistungsdatum, b.DiKonfidenz) = (1, ImportQuelle.Mail, new DateOnly(2026, 1, 1), 0.5m);
+            b.KorrespondentId = zeppelin.Id;
+        });
+
+        async Task<List<Guid>> AufsteigendAsync(string sortierung) =>
+            Ids(await ListeAsync($"sortierung={sortierung}&absteigend=false"));
+
+        (await AufsteigendAsync("Rechnungsnummer")).ShouldBe([zwei.Id, eins.Id]);
+        // Ohne Titel zählt die Rechnungsnummer: „Anker“ < „R-100“.
+        (await AufsteigendAsync("Titel")).ShouldBe([eins.Id, zwei.Id]);
+        (await AufsteigendAsync("Kategorie")).ShouldBe([zwei.Id, eins.Id]);
+        (await AufsteigendAsync("Netto")).ShouldBe([eins.Id, zwei.Id]);
+        (await AufsteigendAsync("Seiten")).ShouldBe([zwei.Id, eins.Id]);
+        (await AufsteigendAsync("Herkunft")).ShouldBe([zwei.Id, eins.Id]);
+        (await AufsteigendAsync("Leistungsdatum")).ShouldBe([zwei.Id, eins.Id]);
+        (await AufsteigendAsync("Konfidenz")).ShouldBe([zwei.Id, eins.Id]);
+        Ids(await ListeAsync("sortierung=Netto")).ShouldBe([zwei.Id, eins.Id]);
     }
 
     [Fact]

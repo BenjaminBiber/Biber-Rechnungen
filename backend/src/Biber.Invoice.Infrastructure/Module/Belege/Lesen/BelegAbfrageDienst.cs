@@ -447,6 +447,14 @@ public sealed partial class BelegAbfrageDienst(BiberDbContext db, IEinstellungen
             BelegSortierung.Brutto => Ordnen(abfrage, b => b.Brutto, ab),
             BelegSortierung.Korrespondent => Ordnen(abfrage, b => b.Korrespondent!.Name, ab),
             BelegSortierung.ErstelltAm => Ordnen(abfrage, b => b.ErstelltAm, ab),
+            BelegSortierung.Rechnungsnummer => Ordnen(abfrage, b => b.Rechnungsnummer, ab),
+            BelegSortierung.Titel => Ordnen(abfrage, b => b.Titel ?? b.Rechnungsnummer ?? b.Korrespondent!.Name, ab),
+            BelegSortierung.Kategorie => Ordnen(abfrage, b => b.Kategorie!.Name, ab),
+            BelegSortierung.Netto => Ordnen(abfrage, b => b.Netto, ab),
+            BelegSortierung.Seiten => Ordnen(abfrage, b => b.Seitenanzahl, ab),
+            BelegSortierung.Herkunft => Ordnen(abfrage, b => b.Quelle, ab),
+            BelegSortierung.Leistungsdatum => Ordnen(abfrage, b => b.Leistungsdatum, ab),
+            BelegSortierung.Konfidenz => Ordnen(abfrage, b => b.DiKonfidenz, ab),
             _ => Ordnen(abfrage, b => b.Rechnungsdatum, ab),
         };
         return sortiert.ThenByDescending(b => b.ErstelltAm).ThenBy(b => b.Id);

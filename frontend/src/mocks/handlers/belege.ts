@@ -22,7 +22,7 @@ import type {
   TagZuordnen,
   Zahlstatus,
 } from '@/api/typen'
-import { beispielPdf, beispielVisualisierung, beispielXml, platzhalterPng } from '../dateien'
+import { beispielPdf, beispielSeiteSvg, beispielVisualisierung, beispielXml } from '../dateien'
 import { db, neueId } from '../db'
 import { mockHeute } from '../fixtures/belege'
 import { tagKurz } from '../fixtures/tags'
@@ -121,6 +121,15 @@ const sortierwert: Record<BelegSortierung, (b: BelegDetail) => string | number> 
   Korrespondent: (b) => b.korrespondent?.name.toLocaleLowerCase('de') ?? '',
   // Belege tragen kein Erstellungsdatum; die Ablage folgt dem Rechnungsdatum.
   ErstelltAm: (b) => b.extraktion.zeitpunkt ?? b.rechnungsdatum ?? '',
+  Rechnungsnummer: (b) => b.rechnungsnummer ?? '',
+  Titel: (b) => (b.titel || b.rechnungsnummer || b.korrespondent?.name || '').toLocaleLowerCase('de'),
+  Kategorie: (b) => b.kategorie?.name.toLocaleLowerCase('de') ?? '',
+  Netto: (b) => b.netto ?? 0,
+  Seiten: (b) => b.seitenanzahl,
+  // Wie im Backend nach dem Enum-Namen (Mail, Mcp, Ordner, Upload).
+  Herkunft: (b) => b.quelle,
+  Leistungsdatum: (b) => b.leistungsdatum ?? '',
+  Konfidenz: (b) => b.konfidenz ?? 0,
 }
 
 /** Filtert und sortiert wie `GET /api/belege` (ohne Blättern). */
@@ -138,7 +147,7 @@ export function filtereBelege(parameter: URLSearchParams): BelegDetail[] {
   const betragBis = zahl(parameter, 'betragBis')
   const betragArt = parameter.get('betragArt') ?? 'Brutto'
   const zahlstatus = parameter.get('zahlstatus') as Zahlstatus | null
-  const ohneDubletten = wahr(parameter, 'dublettenAusschliessen') ?? false
+  const ohneDubletten = wahr(parameter, 'dublettenAusschliessen') ?? true
   const sortierung = (parameter.get('sortierung') ?? 'Rechnungsdatum') as BelegSortierung
   const absteigend = wahr(parameter, 'absteigend') ?? true
 
@@ -175,6 +184,19 @@ export function filtereBelege(parameter: URLSearchParams): BelegDetail[] {
 
 export function findeBeleg(id: string): BelegDetail | undefined {
   return db.belege.find((b) => b.id === id)
+}
+
+/** Inhalt der Beispielseite (Vorschaubild, Bild-Original) eines Belegs. */
+function seitenDaten(beleg: BelegDetail) {
+  return {
+    absender: beleg.korrespondent?.name ?? 'Unbekannter Absender',
+    titel: beleg.titel,
+    nummer: beleg.rechnungsnummer ?? '—',
+    betrag:
+      beleg.brutto === null || beleg.brutto === undefined
+        ? '—'
+        : `${beleg.brutto.toFixed(2).replace('.', ',')} ${beleg.waehrung === 'EUR' ? '€' : beleg.waehrung}`,
+  }
 }
 
 function ersetze(beleg: BelegDetail): BelegDetail {
@@ -384,13 +406,15 @@ export const belegeRouten: Route[] = [
       return datei(beispielXml(beleg.rechnungsnummer ?? ''), eintrag.mimeType, name, { inline })
     if (eintrag.mimeType === 'text/html')
       return datei(beispielVisualisierung(beleg.titel), eintrag.mimeType, name, { inline })
-    if (eintrag.mimeType.startsWith('image/')) return datei(platzhalterPng(), 'image/png', name, { inline })
+    if (eintrag.mimeType.startsWith('image/'))
+      return datei(beispielSeiteSvg(seitenDaten(beleg)), 'image/svg+xml', name, { inline })
     return datei(beispielPdf, 'application/pdf', name, { inline })
   }),
 
-  route('get', '/api/belege/{id}/vorschau', 'Lesen', ({ params }) =>
-    findeBeleg(params.id) ? datei(platzhalterPng(), 'image/png') : nichtGefunden('Beleg'),
-  ),
+  route('get', '/api/belege/{id}/vorschau', 'Lesen', ({ params }) => {
+    const beleg = findeBeleg(params.id)
+    return beleg ? datei(beispielSeiteSvg(seitenDaten(beleg)), 'image/svg+xml') : nichtGefunden('Beleg')
+  }),
 
   route('get', '/api/belege/{id}/visualisierung', 'Lesen', ({ params }) => {
     const beleg = findeBeleg(params.id)

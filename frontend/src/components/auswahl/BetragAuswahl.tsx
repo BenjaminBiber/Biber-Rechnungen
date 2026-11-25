@@ -6,7 +6,7 @@ import { formatZahl } from '@/lib/format'
 export type Betragsbereich = { von: number | null; bis: number | null; art: BetragArt }
 
 /** „1.234,5“ oder „1234.50“ → Zahl; leer → null; ungültig → NaN. */
-function betragEinlesen(text: string): number | null {
+export function betragEinlesen(text: string): number | null {
   const roh = text.trim().replace(/\s|€/g, '')
   if (!roh) return null
   const normal = roh.includes(',') ? roh.replace(/\./g, '').replace(',', '.') : roh
@@ -20,13 +20,16 @@ export function BetragAuswahl({
   wert,
   onAendern,
   ausloeser,
+  anfangsOffen = false,
 }: {
   wert: Betragsbereich
   onAendern: (b: Betragsbereich) => void
   ausloeser: ReactNode
+  /** Beim ersten Anzeigen gleich geöffnet (z. B. frisch hinzugefügte Filter-Pill). */
+  anfangsOffen?: boolean
 }) {
   const id = useId()
-  const [offen, setOffen] = useState(false)
+  const [offen, setOffen] = useState(anfangsOffen)
   const [art, setArt] = useState<BetragArt>(wert.art)
   const [von, setVon] = useState('')
   const [bis, setBis] = useState('')

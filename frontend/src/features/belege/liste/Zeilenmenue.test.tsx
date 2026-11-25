@@ -88,6 +88,21 @@ describe('Zeilenmenü', { timeout: 20_000 }, () => {
     expect(anfragen).toContainEqual({ pfad: `/api/belege/${beleg.id}/tags`, koerper: { tagId: tagIds.ls } })
   })
 
+  it('ohne Zahlungs-Tags zeigt das Untermenü einen Hinweis statt einer leeren Liste', async () => {
+    db.tags = db.tags.filter((t) => !t.istZahlungsTag)
+    const { nutzer, router } = renderBelege()
+    const { zeile } = await ersteZeile()
+    await nutzer.click(within(zeile).getByRole('button', { name: /^Aktionen für/ }))
+    screen.getByRole('menuitem', { name: /Als bezahlt markieren/ }).focus()
+    await nutzer.keyboard('{ArrowRight}')
+    expect(await screen.findByRole('menuitem', { name: 'Noch kein Zahlungs-Tag angelegt' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    )
+    await nutzer.click(screen.getByRole('menuitem', { name: /Zahlungs-Tag anlegen/ }))
+    await waitFor(() => expect(router.state.location.pathname).toBe('/tags'))
+  })
+
   it('„Bestätigen“ nur bei Belegen mit „zu prüfen“', async () => {
     const { nutzer, anfragen } = renderBelege('/belege?ansicht=ZuPruefen')
     const { zeile, beleg } = await ersteZeile()

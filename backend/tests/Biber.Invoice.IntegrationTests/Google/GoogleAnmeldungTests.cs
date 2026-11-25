@@ -162,6 +162,35 @@ public sealed class GoogleAnmeldungTests(ApiFabrik basis) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Verknuepfen_ohne_Sitzung_beim_Rueckruf_legt_kein_Konto_an()
+    {
+        await EinstellenAsync(new ZugriffEinstellungen { GoogleAnmeldung = true, OffeneRegistrierung = true });
+        var benutzer = await _echt.BenutzerAnlegenAsync(Rolle.Benutzer);
+        GoogleMeldet("g-10", "privat-10@gmail.example", verifiziert: true);
+        var client = await AngemeldetAsync(benutzer);
+
+        var ziel = await GoogleDurchlaufenAsync(client, verknuepfen: true, vorRueckruf: async () =>
+            (await client.PostAsync(ApiRouten.Auth.Abmelden, null)).StatusCode.ShouldBe(HttpStatusCode.NoContent));
+
+        ziel.ShouldBe("/einstellungen/konto?google=fehlgeschlagen");
+        (await BenutzerAsync("privat-10@gmail.example")).ShouldBeNull();
+        (await StatusAsync(client)).Angemeldet.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task Verknuepfen_laesst_bei_Google_das_Konto_waehlen()
+    {
+        var benutzer = await _echt.BenutzerAnlegenAsync(Rolle.Benutzer);
+        var client = await AngemeldetAsync(benutzer);
+
+        var start = await client.GetAsync(ApiRouten.Auth.GoogleStart + "?verknuepfen=true");
+
+        var abfrage = QueryHelpers.ParseQuery(start.Headers.Location!.Query);
+        abfrage["prompt"].ToString().ShouldBe("select_account");
+        abfrage["login_hint"].ToString().ShouldBe(benutzer.Email);
+    }
+
+    [Fact]
     public async Task Verknuepfen_braucht_Anmeldung()
     {
         (await Client().GetAsync(ApiRouten.Auth.GoogleStart + "?verknuepfen=true")).StatusCode
@@ -222,13 +251,18 @@ public sealed class GoogleAnmeldungTests(ApiFabrik basis) : IAsyncLifetime
     }
 
     /// <summary>start → Google (nur state übernehmen) → Rückruf der Middleware → Rückruf-Endpunkt; liefert das Ziel im Frontend.</summary>
-    private static async Task<string> GoogleDurchlaufenAsync(HttpClient client, bool verknuepfen = false)
+    private static async Task<string> GoogleDurchlaufenAsync(
+        HttpClient client, bool verknuepfen = false, Func<Task>? vorRueckruf = null)
     {
         var start = await client.GetAsync(ApiRouten.Auth.GoogleStart + (verknuepfen ? "?verknuepfen=true" : ""));
         start.StatusCode.ShouldBe(HttpStatusCode.Redirect);
         var zuGoogle = start.Headers.Location!;
         zuGoogle.AbsolutePath.ShouldBe("/auth");
         var state = QueryHelpers.ParseQuery(zuGoogle.Query)["state"].ToString();
+        if (vorRueckruf is not null)
+        {
+            await vorRueckruf();
+        }
 
         var middleware = await client.GetAsync($"{Rueckruf}?code=code&state={Uri.EscapeDataString(state)}");
         middleware.StatusCode.ShouldBe(HttpStatusCode.Redirect);

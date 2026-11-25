@@ -30,6 +30,18 @@ public enum BelegSortierung
     Brutto,
     Korrespondent,
     ErstelltAm,
+    Rechnungsnummer,
+
+    /// <summary>Angezeigter Titel: Titel, sonst Rechnungsnummer, sonst Korrespondent.</summary>
+    Titel,
+    Kategorie,
+    Netto,
+    Seiten,
+
+    /// <summary>Importquelle (Upload, Ordner, Mail, MCP).</summary>
+    Herkunft,
+    Leistungsdatum,
+    Konfidenz,
 }
 
 /// <summary>Filter der Belegliste; kommt als Query-String und steckt in gespeicherten Ansichten.</summary>
@@ -63,7 +75,8 @@ public sealed record BelegFilterDto
 
     public ImportQuelle[] Quellen { get; init; } = [];
 
-    public bool DublettenAusschliessen { get; init; }
+    /// <summary>Standardmäßig an: Dubletten hängen am Original und erscheinen nicht als eigene Belege.</summary>
+    public bool DublettenAusschliessen { get; init; } = true;
 
     public BelegSortierung Sortierung { get; init; } = BelegSortierung.Rechnungsdatum;
 

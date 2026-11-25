@@ -1,7 +1,6 @@
 import { useDashboard } from '@/api/dashboard'
 import { Icon } from '@/components/Icon'
 import { Seitenkopf } from '@/components/Seitenkopf'
-import { DiVerbrauchKarte } from './DiVerbrauchKarte'
 import { type DashboardZeitraum, Skelett } from './gemeinsam'
 import { Kennzahlen } from './Kennzahlen'
 import { KostenProMonat } from './KostenProMonat'
@@ -33,6 +32,7 @@ export function DashboardSeite({
     <main className="seite flex flex-col gap-5">
       <Seitenkopf
         titel="Dashboard"
+        className="mb-0"
         aktionen={
           <>
             <div className="segment" role="group" aria-label="Zeitraum">
@@ -112,7 +112,6 @@ export function DashboardSeite({
             <SystemKarte />
             <PreisaenderungenKarte eintraege={dashboard.data.preisaenderungen} />
             <VorsteuerKarte vorsteuer={dashboard.data.vorsteuer} jahr={jahr} />
-            <DiVerbrauchKarte verbrauch={dashboard.data.diVerbrauch} />
           </div>
         </>
       )}

@@ -59,7 +59,7 @@ describe('Massenaktionen', { timeout: 20_000 }, () => {
     const { nutzer } = renderBelege()
     const l = await waehle(nutzer, 2)
     expect(l).toHaveTextContent('2 Belege ausgewählt')
-    expect(l).toHaveTextContent(/·\s*[\d.]+,\d\d\s€/)
+    expect(l).toHaveTextContent(/Summe\s*[\d.]+,\d\d\s€/)
   })
 
   it('Bestätigen sendet „Bestaetigen“ für alle gewählten', async () => {
@@ -152,7 +152,7 @@ describe('Massenaktionen', { timeout: 20_000 }, () => {
     expect(leiste()).toBeInTheDocument()
   })
 
-  it('NurLesen sieht nur „Exportieren“ und „Auswahl aufheben“', async () => {
+  it('NurLesen sieht nur „Alle N auswählen“, „Exportieren“ und ✕ (Auswahl aufheben)', async () => {
     szenario.rolle('NurLesen')
     const { nutzer } = renderBelege()
     const l = await waehle(nutzer, 1)
@@ -160,8 +160,12 @@ describe('Massenaktionen', { timeout: 20_000 }, () => {
       expect(
         within(l)
           .getAllByRole('button')
-          .map((b) => b.textContent),
-      ).toEqual([expect.stringContaining('Exportieren'), 'Auswahl aufheben']),
+          .map((b) => b.getAttribute('aria-label') ?? b.textContent),
+      ).toEqual([
+        expect.stringMatching(/^Alle \d+ auswählen$/),
+        expect.stringContaining('Exportieren'),
+        'Auswahl aufheben',
+      ]),
     )
   })
 })
