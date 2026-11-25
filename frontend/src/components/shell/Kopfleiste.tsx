@@ -11,7 +11,7 @@ export function Kopfleiste() {
   const { darfBearbeiten } = useRolle()
 
   return (
-    <header className="relative z-30 flex min-h-16 flex-wrap items-center gap-3 border-b border-rand bg-karte px-8 py-3 text-text">
+    <header className="relative z-30 flex min-h-16 flex-wrap items-center gap-3 border-b border-rand bg-karte px-6 py-3 text-text xl:px-8">
       <button
         type="button"
         onClick={oeffnen}

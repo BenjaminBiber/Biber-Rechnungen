@@ -49,7 +49,7 @@ export function KorrespondentenSeite({
   const imDialog = eintraege.filter((k) => zusammenfuehren.includes(k.id))
 
   return (
-    <main className="p-6">
+    <main className="seite">
       <Seitenkopf
         titel="Korrespondenten"
         aktionen={

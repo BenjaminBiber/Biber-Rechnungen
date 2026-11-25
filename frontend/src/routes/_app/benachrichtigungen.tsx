@@ -18,7 +18,7 @@ function Benachrichtigungen() {
   const seiten = data ? Math.max(1, Math.ceil(data.gesamt / data.seitengroesse)) : 1
 
   return (
-    <main className="p-4 lg:p-8">
+    <main className="seite">
       <Seitenkopf
         titel="Benachrichtigungen"
         untertitel={data && `${data.gesamt} Einträge`}

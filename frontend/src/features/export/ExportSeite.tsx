@@ -32,7 +32,7 @@ const MB = 1024 * 1024
 export function ExportSeite({ vorbelegung, heute }: { vorbelegung: ExportVorbelegung; heute: Date }) {
   const { darfBearbeiten } = useRolle()
   return (
-    <main className="p-6">
+    <main className="seite">
       <Seitenkopf titel="Export" />
       {darfBearbeiten && <ExportFormular vorbelegung={vorbelegung} heute={heute} />}
       <LetzteExporte />

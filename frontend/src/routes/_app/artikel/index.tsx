@@ -44,7 +44,7 @@ function ArtikelSeite() {
   const anzahlStamm = stammartikel.data?.length
 
   return (
-    <main className="flex w-full flex-col gap-3.5 px-4 pt-6 pb-14 text-text md:px-7">
+    <main className="seite flex flex-col gap-3.5 text-text">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <h1 className="m-0 text-[22px] font-semibold">Artikel</h1>

@@ -256,10 +256,10 @@ export function KorrespondentDetailSeite({
   const { darfBearbeiten } = useRolle()
   const [logoReiter, setLogoReiter] = useState<LogoReiter | null>(null)
   const [bearbeiten, setBearbeiten] = useState(false)
-  if (istPending) return <main className="p-6" aria-busy="true" />
+  if (istPending) return <main className="seite" aria-busy="true" />
   if (!detail)
     return (
-      <main className="p-6">
+      <main className="seite">
         <h1 className="m-0 text-[22px] font-semibold">Korrespondent nicht gefunden</h1>
         <p className="gedaempft">
           <Link to="/korrespondenten">Zur Korrespondentenliste</Link>
@@ -271,7 +271,7 @@ export function KorrespondentDetailSeite({
   const typ = [detail.istLieferant && 'Lieferant', detail.istKunde && 'Kunde'].filter(Boolean) as string[]
 
   return (
-    <main className="p-6">
+    <main className="seite">
       <nav aria-label="Brotkrumen" className="gedaempft mb-2 text-[13px]">
         <Link to="/korrespondenten">Korrespondenten</Link> / <span aria-current="page">{detail.name}</span>
       </nav>

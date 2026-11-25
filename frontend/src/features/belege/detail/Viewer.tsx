@@ -124,7 +124,7 @@ export function Viewer({ beleg }: { beleg: BelegDetail }) {
   const blaetterbar = modus === 'original' && (pdf || bild)
 
   return (
-    <section aria-label="Original" className="karte min-w-0 overflow-hidden lg:flex-[1_1_520px]">
+    <section aria-label="Original" className="karte min-w-0 overflow-hidden lg:flex-[1_1_400px]">
       <div className="flex flex-wrap items-center gap-2 border-b border-rand px-3 py-2">
         <div className="segment" role="group" aria-label="Ansicht">
           <button type="button" aria-pressed={modus === 'original'} onClick={() => setModus('original')}>

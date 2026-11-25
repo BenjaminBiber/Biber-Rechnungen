@@ -41,6 +41,29 @@
 
 /* Hilfsklassen aus dem Design (Klassen der *.dc.html in deutscher Benennung) */
 @layer components {
+  /*
+   * Seitenrahmen aller Seiten im App-Rahmen: ein Rand für alle, passend zur Kopfleiste.
+   * Mobil 16 px, ab 1024 px (Seitenleiste sichtbar, kleine Laptops) 24 px, ab 1280 px 32 px wie im Design.
+   */
+  .seite {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 20px 16px 56px;
+  }
+
+  @media (min-width: 1024px) {
+    .seite {
+      padding: 24px 24px 56px;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .seite {
+      padding: 28px 32px 56px;
+    }
+  }
+
   .karte {
     background: var(--color-karte);
     border: 1px solid var(--color-rand);
@@ -197,6 +220,15 @@
     padding: 9px 12px;
     border-bottom: 1px solid var(--color-linie);
     vertical-align: middle;
+  }
+
+  /* Laptop-Breiten: etwas engere Zellen, damit breite Tabellen ohne Querscrollen auskommen */
+  @media (max-width: 1535px) {
+    .tabelle th,
+    .tabelle td {
+      padding-left: 10px;
+      padding-right: 10px;
+    }
   }
 
   .mono {

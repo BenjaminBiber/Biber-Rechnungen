@@ -86,7 +86,7 @@ function BelegeListe({ zustand }: { zustand: ListenZustand }) {
   else inhalt = <BelegTabelle eintraege={eintraege} spalten={spalten} zustand={zustand} />
 
   return (
-    <main className="flex w-full flex-col gap-3.5 px-4 pt-6 pb-14 text-text md:px-7">
+    <main className="seite flex flex-col gap-3.5 text-text">
       <Kopfzeile
         zustand={zustand}
         abfrage={abfrage}

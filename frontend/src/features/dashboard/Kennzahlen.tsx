@@ -119,7 +119,7 @@ export function Kennzahlen({
   ]
 
   return (
-    <div className="grid gap-3.5" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))' }}>
+    <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 2xl:grid-cols-6">
       {karten.map((k) => (
         <Link
           key={k.titel}

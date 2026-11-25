@@ -9,7 +9,7 @@ export const Route = createFileRoute('/_app/einstellungen')({
 
 function EinstellungenLayout() {
   return (
-    <main className="p-6">
+    <main className="seite">
       <Seitenkopf titel="Einstellungen" />
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
         <EinstellungenNavigation />

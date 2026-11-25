@@ -22,11 +22,11 @@ function zelle(schluessel: SpaltenSchluessel, beleg: BelegListeneintrag): { inha
     case 'rechnungsnummer':
       return { inhalt: beleg.rechnungsnummer ?? '–', className: 'mono whitespace-nowrap text-gedaempft-stark' }
     case 'korrespondent':
-      return { inhalt: beleg.korrespondent?.name ?? '–', className: 'whitespace-nowrap' }
+      return { inhalt: beleg.korrespondent?.name ?? '–', className: 'min-w-[120px] 2xl:whitespace-nowrap' }
     case 'titel':
       return {
         inhalt: (
-          <span className="flex flex-wrap items-center gap-1.5">
+          <span className="flex min-w-[160px] flex-wrap items-center gap-1.5">
             <Icon name="visibility" className="text-[18px] text-gedaempft" />
             <Link to="/belege/$belegId" params={{ belegId: beleg.id }} className="font-medium underline">
               {beleg.titel}
@@ -36,7 +36,7 @@ function zelle(schluessel: SpaltenSchluessel, beleg: BelegListeneintrag): { inha
         ),
       }
     case 'kategorie':
-      return { inhalt: beleg.kategorie?.name ?? '–', className: 'whitespace-nowrap' }
+      return { inhalt: beleg.kategorie?.name ?? '–', className: 'min-w-[100px] 2xl:whitespace-nowrap' }
     case 'rechnungsdatum':
       return {
         inhalt: beleg.rechnungsdatum ? formatDatum(beleg.rechnungsdatum) : '–',
@@ -45,7 +45,10 @@ function zelle(schluessel: SpaltenSchluessel, beleg: BelegListeneintrag): { inha
     case 'faelligkeit':
       return {
         inhalt: faelligText(beleg),
-        className: cn('num !text-left', beleg.ueberfaellig ? 'font-semibold text-rot-text' : 'text-gedaempft-stark'),
+        className: cn(
+          'num !text-left whitespace-normal 2xl:whitespace-nowrap',
+          beleg.ueberfaellig ? 'font-semibold text-rot-text' : 'text-gedaempft-stark',
+        ),
       }
     case 'brutto':
       return { inhalt: betrag(beleg.brutto, beleg.waehrung), className: 'num font-semibold' }
@@ -63,13 +66,26 @@ function zelle(schluessel: SpaltenSchluessel, beleg: BelegListeneintrag): { inha
     case 'herkunft':
       return {
         inhalt: (
-          <span className="inline-flex items-center gap-1.5 text-[13px] text-gedaempft-stark">
+          <span className="inline-flex flex-wrap items-center gap-1.5 text-[13px] text-gedaempft-stark">
             <Icon name={quelleIcon[beleg.quelle]} label={quelleText[beleg.quelle]} className="text-[18px]" />
             <Chip ton="grau">{beleg.format}</Chip>
           </span>
         ),
       }
   }
+}
+
+/** Komposita wie „Rechnungsdatum“ dürfen auf Laptop-Breiten vor „datum“ umbrechen (Name bleibt gleich). */
+function kopfText(label: string): ReactNode {
+  const i = label.lastIndexOf('datum')
+  if (i <= 0) return label
+  return (
+    <span>
+      {label.slice(0, i)}
+      <wbr />
+      {label.slice(i)}
+    </span>
+  )
 }
 
 function Spaltenkopf({
@@ -88,20 +104,20 @@ function Spaltenkopf({
   return (
     <th
       scope="col"
-      className={cn(definition.betrag && 'num')}
+      className={cn(definition.betrag && 'num', 'whitespace-normal 2xl:whitespace-nowrap')}
       aria-sort={aktiv ? (absteigend ? 'descending' : 'ascending') : sortierbar ? 'none' : undefined}
     >
       {sortierbar ? (
         <button
           type="button"
           onClick={() => onSortieren(sortierbar)}
-          className="inline-flex cursor-pointer items-center gap-1 border-0 bg-transparent p-0 font-[inherit] text-inherit"
+          className="inline-flex cursor-pointer items-center gap-1 border-0 bg-transparent p-0 text-left font-[inherit] text-inherit"
         >
-          {definition.label}
+          {kopfText(definition.label)}
           {aktiv && <Icon name={absteigend ? 'arrow_downward' : 'arrow_upward'} className="text-[16px]" />}
         </button>
       ) : (
-        definition.label
+        kopfText(definition.label)
       )}
     </th>
   )
@@ -138,7 +154,7 @@ export function BelegTabelle({
 
   return (
     <div className="karte overflow-x-auto">
-      <table className="tabelle min-w-[1080px]">
+      <table className="tabelle min-w-[960px]">
         <thead>
           <tr>
             <th scope="col" className="w-9">

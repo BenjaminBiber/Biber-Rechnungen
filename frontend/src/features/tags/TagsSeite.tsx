@@ -56,7 +56,7 @@ export function TagsSeite({
   )
 
   return (
-    <main className="p-6">
+    <main className="seite">
       <Seitenkopf
         titel="Tags & Kategorien"
         untertitel="Tags sind frei und mehrfach je Beleg. Jeder Beleg hat höchstens eine Kategorie, optional mit EÜR-Zeile für den Export."

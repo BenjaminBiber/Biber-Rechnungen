@@ -20,7 +20,7 @@ export function HochladenSeite() {
   })
 
   return (
-    <div className="flex flex-col gap-5">
+    <main className="seite flex flex-col gap-5">
       <Seitenkopf titel="Hochladen & Import" />
       {anmeldungNoetig && wartend > 0 && (
         <p className="hinweis m-0" role="status">
@@ -36,6 +36,6 @@ export function HochladenSeite() {
       )}
       <UploadListe eintraege={eintraege} onEntfernen={entfernen} onErneut={erneut} />
       <ImportVorgaenge />
-    </div>
+    </main>
   )
 }

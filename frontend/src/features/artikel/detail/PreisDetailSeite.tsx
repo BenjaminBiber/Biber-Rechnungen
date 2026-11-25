@@ -149,10 +149,10 @@ export function PreisDetailSeite({
   onPreisart: (preisart: Preisart) => void
 }) {
   const { darfBearbeiten } = useRolle()
-  if (istPending) return <main className="p-6" aria-busy="true" />
+  if (istPending) return <main className="seite" aria-busy="true" />
   if (!detail)
     return (
-      <main className="p-6">
+      <main className="seite">
         <h1 className="m-0 text-[22px] font-semibold">Artikel nicht gefunden</h1>
         <p className="gedaempft">
           <Link to="/artikel">Zur Artikelliste</Link>
@@ -180,7 +180,7 @@ export function PreisDetailSeite({
     .join(' · ')
 
   return (
-    <main className="p-6">
+    <main className="seite">
       <nav aria-label="Brotkrumen" className="gedaempft mb-2 text-[13px]">
         <Link to="/artikel">Artikel</Link>
         {detail.istStammartikel && <> / Stammartikel</>} / <span aria-current="page">{detail.name}</span>

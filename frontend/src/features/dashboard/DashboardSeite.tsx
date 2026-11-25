@@ -46,7 +46,7 @@ export function DashboardSeite({
   const jahre = Array.from({ length: 5 }, (_, i) => heute.getFullYear() - i)
 
   return (
-    <div className="flex flex-col gap-5">
+    <main className="seite flex flex-col gap-5">
       <Seitenkopf
         titel="Dashboard"
         untertitel={`Stand ${formatDatum(iso(heute))} · Zeitbasis: Rechnungsdatum · alle Beträge brutto in EUR`}
@@ -83,12 +83,15 @@ export function DashboardSeite({
 
       {dashboard.isPending && (
         <div className="flex flex-col gap-5" aria-busy="true" aria-label="Dashboard wird geladen">
-          <div className="grid gap-3.5" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))' }}>
+          <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 2xl:grid-cols-6">
             {Array.from({ length: 6 }, (_, i) => (
               <Skelett key={i} hoehe={104} />
             ))}
           </div>
-          <div className="grid gap-5" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(330px, 1fr))' }}>
+          <div
+            className="grid gap-5"
+            style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(300px, 100%), 1fr))' }}
+          >
             {Array.from({ length: 3 }, (_, i) => (
               <Skelett key={i} hoehe={280} />
             ))}
@@ -125,7 +128,7 @@ export function DashboardSeite({
           </div>
           <div
             className="grid gap-5"
-            style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(330px, 100%), 1fr))' }}
+            style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(300px, 100%), 1fr))' }}
           >
             <ZuPruefenKarte anzahl={dashboard.data.zuPruefen.anzahl} eintraege={dashboard.data.zuPruefenListe} />
             <OffenKarte
@@ -140,6 +143,6 @@ export function DashboardSeite({
           </div>
         </>
       )}
-    </div>
+    </main>
   )
 }
