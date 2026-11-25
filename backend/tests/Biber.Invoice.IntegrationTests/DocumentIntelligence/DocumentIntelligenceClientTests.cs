@@ -1,6 +1,7 @@
 using System.ClientModel.Primitives;
 using System.Text.Json.Nodes;
 using Azure.AI.DocumentIntelligence;
+using Biber.Invoice.Domain.Entitaeten;
 using Biber.Invoice.Domain.Enums;
 using Biber.Invoice.Domain.Pipeline;
 using Biber.Invoice.Infrastructure.Module.DocumentIntelligence;
@@ -61,7 +62,7 @@ public sealed class DocumentIntelligenceClientTests : IDisposable
         aussteller.Land.ShouldBe("DEU");
         aussteller.UstIdNr.ShouldBe("DE123456789");
         aussteller.Steuernummer.ShouldBeNull();
-        aussteller.Ibans.ShouldBe(["DE89370400440532013000"]);
+        aussteller.Bankverbindungen.ShouldBe([new Bankverbindung("DE89370400440532013000", "COBADEFFXXX")]);
 
         var empfaenger = e.Empfaenger.ShouldNotBeNull();
         empfaenger.Name.ShouldBe("Biber Beratung");

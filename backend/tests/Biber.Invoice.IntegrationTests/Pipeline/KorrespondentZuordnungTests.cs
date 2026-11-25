@@ -34,7 +34,7 @@ public sealed class KorrespondentZuordnungTests(ApiFabrik fabrik)
         var iban = Iban();
         var name = $"Firma {Eindeutig()}";
         var nachIban = Testdaten.Korrespondent();
-        nachIban.Ibans = [iban];
+        nachIban.Bankverbindungen = [new Bankverbindung(iban)];
         await fabrik.SpeichernAsync(nachIban);
         await fabrik.SpeichernAsync(Testdaten.Korrespondent(name));
 
@@ -99,7 +99,7 @@ public sealed class KorrespondentZuordnungTests(ApiFabrik fabrik)
         var name = $"Neue Firma {Eindeutig()} GmbH";
         var iban = Iban();
         var ust = UstIdNr();
-        var partei = new ExtrahiertePartei(name, "Hauptstr. 1", "12345", "Berlin", "DE", ust, "12/345/67890", [iban],
+        var partei = new ExtrahiertePartei(name, "Hauptstr. 1", "12345", "Berlin", "DE", ust, "12/345/67890", [new Bankverbindung(iban, "byladem1001")],
             "rechnung@neuefirma.example", "https://www.neuefirma.example/kontakt");
 
         var (beleg, _) = await AusfuehrenAsync(partei);
@@ -110,7 +110,7 @@ public sealed class KorrespondentZuordnungTests(ApiFabrik fabrik)
         k.IstLieferant.ShouldBeTrue();
         k.UstIdNr.ShouldBe(ust);
         k.Steuernummer.ShouldBe("12/345/67890");
-        k.Ibans.ShouldBe([iban]);
+        k.Bankverbindungen.ShouldBe([new Bankverbindung(iban, "BYLADEM1001")]);
         k.Anschrift.Ort.ShouldBe("Berlin");
         k.Anschrift.Plz.ShouldBe("12345");
         k.Email.ShouldBe("rechnung@neuefirma.example");
@@ -134,7 +134,7 @@ public sealed class KorrespondentZuordnungTests(ApiFabrik fabrik)
         var neueIban = Iban();
         var ust = UstIdNr();
         var k = Testdaten.Korrespondent(ustIdNr: ust);
-        k.Ibans = [alteIban];
+        k.Bankverbindungen = [new Bankverbindung(alteIban)];
         await fabrik.SpeichernAsync(k);
 
         // Treffer über die alte IBAN; die Extraktion nennt eine andere USt-IdNr. und eine zweite IBAN.
@@ -142,8 +142,33 @@ public sealed class KorrespondentZuordnungTests(ApiFabrik fabrik)
 
         var gespeichert = await KorrespondentAsync(k.Id);
         gespeichert.UstIdNr.ShouldBe(ust);
-        gespeichert.Ibans.ShouldBe([alteIban, neueIban]);
+        gespeichert.Bankverbindungen.ShouldBe([new Bankverbindung(alteIban), new Bankverbindung(neueIban)]);
         gespeichert.Steuernummer.ShouldBe("99/999/99999");
+    }
+
+    [Fact]
+    public async Task Beim_Treffer_wird_fehlender_BIC_nachgetragen_und_vorhandener_bleibt()
+    {
+        var ohneBic = Iban();
+        var mitBic = Iban();
+        var k = Testdaten.Korrespondent();
+        k.Bankverbindungen = [new Bankverbindung(ohneBic), new Bankverbindung(mitBic, "COBADEFFXXX")];
+        await fabrik.SpeichernAsync(k);
+
+        await AusfuehrenAsync(Partei(k.Name, ibans: [Gruppiert(ohneBic), mitBic], bic: "byladem1001"));
+
+        (await KorrespondentAsync(k.Id)).Bankverbindungen
+            .ShouldBe([new Bankverbindung(ohneBic, "BYLADEM1001"), new Bankverbindung(mitBic, "COBADEFFXXX")]);
+    }
+
+    [Fact]
+    public async Task Unlesbarer_BIC_wird_nicht_uebernommen()
+    {
+        var iban = Iban();
+
+        var (beleg, _) = await AusfuehrenAsync(Partei($"Firma {Eindeutig()}", ibans: [iban], bic: "Sparkasse Bonn"));
+
+        (await KorrespondentAsync(beleg.KorrespondentId!.Value)).Bankverbindungen.ShouldBe([new Bankverbindung(iban)]);
     }
 
     [Fact]
@@ -239,8 +264,8 @@ public sealed class KorrespondentZuordnungTests(ApiFabrik fabrik)
     }
 
     private static ExtrahiertePartei Partei(
-        string? name, string? ustIdNr = null, IReadOnlyList<string>? ibans = null, string? steuernummer = null) =>
-        new(name, null, null, null, null, ustIdNr, steuernummer, ibans ?? [], null, null);
+        string? name, string? ustIdNr = null, IReadOnlyList<string>? ibans = null, string? steuernummer = null, string? bic = null) =>
+        new(name, null, null, null, null, ustIdNr, steuernummer, [.. (ibans ?? []).Select(i => new Bankverbindung(i, bic))], null, null);
 
     private static string Eindeutig() => Guid.NewGuid().ToString("N")[..10];
 

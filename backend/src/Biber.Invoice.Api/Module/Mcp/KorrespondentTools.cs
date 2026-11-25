@@ -33,7 +33,7 @@ public sealed class KorrespondentTools(IKorrespondentDienst korrespondenten, ICo
             k.Anschrift,
             k.UstIdNr,
             k.Steuernummer,
-            k.Ibans,
+            k.Bankverbindungen,
             k.Website,
             k.Email,
             k.IstLieferant,

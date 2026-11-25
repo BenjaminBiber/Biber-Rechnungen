@@ -1,5 +1,6 @@
 using System.Xml;
 using System.Xml.Linq;
+using Biber.Invoice.Domain.Entitaeten;
 using Biber.Invoice.Domain.Enums;
 using Biber.Invoice.Domain.Pipeline;
 using s2industries.ZUGFeRD;
@@ -198,7 +199,12 @@ public sealed class ERechnungParser : IERechnungParser
             Land: partei.Country?.ToString(),
             UstIdNr: Leer(registrierungen.FirstOrDefault(t => t.SchemeID == TaxRegistrationSchemeID.VA)?.No),
             Steuernummer: Leer(registrierungen.FirstOrDefault(t => t.SchemeID == TaxRegistrationSchemeID.FC)?.No),
-            Ibans: (konten ?? []).Select(k => Leer(k.IBAN)).OfType<string>().Distinct().ToList(),
+            Bankverbindungen: (konten ?? [])
+                .Select(k => (Iban: Leer(k.IBAN), Bic: Leer(k.BIC)))
+                .Where(k => k.Iban is not null)
+                .DistinctBy(k => k.Iban)
+                .Select(k => new Bankverbindung(k.Iban!, k.Bic))
+                .ToList(),
             Email: email,
             Website: null);
     }

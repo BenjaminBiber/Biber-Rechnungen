@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 using Azure;
+using Biber.Invoice.Domain.Entitaeten;
 using Biber.Invoice.Domain.Enums;
 using Biber.Invoice.Domain.Pipeline;
 using Microsoft.Extensions.Logging;
@@ -119,7 +120,7 @@ public sealed partial class DocumentIntelligenceClient : IDocumentIntelligenceCl
                 Text(Feld(felder, "VendorName")),
                 Feld(felder, "VendorAddress"),
                 Text(Feld(felder, "VendorTaxId")),
-                Ibans(Feld(felder, "PaymentDetails"))),
+                Bankverbindungen(Feld(felder, "PaymentDetails"))),
             Empfaenger = Partei(Text(Feld(felder, "CustomerName")), Feld(felder, "CustomerAddress"), null, []),
             Volltext = ergebnis.Content,
             Konfidenz = Math.Round(konfidenz, 4),
@@ -284,16 +285,19 @@ public sealed partial class DocumentIntelligenceClient : IDocumentIntelligenceCl
     [GeneratedRegex(@"^(?<menge>\d{1,4})\s*[x×X]\s+(?<text>\S.*)$", RegexOptions.Singleline)]
     private static partial Regex MengeImTextMuster();
 
-    private static List<string> Ibans(AzureDi.DocumentField? feld) =>
+    /// <summary>IBAN und – falls erkannt – BIC (Feld <c>SWIFT</c>) je Eintrag von <c>PaymentDetails</c>.</summary>
+    private static List<Bankverbindung> Bankverbindungen(AzureDi.DocumentField? feld) =>
         [.. (feld?.ValueList ?? [])
-            .Select(z => Text(Feld(z.ValueDictionary, "IBAN")))
-            .Where(iban => iban is not null)
-            .Select(iban => iban!.Replace(" ", "", StringComparison.Ordinal).ToUpperInvariant())];
+            .Select(z => (Iban: Text(Feld(z.ValueDictionary, "IBAN")), Bic: Text(Feld(z.ValueDictionary, "SWIFT"))))
+            .Where(z => z.Iban is not null)
+            .Select(z => new Bankverbindung(OhneLeerzeichen(z.Iban!), z.Bic is null ? null : OhneLeerzeichen(z.Bic)))];
 
-    private static ExtrahiertePartei? Partei(string? name, AzureDi.DocumentField? adresse, string? steuerId, IReadOnlyList<string> ibans)
+    private static string OhneLeerzeichen(string wert) => wert.Replace(" ", "", StringComparison.Ordinal).ToUpperInvariant();
+
+    private static ExtrahiertePartei? Partei(string? name, AzureDi.DocumentField? adresse, string? steuerId, IReadOnlyList<Bankverbindung> bankverbindungen)
     {
         var a = adresse?.ValueAddress;
-        if (name is null && a is null && steuerId is null && ibans.Count == 0)
+        if (name is null && a is null && steuerId is null && bankverbindungen.Count == 0)
         {
             return null;
         }
@@ -313,7 +317,7 @@ public sealed partial class DocumentIntelligenceClient : IDocumentIntelligenceCl
             a?.CountryRegion,
             istUstIdNr ? kompakt!.ToUpperInvariant() : null,
             istUstIdNr ? null : steuerId,
-            ibans,
+            bankverbindungen,
             Email: null,
             Website: null);
     }

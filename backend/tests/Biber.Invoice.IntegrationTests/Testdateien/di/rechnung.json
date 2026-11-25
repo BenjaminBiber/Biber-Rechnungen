@@ -46,7 +46,8 @@
               {
                 "type": "object",
                 "valueObject": {
-                  "IBAN": { "type": "string", "valueString": "DE89 3704 0044 0532 0130 00", "content": "DE89 3704 0044 0532 0130 00", "confidence": 0.9 }
+                  "IBAN": { "type": "string", "valueString": "DE89 3704 0044 0532 0130 00", "content": "DE89 3704 0044 0532 0130 00", "confidence": 0.9 },
+                  "SWIFT": { "type": "string", "valueString": "cobadeff xxx", "content": "cobadeff xxx", "confidence": 0.9 }
                 }
               }
             ]

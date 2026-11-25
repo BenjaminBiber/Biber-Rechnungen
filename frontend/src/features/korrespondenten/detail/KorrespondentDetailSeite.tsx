@@ -143,11 +143,12 @@ function Stammdaten({ detail }: { detail: KorrespondentDetail }) {
         <Eintrag titel="Steuernummer">
           {detail.steuernummer ? <span className="mono">{detail.steuernummer}</span> : leer}
         </Eintrag>
-        <Eintrag titel="IBANs">
-          {detail.ibans.length
-            ? detail.ibans.map((i) => (
-                <div key={i} className="mono">
-                  {ibanFormatiert(i)}
+        <Eintrag titel="Bankverbindungen">
+          {detail.bankverbindungen.length
+            ? detail.bankverbindungen.map((b) => (
+                <div key={b.iban} className="mono">
+                  {ibanFormatiert(b.iban)}
+                  {b.bic && <div className="gedaempft text-xs">BIC {b.bic}</div>}
                 </div>
               ))
             : leer}

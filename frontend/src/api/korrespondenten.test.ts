@@ -44,7 +44,7 @@ describe('Korrespondenten-Hooks', () => {
         id: k.id,
         name: 'Hostwerk Süd AG',
         aliase: k.aliase,
-        ibans: k.ibans,
+        bankverbindungen: k.bankverbindungen,
         istLieferant: true,
         istKunde: false,
         defaultKategorieId: k.defaultKategorie?.id,

@@ -32,6 +32,26 @@ public sealed class KennungNormalisiererTests
     }
 
     [Theory]
+    [InlineData("cobadeffxxx", "COBADEFFXXX")]
+    [InlineData(" BYLA DEM1 ", "BYLADEM1")]
+    [InlineData("BYLADEM1001", "BYLADEM1001")]
+    public void Bic_wird_ohne_Leerzeichen_gross_geschrieben(string wert, string erwartet)
+    {
+        KennungNormalisierer.Bic(wert).ShouldBe(erwartet);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData(" ")]
+    [InlineData("COBADEFF1")]
+    [InlineData("C0BADEFF")]
+    [InlineData("Sparkasse Freiburg")]
+    public void Kein_BIC_ergibt_null(string? wert)
+    {
+        KennungNormalisierer.Bic(wert).ShouldBeNull();
+    }
+
+    [Theory]
     [InlineData("Bürowelt Krämer KG", "Buerowelt Kraemer")]
     [InlineData("Müller & Co. KG", "Mueller")]
     [InlineData("Hans Groß e.K.", "hans gross")]

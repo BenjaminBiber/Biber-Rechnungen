@@ -25,7 +25,7 @@ public sealed record KorrespondentDetailDto(
     string? Anschrift,
     string? UstIdNr,
     string? Steuernummer,
-    string[] Ibans,
+    BankverbindungDto[] Bankverbindungen,
     string? Website,
     string? Email,
     bool IstLieferant,
@@ -39,6 +39,9 @@ public sealed record KorrespondentDetailDto(
     BelegListeneintragDto[] LetzteBelege,
     ArtikelListeneintragDto[] Artikel,
     int AnzahlArtikel);
+
+/// <summary>IBAN ohne Leerzeichen in Großbuchstaben; der BIC ist optional.</summary>
+public sealed record BankverbindungDto(string Iban, string? Bic);
 
 public sealed record KorrespondentKennzahlenDto(
     decimal KostenJahr,
@@ -56,7 +59,7 @@ public sealed record KorrespondentAendernDto(
     string? Anschrift,
     string? UstIdNr,
     string? Steuernummer,
-    string[] Ibans,
+    BankverbindungDto[] Bankverbindungen,
     string? Website,
     string? Email,
     bool IstLieferant,

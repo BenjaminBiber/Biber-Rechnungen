@@ -1696,6 +1696,10 @@ export interface components {
             /** Format: int32 */
             anzahlDumps: number;
         };
+        BankverbindungDto: {
+            iban: string;
+            bic?: string | null;
+        };
         BelegAendernDto: {
             /** Format: uuid */
             korrespondentId?: string | null;
@@ -2229,7 +2233,7 @@ export interface components {
             anschrift?: string | null;
             ustIdNr?: string | null;
             steuernummer?: string | null;
-            ibans: string[];
+            bankverbindungen: components["schemas"]["BankverbindungDto"][];
             website?: string | null;
             email?: string | null;
             istLieferant: boolean;
@@ -2246,7 +2250,7 @@ export interface components {
             anschrift?: string | null;
             ustIdNr?: string | null;
             steuernummer?: string | null;
-            ibans: string[];
+            bankverbindungen: components["schemas"]["BankverbindungDto"][];
             website?: string | null;
             email?: string | null;
             istLieferant: boolean;

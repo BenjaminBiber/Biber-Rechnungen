@@ -68,9 +68,9 @@ public sealed class KorrespondentZuordnungSchritt(BiberDbContext db, TimeProvide
             return (nachUst, KorrespondentErkennung.UstIdNr);
         }
 
-        var ibans = aussteller.Ibans.Select(KennungNormalisierer.Iban).OfType<string>().ToHashSet();
+        var ibans = aussteller.Bankverbindungen.Select(b => KennungNormalisierer.Iban(b.Iban)).OfType<string>().ToHashSet();
         if (ibans.Count > 0
-            && alle.FirstOrDefault(k => k.Ibans.Any(i => KennungNormalisierer.Iban(i) is { } n && ibans.Contains(n))) is { } nachIban)
+            && alle.FirstOrDefault(k => k.Bankverbindungen.Any(b => KennungNormalisierer.Iban(b.Iban) is { } n && ibans.Contains(n))) is { } nachIban)
         {
             return (nachIban, KorrespondentErkennung.Iban);
         }
@@ -112,7 +112,7 @@ public sealed class KorrespondentZuordnungSchritt(BiberDbContext db, TimeProvide
         return korrespondent;
     }
 
-    /// <summary>Füllt leere Kennungen und hängt neue IBANs an; vorhandene Werte bleiben.</summary>
+    /// <summary>Füllt leere Kennungen und ergänzt Bankverbindungen; vorhandene Werte bleiben.</summary>
     private static void Ergaenzen(Korrespondent korrespondent, ExtrahiertePartei aussteller, string? mailAbsender)
     {
         if (string.IsNullOrWhiteSpace(korrespondent.UstIdNr))
@@ -125,16 +125,43 @@ public sealed class KorrespondentZuordnungSchritt(BiberDbContext db, TimeProvide
             korrespondent.Steuernummer = Leer(aussteller.Steuernummer);
         }
 
-        var vorhandene = korrespondent.Ibans.Select(KennungNormalisierer.Iban).OfType<string>().ToHashSet();
-        var neue = aussteller.Ibans.Select(KennungNormalisierer.Iban).OfType<string>().Where(vorhandene.Add).ToList();
-        if (neue.Count > 0)
-        {
-            korrespondent.Ibans = [.. korrespondent.Ibans, .. neue]; // neue Liste, damit EF die Änderung sieht
-        }
+        BankverbindungenErgaenzen(korrespondent, aussteller);
 
         if (string.IsNullOrWhiteSpace(korrespondent.Domain))
         {
             korrespondent.Domain = DomainErmitteln(aussteller, mailAbsender);
+        }
+    }
+
+    /// <summary>Hängt unbekannte IBANs an und trägt einen fehlenden BIC zu einer bekannten IBAN nach.</summary>
+    private static void BankverbindungenErgaenzen(Korrespondent korrespondent, ExtrahiertePartei aussteller)
+    {
+        var liste = korrespondent.Bankverbindungen.ToList();
+        var geaendert = false;
+        foreach (var erkannt in aussteller.Bankverbindungen)
+        {
+            if (KennungNormalisierer.Iban(erkannt.Iban) is not { } iban)
+            {
+                continue;
+            }
+
+            var bic = KennungNormalisierer.Bic(erkannt.Bic);
+            var index = liste.FindIndex(b => KennungNormalisierer.Iban(b.Iban) == iban);
+            if (index < 0)
+            {
+                liste.Add(new Bankverbindung(iban, bic));
+                geaendert = true;
+            }
+            else if (bic is not null && string.IsNullOrWhiteSpace(liste[index].Bic))
+            {
+                liste[index] = liste[index] with { Bic = bic };
+                geaendert = true;
+            }
+        }
+
+        if (geaendert)
+        {
+            korrespondent.Bankverbindungen = liste; // neue Liste, damit EF die Änderung sieht
         }
     }
 
@@ -167,7 +194,7 @@ public sealed class KorrespondentZuordnungSchritt(BiberDbContext db, TimeProvide
 
     private static bool HatAngaben(ExtrahiertePartei p) =>
         !string.IsNullOrWhiteSpace(p.Name) || !string.IsNullOrWhiteSpace(p.UstIdNr) || !string.IsNullOrWhiteSpace(p.Steuernummer)
-        || p.Ibans.Any(i => !string.IsNullOrWhiteSpace(i)) || !string.IsNullOrWhiteSpace(p.Email) || !string.IsNullOrWhiteSpace(p.Website)
+        || p.Bankverbindungen.Any(b => !string.IsNullOrWhiteSpace(b.Iban)) || !string.IsNullOrWhiteSpace(p.Email) || !string.IsNullOrWhiteSpace(p.Website)
         || !string.IsNullOrWhiteSpace(p.Strasse) || !string.IsNullOrWhiteSpace(p.Ort);
 
     private static string? Leer(string? wert) => string.IsNullOrWhiteSpace(wert) ? null : wert.Trim();

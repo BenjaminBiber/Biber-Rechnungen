@@ -20,7 +20,7 @@ export function alsAenderung(d: KorrespondentDetail): KorrespondentAendern {
     anschrift: d.anschrift ?? null,
     ustIdNr: d.ustIdNr ?? null,
     steuernummer: d.steuernummer ?? null,
-    ibans: d.ibans,
+    bankverbindungen: d.bankverbindungen,
     website: d.website ?? null,
     email: d.email ?? null,
     istLieferant: d.istLieferant,

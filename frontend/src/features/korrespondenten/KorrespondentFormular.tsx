@@ -9,7 +9,7 @@ import { Icon } from '@/components/Icon'
 import { useToast } from '@/components/toast'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { ibanFormatieren, ibanGueltig } from '@/lib/iban'
+import { bicGueltig, bicNormalisieren, ibanFormatieren, ibanGueltig } from '@/lib/iban'
 
 type Werte = {
   name: string
@@ -19,7 +19,7 @@ type Werte = {
   land: string
   ustIdNr: string
   steuernummer: string
-  ibans: string[]
+  bankverbindungen: { iban: string; bic: string }[]
   website: string
   email: string
   istLieferant: boolean
@@ -48,7 +48,7 @@ function startwerte(k?: KorrespondentDetail): Werte {
     ...anschriftZerlegen(k?.anschrift),
     ustIdNr: k?.ustIdNr ?? '',
     steuernummer: k?.steuernummer ?? '',
-    ibans: k?.ibans.map(ibanFormatieren) ?? [],
+    bankverbindungen: k?.bankverbindungen.map((b) => ({ iban: ibanFormatieren(b.iban), bic: b.bic ?? '' })) ?? [],
     website: k?.website ?? '',
     email: k?.email ?? '',
     istLieferant: k?.istLieferant ?? true,
@@ -77,7 +77,7 @@ function Feld({ label, fehler, children, id }: { label: string; fehler?: string;
 
 /**
  * Dialog „Korrespondent anlegen“ bzw. „Korrespondent bearbeiten“ (mit `korrespondent`).
- * IBANs werden im Browser geprüft; Serverfehler erscheinen am Feld, 409 als Hinweis mit Link.
+ * IBAN und BIC werden im Browser geprüft; Serverfehler erscheinen am Feld, 409 als Hinweis mit Link.
  */
 export function KorrespondentFormular({
   korrespondent,
@@ -113,8 +113,9 @@ export function KorrespondentFormular({
     e.preventDefault()
     const neueFehler: Fehler = {}
     if (!werte.name.trim()) neueFehler.name = 'Name ist erforderlich.'
-    werte.ibans.forEach((iban, i) => {
-      if (!ibanGueltig(iban)) neueFehler[`ibans[${i}]`] = 'IBAN ist ungültig (Prüfziffer).'
+    werte.bankverbindungen.forEach(({ iban, bic }, i) => {
+      if (!ibanGueltig(iban)) neueFehler[`iban[${i}]`] = 'IBAN ist ungültig (Prüfziffer).'
+      else if (bic.trim() && !bicGueltig(bic)) neueFehler[`iban[${i}]`] = 'BIC ist ungültig (8 oder 11 Stellen).'
     })
     setFehler(neueFehler)
     setKonflikt(null)
@@ -126,7 +127,10 @@ export function KorrespondentFormular({
       anschrift: anschriftZusammensetzen(werte),
       ustIdNr: leer(werte.ustIdNr),
       steuernummer: leer(werte.steuernummer),
-      ibans: werte.ibans.map((i) => i.replace(/\s+/g, '').toUpperCase()),
+      bankverbindungen: werte.bankverbindungen.map(({ iban, bic }) => ({
+        iban: iban.replace(/\s+/g, '').toUpperCase(),
+        bic: bicNormalisieren(bic) || null,
+      })),
       website: leer(werte.website),
       email: leer(werte.email),
       istLieferant: werte.istLieferant,
@@ -160,7 +164,10 @@ export function KorrespondentFormular({
     else anlegen.mutate(eingabe, optionen)
   }
 
-  const eingabe = (schluessel: Exclude<keyof Werte, 'ibans' | 'istLieferant' | 'istKunde'>, label: string) => (
+  const eingabe = (
+    schluessel: Exclude<keyof Werte, 'bankverbindungen' | 'istLieferant' | 'istKunde'>,
+    label: string,
+  ) => (
     <Feld label={label} id={`${id}-${schluessel}`} fehler={fehler[schluessel]}>
       <input
         id={`${id}-${schluessel}`}
@@ -205,11 +212,16 @@ export function KorrespondentFormular({
             </p>
           )}
           <fieldset className="m-0 border-0 p-0">
-            <legend className="label">IBANs</legend>
+            <legend className="label">Bankverbindungen</legend>
             <div className="grid gap-2">
-              {werte.ibans.map((iban, i) => {
+              {werte.bankverbindungen.map((verbindung, i) => {
                 const feldId = `${id}-iban-${i}`
-                const feldFehler = fehler[`ibans[${i}]`]
+                const feldFehler = fehler[`iban[${i}]`]
+                const aendere = (teil: Partial<Werte['bankverbindungen'][number]>) =>
+                  setze(
+                    'bankverbindungen',
+                    werte.bankverbindungen.map((x, j) => (j === i ? { ...x, ...teil } : x)),
+                  )
                 return (
                   <div key={i}>
                     <div className="flex gap-2">
@@ -218,27 +230,27 @@ export function KorrespondentFormular({
                         className="eingabe mono"
                         aria-label={`IBAN ${i + 1}`}
                         aria-invalid={!!feldFehler}
-                        value={iban}
-                        onChange={(e) =>
-                          setze(
-                            'ibans',
-                            werte.ibans.map((x, j) => (j === i ? e.target.value : x)),
-                          )
-                        }
-                        onBlur={() =>
-                          setze(
-                            'ibans',
-                            werte.ibans.map((x, j) => (j === i ? ibanFormatieren(x) : x)),
-                          )
-                        }
+                        placeholder="IBAN"
+                        value={verbindung.iban}
+                        onChange={(e) => aendere({ iban: e.target.value })}
+                        onBlur={() => aendere({ iban: ibanFormatieren(verbindung.iban) })}
+                      />
+                      <input
+                        className="eingabe mono w-[150px] shrink-0"
+                        aria-label={`BIC ${i + 1}`}
+                        aria-invalid={!!feldFehler}
+                        placeholder="BIC (optional)"
+                        value={verbindung.bic}
+                        onChange={(e) => aendere({ bic: e.target.value })}
+                        onBlur={() => aendere({ bic: bicNormalisieren(verbindung.bic) })}
                       />
                       <Button
                         size="icon"
-                        aria-label={`IBAN ${i + 1} entfernen`}
+                        aria-label={`Bankverbindung ${i + 1} entfernen`}
                         onClick={() =>
                           setze(
-                            'ibans',
-                            werte.ibans.filter((_, j) => j !== i),
+                            'bankverbindungen',
+                            werte.bankverbindungen.filter((_, j) => j !== i),
                           )
                         }
                       >
@@ -253,9 +265,18 @@ export function KorrespondentFormular({
                   </div>
                 )
               })}
-              <Button size="klein" className="justify-self-start" onClick={() => setze('ibans', [...werte.ibans, ''])}>
+              {fehler.bankverbindungen && (
+                <span role="alert" className="hinweis text-[var(--color-rot-text)]">
+                  {fehler.bankverbindungen}
+                </span>
+              )}
+              <Button
+                size="klein"
+                className="justify-self-start"
+                onClick={() => setze('bankverbindungen', [...werte.bankverbindungen, { iban: '', bic: '' }])}
+              >
                 <Icon name="add" />
-                IBAN hinzufügen
+                Bankverbindung hinzufügen
               </Button>
             </div>
           </fieldset>

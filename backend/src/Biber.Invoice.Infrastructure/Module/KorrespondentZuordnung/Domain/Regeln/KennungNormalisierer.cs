@@ -2,7 +2,7 @@ using System.Text.RegularExpressions;
 
 namespace Biber.Invoice.Infrastructure.Module.KorrespondentZuordnung.Domain.Regeln;
 
-/// <summary>Vergleichsformen für USt-IdNr., IBAN und Namen bei der Korrespondenten-Zuordnung.</summary>
+/// <summary>Vergleichsformen für USt-IdNr., IBAN, BIC und Namen bei der Korrespondenten-Zuordnung.</summary>
 public static partial class KennungNormalisierer
 {
     private static readonly HashSet<string> Rechtsformen =
@@ -31,6 +31,18 @@ public static partial class KennungNormalisierer
         return string.Concat(wert.Where(c => !char.IsWhiteSpace(c))).ToUpperInvariant();
     }
 
+    /// <summary>Großbuchstaben ohne Leerzeichen; leer oder kein BIC (8 oder 11 Stellen nach ISO 9362) → <c>null</c>.</summary>
+    public static string? Bic(string? wert)
+    {
+        if (string.IsNullOrWhiteSpace(wert))
+        {
+            return null;
+        }
+
+        var text = string.Concat(wert.Where(c => !char.IsWhiteSpace(c))).ToUpperInvariant();
+        return BicMuster().IsMatch(text) ? text : null;
+    }
+
     /// <summary>Kleinbuchstaben, Umlaute umschrieben, ohne Rechtsform, Satzzeichen und Mehrfach-Leerzeichen.</summary>
     public static string Name(string wert)
     {
@@ -48,4 +60,7 @@ public static partial class KennungNormalisierer
 
     [GeneratedRegex(@"[^a-z0-9]+")]
     private static partial Regex NichtAlphanumerisch();
+
+    [GeneratedRegex(@"^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$")]
+    private static partial Regex BicMuster();
 }

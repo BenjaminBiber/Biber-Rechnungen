@@ -117,7 +117,7 @@ public sealed class SchemaTests(ApiFabrik fabrik)
         var kategorie = await fabrik.SpeichernAsync(Testdaten.Kategorie());
         var korrespondent = Testdaten.Korrespondent(ustIdNr: "DE123456789");
         korrespondent.Aliase = ["Krämer", "Kraemer KG"];
-        korrespondent.Ibans = ["DE02120300000000202051"];
+        korrespondent.Bankverbindungen = [new Bankverbindung("DE02120300000000202051", "BYLADEM1001"), new Bankverbindung("DE89370400440532013000")];
         korrespondent.Anschrift = new Anschrift { Strasse = "Hauptstr. 1", Plz = "53111", Ort = "Bonn", Land = "DE" };
         korrespondent.Matching = new Matching { Algorithmus = MatchingAlgorithmus.Exakt, Muster = "Krämer", GrossKlein = true };
         korrespondent.LogoQuelle = LogoQuelle.Favicon;
@@ -127,7 +127,7 @@ public sealed class SchemaTests(ApiFabrik fabrik)
         var geladen = await LadenAsync<Korrespondent>(k => k.Id == korrespondent.Id);
 
         geladen.Aliase.ShouldBe(["Krämer", "Kraemer KG"]);
-        geladen.Ibans.ShouldBe(["DE02120300000000202051"]);
+        geladen.Bankverbindungen.ShouldBe([new Bankverbindung("DE02120300000000202051", "BYLADEM1001"), new Bankverbindung("DE89370400440532013000")]);
         geladen.Anschrift.Ort.ShouldBe("Bonn");
         geladen.Matching.Algorithmus.ShouldBe(MatchingAlgorithmus.Exakt);
         geladen.Matching.Muster.ShouldBe("Krämer");

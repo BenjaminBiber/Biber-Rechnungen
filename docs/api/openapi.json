@@ -5634,6 +5634,23 @@
           "anzahlDumps"
         ]
       },
+      "BankverbindungDto": {
+        "type": "object",
+        "properties": {
+          "iban": {
+            "type": "string"
+          },
+          "bic": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "iban"
+        ]
+      },
       "BelegAendernDto": {
         "type": "object",
         "properties": {
@@ -7627,10 +7644,10 @@
               "null"
             ]
           },
-          "ibans": {
+          "bankverbindungen": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/BankverbindungDto"
             }
           },
           "website": {
@@ -7665,7 +7682,7 @@
         "required": [
           "name",
           "aliase",
-          "ibans",
+          "bankverbindungen",
           "istLieferant",
           "istKunde",
           "matching"
@@ -7705,10 +7722,10 @@
               "null"
             ]
           },
-          "ibans": {
+          "bankverbindungen": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/BankverbindungDto"
             }
           },
           "website": {
@@ -7783,7 +7800,7 @@
           "id",
           "name",
           "aliase",
-          "ibans",
+          "bankverbindungen",
           "istLieferant",
           "istKunde",
           "logo",

@@ -1032,6 +1032,11 @@ namespace Biber.Invoice.Infrastructure.Persistenz.Migrationen
                         .HasColumnType("text[]")
                         .HasColumnName("aliase");
 
+                    b.Property<string>("Bankverbindungen")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("bankverbindungen");
+
                     b.Property<Guid?>("DefaultKategorieId")
                         .HasColumnType("uuid")
                         .HasColumnName("default_kategorie_id");
@@ -1053,11 +1058,6 @@ namespace Biber.Invoice.Infrastructure.Persistenz.Migrationen
                     b.Property<bool>("Geprueft")
                         .HasColumnType("boolean")
                         .HasColumnName("geprueft");
-
-                    b.PrimitiveCollection<List<string>>("Ibans")
-                        .IsRequired()
-                        .HasColumnType("text[]")
-                        .HasColumnName("ibans");
 
                     b.Property<bool>("IstKunde")
                         .HasColumnType("boolean")

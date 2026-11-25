@@ -123,7 +123,7 @@ public sealed class KorrespondentDienst(BiberDbContext db, TimeProvider zeit) : 
             AnschriftText(k.Anschrift),
             k.UstIdNr,
             k.Steuernummer,
-            [.. k.Ibans],
+            [.. k.Bankverbindungen.Select(b => new BankverbindungDto(b.Iban, b.Bic))],
             k.Website,
             k.Email,
             k.IstLieferant,
@@ -199,17 +199,20 @@ public sealed class KorrespondentDienst(BiberDbContext db, TimeProvider zeit) : 
             var zuLoeschen = await ArtikelUmhaengenAsync(behalten, ids, ct);
 
             var aliase = new List<string>(behalten.Aliase);
-            var ibans = new List<string>(behalten.Ibans);
+            var bankverbindungen = new List<Bankverbindung>(behalten.Bankverbindungen);
             foreach (var quelle in quellen)
             {
                 aliase.Add(quelle.Name);
                 aliase.AddRange(quelle.Aliase);
-                ibans.AddRange(quelle.Ibans);
+                bankverbindungen.AddRange(quelle.Bankverbindungen);
                 FeldFuellen(behalten, quelle);
             }
 
             behalten.Aliase = OhneDubletten(aliase.Where(a => !string.Equals(a, behalten.Name, StringComparison.OrdinalIgnoreCase)));
-            behalten.Ibans = ibans.Distinct(StringComparer.Ordinal).ToList();
+            behalten.Bankverbindungen = bankverbindungen
+                .GroupBy(b => b.Iban, StringComparer.Ordinal)
+                .Select(g => new Bankverbindung(g.Key, g.Select(b => b.Bic).FirstOrDefault(bic => !string.IsNullOrWhiteSpace(bic))))
+                .ToList();
 
             // USt-IdNr. der Quellen erst freigeben, dann übernehmen; Artikel erst nach dem Umhängen der Positionen löschen.
             foreach (var quelle in quellen)
@@ -316,11 +319,20 @@ public sealed class KorrespondentDienst(BiberDbContext db, TimeProvider zeit) : 
             fehler["ustIdNr"] = ["Die USt-IdNr. hat keine gültige Form."];
         }
 
-        var ibans = (eingabe.Ibans ?? []).Select(KorrespondentNormalisierung.Kennung).OfType<string>().Distinct().ToList();
-        var ungueltig = ibans.Where(i => !KorrespondentNormalisierung.IstIban(i)).ToList();
-        if (ungueltig.Count > 0)
+        var bankverbindungen = (eingabe.Bankverbindungen ?? [])
+            .Select(b => (Iban: KorrespondentNormalisierung.Kennung(b.Iban), Bic: KorrespondentNormalisierung.Kennung(b.Bic)))
+            .Where(b => b.Iban is not null)
+            .DistinctBy(b => b.Iban)
+            .Select(b => new Bankverbindung(b.Iban!, b.Bic))
+            .ToList();
+        string[] ungueltig =
+        [
+            .. bankverbindungen.Where(b => !KorrespondentNormalisierung.IstIban(b.Iban)).Select(b => $"Die IBAN „{b.Iban}“ ist ungültig."),
+            .. bankverbindungen.Where(b => b.Bic is not null && !KorrespondentNormalisierung.IstBic(b.Bic)).Select(b => $"Der BIC „{b.Bic}“ ist ungültig."),
+        ];
+        if (ungueltig.Length > 0)
         {
-            fehler["ibans"] = [.. ungueltig.Select(i => $"Die IBAN „{i}“ ist ungültig.")];
+            fehler["bankverbindungen"] = ungueltig;
         }
 
         if (eingabe.DefaultKategorieId is { } katId && !await db.Kategorien.AnyAsync(k => k.Id == katId, ct))
@@ -351,7 +363,7 @@ public sealed class KorrespondentDienst(BiberDbContext db, TimeProvider zeit) : 
         ziel.Anschrift = AnschriftAusText(eingabe.Anschrift);
         ziel.UstIdNr = ustIdNr;
         ziel.Steuernummer = Leer(eingabe.Steuernummer);
-        ziel.Ibans = ibans;
+        ziel.Bankverbindungen = bankverbindungen;
         ziel.Website = Leer(eingabe.Website);
         ziel.Domain = KorrespondentNormalisierung.Domain(ziel.Website);
         ziel.Email = Leer(eingabe.Email);
@@ -501,7 +513,7 @@ public sealed class KorrespondentDienst(BiberDbContext db, TimeProvider zeit) : 
         var kennung = KorrespondentNormalisierung.Kennung(text);
         return kennung is not null
             && ((k.UstIdNr?.Contains(kennung, StringComparison.Ordinal) ?? false)
-                || k.Ibans.Any(i => i.Contains(kennung, StringComparison.Ordinal)));
+                || k.Bankverbindungen.Any(b => b.Iban.Contains(kennung, StringComparison.Ordinal)));
     }
 
     private static string? Hinweis(Korrespondent k, Korrespondent? dublette)
@@ -512,9 +524,9 @@ public sealed class KorrespondentDienst(BiberDbContext db, TimeProvider zeit) : 
             teile.Add($"Alias ‚{k.Aliase[0]}‘");
         }
 
-        if (k.Ibans.Count > 1)
+        if (k.Bankverbindungen.Count > 1)
         {
-            teile.Add($"{k.Ibans.Count} IBANs");
+            teile.Add($"{k.Bankverbindungen.Count} IBANs");
         }
 
         if (!k.Geprueft)

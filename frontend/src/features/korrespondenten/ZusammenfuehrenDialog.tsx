@@ -11,7 +11,7 @@ function Kennzeile({ k }: { k: KorrespondentListeneintrag }) {
   const { data } = useKorrespondent(k.id)
   const teile = [
     k.ustIdNr ?? 'keine USt-IdNr.',
-    data && `${data.ibans.length} ${data.ibans.length === 1 ? 'IBAN' : 'IBANs'}`,
+    data && `${data.bankverbindungen.length} ${data.bankverbindungen.length === 1 ? 'IBAN' : 'IBANs'}`,
     k.logo.quelle !== 'Keine' && 'Logo',
   ].filter(Boolean)
   return <span className="gedaempft block text-xs">{teile.join(' · ')}</span>

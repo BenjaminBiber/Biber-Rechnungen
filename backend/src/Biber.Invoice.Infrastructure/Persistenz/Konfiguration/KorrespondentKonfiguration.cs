@@ -1,5 +1,7 @@
+using System.Text.Json;
 using Biber.Invoice.Domain.Entitaeten;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Biber.Invoice.Infrastructure.Persistenz.Konfiguration;
@@ -13,7 +15,15 @@ public sealed class KorrespondentKonfiguration : IEntityTypeConfiguration<Korres
         builder.Property(k => k.Aliase).HasColumnType("text[]");
         builder.Property(k => k.UstIdNr).HasMaxLength(20);
         builder.Property(k => k.Steuernummer).HasMaxLength(30);
-        builder.Property(k => k.Ibans).HasColumnType("text[]");
+        builder.Property(k => k.Bankverbindungen)
+            .HasColumnType("jsonb")
+            .HasConversion(
+                liste => JsonSerializer.Serialize(liste, JsonSerializerOptions.Default),
+                json => JsonSerializer.Deserialize<List<Bankverbindung>>(json, JsonSerializerOptions.Default) ?? new List<Bankverbindung>(),
+                new ValueComparer<List<Bankverbindung>>(
+                    (a, b) => a!.SequenceEqual(b!),
+                    liste => liste.Aggregate(0, (h, v) => HashCode.Combine(h, v.GetHashCode())),
+                    liste => liste.ToList()));
         builder.Property(k => k.Website).HasMaxLength(500);
         builder.Property(k => k.Domain).HasMaxLength(255);
         builder.Property(k => k.Email).HasMaxLength(320);

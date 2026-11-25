@@ -130,7 +130,7 @@ describe('Korrespondenten', { timeout: 20000 }, () => {
     const { anfragen, ende } = renderSeite('/korrespondenten?neu=true')
     const dialog = await screen.findByRole('dialog', { name: 'Korrespondent anlegen' }, { timeout: 5000 })
     await userEvent.type(within(dialog).getByLabelText('Name'), 'Neue Firma GmbH')
-    await userEvent.click(within(dialog).getByRole('button', { name: 'IBAN hinzufügen' }))
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Bankverbindung hinzufügen' }))
     await userEvent.type(within(dialog).getByLabelText('IBAN 1'), 'DE89 3704 0044 0532 0130 01')
     await userEvent.click(within(dialog).getByRole('button', { name: 'Anlegen' }))
     expect(await within(dialog).findByText('IBAN ist ungültig (Prüfziffer).')).toBeInTheDocument()
@@ -142,14 +142,31 @@ describe('Korrespondenten', { timeout: 20000 }, () => {
     const { anfragen, ende } = renderSeite('/korrespondenten?neu=true')
     const dialog = await screen.findByRole('dialog', { name: 'Korrespondent anlegen' }, { timeout: 5000 })
     await userEvent.type(within(dialog).getByLabelText('Name'), 'Neue Firma GmbH')
-    await userEvent.click(within(dialog).getByRole('button', { name: 'IBAN hinzufügen' }))
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Bankverbindung hinzufügen' }))
     await userEvent.type(within(dialog).getByLabelText('IBAN 1'), 'de89370400440532013000')
+    await userEvent.type(within(dialog).getByLabelText('BIC 1'), 'cobadeff xxx')
     await userEvent.click(within(dialog).getByRole('button', { name: 'Anlegen' }))
     expect(await screen.findByText('Korrespondent angelegt')).toBeInTheDocument()
     const post = anfragen.find((a) => a.methode === 'POST')
     await waitFor(() =>
-      expect(post?.koerper).toMatchObject({ name: 'Neue Firma GmbH', ibans: ['DE89370400440532013000'] }),
+      expect(post?.koerper).toMatchObject({
+        name: 'Neue Firma GmbH',
+        bankverbindungen: [{ iban: 'DE89370400440532013000', bic: 'COBADEFFXXX' }],
+      }),
     )
+    ende()
+  })
+
+  it('zeigt bei ungültigem BIC den Feldfehler ohne Anfrage', async () => {
+    const { anfragen, ende } = renderSeite('/korrespondenten?neu=true')
+    const dialog = await screen.findByRole('dialog', { name: 'Korrespondent anlegen' }, { timeout: 5000 })
+    await userEvent.type(within(dialog).getByLabelText('Name'), 'Neue Firma GmbH')
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Bankverbindung hinzufügen' }))
+    await userEvent.type(within(dialog).getByLabelText('IBAN 1'), 'DE89 3704 0044 0532 0130 00')
+    await userEvent.type(within(dialog).getByLabelText('BIC 1'), 'COBA')
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Anlegen' }))
+    expect(await within(dialog).findByText('BIC ist ungültig (8 oder 11 Stellen).')).toBeInTheDocument()
+    expect(anfragen.filter((a) => a.methode === 'POST')).toHaveLength(0)
     ende()
   })
 

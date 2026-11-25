@@ -10,7 +10,7 @@ public class Korrespondent
     public List<string> Aliase { get; set; } = [];
     public string? UstIdNr { get; set; }
     public string? Steuernummer { get; set; }
-    public List<string> Ibans { get; set; } = [];
+    public List<Bankverbindung> Bankverbindungen { get; set; } = [];
     public Anschrift Anschrift { get; set; } = new();
     public string? Website { get; set; }
     public string? Domain { get; set; }

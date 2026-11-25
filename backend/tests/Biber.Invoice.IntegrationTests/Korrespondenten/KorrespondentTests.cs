@@ -49,7 +49,7 @@ public sealed class KorrespondentTests(ApiFabrik fabrik) : IAsyncLifetime
     {
         var k = Testdaten.Korrespondent("Telekom Deutschland GmbH", "DE123456789");
         k.Aliase = ["T-Mobile"];
-        k.Ibans = [GueltigeIban];
+        k.Bankverbindungen = [new Bankverbindung(GueltigeIban)];
         await fabrik.SpeichernAsync(k);
         await fabrik.SpeichernAsync(Testdaten.Korrespondent("Anderer Lieferant"));
         var client = fabrik.ErzeugeClient(Rolle.NurLesen);
@@ -188,7 +188,7 @@ public sealed class KorrespondentTests(ApiFabrik fabrik) : IAsyncLifetime
         var antwort = await client.PostJsonAsync(ApiRouten.Korrespondenten.Liste, Eingabe("Neuer Lieferant") with
         {
             UstIdNr = "de 123 456 789",
-            Ibans = ["de89 3704 0044 0532 0130 00", GueltigeIban],
+            Bankverbindungen = [new BankverbindungDto("de89 3704 0044 0532 0130 00", "cobadeff xxx"), new BankverbindungDto(GueltigeIban, null)],
             Aliase = ["NL", "nl", "Neuer Lieferant"],
             Website = "https://www.neuer-lieferant.de/kontakt",
             Anschrift = "Hauptstraße 1\n12345 Berlin",
@@ -198,7 +198,7 @@ public sealed class KorrespondentTests(ApiFabrik fabrik) : IAsyncLifetime
         antwort.StatusCode.ShouldBe(HttpStatusCode.Created);
         var detail = (await antwort.Content.LesenAsync<KorrespondentDetailDto>()).ShouldNotBeNull();
         detail.UstIdNr.ShouldBe("DE123456789");
-        detail.Ibans.ShouldBe([GueltigeIban]);
+        detail.Bankverbindungen.ShouldBe([new BankverbindungDto(GueltigeIban, "COBADEFFXXX")]);
         detail.Aliase.ShouldBe(["NL"]);
         detail.Anschrift.ShouldBe("Hauptstraße 1\n12345 Berlin");
         detail.DefaultKategorie.ShouldNotBeNull().Name.ShouldBe("Büro");
@@ -214,12 +214,15 @@ public sealed class KorrespondentTests(ApiFabrik fabrik) : IAsyncLifetime
     {
         var client = fabrik.ErzeugeClient(Rolle.Benutzer);
 
-        var iban = await client.PostJsonAsync(ApiRouten.Korrespondenten.Liste, Eingabe("X") with { Ibans = ["DE89370400440532013001"] });
+        var iban = await client.PostJsonAsync(ApiRouten.Korrespondenten.Liste, Eingabe("X") with { Bankverbindungen = [new BankverbindungDto("DE89370400440532013001", null)] });
+        var bic = await client.PostJsonAsync(ApiRouten.Korrespondenten.Liste, Eingabe("Z") with { Bankverbindungen = [new BankverbindungDto(GueltigeIban, "COBA")] });
         var name = await client.PostJsonAsync(ApiRouten.Korrespondenten.Liste, Eingabe(" "));
         var kategorie = await client.PostJsonAsync(ApiRouten.Korrespondenten.Liste, Eingabe("Y") with { DefaultKategorieId = Guid.NewGuid() });
 
         iban.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        (await iban.Content.ReadAsStringAsync()).ShouldContain("ibans");
+        (await iban.Content.ReadAsStringAsync()).ShouldContain("Die IBAN");
+        bic.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await bic.Content.ReadAsStringAsync()).ShouldContain("Der BIC");
         name.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         kategorie.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
@@ -275,11 +278,11 @@ public sealed class KorrespondentTests(ApiFabrik fabrik) : IAsyncLifetime
     public async Task Zusammenfuehren_haengt_alles_um_und_loescht_Quelle()
     {
         var behalten = Testdaten.Korrespondent("Bürowelt Krämer KG");
-        behalten.Ibans = [GueltigeIban];
+        behalten.Bankverbindungen = [new Bankverbindung(GueltigeIban)];
         await fabrik.SpeichernAsync(behalten);
         var quelle = Testdaten.Korrespondent("Buerowelt Kraemer", "DE999999999");
         quelle.Aliase = ["BWK"];
-        quelle.Ibans = [ZweiteIban, GueltigeIban];
+        quelle.Bankverbindungen = [new Bankverbindung(ZweiteIban, "WESTGB2L"), new Bankverbindung(GueltigeIban, "COBADEFFXXX")];
         quelle.Email = "info@bwk.de";
         await fabrik.SpeichernAsync(quelle);
 
@@ -308,7 +311,7 @@ public sealed class KorrespondentTests(ApiFabrik fabrik) : IAsyncLifetime
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
         var detail = (await antwort.Content.LesenAsync<KorrespondentDetailDto>()).ShouldNotBeNull();
         detail.Aliase.ShouldBe(["Buerowelt Kraemer", "BWK"]);
-        detail.Ibans.ShouldBe([GueltigeIban, ZweiteIban]);
+        detail.Bankverbindungen.ShouldBe([new BankverbindungDto(GueltigeIban, "COBADEFFXXX"), new BankverbindungDto(ZweiteIban, "WESTGB2L")]);
         detail.UstIdNr.ShouldBe("DE999999999");
         detail.Email.ShouldBe("info@bwk.de");
         detail.Kennzahlen.AnzahlBelege.ShouldBe(2);

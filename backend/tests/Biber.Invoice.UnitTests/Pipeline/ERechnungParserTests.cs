@@ -1,4 +1,5 @@
 using System.Text;
+using Biber.Invoice.Domain.Entitaeten;
 using Biber.Invoice.Domain.Enums;
 using Biber.Invoice.Domain.Pipeline;
 using Biber.Invoice.Infrastructure.Module.ERechnung;
@@ -133,6 +134,7 @@ public sealed class ERechnungParserTests
         ]);
         PruefeVerkaeufer(e.Aussteller);
         PruefeKaeufer(e.Empfaenger);
+        e.Aussteller!.Bankverbindungen.ShouldBe([new Bankverbindung(Iban, "BYLADEM1001")]);
     }
 
     [Fact]
@@ -215,6 +217,7 @@ public sealed class ERechnungParserTests
         a.Email.ShouldBe("rechnung@muster-buero.de");
         a.UstIdNr.ShouldBe("DE123456789");
         a.Steuernummer.ShouldBeNull();
+        a.Bankverbindungen.ShouldBe([new Bankverbindung(Iban)]); // ohne BIC in der Datei
         e.Empfaenger.ShouldNotBeNull().Email.ShouldBe("einkauf@biber-handwerk.de");
     }
 
@@ -270,7 +273,7 @@ public sealed class ERechnungParserTests
         p.Land.ShouldBe("DE");
         p.UstIdNr.ShouldBe("DE123456789");
         p.Steuernummer.ShouldBe("30/123/45678");
-        p.Ibans.ShouldBe([Iban]);
+        p.Bankverbindungen.Select(b => b.Iban).ShouldBe([Iban]);
         p.Email.ShouldBe("rechnung@muster-buero.de");
         p.Website.ShouldBeNull();
     }
@@ -285,7 +288,7 @@ public sealed class ERechnungParserTests
         p.Land.ShouldBe("DE");
         p.UstIdNr.ShouldBe("DE987654321");
         p.Steuernummer.ShouldBeNull();
-        p.Ibans.ShouldBeEmpty();
+        p.Bankverbindungen.ShouldBeEmpty();
         p.Email.ShouldBe("einkauf@biber-handwerk.de");
         p.Website.ShouldBeNull();
     }

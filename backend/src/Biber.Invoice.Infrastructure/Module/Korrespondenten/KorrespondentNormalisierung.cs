@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 
 namespace Biber.Invoice.Infrastructure.Module.Korrespondenten;
 
-/// <summary>Normalisierung und Formprüfung von Namen, Kennungen (USt-IdNr., IBAN) und Websites.</summary>
+/// <summary>Normalisierung und Formprüfung von Namen, Kennungen (USt-IdNr., IBAN, BIC) und Websites.</summary>
 public static partial class KorrespondentNormalisierung
 {
     private static readonly HashSet<string> Rechtsformen =
@@ -56,6 +56,9 @@ public static partial class KorrespondentNormalisierung
         return BigInteger.Parse(ziffern.ToString(), System.Globalization.CultureInfo.InvariantCulture) % 97 == 1;
     }
 
+    /// <summary>Prüft die Form (ISO 9362): 8 oder 11 Stellen.</summary>
+    public static bool IstBic(string kennung) => BicMuster().IsMatch(kennung);
+
     /// <summary>Host der Website ohne „www.“; <c>null</c>, wenn sich keiner ableiten lässt.</summary>
     public static string? Domain(string? website)
     {
@@ -87,4 +90,7 @@ public static partial class KorrespondentNormalisierung
 
     [GeneratedRegex(@"^[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}$")]
     private static partial Regex IbanMuster();
+
+    [GeneratedRegex(@"^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$")]
+    private static partial Regex BicMuster();
 }

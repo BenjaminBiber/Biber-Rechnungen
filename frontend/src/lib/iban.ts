@@ -20,3 +20,13 @@ export function ibanGueltig(iban: string): boolean {
 export function ibanFormatieren(iban: string): string {
   return normalisieren(iban).replace(/(.{4})(?=.)/g, '$1 ')
 }
+
+/** BIC ohne Leerzeichen, in Großbuchstaben. */
+export function bicNormalisieren(bic: string): string {
+  return normalisieren(bic)
+}
+
+/** Prüft den Aufbau (ISO 9362): 8 oder 11 Stellen. */
+export function bicGueltig(bic: string): boolean {
+  return /^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/.test(normalisieren(bic))
+}
