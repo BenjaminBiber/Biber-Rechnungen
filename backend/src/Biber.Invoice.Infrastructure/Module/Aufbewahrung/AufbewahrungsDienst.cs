@@ -6,6 +6,7 @@ using Biber.Invoice.Domain.Entitaeten;
 using Biber.Invoice.Domain.Enums;
 using Biber.Invoice.Domain.Module;
 using Biber.Invoice.Infrastructure.Module.Audit;
+using Biber.Invoice.Infrastructure.Module.Positionen;
 using Biber.Invoice.Infrastructure.Persistenz;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -87,9 +88,11 @@ public sealed class AufbewahrungsDienst(
             vorgang.BelegId = null;
         }
 
+        var artikel = VerwaisteArtikel.Kandidaten(belege.SelectMany(b => b.Positionen));
         freigabe.Freigeben(ids);
         db.Belege.RemoveRange(belege);
         await db.SaveChangesAsync(ct);
+        await VerwaisteArtikel.EntfernenAsync(db, artikel, ct);
 
         AbgeleiteteLoeschen(abgeleitet);
         logger.LogInformation("Aufbewahrung: {Anzahl} Belege aus {Jahr} gelöscht.", belege.Count, jahr);

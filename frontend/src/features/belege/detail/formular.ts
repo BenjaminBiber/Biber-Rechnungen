@@ -14,6 +14,7 @@ import {
 export type Formular = {
   korrespondentId: string | null
   belegart: Belegart
+  titel: string
   rechnungsnummer: string
   rechnungsdatum: string
   leistung: string
@@ -31,12 +32,15 @@ export type FeldFehler = Partial<Record<string, string>>
 export const FEHLER_DATUM = 'Datum im Format TT.MM.JJJJ eingeben'
 export const FEHLER_LEISTUNG = 'Datum oder Zeitraum „TT.MM.JJJJ – TT.MM.JJJJ“ eingeben'
 export const FEHLER_BETRAG = 'Betrag im Format 1.234,56 eingeben'
+export const MAX_TITEL = 500
+export const FEHLER_TITEL = `Höchstens ${MAX_TITEL} Zeichen`
 export const FEHLER_SATZ = 'Steuersatz wie 19 oder 7 eingeben'
 
 export function ausBeleg(beleg: BelegDetail): Formular {
   return {
     korrespondentId: beleg.korrespondent?.id ?? null,
     belegart: beleg.belegart,
+    titel: beleg.titel,
     rechnungsnummer: beleg.rechnungsnummer ?? '',
     rechnungsdatum: datumEingabe(beleg.rechnungsdatum),
     leistung: leistungEingabe(beleg),
@@ -61,6 +65,7 @@ export function gleich(a: Formular, b: Formular): boolean {
 /** Prüft alle Felder; Schlüssel wie im `BelegAendernDto` (Steuerzeilen als `steuerzeilen.0.netto`). */
 export function pruefen(f: Formular): FeldFehler {
   const fehler: FeldFehler = {}
+  if (f.titel.trim().length > MAX_TITEL) fehler.titel = FEHLER_TITEL
   for (const feld of ['rechnungsdatum', 'faelligkeitsdatum'] as const)
     if (f[feld].trim() && !parseDatum(f[feld])) fehler[feld] = FEHLER_DATUM
   if (parseLeistung(f.leistung) === 'ungueltig') fehler.leistung = FEHLER_LEISTUNG
@@ -74,8 +79,11 @@ export function pruefen(f: Formular): FeldFehler {
   return fehler
 }
 
-/** Baut das `BelegAendernDto`; nur nach erfolgreichem `pruefen` aufrufen. */
-export function zuDto(f: Formular, titel: string): BelegAendern {
+/**
+ * Baut das `BelegAendernDto`; nur nach erfolgreichem `pruefen` aufrufen. Ein leerer Titel lässt den Server wieder
+ * Rechnungsnummer bzw. Korrespondent anzeigen.
+ */
+export function zuDto(f: Formular): BelegAendern {
   const leistung = parseLeistung(f.leistung)
   const betrag = (text: string) => (text.trim() ? parseBetrag(text) : null)
   const datum = (text: string) => (text.trim() ? parseDatum(text) : null)
@@ -83,7 +91,7 @@ export function zuDto(f: Formular, titel: string): BelegAendern {
     korrespondentId: f.korrespondentId,
     belegart: f.belegart,
     rechnungsnummer: f.rechnungsnummer.trim() || null,
-    titel,
+    titel: f.titel.trim(),
     rechnungsdatum: datum(f.rechnungsdatum),
     ...(leistung === 'ungueltig' ? { leistungsdatum: null, leistungVon: null, leistungBis: null } : leistung),
     faelligkeitsdatum: datum(f.faelligkeitsdatum),

@@ -169,6 +169,11 @@ public sealed class BelegSchreibTests(ApiFabrik fabrik) : IAsyncLifetime
             b.KorrespondentErkennung = KorrespondentErkennung.UstIdNr;
             b.Positionen = [Position(1, "Kopierpapier A4", 100m)];
         });
+        (await Client().PutJsonAsync(Route(ApiRouten.Belege.Positionen, beleg.Id), new PositionAendernDto[]
+        {
+            new(1, "Kopierpapier A4", 1m, null, 100m, 100m, 19m),
+        })).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await LadenAsync(beleg.Id)).Positionen.ShouldHaveSingleItem().ArtikelId.ShouldNotBeNull();
 
         var antwort = await Client().PutJsonAsync(Route(ApiRouten.Belege.Einzeln, beleg.Id), Aenderung(beleg) with { KorrespondentId = neu.Id });
 
@@ -182,6 +187,7 @@ public sealed class BelegSchreibTests(ApiFabrik fabrik) : IAsyncLifetime
         using var scope = fabrik.ErzeugeScope();
         var db = scope.ServiceProvider.GetRequiredService<BiberDbContext>();
         (await db.Artikel.SingleAsync(a => a.Id == position.ArtikelId)).KorrespondentId.ShouldBe(neu.Id);
+        (await db.Artikel.AnyAsync(a => a.KorrespondentId == alt.Id)).ShouldBeFalse();
     }
 
     // ---------- Positionen ----------
@@ -214,6 +220,44 @@ public sealed class BelegSchreibTests(ApiFabrik fabrik) : IAsyncLifetime
         gespeichert.Positionen.OrderBy(p => p.Nr).Select(p => (p.Nr, p.Text)).ShouldBe([(1, "Papier"), (2, "Toner")]);
         gespeichert.Befunde.Single(b => b.Pruefung == PruefungArt.Positionssumme).Ergebnis.ShouldBe(PruefErgebnis.Ok);
         gespeichert.Tags.ShouldContain(t => t.TagId == SystemIds.TagZuPruefen);
+    }
+
+    [Fact]
+    public async Task Umbenannte_Position_entfernt_den_verwaisten_Artikel_samt_leerem_Stammartikel()
+    {
+        var korrespondent = await fabrik.SpeichernAsync(Testdaten.Korrespondent());
+        var beleg = await BelegAsync(b => b.KorrespondentId = korrespondent.Id);
+        var anderer = await BelegAsync(b => b.KorrespondentId = korrespondent.Id);
+        var client = Client();
+        (await client.PutJsonAsync(Route(ApiRouten.Belege.Positionen, beleg.Id), new PositionAendernDto[]
+        {
+            new(1, "Papier", 1m, "Pck", 30m, 30m, 19m),
+            new(2, "Toner", 1m, "Stk", 40m, 40m, 19m),
+        })).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await client.PutJsonAsync(Route(ApiRouten.Belege.Positionen, anderer.Id), new PositionAendernDto[]
+        {
+            new(1, "Toner", 1m, "Stk", 40m, 40m, 19m),
+        })).StatusCode.ShouldBe(HttpStatusCode.OK);
+        var papierId = (await LadenAsync(beleg.Id)).Positionen.Single(p => p.Text == "Papier").ArtikelId!.Value;
+        var stamm = new Stammartikel { Id = Guid.NewGuid(), Name = "Papier", Basiseinheit = "Blatt", GrundpreisMenge = 100 };
+        await fabrik.SpeichernAsync(stamm);
+        using (var scope = fabrik.ErzeugeScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<BiberDbContext>();
+            await db.Artikel.Where(a => a.Id == papierId).ExecuteUpdateAsync(s => s.SetProperty(a => a.StammartikelId, stamm.Id));
+        }
+
+        var antwort = await client.PutJsonAsync(Route(ApiRouten.Belege.Positionen, beleg.Id), new PositionAendernDto[]
+        {
+            new(1, "Kopierpapier", 1m, "Pck", 30m, 30m, 19m),
+        });
+
+        antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using var pruefScope = fabrik.ErzeugeScope();
+        var pruefDb = pruefScope.ServiceProvider.GetRequiredService<BiberDbContext>();
+        var namen = await pruefDb.Artikel.Where(a => a.KorrespondentId == korrespondent.Id).Select(a => a.Name).ToListAsync();
+        namen.Order().ShouldBe(["Kopierpapier", "Toner"]);
+        (await pruefDb.Stammartikel.AnyAsync(s => s.Id == stamm.Id)).ShouldBeFalse();
     }
 
     [Fact]

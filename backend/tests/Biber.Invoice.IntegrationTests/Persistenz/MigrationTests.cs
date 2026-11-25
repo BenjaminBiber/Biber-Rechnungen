@@ -63,6 +63,30 @@ public sealed class MigrationTests(ApiFabrik fabrik)
     }
 
     [Fact]
+    public async Task VerwaisteArtikelEntfernen_loescht_Artikel_ohne_Position_und_leere_Stammartikel()
+    {
+        await using var datenbank = await FrischeDatenbank.AnlegenAsync(fabrik);
+        await using var db = datenbank.Kontext();
+        var migrator = db.GetInfrastructure().GetRequiredService<IMigrator>();
+        await migrator.MigrateAsync("BelegBankverbindungen");
+        var korrespondent = Testdaten.Korrespondent();
+        var leer = new Stammartikel { Id = Guid.NewGuid(), Name = "Papier", Basiseinheit = "Blatt" };
+        var gemischt = new Stammartikel { Id = Guid.NewGuid(), Name = "Toner", Basiseinheit = "Stk" };
+        var gekauft = Artikel(korrespondent.Id, "toner", gemischt.Id);
+        var verwaist = Artikel(korrespondent.Id, "papier", leer.Id);
+        var verwaistImGemischten = Artikel(korrespondent.Id, "toner alt", gemischt.Id);
+        var beleg = Testdaten.Beleg(korrespondentId: korrespondent.Id);
+        beleg.Positionen = [new Position { Id = Guid.NewGuid(), Nr = 1, Text = "Toner", ArtikelId = gekauft.Id }];
+        db.AddRange(korrespondent, leer, gemischt, gekauft, verwaist, verwaistImGemischten, beleg);
+        await db.SaveChangesAsync();
+
+        await migrator.MigrateAsync();
+
+        (await db.Artikel.AsNoTracking().Select(a => a.Id).ToListAsync()).ShouldBe([gekauft.Id]);
+        (await db.Stammartikel.AsNoTracking().Select(s => s.Id).ToListAsync()).ShouldBe([gemischt.Id]);
+    }
+
+    [Fact]
     public void Modell_hat_keine_ausstehenden_Aenderungen()
     {
         using var scope = fabrik.ErzeugeScope();
@@ -82,4 +106,13 @@ public sealed class MigrationTests(ApiFabrik fabrik)
         (await db.Database.SqlQueryRaw<int>(
             "SELECT count(*)::int AS \"Value\" FROM pg_trigger WHERE tgname = 'audit_eintrag_unveraenderlich'").SingleAsync()).ShouldBe(1);
     }
+
+    private static Artikel Artikel(Guid korrespondentId, string name, Guid? stammartikelId) => new()
+    {
+        Id = Guid.NewGuid(),
+        KorrespondentId = korrespondentId,
+        Name = name,
+        NameNormalisiert = name,
+        StammartikelId = stammartikelId,
+    };
 }

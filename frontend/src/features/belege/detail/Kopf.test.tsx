@@ -20,7 +20,7 @@ describe('Beleg-Detail: Rahmen und Kopf', () => {
     expect(screen.queryByRole('navigation', { name: 'Blättern' })).not.toBeInTheDocument()
   })
 
-  it('zeigt für Benutzer bei „zu prüfen“ alle Aktionen außer „Aufteilen“ (nur eine Seite)', async () => {
+  it('zeigt für Benutzer bei „zu prüfen“ alle Aktionen', async () => {
     renderBelegDetail()
     await kopfGeladen()
     const aktionen = screen.getByRole('group', { name: 'Beleg-Aktionen' })
@@ -32,13 +32,11 @@ describe('Beleg-Detail: Rahmen und Kopf', () => {
     expect(within(aktionen).getByRole('button', { name: 'Weitere Aktionen' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Erneut auslesen' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Bestätigen' })).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'Aufteilen' })).not.toBeInTheDocument()
   })
 
-  it('zeigt „Aufteilen“ bei mehrseitigem PDF und kein „Bestätigen“ ohne „zu prüfen“', async () => {
+  it('zeigt kein „Bestätigen“ ohne „zu prüfen“', async () => {
     renderBelegDetail(`/belege/${belegIds.b3}`)
     await kopfGeladen('Autohaus Brenner GmbH')
-    expect(screen.getByRole('link', { name: 'Aufteilen' })).toHaveAttribute('href', `/belege/${belegIds.b3}/aufteilen`)
     expect(screen.queryByRole('button', { name: 'Bestätigen' })).not.toBeInTheDocument()
   })
 

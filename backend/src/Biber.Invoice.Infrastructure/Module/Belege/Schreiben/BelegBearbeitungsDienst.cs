@@ -5,6 +5,7 @@ using Biber.Invoice.Domain.Entitaeten;
 using Biber.Invoice.Domain.Enums;
 using Biber.Invoice.Domain.Pipeline;
 using Biber.Invoice.Infrastructure.Module.Korrespondenten;
+using Biber.Invoice.Infrastructure.Module.Positionen;
 using Biber.Invoice.Infrastructure.Persistenz;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -50,6 +51,7 @@ public sealed class BelegBearbeitungsDienst(
         var korrespondent = await PruefeAenderungAsync(aenderung, ct);
 
         var korrespondentGewechselt = aenderung.KorrespondentId != beleg.KorrespondentId;
+        var bisherigeArtikel = VerwaisteArtikel.Kandidaten(beleg.Positionen);
         var zuPruefen = await db.BelegTags.AnyAsync(t => t.BelegId == id && t.TagId == SystemIds.TagZuPruefen, ct);
         if (korrespondentGewechselt)
         {
@@ -121,6 +123,11 @@ public sealed class BelegBearbeitungsDienst(
             log.LogInformation("Ablage von Beleg {Beleg} verschoben: {Von} → {Nach}", id, v.Von, v.Nach);
         }
 
+        if (korrespondentGewechselt)
+        {
+            await VerwaisteArtikel.EntfernenAsync(db, bisherigeArtikel, ct);
+        }
+
         log.LogInformation("Beleg {Beleg} manuell korrigiert", id);
         return await abfrage.AbrufenAsync(id, ct);
     }
@@ -136,6 +143,7 @@ public sealed class BelegBearbeitungsDienst(
         PruefeAenderbar(beleg);
         PruefePositionen(positionen ?? []);
 
+        var bisherigeArtikel = VerwaisteArtikel.Kandidaten(beleg.Positionen);
         db.Positionen.RemoveRange(beleg.Positionen);
         beleg.Positionen = [.. (positionen ?? []).Select((p, i) => new Position
         {
@@ -154,6 +162,7 @@ public sealed class BelegBearbeitungsDienst(
         await ArtikelZuordnenAsync(beleg, ct);
         await pruefDienst.PruefenAsync(beleg, null, ct);
         await db.SaveChangesAsync(ct);
+        await VerwaisteArtikel.EntfernenAsync(db, bisherigeArtikel, ct);
         return await abfrage.AbrufenAsync(id, ct);
     }
 

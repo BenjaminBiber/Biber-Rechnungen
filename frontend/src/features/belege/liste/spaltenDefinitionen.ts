@@ -5,6 +5,7 @@ export type SpaltenSchluessel =
   | 'rechnungsnummer'
   | 'korrespondent'
   | 'titel'
+  | 'tags'
   | 'kategorie'
   | 'rechnungsdatum'
   | 'faelligkeit'
@@ -31,6 +32,7 @@ export const spaltenDefinitionen: SpaltenDefinition[] = [
   { schluessel: 'rechnungsnummer', label: 'Rechnungsnr.', sortierung: 'Rechnungsnummer' },
   { schluessel: 'korrespondent', label: 'Korrespondent', sortierung: 'Korrespondent', fest: true },
   { schluessel: 'titel', label: 'Titel', sortierung: 'Titel' },
+  { schluessel: 'tags', label: 'Tags' },
   { schluessel: 'kategorie', label: 'Kategorie', sortierung: 'Kategorie' },
   { schluessel: 'rechnungsdatum', label: 'Rechnungsdatum', sortierung: 'Rechnungsdatum' },
   { schluessel: 'faelligkeit', label: 'Fällig', sortierung: 'Faelligkeit' },
@@ -60,10 +62,24 @@ export function spaltenBereinigen(werte: readonly unknown[]): SpaltenSchluessel[
   return gueltig.includes('korrespondent') ? gueltig : ['korrespondent', ...gueltig]
 }
 
+/** Merker, dass gespeicherte Spaltenlisten die (neue) Tags-Spalte schon einmal angeboten bekommen haben. */
+const TAGS_MIGRIERT = 'belege.spalten.tags'
+
+/** Gespeicherte Listen von vor der Tags-Spalte bekommen sie einmalig hinter „Titel“ eingefügt. */
+function tagsNachruesten(werte: unknown[]): unknown[] {
+  if (window.localStorage.getItem(TAGS_MIGRIERT)) return werte
+  window.localStorage.setItem(TAGS_MIGRIERT, '1')
+  if (werte.includes('tags')) return werte
+  const i = werte.indexOf('titel')
+  const neu = i < 0 ? [...werte, 'tags'] : [...werte.slice(0, i + 1), 'tags', ...werte.slice(i + 1)]
+  window.localStorage.setItem(SPALTEN_SPEICHER, JSON.stringify(spaltenBereinigen(neu)))
+  return neu
+}
+
 function spaltenLesen(): SpaltenSchluessel[] {
   try {
     const roh: unknown = JSON.parse(window.localStorage.getItem(SPALTEN_SPEICHER) ?? 'null')
-    return Array.isArray(roh) ? spaltenBereinigen(roh) : standardSpalten
+    return Array.isArray(roh) ? spaltenBereinigen(tagsNachruesten(roh)) : standardSpalten
   } catch {
     return standardSpalten
   }

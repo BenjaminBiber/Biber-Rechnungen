@@ -32,6 +32,12 @@ describe('Mehr-Menü', () => {
     expect(screen.getByRole('menuitem', { name: /Löschen/ })).toHaveAttribute('aria-disabled', 'true')
   })
 
+  it('„Aufteilen …“ gibt es nur bei mehrseitigen PDFs und öffnet den Dialog', async () => {
+    const { nutzer, router } = await oeffneMenue(`/belege/${belegIds.b3}`, 'Autohaus Brenner GmbH')
+    await nutzer.click(screen.getByRole('menuitem', { name: /Aufteilen/ }))
+    await waitFor(() => expect(router.state.location.pathname).toBe(`/belege/${belegIds.b3}/aufteilen`))
+  })
+
   it('„Erneut auslesen“ stößt das Auslesen an', async () => {
     const { nutzer } = await oeffneMenue()
     await nutzer.click(screen.getByRole('menuitem', { name: /Erneut auslesen/ }))

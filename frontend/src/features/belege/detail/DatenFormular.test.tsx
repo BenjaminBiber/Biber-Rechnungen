@@ -26,6 +26,7 @@ describe('Tab „Daten“', () => {
     await oeffneDaten()
     expect(feld('Korrespondent')).toHaveTextContent('Bürowelt Krämer KG')
     expect(within(formular()).getByText('erkannt über USt-IdNr.')).toBeInTheDocument()
+    expect(feld('Titel')).toHaveValue('Büromaterial Bestellung')
     expect(feld('Belegart')).toHaveValue('Rechnung')
     expect(feld('Rechnungsnummer')).toHaveValue('2026-48817')
     expect(feld('Rechnungsdatum')).toHaveValue('19.11.2026')
@@ -96,6 +97,23 @@ describe('Tab „Daten“', () => {
     await waitFor(() => expect(speichern()).toBeDisabled())
     expect(feld('Kategorie')).toHaveTextContent('Hardware')
     expect(feld('Leistungsdatum / -zeitraum')).toHaveValue('01.11.2026 – 15.11.2026')
+  })
+
+  it('ändert den Titel; leer gespeichert überlässt er die Anzeige dem Server', async () => {
+    const { anfragen } = anfragenMitschneiden()
+    const { nutzer } = await oeffneDaten()
+    await nutzer.clear(feld('Titel'))
+    await nutzer.type(feld('Titel'), '  Toner und Papier ')
+    await nutzer.click(speichern())
+    expect(await screen.findByText('Gespeichert')).toBeInTheDocument()
+    await nutzer.clear(feld('Titel'))
+    await nutzer.click(speichern())
+
+    await waitFor(async () =>
+      expect(
+        (await anfragen()).filter((a) => a.methode === 'PUT').map((a) => (a.body as { titel: string }).titel),
+      ).toEqual(['Toner und Papier', '']),
+    )
   })
 
   it('lehnt ungültiges Datum und ungültigen Betrag ab', async () => {

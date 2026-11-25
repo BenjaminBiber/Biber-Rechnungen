@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { formatDatum } from '@/lib/format'
-import { original, xmlDatei } from './gemeinsam'
+import { istPdf, original, xmlDatei } from './gemeinsam'
 
 /**
  * Beleg-Aktionen neben „Bestätigen“ als geteilter Knopf: Hauptaktion „Original herunterladen“,
@@ -40,6 +40,7 @@ export function MehrMenue({
   const datei = original(beleg)
   const xml = xmlDatei(beleg)
   const geteilt = !!datei && !kompakt
+  const aufteilbar = istPdf(datei) && beleg.seitenanzahl > 1
 
   async function auslesen() {
     try {
@@ -140,6 +141,14 @@ export function MehrMenue({
           {darfBearbeiten && (
             <>
               <DropdownMenuSeparator />
+              {aufteilbar && (
+                <DropdownMenuItem
+                  onSelect={() => void navigate({ to: '/belege/$belegId/aufteilen', params: { belegId: beleg.id } })}
+                >
+                  <Icon name="call_split" />
+                  Aufteilen …
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onSelect={() => void navigate({ href: `/belege/${beleg.id}/dubletten?markieren=1` })}>
                 <Icon name="content_copy" />
                 Als Dublette markieren …

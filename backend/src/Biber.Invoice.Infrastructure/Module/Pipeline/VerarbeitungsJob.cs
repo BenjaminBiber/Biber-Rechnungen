@@ -2,6 +2,7 @@ using Biber.Invoice.Contracts.Dienste;
 using Biber.Invoice.Domain.Entitaeten;
 using Biber.Invoice.Domain.Enums;
 using Biber.Invoice.Domain.Pipeline;
+using Biber.Invoice.Infrastructure.Module.Positionen;
 using Biber.Invoice.Infrastructure.Persistenz;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
@@ -59,6 +60,7 @@ public sealed class VerarbeitungsJob(
         }
 
         var beleg = await BelegLadenOderAnlegenAsync(vorgang, ct);
+        var bisherigeArtikel = VerwaisteArtikel.Kandidaten(beleg.Positionen);
         var reihe = schritte.OrderBy(s => s.Reihenfolge).ToList();
         vorgang.Status = ImportStatus.InVerarbeitung;
         vorgang.NaechsterVersuchAm = null;
@@ -116,6 +118,7 @@ public sealed class VerarbeitungsJob(
                     }
 
                     await db.SaveChangesAsync(ct);
+                    await VerwaisteArtikel.EntfernenAsync(db, bisherigeArtikel, ct);
                     return;
 
                 case SchrittAusgang.SpaeterErneut:
@@ -141,6 +144,7 @@ public sealed class VerarbeitungsJob(
         vorgang.Fehler = null;
         vorgang.BeendetAm = zeit.GetUtcNow();
         await db.SaveChangesAsync(ct);
+        await VerwaisteArtikel.EntfernenAsync(db, bisherigeArtikel, ct);
     }
 
     /// <summary>Neuer Beleg zu einem Import-Vorgang (noch nicht gespeichert).</summary>

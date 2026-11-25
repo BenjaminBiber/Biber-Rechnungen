@@ -75,6 +75,44 @@ public sealed class DiPositionenTests
         Abbilden(item).Positionen.ShouldBe([new ExtrahiertePosition(1, "2 x Toner", 1m, null, null, 90.00m, null)]);
     }
 
+    [Fact]
+    public void Ohne_Description_kommt_die_Bezeichnung_aus_dem_Positionskopf_vor_dem_Seitenumbruch()
+    {
+        // Nachgebildet der CLAAS-Mietrechnung 6671476793: Kopf auf Seite 1, Betragszeile auf Seite 2.
+        const string volltext = "Pos.\nArtikelnummer\nBezeichnung\nU\nMenge ME\nEinzelpreis\nPE\nWert\n%\n"
+            + "aus Auftrag 2210665236 vom 25.11.2026\n0010\n0011977388\nAXION 870 CMATIC - Stage V CEBIS Claas Traktor\n"
+            + "Fahrgestellnummer\nA5107495\nBetriebsstunden\n327\nBaujahr\n01/2026\nGeschäftsführer: Bernhard Beer\n"
+            + "Hubraum\n6728 cm3\nAnzahl Zylinder\n6\n1 ZUGPENDEL MIT ZUGKUGEL\n";
+        const string inhalt = "7 ST\n37,00\n1 ST\n259,00\n19";
+        var item = Item(inhalt, "", 259.00);
+        var felder = item["valueObject"]!.AsObject();
+        felder.Remove("Description");
+        felder["Quantity"] = new JsonObject { ["type"] = "number", ["valueNumber"] = 7, ["content"] = "7" };
+        felder["Unit"] = new JsonObject { ["type"] = "string", ["valueString"] = "ST", ["content"] = "ST" };
+        felder["UnitPrice"] = new JsonObject
+        {
+            ["type"] = "currency",
+            ["valueCurrency"] = new JsonObject { ["amount"] = 37.0, ["currencyCode"] = "EUR" },
+            ["content"] = "37,00",
+        };
+        item["spans"] = new JsonArray(new JsonObject { ["offset"] = volltext.Length, ["length"] = inhalt.Length });
+
+        var e = AbbildenMitVolltext(volltext + inhalt, item);
+
+        e.Positionen.ShouldBe(
+            [new ExtrahiertePosition(1, "AXION 870 CMATIC - Stage V CEBIS Claas Traktor", 7m, "ST", 37.00m, 259.00m, null)]);
+    }
+
+    [Fact]
+    public void Ohne_Description_und_ohne_Positionskopf_bleibt_der_Inhalt_der_Text()
+    {
+        var item = Item("Pauschale\n12,00", "", 12.00);
+        item["valueObject"]!.AsObject().Remove("Description");
+        item["spans"] = new JsonArray(new JsonObject { ["offset"] = 9, ["length"] = 15 });
+
+        AbbildenMitVolltext("Rechnung\nPauschale\n12,00", item).Positionen.ShouldHaveSingleItem().Text.ShouldBe("Pauschale\n12,00");
+    }
+
     private static JsonObject Item(string inhalt, string beschreibung, double betrag) => new()
     {
         ["type"] = "object",
@@ -91,9 +129,16 @@ public sealed class DiPositionenTests
         },
     };
 
-    private static ExtraktionsErgebnis Abbilden(params JsonObject[] items)
+    private static ExtraktionsErgebnis Abbilden(params JsonObject[] items) => AbbildenMitVolltext(null, items);
+
+    private static ExtraktionsErgebnis AbbildenMitVolltext(string? volltext, params JsonObject[] items)
     {
         var json = JsonNode.Parse(AzureNachbildung.Antwort)!["analyzeResult"]!;
+        if (volltext is not null)
+        {
+            json["content"] = volltext;
+        }
+
         json["documents"]![0]!["fields"]!["Items"] = new JsonObject
         {
             ["type"] = "array",

@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { formatDatumZeit, formatZahl } from '@/lib/format'
 import { parseBetrag, parseSatz, seitenText, steuerStimmt } from './gemeinsam'
-import { ausBeleg, gleich, pruefen, serverFehler, zuDto, type FeldFehler, type Formular } from './formular'
+import { ausBeleg, gleich, MAX_TITEL, pruefen, serverFehler, zuDto, type FeldFehler, type Formular } from './formular'
 
 const belegarten: Belegart[] = ['Rechnung', 'Gutschrift', 'Quittung']
 
@@ -136,7 +136,7 @@ export function DatenFormular({
       return
     }
     try {
-      const neu = await aendern.mutateAsync({ id: beleg.id, ...zuDto(werte, beleg.titel) })
+      const neu = await aendern.mutateAsync({ id: beleg.id, ...zuDto(werte) })
       queryClient.setQueryData(belegeKeys.detail(beleg.id), neu)
       setEntwurf(null)
       setFehler({})
@@ -188,7 +188,10 @@ export function DatenFormular({
       : undefined
   const waehrungen = Array.from(new Set(['EUR', werte.waehrung]))
 
-  const eingabe = (feld: 'rechnungsnummer' | 'rechnungsdatum' | 'leistung' | 'faelligkeitsdatum', extra = '') => ({
+  const eingabe = (
+    feld: 'titel' | 'rechnungsnummer' | 'rechnungsdatum' | 'leistung' | 'faelligkeitsdatum',
+    extra = '',
+  ) => ({
     id: `${id}-${feld}`,
     className: `eingabe ${extra}`,
     value: werte[feld],
@@ -225,6 +228,14 @@ export function DatenFormular({
         if (geaendert) void speichern()
       }}
     >
+      <Feld
+        id={`${id}-titel`}
+        label="Titel"
+        hinweis={nurLesen ? undefined : 'Wird in der Übersicht angezeigt. Leer = Rechnungsnummer bzw. Korrespondent.'}
+        fehler={fehler.titel}
+      >
+        <input {...eingabe('titel')} maxLength={MAX_TITEL} />
+      </Feld>
       <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3.5">
         <Feld
           id={`${id}-korrespondent`}

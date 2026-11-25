@@ -115,7 +115,7 @@ public sealed partial class DocumentIntelligenceClient : IDocumentIntelligenceCl
             Steuer = Betrag(Feld(felder, "TotalTax")),
             Brutto = Betrag(Feld(felder, "InvoiceTotal")),
             Steuerzeilen = Steuerzeilen(Feld(felder, "TaxDetails")),
-            Positionen = Positionen(Feld(felder, "Items")),
+            Positionen = Positionen(Feld(felder, "Items"), ergebnis.Content ?? ""),
             Aussteller = Partei(
                 Text(Feld(felder, "VendorName")),
                 Feld(felder, "VendorAddress"),
@@ -185,18 +185,43 @@ public sealed partial class DocumentIntelligenceClient : IDocumentIntelligenceCl
                 Betrag(Feld(z, "NetAmount")) ?? 0m,
                 Betrag(Feld(z, "Amount")) ?? 0m))];
 
-    private static List<ExtrahiertePosition> Positionen(AzureDi.DocumentField? feld) =>
-        [.. (feld?.ValueList ?? [])
-            .SelectMany(p => Aufteilen(p) ?? [Position(p)])
-            .Select(MengeAusText)
-            .Select((p, i) => p with { Nr = i + 1 })];
+    private static List<ExtrahiertePosition> Positionen(AzureDi.DocumentField? feld, string volltext)
+    {
+        var positionen = new List<ExtrahiertePosition>();
+        var vorigesEnde = 0;
+        foreach (var item in feld?.ValueList ?? [])
+        {
+            var beginn = item.Spans?.Count > 0 ? Math.Min(item.Spans[0].Offset, volltext.Length) : -1;
+            var bezeichnung = Text(Feld(item.ValueDictionary, "Description"))
+                ?? (beginn > vorigesEnde ? BezeichnungVorItem(volltext[vorigesEnde..beginn]) : null);
+            positionen.AddRange(Aufteilen(item) ?? [Position(item, bezeichnung)]);
+            if (item.Spans?.Count > 0)
+            {
+                vorigesEnde = Math.Min(item.Spans[^1].Offset + item.Spans[^1].Length, volltext.Length);
+            }
+        }
 
-    private static ExtrahiertePosition Position(AzureDi.DocumentField p)
+        return [.. positionen.Select(MengeAusText).Select((p, i) => p with { Nr = i + 1 })];
+    }
+
+    /// <summary>
+    /// Erstreckt sich eine Position über einen Seitenumbruch, erkennt DI oft nur die Betragszeile auf der Folgeseite
+    /// als Item – ohne <c>Description</c>; der Inhalt ist dann nur „7 ST 37,00 1 ST 259,00 19“. Die Bezeichnung
+    /// steht davor im Volltext im Positionskopf „Pos.-Nr. / Artikelnummer / Bezeichnung“ (z. B. „0010 / 0011977388 /
+    /// AXION 870 …“); gesucht wird der letzte solche Kopf zwischen vorigem Item und diesem.
+    /// </summary>
+    private static string? BezeichnungVorItem(string abschnitt)
+    {
+        var treffer = PositionskopfMuster().Matches(abschnitt);
+        return treffer.Count == 0 ? null : treffer[^1].Groups["bezeichnung"].Value.Trim();
+    }
+
+    private static ExtrahiertePosition Position(AzureDi.DocumentField p, string? bezeichnung)
     {
         var felder = p.ValueDictionary;
         return new ExtrahiertePosition(
             0,
-            Text(Feld(felder, "Description")) ?? p.Content?.Trim() ?? "",
+            bezeichnung ?? p.Content?.Trim() ?? "",
             Zahl(Feld(felder, "Quantity")),
             Text(Feld(felder, "Unit")),
             Betrag(Feld(felder, "UnitPrice")),
@@ -278,6 +303,10 @@ public sealed partial class DocumentIntelligenceClient : IDocumentIntelligenceCl
 
     [GeneratedRegex(@"^-?\d{1,3}(?:[ .]?\d{3})*,\d{2}$")]
     private static partial Regex BetragszeileMuster();
+
+    /// <summary>Positionsnummer, Artikelnummer (mit Ziffer) und eine Bezeichnung mit Buchstaben – je eine Zeile.</summary>
+    [GeneratedRegex(@"^\d{1,6}\n(?=[^\n]*\d)[0-9A-Z][0-9A-Z./-]{3,}\n(?<bezeichnung>[^\n]*\p{L}{3}[^\n]*)$", RegexOptions.Multiline)]
+    private static partial Regex PositionskopfMuster();
 
     [GeneratedRegex(@"^\d{1,2}\.\d{1,2}\.\d{2,4}$")]
     private static partial Regex DatumszeileMuster();

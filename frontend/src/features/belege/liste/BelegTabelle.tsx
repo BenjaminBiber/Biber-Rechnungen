@@ -26,13 +26,23 @@ function zelle(schluessel: SpaltenSchluessel, beleg: BelegListeneintrag): { inha
     case 'titel':
       return {
         inhalt: (
-          <span className="flex min-w-[160px] flex-wrap items-center gap-1.5">
-            <Link to="/belege/$belegId" params={{ belegId: beleg.id }} className="font-medium underline">
-              {beleg.titel}
-            </Link>
-            <TagChips tags={beleg.tags} />
-          </span>
+          <Link to="/belege/$belegId" params={{ belegId: beleg.id }} className="font-medium underline">
+            {beleg.titel}
+          </Link>
         ),
+        className: 'min-w-[160px]',
+      }
+    case 'tags':
+      return {
+        inhalt:
+          beleg.tags.length > 0 ? (
+            <span className="flex flex-wrap items-center gap-1">
+              <TagChips tags={beleg.tags} />
+            </span>
+          ) : (
+            '–'
+          ),
+        className: 'min-w-[90px]',
       }
     case 'kategorie':
       return { inhalt: beleg.kategorie?.name ?? '–', className: 'min-w-[100px] min-[1760px]:whitespace-nowrap' }

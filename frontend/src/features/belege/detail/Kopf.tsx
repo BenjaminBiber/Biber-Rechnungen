@@ -1,10 +1,9 @@
-import { Link } from '@tanstack/react-router'
 import type { BelegDetail, BelegeAbfrage } from '@/api/typen'
 import { Chip, type ChipTon } from '@/components/Chip'
 import { Icon } from '@/components/Icon'
 import { KorrespondentLogo } from '@/components/KorrespondentLogo'
 import { BestaetigenDialog } from './BestaetigenDialog'
-import { istPdf, istZuPruefen, original } from './gemeinsam'
+import { istZuPruefen } from './gemeinsam'
 import { MehrMenue } from './MehrMenue'
 import { Blaettern, ZurueckKnopf } from './Navigation'
 
@@ -21,8 +20,6 @@ export function Kopf({
   /** Gesetzt, solange das Original-Panel geschlossen ist: blendet es wieder ein. */
   onOriginalZeigen?: () => void
 }) {
-  const aufteilbar = istPdf(original(beleg)) && beleg.seitenanzahl > 1
-
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
       <div className="flex min-w-0 flex-[1_1_320px] items-center gap-3">
@@ -59,12 +56,6 @@ export function Kopf({
             <Icon name="picture_as_pdf" />
             Original anzeigen
           </button>
-        )}
-        {darfBearbeiten && aufteilbar && (
-          <Link to="/belege/$belegId/aufteilen" params={{ belegId: beleg.id }} className="btn">
-            <Icon name="call_split" />
-            Aufteilen
-          </Link>
         )}
         <MehrMenue beleg={beleg} darfBearbeiten={darfBearbeiten} />
         {darfBearbeiten && istZuPruefen(beleg) && <BestaetigenDialog beleg={beleg} />}

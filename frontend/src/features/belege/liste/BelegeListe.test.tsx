@@ -318,11 +318,13 @@ describe('Belegliste', () => {
     await waitFor(() => expect(within(tabellenzeilen()[0]).getByText('534,00 €')).toBeInTheDocument())
   })
 
-  it('jede Standardspalte ist sortierbar; Titel aufsteigend, Seiten nach zwei Klicks absteigend', async () => {
+  it('jede Standardspalte außer Tags ist sortierbar; Titel aufsteigend, Seiten nach zwei Klicks absteigend', async () => {
     const { nutzer, letzte } = renderBelege()
     await tabelleGeladen()
     const koepfe = screen.getAllByRole('columnheader').slice(1, -1)
-    koepfe.forEach((kopf) => expect(kopf).toHaveAttribute('aria-sort'))
+    const tags = koepfe.find((kopf) => kopf.textContent === 'Tags')
+    expect(tags).not.toHaveAttribute('aria-sort')
+    koepfe.filter((kopf) => kopf !== tags).forEach((kopf) => expect(kopf).toHaveAttribute('aria-sort'))
 
     await nutzer.click(screen.getByRole('button', { name: 'Titel sortieren' }))
     await waitFor(() => expect(letzte().get('sortierung')).toBe('Titel'))
