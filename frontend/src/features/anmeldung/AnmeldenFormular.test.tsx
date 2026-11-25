@@ -11,7 +11,7 @@ async function anmelden(email: string, passwort: string, pfad?: string) {
   const app = renderAnmeldung(pfad)
   await app.user.type(await screen.findByLabelText('E-Mail-Adresse'), email)
   await app.user.type(screen.getByLabelText('Passwort'), passwort)
-  await app.user.click(screen.getByRole('button', { name: 'Weiter' }))
+  await app.user.click(screen.getByRole('button', { name: 'Anmelden' }))
   return app
 }
 
@@ -63,7 +63,7 @@ describe('AnmeldenFormular', () => {
   it('„Vergessen?“ zeigt den Hinweis auf den Admin', async () => {
     szenario.abgemeldet()
     const { user } = renderAnmeldung()
-    await user.click(await screen.findByRole('button', { name: 'Vergessen?' }))
+    await user.click(await screen.findByRole('button', { name: 'Passwort vergessen?' }))
     expect(screen.getByText(/Wende dich an einen Admin/)).toBeInTheDocument()
   })
 
@@ -74,7 +74,7 @@ describe('AnmeldenFormular', () => {
       'href',
       '/api/auth/google/start',
     )
-    expect(screen.getByRole('button', { name: 'Registrieren' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Konto erstellen' })).toBeInTheDocument()
   })
 
   it('blendet Google und Registrieren aus, wenn beides aus ist', async () => {
@@ -84,7 +84,7 @@ describe('AnmeldenFormular', () => {
     renderAnmeldung()
     await screen.findByRole('heading', { name: 'Anmelden' })
     expect(screen.queryByRole('link', { name: 'Mit Google anmelden' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Registrieren' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: 'Konto erstellen' })).not.toBeInTheDocument()
   })
 
   it('fehler=google-unbekannt zeigt die Meldung', async () => {

@@ -1,7 +1,7 @@
 # UI-Design (Quelltext)
 
 Kopie des Design-Canvas „Biber-Rechnungen – UI-Design“
-(<https://claude.ai/artifact/MshU1GCVcMfsi5g5NN45dY>), Stand 2026-11-24.
+(<https://claude.ai/artifact/MshU1GCVcMfsi5g5NN45dY>), Stand 2026-11-25.
 Das Design ist maßgeblich für alle Views. Die Dateien sind **Vorlage, kein Produktivcode**:
 Sie werden gelesen, nicht eingebunden.
 
@@ -29,11 +29,14 @@ Die Werte der Platzhalter und die **Beispieldaten** stehen unten in `renderVals(
 | `Menues.dc.html` | alle Menüs und Popover (Befehlspalette, Benutzermenü, Glocke, Zeilenmenü, Auswahl-Popover, Filter) |
 | `Dialoge.dc.html` | alle Dialoge und Toasts |
 | `MobilDashboard.dc.html`, `MobilBelege.dc.html`, `MobilBelegDetail.dc.html`, `MobilUpload.dc.html` | Mobil (PWA), 390 px |
-| `Sidebar.dc.html`, `Topbar.dc.html`, `MobilNav.dc.html` | Bausteine: Seitenleiste, Kopfleiste, Bottom-Navigation |
+| `Sidebar.dc.html`, `SidebarEingeklappt.dc.html`, `Topbar.dc.html`, `MobilNav.dc.html` | Bausteine: Seitenleiste (ausgeklappt 240 px / eingeklappt 72 px), Kopfleiste, Bottom-Navigation |
+| `biber-rechnungen-logo.svg` | Biber-Logo (Quelle für `frontend/src/components/Logo.tsx`) |
 
 ## Look „Paperless-Indigo“
 
-- Akzent und Seitenleiste: Indigo `#2F2D86` (Hover `#24226B`, aktiver Eintrag `#45439A`), Arbeitsfläche `#F4F5F7`, Karten weiß mit Rand `#E3E6EB`, Radius 12 px.
+- Akzent: Indigo `#2F2D86` (Hover `#24226B`), Arbeitsfläche `#F4F5F7`, Karten weiß mit Rand `#E3E6EB`, Radius 12 px.
+- Seitenleiste und Marke: Schiefer-Indigo `#34334F` (Hover `#45445F`, aktiver Eintrag `#4A4968`, Gruppentitel `#ABAAC2`, Linie/Badge `#5C5B78`); einklappbar auf 72 px nur mit Icons.
+- Logo: Biber-Umriss in Weiß auf der Seitenleiste bzw. in `#34334F` im mobilen Kopf. Anmeldung: Bürofoto (`frontend/src/assets/anmeldung-buero.webp`, im Design ein Upload `/_blob/…`) mit Logo-Fahne links, Formular rechts in 560 px.
 - Text `#151922`, gedämpft `#5E6676` / `#4A5262`, Linien `#EEF0F3`, Eingabefeld-Rand `#D5D9E0`.
 - Statusfarben, immer mit Text, nie nur Farbe:
   - Orange = zu prüfen: Fläche `#FDF0E3`, Text `#A44A06`

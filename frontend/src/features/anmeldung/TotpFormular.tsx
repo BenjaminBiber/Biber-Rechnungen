@@ -3,7 +3,7 @@ import { useRef, useState, type ClipboardEvent, type FormEvent, type KeyboardEve
 import { useTotp, useWiederherstellungscode } from '@/api/auth'
 import { Icon } from '@/components/Icon'
 import { Button } from '@/components/ui/button'
-import { Ankreuzfeld, Feld, Meldung, SchrittTitel, TextKnopf, allgemeinerFehler } from './gemeinsam'
+import { Ankreuzfeld, Feld, Meldung, SchrittTitel, TextKnopf, allgemeinerFehler, grosserKnopf } from './gemeinsam'
 
 const leer = ['', '', '', '', '', '']
 
@@ -82,14 +82,11 @@ export function TotpFormular() {
       <button
         type="button"
         onClick={() => void navigate({ to: '/anmelden', search: {} })}
-        className="flex cursor-pointer items-center gap-1 self-start border-0 bg-transparent p-0 text-sm font-medium text-gedaempft-stark"
+        className="btn h-[34px] gap-1 self-start pr-3 pl-2 text-[13px]"
       >
-        <Icon name="arrow_back" />
+        <Icon name="arrow_back" className="text-[18px] [vertical-align:0]" />
         Zurück
       </button>
-      <div className="flex h-[52px] w-[52px] items-center justify-center rounded-[14px] bg-blau-flaeche text-blau-text">
-        <Icon name="phonelink_lock" className="text-[28px] [vertical-align:0]" />
-      </div>
       <SchrittTitel
         titel="Bestätigungscode"
         text={
@@ -103,6 +100,7 @@ export function TotpFormular() {
       {mitCode ? (
         <Feld
           label="Wiederherstellungscode"
+          icon="key"
           autoComplete="off"
           spellCheck={false}
           className="font-mono"
@@ -112,7 +110,7 @@ export function TotpFormular() {
       ) : (
         <>
           <fieldset className="m-0 border-0 p-0">
-            <legend className="label mb-1.5 block">Code</legend>
+            <legend className="sr-only">Code</legend>
             <div className="flex justify-between gap-2">
               {ziffern.map((ziffer, i) => (
                 <input
@@ -129,7 +127,7 @@ export function TotpFormular() {
                   onPaste={(e) => beiEinfuegen(i, e)}
                   onKeyDown={(e) => beiTaste(i, e)}
                   onFocus={(e) => e.target.select()}
-                  className="eingabe h-[54px] w-[46px] min-w-0 text-center font-mono text-[22px] font-semibold"
+                  className="eingabe h-[54px] w-[46px] min-w-0 rounded-[10px] text-center font-mono text-[22px] font-semibold"
                 />
               ))}
             </div>
@@ -140,7 +138,7 @@ export function TotpFormular() {
       <Button
         type="submit"
         variant="primaer"
-        className="h-11 w-full text-[15px]"
+        className={grosserKnopf}
         disabled={totp.isPending || wiederherstellung.isPending}
       >
         Anmelden

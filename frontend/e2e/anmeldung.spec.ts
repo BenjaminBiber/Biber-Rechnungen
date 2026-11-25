@@ -11,7 +11,7 @@ test('abgemeldet: Anmelden mit TOTP führt zum Dashboard', async ({ page }) => {
   await expect(page).toHaveURL(/\/anmelden/)
   await page.getByLabel('E-Mail-Adresse').fill('m.keller@firma.de')
   await page.getByLabel('Passwort', { exact: true }).fill('biber-demo')
-  await page.getByRole('button', { name: 'Weiter' }).click()
+  await page.getByRole('button', { name: 'Anmelden' }).click()
 
   await expect(page.getByRole('heading', { name: 'Bestätigungscode' })).toBeVisible()
   await page.getByLabel('Ziffer 1').click()
@@ -36,10 +36,14 @@ test('angemeldet: /anmelden leitet nach /', async ({ page }) => {
   await expect(page).toHaveURL(/^http:\/\/[^/]+\/$/)
 })
 
-test('Indigo-Feld nur auf breiten Bildschirmen', async ({ page, isMobile }) => {
+test('Bürofoto mit Logo neben dem Formular, mobil als Band darüber', async ({ page, isMobile }) => {
   await mockSzenario(page, 'abgemeldet')
   await page.goto('/anmelden')
-  await expect(page.getByRole('heading', { name: 'Anmelden' })).toBeVisible()
-  if (isMobile) await expect(page.getByTestId('anmelde-feld')).toBeHidden()
-  else await expect(page.getByTestId('anmelde-feld')).toBeVisible()
+  await expect(page.getByRole('tab', { name: 'Anmelden', selected: true })).toBeVisible()
+  const foto = page.getByTestId('anmelde-feld')
+  await expect(foto).toBeVisible()
+  const fotoBox = await foto.boundingBox()
+  const formularBox = await page.getByLabel('E-Mail-Adresse').boundingBox()
+  if (isMobile) expect(fotoBox!.y + fotoBox!.height).toBeLessThanOrEqual(formularBox!.y)
+  else expect(fotoBox!.x + fotoBox!.width).toBeLessThanOrEqual(formularBox!.x)
 })

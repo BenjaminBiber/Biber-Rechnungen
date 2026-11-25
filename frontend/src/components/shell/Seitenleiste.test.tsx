@@ -1,4 +1,5 @@
 import { screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 import { server } from '@/mocks/server'
@@ -33,6 +34,23 @@ describe('Seitenleiste', () => {
     renderMitApp(<Seitenleiste />)
     const badge = await screen.findByLabelText(/in der Inbox$/)
     expect(badge).toHaveTextContent('12')
+  })
+
+  it('klappt auf Icons ein, zeigt dann Tooltips und merkt sich den Zustand', async () => {
+    localStorage.removeItem('seitenleiste-eingeklappt')
+    const user = userEvent.setup()
+    renderMitApp(<Seitenleiste />)
+    const knopf = await screen.findByRole('button', { name: 'Seitenleiste einklappen' })
+    expect(knopf).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByRole('link', { name: 'Export' })).not.toHaveAttribute('title')
+
+    await user.click(knopf)
+    expect(screen.getByRole('button', { name: 'Seitenleiste ausklappen' })).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.getByRole('link', { name: 'Export' })).toHaveAttribute('title', 'Export')
+    expect(localStorage.getItem('seitenleiste-eingeklappt')).toBe('true')
+
+    await user.click(screen.getByRole('button', { name: 'Seitenleiste ausklappen' }))
+    expect(localStorage.getItem('seitenleiste-eingeklappt')).toBe('false')
   })
 
   it('markiert den aktiven Eintrag über den Router', async () => {

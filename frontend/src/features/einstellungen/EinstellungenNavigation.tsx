@@ -86,56 +86,68 @@ function useChips(): Record<string, { text: string; ton: ChipTon } | 'benutzer' 
   }
 }
 
-/** Bereichsnavigation: ab 1024 px als Liste links, darunter als Auswahlliste über dem Inhalt. */
-export function EinstellungenNavigation() {
-  const chips = useChips()
+/** Bereichsauswahl unter 1024 px: Auswahlliste über dem Inhalt. */
+export function EinstellungenAuswahl() {
   const navigate = useNavigate()
   const pfadname = useRouterState({ select: (s) => s.location.pathname })
   const aktiv = pfadname.split('/')[2] ?? ''
 
   return (
-    <>
-      <label className="block lg:hidden">
-        <span className="label">Bereich</span>
-        <select
-          className="eingabe"
-          value={aktiv}
-          onChange={(e) => void navigate({ to: `/einstellungen/${e.target.value}` })}
-        >
-          {bereichsGruppen.map((g) => (
-            <optgroup key={g.label} label={g.label}>
-              {g.bereiche.map((b) => (
-                <option key={b.pfad} value={b.pfad}>
-                  {b.label}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
-      </label>
-      <nav aria-label="Einstellungsbereiche" className="hidden w-[240px] flex-none flex-col gap-3.5 lg:flex">
+    <label className="block lg:hidden">
+      <span className="label">Bereich</span>
+      <select
+        className="eingabe"
+        value={aktiv}
+        onChange={(e) => void navigate({ to: `/einstellungen/${e.target.value}` })}
+      >
         {bereichsGruppen.map((g) => (
-          <div key={g.label} role="group" aria-label={g.label} className="flex flex-col gap-0.5">
-            <span className="px-2.5 pb-1 text-[11px] font-semibold tracking-[0.08em] text-gedaempft uppercase">
-              {g.label}
-            </span>
-            {g.bereiche.map((b) => {
-              const chip = chips[b.pfad]
-              return (
-                <Link
-                  key={b.pfad}
-                  to={`/einstellungen/${b.pfad}`}
-                  className="flex h-[38px] items-center gap-2.5 rounded-lg px-2.5 text-sm font-medium text-text no-underline hover:bg-hover data-[status=active]:bg-blau-flaeche data-[status=active]:text-akzent-text"
-                >
-                  <Icon name={b.icon} />
-                  <span className="flex-1">{b.label}</span>
-                  {chip === 'benutzer' ? <WartendeKonten /> : chip && <Chip ton={chip.ton}>{chip.text}</Chip>}
-                </Link>
-              )
-            })}
-          </div>
+          <optgroup key={g.label} label={g.label}>
+            {g.bereiche.map((b) => (
+              <option key={b.pfad} value={b.pfad}>
+                {b.label}
+              </option>
+            ))}
+          </optgroup>
         ))}
-      </nav>
-    </>
+      </select>
+    </label>
+  )
+}
+
+/**
+ * Bereichsnavigation ab 1024 px (Einstellungen.dc.html): weiße Spalte zwischen Seitenleiste und Kopfleiste,
+ * über die volle Höhe, mit der Seitenüberschrift oben.
+ */
+export function EinstellungenNavigation() {
+  const chips = useChips()
+
+  return (
+    <nav
+      aria-label="Einstellungsbereiche"
+      className="flex min-w-[220px] flex-[0_1_264px] flex-col gap-[18px] border-r border-rand bg-karte px-3.5 py-7"
+    >
+      <h1 className="m-0 px-2.5 text-[22px] font-semibold text-text">Einstellungen</h1>
+      {bereichsGruppen.map((g) => (
+        <div key={g.label} role="group" aria-label={g.label} className="flex flex-col gap-0.5">
+          <span className="px-2.5 pb-1 text-[11px] font-semibold tracking-[0.08em] text-gedaempft uppercase">
+            {g.label}
+          </span>
+          {g.bereiche.map((b) => {
+            const chip = chips[b.pfad]
+            return (
+              <Link
+                key={b.pfad}
+                to={`/einstellungen/${b.pfad}`}
+                className="flex h-[38px] items-center gap-2.5 rounded-lg px-2.5 text-sm font-medium text-text no-underline hover:bg-hover data-[status=active]:bg-blau-flaeche data-[status=active]:text-akzent-text"
+              >
+                <Icon name={b.icon} />
+                <span className="flex-1">{b.label}</span>
+                {chip === 'benutzer' ? <WartendeKonten /> : chip && <Chip ton={chip.ton}>{chip.text}</Chip>}
+              </Link>
+            )
+          })}
+        </div>
+      ))}
+    </nav>
   )
 }

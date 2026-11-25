@@ -28,7 +28,7 @@ test('leeres System: Ersteinrichtung mit QR-Schlüssel, Abmelden, Anmelden mit P
   // Anmelden mit Passwort und Code aus der „Authenticator-App“.
   await page.getByLabel('E-Mail-Adresse').fill(ADMIN.email)
   await page.getByLabel('Passwort', { exact: true }).fill(ADMIN.passwort)
-  await page.getByRole('button', { name: 'Weiter' }).click()
+  await page.getByRole('button', { name: 'Anmelden' }).click()
   await expect(page.getByRole('heading', { name: 'Bestätigungscode' })).toBeVisible()
   const code = await frischerTotpCode(schluessel)
   await page.getByLabel('Ziffer 1').click()

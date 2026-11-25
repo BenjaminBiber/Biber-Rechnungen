@@ -46,18 +46,18 @@ test('offene Registrierung → zweites Konto wartet auf Freigabe → Admin gibt 
   const zweiter = await kontext.newPage()
   try {
     await zweiter.goto('/anmelden')
-    await zweiter.getByRole('button', { name: 'Registrieren' }).click()
+    await zweiter.getByRole('tab', { name: 'Konto erstellen' }).click()
     await zweiter.getByLabel('Name').fill(gast.name)
     await zweiter.getByLabel('E-Mail-Adresse').fill(gast.email)
     await zweiter.getByLabel('Passwort', { exact: true }).fill(gast.passwort)
-    await zweiter.getByRole('button', { name: 'Registrieren' }).click()
+    await zweiter.getByRole('button', { name: 'Konto erstellen' }).click()
     await expect(zweiter.getByRole('heading', { name: 'Konto wartet auf Freigabe' })).toBeVisible()
 
     // Anmelden vor der Freigabe → wieder der Hinweis.
     await zweiter.getByRole('button', { name: 'Zur Anmeldung' }).click()
     await zweiter.getByLabel('E-Mail-Adresse').fill(gast.email)
     await zweiter.getByLabel('Passwort', { exact: true }).fill(gast.passwort)
-    await zweiter.getByRole('button', { name: 'Weiter' }).click()
+    await zweiter.getByRole('button', { name: 'Anmelden' }).click()
     await expect(zweiter.getByRole('heading', { name: 'Konto wartet auf Freigabe' })).toBeVisible()
 
     // Admin gibt frei.
@@ -73,7 +73,7 @@ test('offene Registrierung → zweites Konto wartet auf Freigabe → Admin gibt 
     await zweiter.getByRole('button', { name: 'Zur Anmeldung' }).click()
     await zweiter.getByLabel('E-Mail-Adresse').fill(gast.email)
     await zweiter.getByLabel('Passwort', { exact: true }).fill(gast.passwort)
-    await zweiter.getByRole('button', { name: 'Weiter' }).click()
+    await zweiter.getByRole('button', { name: 'Anmelden' }).click()
     await expect(zweiter.getByRole('heading', { level: 1, name: 'Dashboard', exact: true })).toBeVisible()
 
     const belege = (await (await zweiter.request.get('/api/belege', { params: { seitengroesse: 50 } })).json()) as {

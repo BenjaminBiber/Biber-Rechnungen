@@ -1,6 +1,7 @@
 import { useNavigate } from '@tanstack/react-router'
 import { Icon } from '@/components/Icon'
 import { Button } from '@/components/ui/button'
+import { grosserKnopf } from './gemeinsam'
 
 /** Schritt „freigabe“: Konto ist angelegt, ein Admin muss es freigeben. */
 export function FreigabeHinweis({ email }: { email?: string }) {
@@ -16,7 +17,7 @@ export function FreigabeHinweis({ email }: { email?: string }) {
         {email ? ' ' : ''}wurde angelegt. Ein Admin wurde benachrichtigt und muss es freigeben, bevor du dich anmelden
         kannst.
       </p>
-      <Button className="h-11 w-full text-[15px]" onClick={() => void navigate({ to: '/anmelden', search: {} })}>
+      <Button className={grosserKnopf} onClick={() => void navigate({ to: '/anmelden', search: {} })}>
         Zur Anmeldung
       </Button>
     </div>

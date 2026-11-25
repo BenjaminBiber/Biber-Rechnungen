@@ -1,16 +1,17 @@
 import { useNavigate } from '@tanstack/react-router'
 import { useState, type FormEvent } from 'react'
-import { googleStartUrl, useAuthStatus, useRegistrieren } from '@/api/auth'
+import { useAuthStatus, useRegistrieren } from '@/api/auth'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { GoogleZeichen } from './AnmeldenFormular'
 import {
+  AnmeldeReiter,
   Feld,
+  GoogleKnopf,
   MINDEST_PASSWORT,
   Meldung,
-  SchrittTitel,
-  TextKnopf,
+  Trenner,
   allgemeinerFehler,
+  grosserKnopf,
   pruefeEmail,
   pruefeName,
   pruefePasswort,
@@ -77,46 +78,51 @@ export function RegistrierenFormular() {
   }
 
   return (
-    <form noValidate onSubmit={absenden} className="flex flex-col gap-4">
-      <SchrittTitel titel="Konto registrieren" text="Neue Konten sind gesperrt, bis ein Admin sie freigibt." />
-      {allgemeinerFehler(registrieren.error) && <Meldung>{allgemeinerFehler(registrieren.error)}</Meldung>}
-      <Feld
-        label="Name"
-        autoComplete="name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        fehler={fehler.name ?? serverFehler(registrieren.error, 'name')}
-      />
-      <Feld
-        label="E-Mail-Adresse"
-        type="email"
-        autoComplete="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        fehler={fehler.email ?? serverFehler(registrieren.error, 'email')}
-      />
-      <Feld
-        label="Passwort"
-        type="password"
-        autoComplete="new-password"
-        value={passwort}
-        onChange={(e) => setPasswort(e.target.value)}
-        fehler={fehler.passwort ?? serverFehler(registrieren.error, 'passwort')}
-        unterhalb={<StaerkeAnzeige passwort={passwort} />}
-      />
-      <Button type="submit" variant="primaer" className="h-11 w-full text-[15px]" disabled={registrieren.isPending}>
-        Registrieren
-      </Button>
-      {status?.googleAktiv && (
-        <a href={googleStartUrl()} className="btn h-11 w-full text-[15px] text-text no-underline">
-          <GoogleZeichen />
-          Mit Google registrieren
-        </a>
-      )}
-      <p className="m-0 text-center text-sm text-gedaempft-stark">
-        Schon registriert?{' '}
-        <TextKnopf onClick={() => void navigate({ to: '/anmelden', search: {} })}>Anmelden</TextKnopf>
-      </p>
-    </form>
+    <>
+      <AnmeldeReiter aktiv="registrieren" />
+      <form noValidate onSubmit={absenden} className="flex flex-col gap-4">
+        <h1 className="sr-only">Konto erstellen</h1>
+        <p className="m-0 mb-1 text-[15px] leading-relaxed text-gedaempft-stark">
+          Neue Konten sind gesperrt, bis ein Admin sie freigibt.
+        </p>
+        {allgemeinerFehler(registrieren.error) && <Meldung>{allgemeinerFehler(registrieren.error)}</Meldung>}
+        <Feld
+          label="Name"
+          icon="person"
+          autoComplete="name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          fehler={fehler.name ?? serverFehler(registrieren.error, 'name')}
+        />
+        <Feld
+          label="E-Mail-Adresse"
+          icon="alternate_email"
+          type="email"
+          autoComplete="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          fehler={fehler.email ?? serverFehler(registrieren.error, 'email')}
+        />
+        <Feld
+          label="Passwort"
+          icon="lock"
+          type="password"
+          autoComplete="new-password"
+          value={passwort}
+          onChange={(e) => setPasswort(e.target.value)}
+          fehler={fehler.passwort ?? serverFehler(registrieren.error, 'passwort')}
+          unterhalb={<StaerkeAnzeige passwort={passwort} />}
+        />
+        <Button type="submit" variant="primaer" className={grosserKnopf} disabled={registrieren.isPending}>
+          Konto erstellen
+        </Button>
+        {status?.googleAktiv && (
+          <>
+            <Trenner />
+            <GoogleKnopf>Mit Google registrieren</GoogleKnopf>
+          </>
+        )}
+      </form>
+    </>
   )
 }

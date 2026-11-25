@@ -1,45 +1,34 @@
 import type { ReactNode } from 'react'
-import { Icon } from '@/components/Icon'
+import bueroBild from '@/assets/anmeldung-buero.webp'
+import { Logo } from '@/components/Logo'
 
-const stichpunkte: Array<[icon: string, text: string]> = [
-  ['inbox', 'E-Mail, Scanner-Ordner und Upload in einer Pipeline'],
-  ['fact_check', 'Automatische Plausibilitätsprüfung inkl. E-Rechnung (KoSIT)'],
-  ['lock', 'GoBD-konforme Ablage: unveränderbar, protokolliert, 8 Jahre gesperrt'],
-]
-
-/** Zweispaltiges Layout der Anmeldung: Indigo-Feld (ab 1024 px) links, Formularkarte rechts. */
+/**
+ * Layout der Anmeldung (Login.dc.html): links das Bürofoto mit Logo-Fahne, rechts eine weiße Spalte
+ * von 560 px mit dem Formular. Unter 960 px rutscht das Foto als Band über das Formular.
+ */
 export function AnmeldeRahmen({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-screen font-sans text-text">
+    <div className="flex min-h-screen flex-wrap bg-karte font-sans text-text">
       <aside
         data-testid="anmelde-feld"
-        className="hidden flex-[1_1_420px] flex-col justify-between gap-10 bg-seitenleiste p-14 text-[#d7d6ee] lg:flex"
+        className="relative flex min-h-[240px] flex-[1_1_480px] flex-col justify-between overflow-hidden bg-seitenleiste bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${bueroBild})` }}
       >
-        <div className="flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-[11px] bg-karte text-[22px] font-bold text-akzent-text">
-            B
-          </span>
-          <span className="text-xl font-semibold text-white">Biber-Rechnungen</span>
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 backdrop-grayscale-[0.65]"
+          style={{
+            background:
+              'linear-gradient(180deg, rgba(52, 51, 79, 0.5) 0%, rgba(110, 112, 122, 0.18) 22%, rgba(110, 112, 122, 0.18) 100%)',
+          }}
+        />
+        <div className="relative flex items-center gap-3 self-start bg-seitenleiste py-7 pr-14 pl-6 whitespace-nowrap sm:py-10 sm:pr-[72px] sm:pl-14 [clip-path:polygon(0_0,100%_0,100%_calc(100%_-_40px),calc(100%_-_40px)_100%,0_100%)]">
+          <Logo className="h-8 w-[53px] text-white" />
+          <span className="text-[22px] font-semibold text-white">Biber-Rechnungen</span>
         </div>
-        <div className="max-w-[440px]">
-          <p className="m-0 mb-4 text-[34px] leading-tight font-semibold text-white">
-            Belege rein, sauber abgelegt, auffindbar.
-          </p>
-          <ul className="m-0 flex list-none flex-col gap-3.5 p-0 text-[15px] leading-normal">
-            {stichpunkte.map(([icon, text]) => (
-              <li key={icon} className="flex gap-2.5">
-                <Icon name={icon} className="text-[#b3b1f0]" />
-                {text}
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="text-[13px] text-[#aeadd8]">Nur im lokalen Netz erreichbar · {window.location.host}</div>
       </aside>
-      <main className="flex flex-[999_1_480px] items-center justify-center bg-flaeche px-6 py-12">
-        <div className="flex w-full max-w-[420px] flex-col gap-5 rounded-2xl border border-rand bg-karte p-9">
-          {children}
-        </div>
+      <main className="relative z-[1] flex min-w-0 flex-[1_1_100%] flex-col bg-karte px-6 pt-8 pb-8 sm:px-16 sm:pt-10 min-[961px]:flex-[0_0_560px]">
+        <div className="mx-auto flex w-full max-w-[432px] flex-1 flex-col justify-center gap-6">{children}</div>
       </main>
     </div>
   )

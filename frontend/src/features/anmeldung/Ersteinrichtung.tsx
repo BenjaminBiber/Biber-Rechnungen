@@ -8,6 +8,7 @@ import {
   Meldung,
   SchrittTitel,
   allgemeinerFehler,
+  grosserKnopf,
   pruefeEmail,
   pruefeName,
   pruefePasswort,
@@ -43,9 +44,6 @@ export function Ersteinrichtung() {
 
   return (
     <form noValidate onSubmit={absenden} className="flex flex-col gap-4">
-      <span className="inline-flex h-6 items-center self-start rounded-xl bg-blau-flaeche px-2.5 text-xs font-semibold text-blau-text">
-        Ersteinrichtung
-      </span>
       <SchrittTitel
         titel="Admin-Konto anlegen"
         text="Der erste Benutzer wird automatisch Admin. Danach richtest du die Zwei-Faktor-Anmeldung ein."
@@ -53,6 +51,7 @@ export function Ersteinrichtung() {
       {allgemeinerFehler(einrichten.error) && <Meldung>{allgemeinerFehler(einrichten.error)}</Meldung>}
       <Feld
         label="Name"
+        icon="person"
         autoComplete="name"
         value={name}
         onChange={(e) => setName(e.target.value)}
@@ -60,6 +59,7 @@ export function Ersteinrichtung() {
       />
       <Feld
         label="E-Mail-Adresse"
+        icon="alternate_email"
         type="email"
         autoComplete="email"
         value={email}
@@ -68,6 +68,7 @@ export function Ersteinrichtung() {
       />
       <Feld
         label="Passwort"
+        icon="lock"
         type="password"
         autoComplete="new-password"
         value={passwort}
@@ -101,7 +102,7 @@ export function Ersteinrichtung() {
       <Button
         type="submit"
         variant="primaer"
-        className="h-11 w-full text-[15px]"
+        className={grosserKnopf}
         disabled={einrichten.isPending || !vorschlag.data}
       >
         Konto anlegen und fortfahren

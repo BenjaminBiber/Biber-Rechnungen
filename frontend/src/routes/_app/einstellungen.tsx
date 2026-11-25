@@ -1,8 +1,12 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { Seitenkopf } from '@/components/Seitenkopf'
-import { EinstellungenNavigation } from '@/features/einstellungen/EinstellungenNavigation'
+import { EinstellungenAuswahl } from '@/features/einstellungen/EinstellungenNavigation'
 
-/** Layout der Einstellungen: Bereichsnavigation links, der gewählte Bereich als Karte rechts. */
+/**
+ * Layout der Einstellungen (Einstellungen.dc.html): der gewählte Bereich als Karte.
+ * Ab 1024 px steht die Bereichsnavigation samt Überschrift als eigene Spalte im App-Rahmen (`_app.tsx`),
+ * darunter gibt es Überschrift und Auswahlliste hier über der Karte.
+ */
 export const Route = createFileRoute('/_app/einstellungen')({
   component: EinstellungenLayout,
 })
@@ -10,13 +14,13 @@ export const Route = createFileRoute('/_app/einstellungen')({
 function EinstellungenLayout() {
   return (
     <main className="seite">
-      <Seitenkopf titel="Einstellungen" />
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-        <EinstellungenNavigation />
-        <section className="karte flex min-w-0 flex-1 flex-col gap-[18px] p-6">
-          <Outlet />
-        </section>
+      <div className="mb-6 lg:hidden">
+        <Seitenkopf titel="Einstellungen" />
+        <EinstellungenAuswahl />
       </div>
+      <section className="karte flex min-w-0 flex-col gap-[18px] p-6">
+        <Outlet />
+      </section>
     </main>
   )
 }

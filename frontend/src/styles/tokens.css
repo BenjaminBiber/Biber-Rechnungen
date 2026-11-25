@@ -14,7 +14,14 @@
   --color-akzent-zart: #f1f1f9;
   --color-akzent-text: #2f2d86;
   --color-auf-akzent: #ffffff;
-  --color-seitenleiste: #2f2d86;
+
+  /* Seitenleiste und Marke (Schiefer-Indigo, Sidebar.dc.html) */
+  --color-seitenleiste: #34334f;
+  --color-seitenleiste-hover: #45445f;
+  --color-seitenleiste-aktiv: #4a4968;
+  --color-seitenleiste-gedaempft: #abaac2;
+  --color-seitenleiste-linie: #5c5b78;
+  --color-marke: #34334f;
 
   /* Flächen und Linien */
   --color-flaeche: #f4f5f7;
@@ -80,7 +87,13 @@
   --color-akzent-zart: #22223a;
   --color-akzent-text: #a9a7f0;
   --color-auf-akzent: #ffffff;
-  --color-seitenleiste: #1b1a4a;
+
+  --color-seitenleiste: #1d1c2f;
+  --color-seitenleiste-hover: #2a2940;
+  --color-seitenleiste-aktiv: #36354f;
+  --color-seitenleiste-gedaempft: #a3a2bc;
+  --color-seitenleiste-linie: #47465f;
+  --color-marke: #c9c8e0;
 
   --color-flaeche: #0f1218;
   --color-karte: #171b23;

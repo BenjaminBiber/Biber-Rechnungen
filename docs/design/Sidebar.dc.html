@@ -9,42 +9,78 @@
 <x-dc>
 <helmet>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=Material+Symbols+Outlined&amp;display=block">
-<style>body{margin:0}</style>
+<style>
+body{margin:0}
+.sb{--ease:cubic-bezier(0.32,0.72,0,1);transition:width 320ms var(--ease)}
+.sb-item{transition:background-color 150ms ease}
+.sb-item:hover{background:#45445F}
+.sb-fade{transition:opacity 200ms ease,transform 320ms var(--ease)}
+.sb-badge{transition:top 320ms var(--ease),right 320ms var(--ease),transform 320ms var(--ease)}
+.sb-rot{transition:transform 320ms var(--ease)}
+.sb-line{transition:opacity 200ms ease}
+@media (prefers-reduced-motion: reduce){.sb,.sb-fade,.sb-badge,.sb-rot,.sb-line{transition:none}}
+</style>
 </helmet>
-<nav aria-label="Hauptnavigation" style="width: 100%; min-height: 100%; box-sizing: border-box; padding: 20px 14px; display: flex; flex-direction: column; gap: 22px; background: #2F2D86; font-family: 'IBM Plex Sans', sans-serif; color: #FFFFFF">
-  <a href="Main.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 4px 8px; text-decoration: none">
-    <span style="display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 9px; background: #FFFFFF; color: #2F2D86; font-weight: 700; font-size: 17px">B</span>
-    <span style="display: flex; flex-direction: column">
-      <span style="font-weight: 600; font-size: 15px; color: #FFFFFF; line-height: 1.2">Biber-Rechnungen</span>
-      <span style="font-size: 12px; color: #FFFFFF">Belegarchiv</span>
-    </span>
+<nav aria-label="Hauptnavigation" class="sb" style="width: {{ w }}px; min-height: 100%; box-sizing: border-box; padding: 20px 12px; display: flex; flex-direction: column; gap: 10px; overflow: hidden; background: #34334F; font-family: 'IBM Plex Sans', sans-serif; color: #FFFFFF">
+
+  <a href="Main.dc.html" aria-label="Biber-Rechnungen, zum Dashboard" title="{{ logoTip }}" style="display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 2px; text-decoration: none; white-space: nowrap; margin-bottom: 6px">
+    <svg viewBox="186 186 1166 701" width="44" height="26" aria-hidden="true" style="flex: none; display: block; color: #FFFFFF"><path fill="currentColor" fill-rule="evenodd" d="M592.795,876.250 C586.643,862.288 572.467,839.517 560.581,824.503 C550.369,811.603 531.293,792.553 518.162,782.140 C495.692,764.321 466.895,747.514 443.000,738.272 C431.203,733.709 432.002,733.463 430.564,742.106 C429.727,747.131 424.583,754.503 419.449,758.035 C411.374,763.591 406.526,764.167 371.228,763.767 C343.818,763.457 338.861,763.166 334.805,761.629 C329.439,759.595 322.100,753.516 319.047,748.576 C317.189,745.570 298.920,680.601 292.974,655.851 L290.655,646.203 L284.607,643.351 C251.631,627.804 227.271,596.416 221.923,562.583 L220.672,554.665 L212.510,546.583 C197.941,532.155 191.213,514.698 192.281,494.097 C193.120,477.908 198.983,464.137 212.969,445.500 C243.321,405.054 331.586,338.267 409.986,296.425 C479.386,259.387 543.813,240.000 597.500,240.002 C609.455,240.002 631.931,242.292 641.500,244.485 L647.500,245.860 L657.000,236.596 C688.272,206.100 726.846,190.489 766.500,192.280 C799.660,193.778 828.646,206.493 850.555,229.152 C867.229,246.397 876.664,264.010 881.472,286.866 C887.183,314.018 881.704,347.521 867.465,372.507 C865.009,376.816 863.000,380.417 863.000,380.509 C863.000,380.602 866.929,383.787 871.731,387.589 C890.181,402.193 910.660,425.041 922.496,444.228 C926.813,451.226 929.000,453.044 929.000,449.634 C929.000,446.932 942.310,421.646 948.884,411.859 C965.084,387.741 986.649,368.383 1012.133,355.083 C1031.740,344.851 1052.053,339.161 1076.500,337.055 C1091.874,335.730 1157.482,335.698 1174.641,337.007 C1196.940,338.708 1215.709,344.908 1230.488,355.454 C1236.447,359.706 1319.533,443.251 1329.487,455.000 C1335.647,462.270 1340.924,471.818 1343.260,479.921 C1345.556,487.882 1345.937,502.891 1344.063,511.500 C1342.267,519.748 1319.075,589.210 1306.334,624.500 C1270.435,723.934 1247.943,766.188 1210.051,805.378 C1170.241,846.551 1112.983,874.551 1057.576,879.938 C1050.232,880.652 972.642,881.000 820.770,881.000 L594.888,881.000 L592.795,876.250 Z M688.409,821.101 C778.957,771.312 838.310,704.521 866.669,620.500 C880.031,580.914 882.991,549.803 876.480,517.398 C865.862,464.555 832.186,422.289 781.745,398.500 C774.747,395.200 769.030,392.275 769.038,392.000 C769.047,391.725 771.929,390.216 775.443,388.647 C796.399,379.289 814.703,360.380 823.096,339.420 C832.067,317.016 830.474,291.762 818.865,272.350 C811.121,259.399 796.529,247.850 780.807,242.226 C774.120,239.835 772.141,239.608 757.500,239.556 C743.692,239.508 740.419,239.813 733.605,241.787 C706.556,249.621 682.215,269.093 666.135,295.761 C661.147,304.034 661.167,304.027 650.141,300.972 C642.295,298.798 634.347,295.161 629.496,291.525 C621.779,285.741 581.486,283.372 558.500,287.351 C514.024,295.049 456.907,317.722 400.500,350.071 C332.767,388.916 263.891,441.274 244.094,468.969 C233.518,483.765 233.727,496.736 244.628,502.102 C248.902,504.206 250.788,504.485 260.000,504.374 C276.025,504.182 289.357,499.775 311.000,487.517 C321.980,481.298 326.176,480.211 331.166,482.296 C336.071,484.346 338.426,489.579 337.683,496.778 C335.693,516.059 310.393,537.852 278.888,547.421 C268.409,550.604 266.620,552.306 266.772,558.949 C267.015,569.619 274.099,584.388 284.372,595.641 C304.494,617.682 337.739,628.639 376.214,625.911 C391.745,624.810 401.080,622.998 415.000,618.383 C438.974,610.434 460.888,597.398 479.102,580.252 L485.739,574.004 L486.338,577.697 C487.490,584.793 484.449,599.218 479.920,608.138 C473.675,620.441 457.191,635.620 442.402,642.686 L435.303,646.078 L434.652,658.196 C434.293,664.861 434.000,674.240 434.000,679.038 L434.000,687.762 L443.750,688.479 C511.506,693.457 574.213,720.335 616.470,762.511 C635.507,781.512 648.692,801.352 660.827,829.260 L662.897,834.021 L668.198,831.660 C671.114,830.361 680.209,825.610 688.409,821.101 Z M1054.500,821.980 C1102.301,816.653 1144.266,795.456 1177.349,759.929 C1203.840,731.482 1223.176,695.665 1248.032,629.000 C1266.143,580.427 1291.082,506.434 1292.696,496.483 L1293.262,493.000 L1247.757,493.000 C1198.974,493.000 1197.855,492.898 1190.940,487.808 C1189.215,486.538 1186.708,483.634 1185.367,481.352 C1181.184,474.234 1181.330,469.796 1186.496,447.000 C1193.514,416.030 1199.000,390.706 1199.000,389.277 C1199.000,387.249 1083.895,387.457 1071.248,389.509 C1031.986,395.876 1001.399,419.226 983.492,456.500 C981.114,461.450 975.571,475.850 971.174,488.500 C949.081,552.060 929.218,604.751 916.513,633.500 C883.314,708.618 838.427,767.097 774.658,818.309 L768.817,823.000 L907.158,822.992 C992.967,822.987 1048.918,822.603 1054.500,821.980 Z M945.121,739.831 C933.786,734.220 930.783,718.012 939.284,708.330 C946.092,700.576 939.558,701.044 1041.000,701.044 C1126.982,701.044 1131.700,701.136 1135.500,702.896 C1140.402,705.165 1144.388,709.288 1146.447,714.218 C1150.526,723.982 1145.706,735.379 1135.500,740.104 C1131.700,741.863 1126.943,741.957 1040.500,741.977 L949.500,741.998 L945.121,739.831 Z M397.077,729.077 L400.000,726.154 L400.000,688.946 L400.000,651.738 L396.250,652.398 C386.651,654.087 356.295,654.206 342.087,652.611 C334.160,651.721 327.535,651.132 327.365,651.302 C326.960,651.706 332.387,675.616 339.494,704.742 C344.416,724.912 345.503,728.250 347.718,729.992 C350.097,731.864 351.756,732.000 372.212,732.000 L394.154,732.000 L397.077,729.077 Z M980.500,657.793 C972.033,654.834 967.000,647.641 967.000,638.500 C967.000,629.849 970.847,623.716 979.000,619.367 C982.347,617.581 986.708,617.500 1079.000,617.500 L1175.500,617.500 L1179.956,620.000 C1185.891,623.330 1189.876,629.155 1190.641,635.619 C1191.757,645.037 1187.475,652.473 1178.541,656.633 L1173.500,658.980 L1078.500,658.911 C1014.977,658.865 982.506,658.495 980.500,657.793 Z M1012.764,575.004 C1005.129,572.705 1000.233,567.449 998.037,559.192 C995.587,549.979 1001.997,539.026 1011.876,535.543 C1015.704,534.193 1028.285,534.001 1112.376,534.010 L1208.500,534.020 L1213.617,536.402 C1226.674,542.482 1229.645,557.921 1219.811,568.589 C1212.636,576.373 1218.038,576.011 1110.568,575.914 C1058.281,575.867 1014.269,575.457 1012.764,575.004 Z M487.079,456.416 C480.835,454.147 476.096,450.956 471.632,446.014 C466.030,439.814 463.721,433.903 463.227,424.500 C462.667,413.848 465.136,407.127 472.553,399.116 C480.104,390.960 487.688,387.581 498.500,387.555 C505.407,387.538 507.409,387.963 513.151,390.669 C520.984,394.359 526.858,399.893 530.715,407.216 C533.222,411.974 533.499,413.495 533.499,422.500 C533.500,431.092 533.155,433.204 531.046,437.500 C524.940,449.943 513.751,457.105 499.500,457.693 C493.938,457.922 490.153,457.533 487.079,456.416 Z"></path></svg>
+    <span class="sb-fade" style="font-weight: 600; font-size: 15px; color: #FFFFFF; opacity: {{ textOp }}; transform: translateX({{ textX }}px); transition-delay: {{ textDelay }}">Biber-Rechnungen</span>
   </a>
+
   <sc-for list="{{ groups }}" as="g" hint-placeholder-count="4">
-    <div style="display: flex; flex-direction: column; gap: 2px">
-      <div style="padding: 0 12px 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #A9A8D6">{{ g.label }}</div>
+    <div role="group" aria-label="{{ g.label }}" style="display: flex; flex-direction: column; gap: 2px">
+      <div aria-hidden="true" style="position: relative; height: 26px; white-space: nowrap">
+        <span class="sb-fade" style="position: absolute; left: 13px; bottom: 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #ABAAC2; opacity: {{ textOp }}; transform: translateX({{ textX }}px); transition-delay: {{ textDelay }}">{{ g.label }}</span>
+        <span class="sb-line" style="position: absolute; left: 4px; width: 40px; top: 12px; height: 1px; background: #5C5B78; opacity: {{ lineOp }}"></span>
+      </div>
       <sc-for list="{{ g.items }}" as="item" hint-placeholder-count="3">
-        <a href="{{ item.href }}" style="display: flex; align-items: center; gap: 12px; height: 40px; padding: 0 12px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 500; background: {{ item.bg }}; color: {{ item.fg }}">
-          <span class="material-symbols-outlined" aria-hidden="true" style="font-size: 20px">{{ item.icon }}</span>
-          <span style="flex: 1; color: #FFFFFF">{{ item.label }}</span>
+        <a href="{{ item.href }}" class="sb-item" aria-label="{{ item.aria }}" title="{{ item.tip }}" aria-current="{{ item.cur }}" style="position: relative; display: flex; align-items: center; gap: 14px; height: 42px; padding: 0 0 0 13px; border-radius: 9px; text-decoration: none; white-space: nowrap; font-size: 14px; font-weight: 500; background: {{ item.bg }}; color: #FFFFFF">
+          <span class="material-symbols-outlined" aria-hidden="true" style="flex: none; width: 22px; font-size: 22px">{{ item.icon }}</span>
+          <span class="sb-fade" style="opacity: {{ textOp }}; transform: translateX({{ textX }}px); transition-delay: {{ textDelay }}">{{ item.label }}</span>
           <sc-if value="{{ item.hasBadge }}" hint-placeholder-val="{{ false }}">
-            <span style="min-width: 22px; height: 20px; padding: 0 6px; box-sizing: border-box; border-radius: 10px; background: #5654A8; color: #FFFFFF; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">{{ item.badge }}</span>
+            <span aria-hidden="true" class="sb-badge" style="position: absolute; top: {{ badgeTop }}px; right: {{ badgeRight }}px; transform: scale({{ badgeScale }}); transform-origin: top right; min-width: 22px; height: 20px; padding: 0 6px; box-sizing: border-box; border-radius: 10px; background: #5C5B78; color: #FFFFFF; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">{{ item.badge }}</span>
           </sc-if>
         </a>
       </sc-for>
     </div>
   </sc-for>
+
+  <span style="flex: 1"></span>
+  <button type="button" class="sb-item" onClick="{{ toggle }}" aria-expanded="{{ expanded }}" aria-label="{{ toggleLabel }}" title="{{ toggleTip }}" style="display: flex; align-items: center; gap: 14px; height: 42px; padding: 0 0 0 13px; border: 0; border-radius: 9px; background: transparent; color: #ABAAC2; font: 500 14px 'IBM Plex Sans', sans-serif; text-align: left; white-space: nowrap; cursor: pointer">
+    <span class="material-symbols-outlined sb-rot" aria-hidden="true" style="flex: none; width: 22px; font-size: 22px; transform: rotate({{ rot }}deg)">keyboard_double_arrow_left</span>
+    <span class="sb-fade" style="opacity: {{ textOp }}; transform: translateX({{ textX }}px); transition-delay: {{ textDelay }}">Einklappen</span>
+  </button>
 </nav>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"active":{"editor":"enum","options":["dashboard","belege","upload","korrespondenten","artikel","tags","export","einstellungen"],"default":"dashboard"},"$preview":{"width":240,"height":940}}'>
+<script type="text/x-dc" data-dc-script data-props='{"active":{"editor":"enum","options":["dashboard","belege","upload","korrespondenten","artikel","tags","export","einstellungen"],"default":"dashboard"},"eingeklappt":{"editor":"boolean","default":false},"$preview":{"width":240,"height":940}}'>
 class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { closed: null }; }
   renderVals() {
     const a = this.props.active ?? 'dashboard';
+    const closed = this.state.closed ?? (this.props.eingeklappt === true || this.props.eingeklappt === 'true');
     const it = (id, icon, label, href, badge) => ({
-      id, icon, label, href, badge: badge || '', hasBadge: !!badge,
-      bg: id === a ? '#45439A' : 'transparent',
-      fg: id === a ? '#FFFFFF' : '#FFFFFF'
+      icon, label, href, badge: badge || '', hasBadge: !!badge,
+      aria: label + (badge ? ', ' + badge + ' neu' : ''),
+      tip: closed ? label : '',
+      cur: id === a ? 'page' : 'false',
+      bg: id === a ? '#4A4968' : 'transparent'
     });
     return {
+      w: closed ? 72 : 240,
+      textOp: closed ? 0 : 1,
+      textX: closed ? -8 : 0,
+      textDelay: closed ? '0ms' : '120ms',
+      lineOp: closed ? 1 : 0,
+      badgeTop: closed ? 3 : 11,
+      badgeRight: closed ? 1 : 10,
+      badgeScale: closed ? 0.82 : 1,
+      rot: closed ? 180 : 0,
+      expanded: closed ? 'false' : 'true',
+      toggleLabel: closed ? 'Seitenleiste ausklappen' : 'Seitenleiste einklappen',
+      toggleTip: closed ? 'Ausklappen' : '',
+      logoTip: closed ? 'Biber-Rechnungen' : '',
+      toggle: () => this.setState({ closed: !closed }),
       groups: [
         { label: 'Übersicht', items: [
           it('dashboard', 'space_dashboard', 'Dashboard', 'Main.dc.html'),

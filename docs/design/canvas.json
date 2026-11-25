@@ -220,6 +220,15 @@
       "w": 1920,
       "x": 2000,
       "y": 1680
+    },
+    "SidebarEingeklappt.dc.html": {
+      "h": 940,
+      "is_interactive": true,
+      "page": "bausteine",
+      "title": "Seitenleiste eingeklappt (nur Icons)",
+      "w": 72,
+      "x": 1600,
+      "y": 0
     }
   },
   "createdOnFiles": {
@@ -275,7 +284,7 @@
     },
     "t_bau": {
       "kind": "title1",
-      "maxW": 1520,
+      "maxW": 1680,
       "page": "bausteine",
       "text": "Bausteine",
       "w": 240,
@@ -323,6 +332,7 @@
     "MobilBelegDetail.dc.html",
     "MobilUpload.dc.html",
     "Sidebar.dc.html",
+    "SidebarEingeklappt.dc.html",
     "Topbar.dc.html",
     "MobilNav.dc.html"
   ],

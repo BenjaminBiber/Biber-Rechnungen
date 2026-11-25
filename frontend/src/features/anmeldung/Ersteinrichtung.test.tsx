@@ -10,7 +10,6 @@ describe('Ersteinrichtung', () => {
     renderAnmeldung()
     expect(await screen.findByRole('img', { name: 'QR-Code für die Authenticator-App' })).toBeInTheDocument()
     expect(screen.getByTestId('totp-schluessel')).toHaveTextContent('JBSW Y3DP EHPK 3PXP')
-    expect(screen.getByText('Ersteinrichtung')).toBeInTheDocument()
   })
 
   it('legt den Admin an und führt zum Dashboard', async () => {
