@@ -1,8 +1,17 @@
-# Override für lokale Tests und CI: Pfade als benannte Volumes statt Bind-Mounts,
-# damit kein Host-Verzeichnis nötig ist.
+# Override für lokale Tests und CI: Images aus dem Quellcode statt von Docker Hub (eigene Tags, damit die
+# veröffentlichten nicht überschrieben werden), Pfade als benannte Volumes statt Bind-Mounts,
+# damit kein Host-Verzeichnis nötig ist. Pfade relativ zum Repo-Hauptordner (Ordner der ersten Datei).
 #   docker compose --env-file .env.test -f docker-compose.yml -f docker/compose.test.yml up -d --build --wait
 services:
   api:
+    image: biber-rechnungen-api:test
+    pull_policy: build
+    build:
+      context: .
+      dockerfile: backend/src/Biber.Invoice.Api/Dockerfile
+      args:
+        APP_UID: ${APP_UID:-1000}
+        APP_GID: ${APP_GID:-1000}
     volumes: !override
       - eingang:/srv/rechnungen/eingang
       - staging:/srv/rechnungen/staging
@@ -11,7 +20,15 @@ services:
       - backup:/srv/rechnungen/backup:ro
       - ./docs/verfahrensdokumentation:/app/verfahrensdokumentation:ro
 
+  kosit:
+    image: biber-rechnungen-kosit:test
+    pull_policy: build
+    build: ./docker/kosit
+
   db-backup:
+    image: biber-rechnungen-db-backup:test
+    pull_policy: build
+    build: ./docker/db-backup
     volumes: !override
       - backup:/backup
 

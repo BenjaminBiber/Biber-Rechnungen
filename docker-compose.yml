@@ -17,12 +17,9 @@ services:
       retries: 20
 
   api:
-    build:
-      context: .
-      dockerfile: backend/src/Biber.Invoice.Api/Dockerfile
-      args:
-        APP_UID: ${APP_UID:-1000}
-        APP_GID: ${APP_GID:-1000}
+    image: benjaminbiber/biber-rechnungen-api:${BIBER_VERSION:-latest}
+    # Das Image läuft als 1000:1000; abweichende Besitzer der Host-Verzeichnisse über APP_UID/APP_GID.
+    user: "${APP_UID:-1000}:${APP_GID:-1000}"
     restart: unless-stopped
     depends_on:
       postgres:
@@ -54,13 +51,13 @@ services:
       - intern
 
   kosit:
-    build: ./docker/kosit
+    image: benjaminbiber/biber-rechnungen-kosit:${BIBER_VERSION:-latest}
     restart: unless-stopped
     networks:
       - intern
 
   db-backup:
-    build: ./docker/db-backup
+    image: benjaminbiber/biber-rechnungen-db-backup:${BIBER_VERSION:-latest}
     restart: unless-stopped
     depends_on:
       postgres:

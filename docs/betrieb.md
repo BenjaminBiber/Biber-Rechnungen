@@ -47,6 +47,7 @@ cp .env.example .env
 | `POSTGRES_USER` | Datenbankbenutzer | `rechnungen` | nein |
 | `POSTGRES_PASSWORD` | Datenbankpasswort, **unbedingt ändern** | langes Zufallspasswort | nein |
 | `POSTGRES_DB` | Datenbankname | `rechnungen` | nein |
+| `BIBER_VERSION` | Version der Images `benjaminbiber/biber-rechnungen-*` von Docker Hub | `0.1.0` | ja (Standard `latest`) |
 | `PFAD_EINGANG` | Host-Pfad des Eingangsordners | `/srv/rechnungen/eingang` | nein |
 | `PFAD_STAGING` | Host-Pfad der Zwischenablage | `/srv/rechnungen/staging` | nein |
 | `PFAD_ABLAGE` | Host-Pfad der Belegablage | `/srv/rechnungen/ablage` | nein |
@@ -133,7 +134,7 @@ claude mcp add --transport http biber-rechnungen https://rechnungen.<domain>/mcp
 
 - Der Dienst `db-backup` schreibt jede Nacht um 02:00 Uhr einen `pg_dump` nach `PFAD_BACKUP` (`biber-rechnungen_<yyyyMMdd-HHmmss>.dump`) und löscht Dumps, die älter als 30 Tage sind. Details: [`docker/db-backup/README.md`](../docker/db-backup/README.md).
 - **Der Backup-Ordner (`PFAD_BACKUP`) und die Ablage (`PFAD_ABLAGE`) müssen vom vorhandenen Host-Backup auf ein anderes Gerät gesichert werden (P3).** Ohne diese Sicherung ist die Aufbewahrung bei einem Hardwaredefekt nicht gewährleistet. Empfohlen zusätzlich: `PFAD_DATEN` (ML-Modelle, Schlüssel).
-- Der Schlüsselbund für Anmelde-Cookies und Links (Passwort zurücksetzen, Bestätigungen) liegt unter `PFAD_DATEN/schluessel` und gehört zur Sicherung von `PFAD_DATEN`. Er übersteht `docker compose up -d --build`. Fehlt er (z. B. nach dem Löschen von `PFAD_DATEN`), legt die Anwendung beim Start einen neuen an: Alle müssen sich neu anmelden und offene Links verfallen, Daten gehen dabei nicht verloren. Das Log warnt „No XML encryptor configured“; das ist erwartet, der Ordner ist durch die Dateirechte (`APP_UID`) geschützt.
+- Der Schlüsselbund für Anmelde-Cookies und Links (Passwort zurücksetzen, Bestätigungen) liegt unter `PFAD_DATEN/schluessel` und gehört zur Sicherung von `PFAD_DATEN`. Er übersteht Updates (`docker compose pull && docker compose up -d`). Fehlt er (z. B. nach dem Löschen von `PFAD_DATEN`), legt die Anwendung beim Start einen neuen an: Alle müssen sich neu anmelden und offene Links verfallen, Daten gehen dabei nicht verloren. Das Log warnt „No XML encryptor configured“; das ist erwartet, der Ordner ist durch die Dateirechte (`APP_UID`) geschützt.
 - Das Volume `pgdata` muss nicht gesichert werden; die Dumps genügen.
 
 ## Wiederherstellung
@@ -155,8 +156,9 @@ claude mcp add --transport http biber-rechnungen https://rechnungen.<domain>/mcp
 ## Aktualisieren
 
 ```bash
-git pull
-docker compose up -d --build
+git pull                 # docker-compose.yml und Verfahrensdokumentation
+docker compose pull
+docker compose up -d
 ```
 
 Die Datenbankmigration läuft beim Start automatisch. Vorher prüfen, dass der letzte nächtliche Dump in `PFAD_BACKUP` vorhanden ist. Produktive Versionen sind Git-Tags; Änderungen an Erfassung, Prüfung oder Ablage werden in der Verfahrensdokumentation vermerkt.

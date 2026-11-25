@@ -16,8 +16,11 @@ Selbst gehostetes, GoBD-orientiertes Belegarchiv für Eingangsrechnungen: Import
 cp .env.example .env            # mindestens POSTGRES_PASSWORD ändern
 sudo mkdir -p /srv/rechnungen/{eingang,staging,ablage,daten,backup}
 sudo chown -R 1000:1000 /srv/rechnungen
+docker compose pull
 docker compose up -d
 ```
+
+Die Images kommen von Docker Hub (`benjaminbiber/biber-rechnungen-*`, Version über `BIBER_VERSION` in `.env`).
 
 Ausführlich in [`docs/betrieb.md`](docs/betrieb.md). Smoke-Test ohne Host-Verzeichnisse: `bash docker/smoke.sh`.
 
