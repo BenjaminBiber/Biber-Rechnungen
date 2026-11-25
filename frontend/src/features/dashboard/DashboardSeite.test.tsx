@@ -156,11 +156,13 @@ describe('Dashboard', () => {
     expect(await screen.findByLabelText('Dashboard wird geladen')).toBeInTheDocument()
   })
 
-  it('zeigt bei leerem Bestand den Hinweis zum Hochladen', async () => {
+  it('zeigt bei leerem Bestand keine Hochladen-Kachel', async () => {
     szenario.leer()
     renderDashboard()
-    expect(await screen.findByText('Noch keine Belege – lade den ersten hoch')).toBeInTheDocument()
-    const hinweis = screen.getByText('Noch keine Belege – lade den ersten hoch').parentElement as HTMLElement
-    expect(within(hinweis).getByRole('link', { name: 'Hochladen' })).toHaveAttribute('href', '/hochladen')
+    expect(await screen.findByRole('heading', { name: 'Gesamtkosten pro Monat' })).toBeInTheDocument()
+    expect(screen.queryByText('Noch keine Belege – lade den ersten hoch')).not.toBeInTheDocument()
+    // Nur die Navigation führt noch zum Hochladen, das Dashboard selbst nicht.
+    const inhalt = screen.getByRole('heading', { level: 1, name: 'Dashboard' }).closest('main')!
+    expect(within(inhalt).queryByRole('link', { name: 'Hochladen' })).not.toBeInTheDocument()
   })
 })

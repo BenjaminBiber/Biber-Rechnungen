@@ -253,6 +253,7 @@ export function PositionenTab({ beleg, darfBearbeiten }: { beleg: BelegDetail; d
             type="button"
             className="btn btn-primaer"
             disabled={ersetzen.isPending || bearbeitet !== null}
+            aria-busy={ersetzen.isPending}
             onClick={speichern}
           >
             Änderungen speichern

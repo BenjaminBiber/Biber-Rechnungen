@@ -502,7 +502,12 @@ export function DatenFormular({
           <button type="button" className="btn" onClick={verwerfen} disabled={!geaendert}>
             Verwerfen
           </button>
-          <button type="submit" className="btn btn-primaer" disabled={!geaendert || aendern.isPending}>
+          <button
+            type="submit"
+            className="btn btn-primaer"
+            disabled={!geaendert || aendern.isPending}
+            aria-busy={aendern.isPending}
+          >
             Änderungen speichern
           </button>
         </div>

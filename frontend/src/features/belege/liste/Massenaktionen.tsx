@@ -17,7 +17,7 @@ const belegeText = (n: number) => (n === 1 ? '1 Beleg' : `${n} Belege`)
 const belegenText = (n: number) => (n === 1 ? '1 Beleg' : `${n} Belegen`)
 
 const knopf =
-  'inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-white/25 bg-white/10 px-3 text-[13px] font-medium text-auf-akzent hover:bg-white/20 [&_.material-symbols-outlined]:text-[18px]'
+  '[--btn-laden-farbe:var(--color-auf-akzent)] inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-white/25 bg-white/10 px-3 text-[13px] font-medium text-auf-akzent hover:bg-white/20 [&_.material-symbols-outlined]:text-[18px]'
 
 function Knopf({ icon, children, ...rest }: { icon: string; children: ReactNode } & React.ComponentProps<'button'>) {
   return (
@@ -126,7 +126,12 @@ export function Massenaktionen() {
             }
           />
           {zahlungsTags.length === 1 ? (
-            <Knopf icon="payments" disabled={massenaktion.isPending} onClick={() => alsBezahlt(zahlungsTags[0].id)}>
+            <Knopf
+              icon="payments"
+              disabled={massenaktion.isPending}
+              aria-busy={massenaktion.isPending && massenaktion.variables?.aktion === 'TagsSetzen'}
+              onClick={() => alsBezahlt(zahlungsTags[0].id)}
+            >
               Als bezahlt markieren
             </Knopf>
           ) : (
@@ -148,6 +153,7 @@ export function Massenaktionen() {
           <Knopf
             icon="check_circle"
             disabled={massenaktion.isPending}
+            aria-busy={massenaktion.isPending && massenaktion.variables?.aktion === 'Bestaetigen'}
             onClick={() => ausfuehren({ aktion: 'Bestaetigen' }, (n) => `${belegeText(n)} bestätigt`)}
           >
             Bestätigen

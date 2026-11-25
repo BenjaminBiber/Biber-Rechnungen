@@ -33,7 +33,7 @@ test('leeres System: Ersteinrichtung mit QR-Schlüssel, Abmelden, Anmelden mit P
   const code = await frischerTotpCode(schluessel)
   await page.getByLabel('Ziffer 1').click()
   await page.keyboard.type(code)
-  await page.getByRole('button', { name: 'Anmelden' }).click()
+  // Nach der sechsten Ziffer wird der Code ohne Klick geprüft.
 
   await expect(page).toHaveURL(/^http:\/\/[^/]+\/$/)
   await expect(page.getByRole('heading', { level: 1, name: 'Dashboard', exact: true })).toBeVisible()

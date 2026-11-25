@@ -60,9 +60,12 @@ describe('Tags & Kategorien', { timeout: 20000 }, () => {
     const pruef = zeile('zu prüfen')
     expect(within(pruef).getByText('System')).toBeInTheDocument()
     expect(within(pruef).queryByRole('button', { name: /bearbeiten$/ })).not.toBeInTheDocument()
-    expect(within(pruef).getByRole('button', { name: /System-Tag/ })).toBeInTheDocument()
+    expect(within(pruef).getByRole('button', { name: /System-Tag und kann nicht bearbeitet/ })).toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: /bearbeiten$/ })).toHaveLength(6)
-    expect(screen.getByText(/„zu prüfen“ ist ein System-Tag/)).toBeInTheDocument()
+    // Der Hinweis zum System-Tag steht nicht mehr unter der Tabelle, sondern im „i“ hinter dem Chip.
+    expect(screen.queryByText(/Ihn setzt nur die Pipeline/)).not.toBeInTheDocument()
+    await userEvent.setup().hover(within(pruef).getByRole('button', { name: 'Hinweis zum System-Tag „zu prüfen“' }))
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(/Ihn setzt nur die Pipeline/)
     ende()
   })
 

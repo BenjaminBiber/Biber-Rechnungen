@@ -52,6 +52,17 @@ describe('AnmeldenFormular', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('E-Mail-Adresse oder Passwort ist falsch.')
   })
 
+  it('zeigt das Passwort auf Wunsch im Klartext', async () => {
+    szenario.abgemeldet()
+    const { user } = renderAnmeldung()
+    const feld = await screen.findByLabelText('Passwort')
+    expect(feld).toHaveAttribute('type', 'password')
+    await user.click(screen.getByRole('button', { name: 'Passwort anzeigen' }))
+    expect(feld).toHaveAttribute('type', 'text')
+    await user.click(screen.getByRole('button', { name: 'Passwort verbergen' }))
+    expect(feld).toHaveAttribute('type', 'password')
+  })
+
   it('prüft die E-Mail vor dem Absenden', async () => {
     szenario.abgemeldet()
     await anmelden('kein-mail', 'x')

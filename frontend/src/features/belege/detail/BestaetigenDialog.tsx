@@ -44,7 +44,13 @@ export function BestaetigenDialog({ beleg }: { beleg: BelegDetail }) {
 
   return (
     <>
-      <button type="button" className="btn btn-primaer" onClick={klick} disabled={bestaetigen.isPending}>
+      <button
+        type="button"
+        className="btn btn-primaer"
+        onClick={klick}
+        disabled={bestaetigen.isPending}
+        aria-busy={bestaetigen.isPending}
+      >
         <Icon name="task_alt" />
         Bestätigen
       </button>
@@ -84,6 +90,7 @@ export function BestaetigenDialog({ beleg }: { beleg: BelegDetail }) {
               type="button"
               className="btn btn-primaer"
               disabled={bestaetigen.isPending}
+              aria-busy={bestaetigen.isPending}
               onClick={() => void ausfuehren(begruendung)}
             >
               Trotzdem bestätigen

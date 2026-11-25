@@ -104,6 +104,7 @@ export function Ersteinrichtung() {
         variant="primaer"
         className={grosserKnopf}
         disabled={einrichten.isPending || !vorschlag.data}
+        laedt={einrichten.isPending}
       >
         Konto anlegen und fortfahren
       </Button>

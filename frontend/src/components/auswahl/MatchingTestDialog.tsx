@@ -105,6 +105,7 @@ export function MatchingTestDialog({
               type="button"
               className="btn btn-primaer"
               disabled={anwenden.isPending}
+              aria-busy={anwenden.isPending}
               onClick={() => void speichern()}
             >
               Regel speichern

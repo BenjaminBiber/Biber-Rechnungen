@@ -75,14 +75,14 @@ function FreigabeBalken({ benutzer }: { benutzer: Benutzer }) {
           </option>
         ))}
       </select>
-      <Button type="button" size="klein" onClick={() => setRueckfrage(true)} disabled={ablehnen.isPending}>
+      <Button type="button" size="klein" onClick={() => setRueckfrage(true)} laedt={ablehnen.isPending}>
         Ablehnen
       </Button>
       <Button
         type="button"
         size="klein"
         variant="primaer"
-        disabled={freigeben.isPending}
+        laedt={freigeben.isPending}
         onClick={() =>
           freigeben
             .mutateAsync({ id: benutzer.id, rolle })
@@ -186,7 +186,7 @@ function AnlegenDialog({ onSchliessen }: { onSchliessen: () => void }) {
             <Button type="button" onClick={onSchliessen}>
               Abbrechen
             </Button>
-            <Button type="submit" variant="primaer" disabled={anlegen.isPending}>
+            <Button type="submit" variant="primaer" laedt={anlegen.isPending}>
               Anlegen
             </Button>
           </DialogFooter>
@@ -233,7 +233,7 @@ function ZuruecksetzenDialog({ benutzer, onSchliessen }: { benutzer: Benutzer; o
             <Button type="button" onClick={onSchliessen}>
               Abbrechen
             </Button>
-            <Button type="submit" variant="primaer" disabled={zuruecksetzen.isPending}>
+            <Button type="submit" variant="primaer" laedt={zuruecksetzen.isPending}>
               Zurücksetzen
             </Button>
           </DialogFooter>

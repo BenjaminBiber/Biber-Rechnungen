@@ -56,7 +56,7 @@ export function Kostenverlauf({
         </select>
       </div>
       <div className="h-[220px] min-w-0" aria-hidden="true">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" debounce={120}>
           <BarChart data={daten} margin={{ top: 18, right: 8, bottom: 0, left: 0 }}>
             <CartesianGrid vertical={false} stroke="var(--color-linie)" />
             <XAxis dataKey="monat" tickLine={false} axisLine={{ stroke: 'var(--color-schalter-aus)' }} fontSize={11} />

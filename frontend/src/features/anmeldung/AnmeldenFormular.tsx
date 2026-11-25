@@ -98,7 +98,7 @@ export function AnmeldenFormular({ fehler }: { fehler?: AnmeldeFehler }) {
             Wende dich an einen Admin – er kann dein Passwort unter Einstellungen › Benutzer zurücksetzen.
           </Meldung>
         )}
-        <Button type="submit" variant="primaer" className={grosserKnopf} disabled={anmelden.isPending}>
+        <Button type="submit" variant="primaer" className={grosserKnopf} laedt={anmelden.isPending}>
           Anmelden
         </Button>
         {status?.googleAktiv && (

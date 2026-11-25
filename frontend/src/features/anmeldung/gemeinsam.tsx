@@ -3,6 +3,7 @@ import { useId, type ComponentProps, type ReactNode } from 'react'
 import { googleStartUrl, useAuthStatus } from '@/api/auth'
 import { istApiFehler } from '@/api/client'
 import { Icon } from '@/components/Icon'
+import { usePasswortAnzeigen } from '@/components/PasswortAnzeigen'
 import { cn } from '@/lib/utils'
 
 /** Schritte der Anmeldeseite (Suchparameter `schritt`). */
@@ -53,9 +54,11 @@ export function Feld({
   fehler,
   unterhalb,
   className,
+  type,
   ...props
 }: ComponentProps<'input'> & { label: string; icon: string; fehler?: string; unterhalb?: ReactNode }) {
   const id = useId()
+  const passwort = usePasswortAnzeigen(type, label)
   const fehlerId = `${id}-fehler`
   return (
     <div>
@@ -78,8 +81,10 @@ export function Feld({
           )}
           aria-invalid={fehler ? true : undefined}
           aria-describedby={fehler ? fehlerId : undefined}
+          type={passwort.type}
           {...props}
         />
+        {passwort.knopf}
       </div>
       {unterhalb}
       {fehler && (

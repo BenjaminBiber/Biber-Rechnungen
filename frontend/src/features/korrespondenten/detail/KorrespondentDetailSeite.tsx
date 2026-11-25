@@ -190,7 +190,7 @@ function MatchingDialog({ detail, onSchliessen }: { detail: KorrespondentDetail;
         />
         <DialogFooter>
           <Button onClick={onSchliessen}>Abbrechen</Button>
-          <Button variant="primaer" disabled={laeuft} onClick={() => void sichern()}>
+          <Button variant="primaer" laedt={laeuft} onClick={() => void sichern()}>
             Speichern
           </Button>
         </DialogFooter>

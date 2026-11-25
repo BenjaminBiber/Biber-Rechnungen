@@ -104,7 +104,12 @@ export function EinstellungsFormular<G extends keyof EinstellungGruppen, T>({
           >
             Verwerfen
           </Button>
-          <Button type="submit" variant="primaer" disabled={!geaendert || speichern.isPending}>
+          <Button
+            type="submit"
+            variant="primaer"
+            disabled={!geaendert || speichern.isPending}
+            laedt={speichern.isPending}
+          >
             Speichern
           </Button>
         </div>

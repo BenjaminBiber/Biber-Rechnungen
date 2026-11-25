@@ -304,7 +304,7 @@ export function KorrespondentFormular({
           </Feld>
           <DialogFooter>
             <Button onClick={onSchliessen}>Abbrechen</Button>
-            <Button type="submit" variant="primaer" disabled={laeuft}>
+            <Button type="submit" variant="primaer" laedt={laeuft}>
               {korrespondent ? 'Speichern' : 'Anlegen'}
             </Button>
           </DialogFooter>

@@ -224,7 +224,7 @@ function Inhalt({ artikel, onSchliessen, stamm }: InhaltProps & { stamm?: PreisD
         <button type="button" className="btn" onClick={onSchliessen}>
           Abbrechen
         </button>
-        <button type="submit" className="btn btn-primaer" disabled={laeuft}>
+        <button type="submit" className="btn btn-primaer" disabled={laeuft} aria-busy={laeuft}>
           {vorhanden ? 'Zuordnen' : 'Stammartikel anlegen'}
         </button>
       </DialogFooter>

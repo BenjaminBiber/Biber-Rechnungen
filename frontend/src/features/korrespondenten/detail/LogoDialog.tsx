@@ -190,7 +190,7 @@ function ReiterAusschnitt({
       <div className="flex justify-end">
         <Button
           variant="primaer"
-          disabled={uebernehmen.isPending}
+          laedt={uebernehmen.isPending}
           onClick={() =>
             uebernehmen.mutateAsync({ id: belegId, seite: 1, ...wert }).then(
               () => {
@@ -249,6 +249,7 @@ function ReiterUpload({ korrespondentId, onFertig }: { korrespondentId: string; 
         <Button
           variant="primaer"
           disabled={!datei || hochladen.isPending}
+          laedt={hochladen.isPending}
           onClick={() =>
             datei &&
             hochladen.mutateAsync({ id: korrespondentId, datei }).then(
@@ -281,6 +282,7 @@ function ReiterFavicon({ detail, onFertig }: { detail: KorrespondentDetail; onFe
       <div>
         <Button
           disabled={!domain || favicon.isPending}
+          laedt={favicon.isPending}
           onClick={() =>
             favicon.mutateAsync(detail.id).then(
               () => {
@@ -342,7 +344,7 @@ export function LogoDialog({
           {detail.logo.quelle !== 'Keine' && (
             <Button
               variant="gefaehrlich"
-              disabled={entfernen.isPending}
+              laedt={entfernen.isPending}
               onClick={() =>
                 entfernen.mutateAsync(detail.id).then(
                   () => {

@@ -123,6 +123,7 @@ export function AktionsKnopf({
     <Button
       type="button"
       disabled={disabled || aktion.isPending}
+      laedt={aktion.isPending}
       onClick={() =>
         aktion.mutateAsync().then(
           (e) => {

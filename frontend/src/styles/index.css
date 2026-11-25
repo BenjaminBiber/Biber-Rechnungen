@@ -1,6 +1,9 @@
 @import 'tailwindcss';
 @import './tokens.css';
 
+/* `dark:` folgt dem Farbschema der App (`data-theme` am <html>, siehe lib/theme.ts), nicht nur dem System. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
 /* Schrift und Icons lokal, kein CDN */
 @import '@fontsource/ibm-plex-sans/400.css';
 @import '@fontsource/ibm-plex-sans/500.css';
@@ -128,6 +131,74 @@
     background: var(--color-gefahr-hover);
     border-color: var(--color-gefahr-hover);
     color: #ffffff;
+  }
+
+  /*
+   * Laufende Aktion (`aria-busy="true"` an einem Knopf, z. B. `<Button laedt>`): der Knopf ist sofort gesperrt; dauert die
+   * Antwort länger als 250 ms, weicht der Inhalt einem Drehkreis. Die Breite bleibt gleich.
+   */
+  :is(button, .btn)[aria-busy='true'] {
+    position: relative;
+    cursor: progress;
+    pointer-events: none;
+    --btn-laden-farbe: var(--color-text);
+    /* Text ohne eigenes Element verschwindet über die Schriftfarbe, Icons und Spans über ihre Deckkraft. */
+    animation: btn-text-aus 150ms ease-out 250ms forwards;
+  }
+
+  :is(button, .btn)[aria-busy='true']:disabled {
+    opacity: 1;
+  }
+
+  .btn-primaer[aria-busy='true'],
+  .btn-gefaehrlich[aria-busy='true'] {
+    --btn-laden-farbe: #ffffff;
+  }
+
+  :is(button, .btn)[aria-busy='true'] > * {
+    animation: btn-inhalt-aus 150ms ease-out 250ms forwards;
+  }
+
+  :is(button, .btn)[aria-busy='true']::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 16px;
+    height: 16px;
+    margin: -8px 0 0 -8px;
+    box-sizing: border-box;
+    border: 2px solid var(--btn-laden-farbe);
+    border-right-color: transparent;
+    border-radius: 50%;
+    opacity: 0;
+    animation:
+      btn-laden-ein 150ms ease-out 250ms forwards,
+      btn-laden-drehen 700ms linear infinite;
+  }
+
+  @keyframes btn-inhalt-aus {
+    to {
+      opacity: 0;
+    }
+  }
+
+  @keyframes btn-text-aus {
+    to {
+      color: transparent;
+    }
+  }
+
+  @keyframes btn-laden-ein {
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes btn-laden-drehen {
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   .btn-klein {
@@ -313,6 +384,122 @@
     font: 500 12px var(--font-sans);
     color: var(--color-gedaempft-stark);
     margin-bottom: 4px;
+  }
+
+  /*
+   * Popover mit Ein-/Ausblende-Animation (z. B. Benutzermenü): kommt leicht skaliert von der Seite des Auslösers.
+   * Radix wartet beim Schließen, bis die Ausblend-Animation durch ist.
+   */
+  .popover-animiert {
+    transform-origin: var(--radix-popover-content-transform-origin);
+  }
+
+  .popover-animiert[data-state='open'] {
+    animation: popover-ein 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .popover-animiert[data-state='closed'] {
+    animation: popover-aus 130ms cubic-bezier(0.4, 0, 1, 1) forwards;
+  }
+
+  @keyframes popover-ein {
+    from {
+      opacity: 0;
+      transform: translateY(-6px) scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes popover-aus {
+    from {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-4px) scale(0.97);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .popover-animiert[data-state='open'],
+    .popover-animiert[data-state='closed'] {
+      animation-duration: 1ms;
+    }
+  }
+
+  /* Bestätigungscode: Welle während der Prüfung, grün bei Erfolg, Schütteln bei falschem Code */
+  .eingabe.ziffer-pruefen {
+    border-color: var(--color-akzent);
+    background: var(--color-karte);
+    color: var(--color-text);
+    animation: ziffer-welle 700ms ease-in-out infinite;
+  }
+
+  .eingabe.ziffer-gueltig {
+    border-color: var(--color-gruen-text);
+    background: var(--color-gruen-flaeche);
+    color: var(--color-gruen-text);
+    animation: ziffer-pop 300ms ease-out;
+  }
+
+  .eingabe.ziffer-falsch {
+    border-color: var(--color-rot-text);
+    background: var(--color-rot-flaeche);
+    color: var(--color-rot-text);
+  }
+
+  .ziffern-schuetteln {
+    animation: ziffern-schuetteln 420ms cubic-bezier(0.36, 0.07, 0.19, 0.97);
+  }
+
+  @keyframes ziffer-welle {
+    0%,
+    60%,
+    100% {
+      transform: translateY(0);
+    }
+    30% {
+      transform: translateY(-5px);
+      background: var(--color-blau-flaeche);
+    }
+  }
+
+  @keyframes ziffer-pop {
+    50% {
+      transform: scale(1.08);
+    }
+  }
+
+  @keyframes ziffern-schuetteln {
+    10%,
+    90% {
+      transform: translateX(-2px);
+    }
+    20%,
+    80% {
+      transform: translateX(4px);
+    }
+    30%,
+    50%,
+    70% {
+      transform: translateX(-7px);
+    }
+    40%,
+    60% {
+      transform: translateX(7px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ziffer-pruefen,
+    .ziffer-gueltig,
+    .ziffern-schuetteln {
+      animation: none;
+    }
   }
 
   .hinweis {

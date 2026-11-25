@@ -3,7 +3,6 @@ import { useState } from 'react'
 import { useAuthStatus } from '@/api/auth'
 import { Icon } from '@/components/Icon'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { initialen } from '@/lib/format'
 import { type Darstellung, useDarstellung } from '@/lib/theme'
 import { cn } from '@/lib/utils'
 import { useAbmeldenUndWeiter } from './useAbmeldenUndWeiter'
@@ -27,7 +26,10 @@ function kurzname(name: string): string {
   return teile.length < 2 ? name : `${teile[0][0]}. ${teile[teile.length - 1]}`
 }
 
-/** Avatar mit Kurzname; Popover mit Konto-Links, Darstellung und Abmelden (Menues.dc.html). */
+/**
+ * Schlichter Auslöser wie bei paperless-ngx: Personen-Icon und Kurzname (mobil nur das Icon);
+ * Popover mit Konto-Links, Darstellung und Abmelden (Menues.dc.html).
+ */
 export function Benutzermenue({ kompakt = false }: { kompakt?: boolean }) {
   const [offen, setOffen] = useState(false)
   const { data: status } = useAuthStatus()
@@ -41,22 +43,15 @@ export function Benutzermenue({ kompakt = false }: { kompakt?: boolean }) {
       <PopoverTrigger
         aria-label="Benutzermenü"
         className={cn(
-          'flex h-11 cursor-pointer items-center gap-2 rounded-[22px] border border-rand font-medium text-text',
-          kompakt ? 'border-0 bg-transparent p-0' : 'pr-2 pl-1',
-          offen ? 'bg-hover' : 'bg-karte',
+          'flex h-10 cursor-pointer items-center gap-1.5 rounded-lg border-0 font-semibold text-text hover:bg-hover',
+          kompakt ? 'w-10 justify-center px-0' : 'px-2',
+          offen ? 'bg-hover' : 'bg-transparent',
         )}
       >
-        <span className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-akzent-zart text-[13px] font-semibold text-akzent-text">
-          {initialen(name)}
-        </span>
-        {!kompakt && (
-          <>
-            <span className="text-sm">{kurzname(name)}</span>
-            <Icon name="expand_more" className="text-[20px] text-gedaempft" />
-          </>
-        )}
+        <Icon name="account_circle" className="text-[24px] [vertical-align:0]" />
+        {!kompakt && <span className="text-sm">{kurzname(name)}</span>}
       </PopoverTrigger>
-      <PopoverContent align="end" sideOffset={8} aria-label="Benutzermenü" className="w-[280px] p-1.5">
+      <PopoverContent align="end" sideOffset={8} aria-label="Benutzermenü" className="popover-animiert w-[280px] p-1.5">
         <div className="mb-1.5 border-b border-linie px-3 pt-2.5 pb-3">
           <div className="text-sm font-semibold">{name}</div>
           <div className="text-xs text-gedaempft">

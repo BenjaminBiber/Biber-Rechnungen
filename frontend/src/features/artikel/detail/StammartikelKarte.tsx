@@ -189,7 +189,7 @@ export function StammartikelKarte({ detail, darfBearbeiten }: { detail: PreisDet
             </Button>
           )}
           <div className="mt-4 flex justify-end">
-            <Button variant="primaer" disabled={aendern.isPending} onClick={speichern}>
+            <Button variant="primaer" laedt={aendern.isPending} onClick={speichern}>
               <Icon name="save" />
               Speichern
             </Button>

@@ -1,11 +1,17 @@
 import { useNavigate } from '@tanstack/react-router'
-import { useRef, useState, type ClipboardEvent, type FormEvent, type KeyboardEvent } from 'react'
+import { useEffect, useRef, useState, type ClipboardEvent, type FormEvent, type KeyboardEvent } from 'react'
 import { useTotp, useWiederherstellungscode } from '@/api/auth'
 import { Icon } from '@/components/Icon'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import { Ankreuzfeld, Feld, Meldung, SchrittTitel, TextKnopf, allgemeinerFehler, grosserKnopf } from './gemeinsam'
 
 const leer = ['', '', '', '', '', '']
+
+/** Ablauf der Ziffernfelder: Eingabe → automatische Prüfung (Welle) → gültig (grün) oder falsch (Schütteln). */
+type Pruefzustand = 'eingabe' | 'pruefen' | 'gueltig' | 'falsch'
+
+const warte = (ms: number) => new Promise((fertig) => setTimeout(fertig, ms))
 
 /** Schritt „totp“: sechs Ziffernfelder oder Wiederherstellungscode. */
 export function TotpFormular() {
@@ -18,6 +24,35 @@ export function TotpFormular() {
   const [code, setCode] = useState('')
   const [fehler, setFehler] = useState<string>()
   const felder = useRef<Array<HTMLInputElement | null>>([])
+  const [zustand, setZustand] = useState<Pruefzustand>('eingabe')
+  const gesperrt = zustand === 'pruefen' || zustand === 'gueltig'
+  const wert = ziffern.join('')
+
+  // Sobald alle sechs Ziffern stehen, wird der Code ohne Klick geprüft.
+  useEffect(() => {
+    if (!mitCode && wert.length === 6 && zustand === 'eingabe') void pruefeZiffern(wert)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- nur bei vollständiger Eingabe auslösen
+  }, [wert, mitCode, zustand])
+
+  async function pruefeZiffern(code: string) {
+    setFehler(undefined)
+    setZustand('pruefen')
+    const antwort = await totp.mutateAsync({ code, geraetVertrauen: vertrauen }).catch(() => null)
+    if (antwort?.status === 'Ok') {
+      setZustand('gueltig')
+      await warte(350)
+      await navigate({ to: '/' })
+      return
+    }
+    if (antwort?.status === 'Gesperrt') setFehler('Zu viele Fehlversuche. Bitte in 10 Minuten erneut versuchen.')
+    else if (antwort) setFehler('Der Code ist ungültig.')
+    // Falsch: kurz schütteln, dann leeren und vorne neu beginnen.
+    setZustand('falsch')
+    await warte(450)
+    setZiffern(leer)
+    setZustand('eingabe')
+    felder.current[0]?.focus()
+  }
 
   function setzeAb(index: number, werte: string[]) {
     setZiffern((alt) => {
@@ -65,9 +100,9 @@ export function TotpFormular() {
       if (!code.trim()) return setFehler('Bitte einen Wiederherstellungscode eingeben.')
       antwort = await wiederherstellung.mutateAsync({ code: code.trim() }).catch(() => null)
     } else {
-      const wert = ziffern.join('')
       if (wert.length !== 6) return setFehler('Bitte alle 6 Ziffern eingeben.')
-      antwort = await totp.mutateAsync({ code: wert, geraetVertrauen: vertrauen }).catch(() => null)
+      if (zustand === 'eingabe') await pruefeZiffern(wert)
+      return
     }
     if (!antwort) return
     if (antwort.status === 'Ok') await navigate({ to: '/' })
@@ -109,9 +144,14 @@ export function TotpFormular() {
         />
       ) : (
         <>
+          {/* Vor den Ziffern, weil der Code nach der sechsten Ziffer sofort geprüft wird. */}
+          <Ankreuzfeld label="Diesem Gerät 30 Tage vertrauen" checked={vertrauen} onChange={setVertrauen} />
           <fieldset className="m-0 border-0 p-0">
             <legend className="sr-only">Code</legend>
-            <div className="flex justify-between gap-2">
+            <div
+              className={cn('flex justify-between gap-2', zustand === 'falsch' && 'ziffern-schuetteln')}
+              aria-busy={zustand === 'pruefen'}
+            >
               {ziffern.map((ziffer, i) => (
                 <input
                   key={i}
@@ -127,19 +167,25 @@ export function TotpFormular() {
                   onPaste={(e) => beiEinfuegen(i, e)}
                   onKeyDown={(e) => beiTaste(i, e)}
                   onFocus={(e) => e.target.select()}
-                  className="eingabe h-[54px] w-[46px] min-w-0 rounded-[10px] text-center font-mono text-[22px] font-semibold"
+                  readOnly={gesperrt}
+                  style={{ animationDelay: zustand === 'pruefen' ? `${i * 70}ms` : undefined }}
+                  className={cn(
+                    'eingabe h-[54px] w-[46px] min-w-0 rounded-[10px] text-center font-mono text-[22px] font-semibold transition-[border-color,background-color,color] duration-200',
+                    zustand === 'pruefen' && 'ziffer-pruefen',
+                    zustand === 'gueltig' && 'ziffer-gueltig',
+                    zustand === 'falsch' && 'ziffer-falsch',
+                  )}
                 />
               ))}
             </div>
           </fieldset>
-          <Ankreuzfeld label="Diesem Gerät 30 Tage vertrauen" checked={vertrauen} onChange={setVertrauen} />
         </>
       )}
       <Button
         type="submit"
         variant="primaer"
         className={grosserKnopf}
-        disabled={totp.isPending || wiederherstellung.isPending}
+        laedt={totp.isPending || wiederherstellung.isPending || gesperrt}
       >
         Anmelden
       </Button>

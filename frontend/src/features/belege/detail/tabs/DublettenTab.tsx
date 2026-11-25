@@ -119,6 +119,7 @@ export function DublettenTab({
               type="button"
               className="btn btn-klein"
               disabled={setzen.isPending}
+              aria-busy={setzen.isPending}
               onClick={() => verknuepfen(null)}
             >
               Verknüpfung aufheben
@@ -269,6 +270,7 @@ function MarkierenDialog({
             type="button"
             className="btn btn-primaer"
             disabled={!gewaehlt || laeuft}
+            aria-busy={laeuft}
             onClick={() => gewaehlt && onWaehlen(gewaehlt)}
           >
             Verknüpfen

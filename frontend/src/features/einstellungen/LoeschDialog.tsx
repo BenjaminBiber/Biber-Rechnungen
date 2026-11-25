@@ -109,6 +109,7 @@ export function LoeschDialog({ eintrag, onSchliessen }: { eintrag: Loeschbar; on
                 type="button"
                 variant="gefaehrlich"
                 disabled={eingabe.trim() !== BESTAETIGUNG || loeschen.isPending}
+                laedt={loeschen.isPending}
                 onClick={() => void absenden()}
               >
                 Endgültig löschen

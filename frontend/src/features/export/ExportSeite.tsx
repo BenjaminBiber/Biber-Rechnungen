@@ -293,6 +293,7 @@ function ExportFormular({ vorbelegung, heute }: { vorbelegung: ExportVorbelegung
           type="button"
           className="btn btn-primaer w-full"
           disabled={!inhaltGewaehlt || !anfrage || erzeugen.isPending}
+          aria-busy={erzeugen.isPending}
           onClick={() => void erstellen()}
         >
           <Icon name="download" />

@@ -68,7 +68,13 @@ function NameUndEmail({ konto }: { konto: Konto }) {
           fehler={fehler.email}
         />
       </div>
-      <Button type="submit" variant="primaer" className="self-end" disabled={!geaendert || aendern.isPending}>
+      <Button
+        type="submit"
+        variant="primaer"
+        className="self-end"
+        disabled={!geaendert || aendern.isPending}
+        laedt={aendern.isPending}
+      >
         Speichern
       </Button>
     </form>
@@ -142,7 +148,7 @@ function PasswortDialog({ onSchliessen }: { onSchliessen: () => void }) {
             <Button type="button" onClick={onSchliessen}>
               Abbrechen
             </Button>
-            <Button type="submit" variant="primaer" disabled={aendern.isPending}>
+            <Button type="submit" variant="primaer" laedt={aendern.isPending}>
               Passwort ändern
             </Button>
           </DialogFooter>
@@ -295,7 +301,7 @@ function TotpDialog({ onSchliessen }: { onSchliessen: () => void }) {
               <Button type="button" onClick={() => setSchritt(1)}>
                 Zurück
               </Button>
-              <Button type="submit" variant="primaer" disabled={aktivieren.isPending}>
+              <Button type="submit" variant="primaer" laedt={aktivieren.isPending}>
                 Aktivieren
               </Button>
             </DialogFooter>
@@ -370,6 +376,7 @@ function KontoInhalt({ konto }: { konto: Konto }) {
             type="button"
             size="klein"
             disabled={konto.aktiveSitzungen <= 1 || abmelden.isPending}
+            laedt={abmelden.isPending}
             onClick={() =>
               abmelden.mutateAsync().then(() => toast.erfolg('Andere Geräte abgemeldet'), fehlerMelden(toast))
             }

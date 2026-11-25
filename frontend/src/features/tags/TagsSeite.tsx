@@ -83,11 +83,6 @@ export function TagsSeite({
           <KategorieTabelle kategorien={alleKategorien} jahr={jahr} gewaehlt={bearbeiten} onBearbeiten={oeffnen} />
         )}
       </div>
-      <p className="gedaempft m-0 mt-4 flex items-center gap-1.5 text-xs">
-        <Icon name="lock" className="text-base" />
-        „zu prüfen“ ist ein System-Tag: Ihn setzt nur die Pipeline, entfernt wird er nur durch „Bestätigen“. Er kann
-        nicht bearbeitet oder gelöscht werden.
-      </p>
       {darfBearbeiten && geladen && istTags && (neu || tag) && (
         <BearbeitenDialog
           key={tag?.id ?? 'neu'}

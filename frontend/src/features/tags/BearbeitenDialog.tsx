@@ -284,7 +284,7 @@ export function BearbeitenDialog({ onSchliessen, ...ziel }: Ziel & { onSchliesse
             )}
             <span className="flex gap-2">
               <Button onClick={onSchliessen}>Abbrechen</Button>
-              <Button type="submit" variant="primaer" disabled={laeuft}>
+              <Button type="submit" variant="primaer" laedt={laeuft}>
                 Speichern
               </Button>
             </span>

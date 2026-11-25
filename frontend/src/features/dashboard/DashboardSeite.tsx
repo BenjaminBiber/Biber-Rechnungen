@@ -1,9 +1,6 @@
-import { Link } from '@tanstack/react-router'
 import { useDashboard } from '@/api/dashboard'
-import type { Dashboard } from '@/api/typen'
 import { Icon } from '@/components/Icon'
 import { Seitenkopf } from '@/components/Seitenkopf'
-import { formatDatum } from '@/lib/format'
 import { DiVerbrauchKarte } from './DiVerbrauchKarte'
 import { type DashboardZeitraum, Skelett } from './gemeinsam'
 import { Kennzahlen } from './Kennzahlen'
@@ -16,19 +13,6 @@ import { VorsteuerKarte } from './VorsteuerKarte'
 import { ZuPruefenKarte } from './ZuPruefenKarte'
 
 const zeitraeume: DashboardZeitraum[] = ['Monat', 'Quartal', 'Jahr']
-
-const iso = (d: Date) =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-
-function istLeer(d: Dashboard): boolean {
-  return (
-    d.kostenJahr.anzahl === 0 &&
-    d.offen.anzahl === 0 &&
-    d.inbox.anzahl === 0 &&
-    d.zuPruefen.anzahl === 0 &&
-    d.topKorrespondenten.length === 0
-  )
-}
 
 /** Dashboard mit Zeitraum- und Jahreswahl; `onWahl` schreibt die Auswahl in die URL. */
 export function DashboardSeite({
@@ -49,7 +33,6 @@ export function DashboardSeite({
     <main className="seite flex flex-col gap-5">
       <Seitenkopf
         titel="Dashboard"
-        untertitel={`Stand ${formatDatum(iso(heute))} · Zeitbasis: Rechnungsdatum · alle Beträge brutto in EUR`}
         aktionen={
           <>
             <div className="segment" role="group" aria-label="Zeitraum">
@@ -106,16 +89,6 @@ export function DashboardSeite({
             <Icon name="refresh" />
             Erneut versuchen
           </button>
-        </div>
-      )}
-
-      {dashboard.data && istLeer(dashboard.data) && (
-        <div className="karte flex flex-col items-start gap-3 p-5">
-          <p className="m-0 text-sm">Noch keine Belege – lade den ersten hoch</p>
-          <Link to="/hochladen" className="btn btn-primaer">
-            <Icon name="upload" />
-            Hochladen
-          </Link>
         </div>
       )}
 

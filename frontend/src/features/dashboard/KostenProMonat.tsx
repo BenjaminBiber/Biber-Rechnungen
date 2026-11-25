@@ -72,7 +72,7 @@ export function KostenProMonat({ monate, jahr }: { monate: MonatsKosten[]; jahr:
       className="flex-[2_1_560px]"
     >
       <div className="h-[260px] min-w-0" aria-hidden="true">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" debounce={120}>
           <BarChart data={zeilen} margin={{ top: 18, right: 0, bottom: 0, left: 0 }}>
             <CartesianGrid vertical={false} stroke="var(--color-linie)" />
             <XAxis dataKey="name" tickLine={false} axisLine={{ stroke: 'var(--color-schalter-aus)' }} fontSize={11} />

@@ -14,14 +14,15 @@ function totpSchritt() {
 const ziffern = () => [1, 2, 3, 4, 5, 6].map((n) => screen.getByLabelText(`Ziffer ${n}`))
 
 describe('TotpFormular', () => {
-  it('springt beim Tippen weiter und meldet mit gültigem Code an', async () => {
+  it('springt beim Tippen weiter und meldet nach der sechsten Ziffer ohne Klick an', async () => {
     const { user, router } = totpSchritt()
     await user.click(await screen.findByLabelText('Ziffer 1'))
     await user.keyboard(mockZugang.totpCode)
     expect(ziffern().map((f) => (f as HTMLInputElement).value)).toEqual(mockZugang.totpCode.split(''))
     expect(ziffern()[0]).toHaveAttribute('inputmode', 'numeric')
     expect(ziffern()[0]).toHaveAttribute('autocomplete', 'one-time-code')
-    await user.click(screen.getByRole('button', { name: 'Anmelden' }))
+    // Während der Prüfung sind die Felder gesperrt, danach geht es ohne Klick weiter.
+    expect(ziffern()[0]).toHaveAttribute('readonly')
     await waitFor(() => expect(router.state.location.pathname).toBe('/'))
   })
 
@@ -42,12 +43,14 @@ describe('TotpFormular', () => {
     expect(ziffern()[1]).toHaveValue('')
   })
 
-  it('falscher Code zeigt eine Fehlermeldung', async () => {
+  it('falscher Code zeigt eine Fehlermeldung, leert die Felder und setzt vorne wieder an', async () => {
     const { user } = totpSchritt()
     await user.click(await screen.findByLabelText('Ziffer 1'))
     await user.keyboard('000000')
-    await user.click(screen.getByRole('button', { name: 'Anmelden' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Der Code ist ungültig.')
+    await waitFor(() => expect(ziffern().every((f) => (f as HTMLInputElement).value === '')).toBe(true))
+    expect(ziffern()[0]).toHaveFocus()
+    expect(ziffern()[0]).not.toHaveAttribute('readonly')
   })
 
   it('meldet mit Wiederherstellungscode an', async () => {

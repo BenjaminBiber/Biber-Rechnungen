@@ -16,7 +16,7 @@ test('abgemeldet: Anmelden mit TOTP führt zum Dashboard', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Bestätigungscode' })).toBeVisible()
   await page.getByLabel('Ziffer 1').click()
   await page.keyboard.type('123456')
-  await page.getByRole('button', { name: 'Anmelden' }).click()
+  // Nach der sechsten Ziffer wird der Code ohne Klick geprüft.
 
   await expect(page).toHaveURL(/^http:\/\/[^/]+\/$/)
   await expect(page.getByRole('heading', { level: 1, name: 'Dashboard', exact: true })).toBeVisible()

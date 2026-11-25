@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import type { Rolle } from '@/api/typen'
+import { usePasswortAnzeigen } from '@/components/PasswortAnzeigen'
 import { Button } from '@/components/ui/button'
 import {
   AlertDialog,
@@ -92,6 +93,7 @@ export function Feld({
   label,
   fehler,
   unterhalb,
+  type,
   ...props
 }: {
   id: string
@@ -99,12 +101,20 @@ export function Feld({
   fehler?: string
   unterhalb?: ReactNode
 } & React.InputHTMLAttributes<HTMLInputElement>) {
+  const passwort = usePasswortAnzeigen(type, label)
   return (
     <div>
       <label className="label" htmlFor={id}>
         {label}
       </label>
-      <input id={id} className="eingabe" aria-invalid={!!fehler} {...props} />
+      {passwort.knopf ? (
+        <div className="relative">
+          <input id={id} className="eingabe pr-10" aria-invalid={!!fehler} type={passwort.type} {...props} />
+          <span className="absolute inset-y-0 right-px flex items-center [&>button]:size-[30px]">{passwort.knopf}</span>
+        </div>
+      ) : (
+        <input id={id} className="eingabe" aria-invalid={!!fehler} type={type} {...props} />
+      )}
       {unterhalb}
       {fehler && (
         <span role="alert" className="mt-1 block text-[13px] text-gefahr">

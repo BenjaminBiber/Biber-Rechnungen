@@ -29,7 +29,7 @@ export function Kopfleiste() {
       <div className="flex-[1_1_0]" />
       {darfBearbeiten && (
         <Link to="/hochladen" className="btn btn-primaer h-10 px-4">
-          <Icon name="add" className="text-[20px]" />
+          <Icon name="upload" className="text-[20px]" />
           Beleg hochladen
         </Link>
       )}

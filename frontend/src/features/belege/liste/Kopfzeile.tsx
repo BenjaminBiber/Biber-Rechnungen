@@ -316,7 +316,12 @@ function AnsichtSpeichernDialog({
             <button type="button" className="btn" onClick={() => onOffenAendern(false)}>
               Abbrechen
             </button>
-            <button type="submit" className="btn btn-primaer" disabled={!name.trim() || speichern.isPending}>
+            <button
+              type="submit"
+              className="btn btn-primaer"
+              disabled={!name.trim() || speichern.isPending}
+              aria-busy={speichern.isPending}
+            >
               Speichern
             </button>
           </DialogFooter>

@@ -113,7 +113,7 @@ export function RegistrierenFormular() {
           fehler={fehler.passwort ?? serverFehler(registrieren.error, 'passwort')}
           unterhalb={<StaerkeAnzeige passwort={passwort} />}
         />
-        <Button type="submit" variant="primaer" className={grosserKnopf} disabled={registrieren.isPending}>
+        <Button type="submit" variant="primaer" className={grosserKnopf} laedt={registrieren.isPending}>
           Konto erstellen
         </Button>
         {status?.googleAktiv && (

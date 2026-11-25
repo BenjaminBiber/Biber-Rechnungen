@@ -89,6 +89,7 @@ export function ZusammenfuehrenDialog({
           <Button
             variant="primaer"
             disabled={!behalten || quellen.length === 0 || zusammenfuehren.isPending}
+            laedt={zusammenfuehren.isPending}
             onClick={absenden}
           >
             Zusammenführen

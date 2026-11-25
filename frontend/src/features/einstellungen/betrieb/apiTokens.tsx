@@ -195,7 +195,12 @@ function TokenErstellenDialog({
             <Button type="button" onClick={onSchliessen}>
               Abbrechen
             </Button>
-            <Button type="submit" variant="primaer" disabled={!name.trim() || anlegen.isPending}>
+            <Button
+              type="submit"
+              variant="primaer"
+              disabled={!name.trim() || anlegen.isPending}
+              laedt={anlegen.isPending}
+            >
               Erstellen
             </Button>
           </DialogFooter>
@@ -231,12 +236,7 @@ function WiderrufenDialog({ token, onSchliessen }: { token: ApiToken; onSchliess
           <Button type="button" onClick={onSchliessen}>
             Abbrechen
           </Button>
-          <Button
-            type="button"
-            variant="gefaehrlich"
-            disabled={widerrufen.isPending}
-            onClick={() => void bestaetigen()}
-          >
+          <Button type="button" variant="gefaehrlich" laedt={widerrufen.isPending} onClick={() => void bestaetigen()}>
             Widerrufen
           </Button>
         </AlertDialogFooter>

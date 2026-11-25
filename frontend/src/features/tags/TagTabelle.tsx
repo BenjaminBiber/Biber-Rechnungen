@@ -44,7 +44,26 @@ export function TagTabelle({
           {tags.map((t) => (
             <tr key={t.id} className={t.id === gewaehlt ? 'bg-[var(--color-akzent-zart)]' : undefined}>
               <td>
-                <Chip ton={tagTon(t.farbe)}>{t.name}</Chip>
+                <span className="inline-flex items-center gap-1">
+                  <Chip ton={tagTon(t.farbe)}>{t.name}</Chip>
+                  {t.istSystem && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          aria-label={`Hinweis zum System-Tag „${t.name}“`}
+                          className="inline-flex cursor-help border-0 bg-transparent p-0.5 text-gedaempft hover:text-text"
+                        >
+                          <Icon name="info" className="text-[16px] [vertical-align:0]" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-[280px]">
+                        „{t.name}“ ist ein System-Tag: Ihn setzt nur die Pipeline, entfernt wird er nur durch
+                        „Bestätigen“. Er kann nicht bearbeitet oder gelöscht werden.
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                </span>
               </td>
               <td className="text-[13px]">{sonderform(t)}</td>
               <td className="text-[13px] text-gedaempft-stark">{t.istSystem ? '—' : matchingKurztext(t.matching)}</td>

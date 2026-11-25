@@ -101,7 +101,7 @@ export function Preisverlauf({
         </p>
       )}
       <div className="h-[260px] min-w-0" role="img" aria-label={beschreibung}>
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" debounce={120}>
           <LineChart margin={{ top: 18, right: 16, bottom: 0, left: 0 }}>
             <CartesianGrid vertical={false} stroke="var(--color-linie)" />
             <XAxis

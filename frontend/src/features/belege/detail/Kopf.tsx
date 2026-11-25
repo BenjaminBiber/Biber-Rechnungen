@@ -79,7 +79,13 @@ export function Kopf({ beleg, darfBearbeiten }: { beleg: BelegDetail; darfBearbe
       </div>
       <div className="flex flex-wrap gap-2">
         {darfBearbeiten && (
-          <button type="button" className="btn" onClick={() => void auslesen()} disabled={erneutAuslesen.isPending}>
+          <button
+            type="button"
+            className="btn"
+            onClick={() => void auslesen()}
+            disabled={erneutAuslesen.isPending}
+            aria-busy={erneutAuslesen.isPending}
+          >
             <Icon name="refresh" />
             Erneut auslesen
           </button>

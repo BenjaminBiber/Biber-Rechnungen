@@ -164,6 +164,7 @@ export function AufteilenDialog({
                 type="button"
                 className="btn btn-primaer"
                 disabled={schnitte.length === 0 || aufteilen.isPending}
+                aria-busy={aufteilen.isPending}
                 onClick={() => void absenden()}
               >
                 In {teile.length} Belege aufteilen

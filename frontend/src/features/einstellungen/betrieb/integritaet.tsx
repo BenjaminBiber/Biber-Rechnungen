@@ -79,7 +79,7 @@ export function IntegritaetBereich() {
         {istAdmin && (
           <Button
             type="button"
-            disabled={starten.isPending}
+            laedt={starten.isPending}
             onClick={() =>
               starten.mutateAsync().then(
                 () => toast.erfolg('Integritätsprüfung gestartet'),
