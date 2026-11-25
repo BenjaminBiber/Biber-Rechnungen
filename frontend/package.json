@@ -8,6 +8,7 @@
   },
   "scripts": {
     "dev": "vite",
+    "dev:docker": "docker compose -f ../docker/compose.dev.yml up -d --build --wait",
     "build": "tsr generate && tsc -b && vite build",
     "typecheck": "tsr generate && tsc -b --noEmit",
     "lint": "eslint . && prettier --check .",

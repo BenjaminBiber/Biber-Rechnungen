@@ -50,6 +50,8 @@ docker compose -f docker/compose.dev.yml up -d --build --wait
 cd frontend && npm run dev   # danach http://localhost:5173 öffnen
 ```
 
+In Rider (Solution `backend/Biber.Invoice.sln`) geht das in einem Schritt: die Run-Konfiguration **Entwicklung (API + Frontend)** aus `backend/.run/` startet API und Vite zusammen; vor der API startet sie die Docker-Dienste (`npm run dev:docker` in `frontend/`). Mit Debug läuft die API im Debugger. Einzeln gibt es **API**, **Frontend (Vite)** und **Docker-Dienste (PostgreSQL, KoSIT, Mail)**.
+
 Laufzeitdaten landen in `backend/src/Biber.Invoice.Api/.daten/`. Mit `docker compose -f docker/compose.dev.yml down -v` wird die Datenbank geleert.
 
 Dokumentation prüfen:
