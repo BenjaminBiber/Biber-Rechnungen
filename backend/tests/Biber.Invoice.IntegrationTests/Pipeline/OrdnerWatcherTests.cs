@@ -110,8 +110,13 @@ public sealed class OrdnerWatcherTests : IDisposable
         Schreibe("~$rechnung.pdf", 10);
         Schreibe("scan.tmp", 10);
         Schreibe("scan.pdf.part", 10);
-        Schreibe("versteckt.pdf", 10);
-        File.SetAttributes(Path.Combine(Eingang, "versteckt.pdf"), FileAttributes.Hidden);
+        // Das Attribut „Versteckt“ gibt es nur unter Windows; unter Linux/macOS ist eine Datei durch den Punkt versteckt.
+        var versteckt = OperatingSystem.IsWindows() ? "versteckt.pdf" : ".versteckt.pdf";
+        Schreibe(versteckt, 10);
+        if (OperatingSystem.IsWindows())
+        {
+            File.SetAttributes(Path.Combine(Eingang, versteckt), FileAttributes.Hidden);
+        }
         Directory.CreateDirectory(Path.Combine(Eingang, "unterordner"));
         File.WriteAllBytes(Path.Combine(Eingang, "unterordner", "tief.pdf"), new byte[10]);
 

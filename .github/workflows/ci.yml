@@ -36,6 +36,10 @@ jobs:
       - name: Format prüfen
         run: dotnet format backend/Biber.Invoice.sln --verify-no-changes
 
+      # Die Integrationstests starten viele Hosts mit FileSystemWatchern; der Runner erlaubt nur 128 inotify-Instanzen.
+      - name: inotify-Limit erhöhen
+        run: sudo sysctl -w fs.inotify.max_user_instances=1024
+
       - name: Tests
         run: dotnet test backend/Biber.Invoice.sln --logger trx
 

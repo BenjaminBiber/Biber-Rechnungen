@@ -40,6 +40,12 @@ public sealed class ApiFabrik : WebApplicationFactory<Program>, IAsyncLifetime
     private string? _seedSql;
     private bool _entsorgt;
 
+    /// <summary>
+    /// Ohne Neuladen bei Dateiänderungen: Sonst überwacht jeder Test-Host die appsettings-Dateien, und unter Linux
+    /// ist das inotify-Limit (meist 128 Instanzen je Benutzer) nach einigen Dutzend Hosts erschöpft.
+    /// </summary>
+    static ApiFabrik() => Environment.SetEnvironmentVariable("DOTNET_hostBuilder__reloadConfigOnChange", "false");
+
     public ApiFabrik()
         : this(new PostgreSqlBuilder("postgres:17").Build(), besitztContainer: true, [], echteAnmeldung: false, datenOrdner: null)
     {
