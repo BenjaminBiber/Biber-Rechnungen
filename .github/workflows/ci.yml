@@ -45,7 +45,7 @@ jobs:
 
       - name: Testergebnisse hochladen
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: backend-testergebnisse
           path: backend/**/TestResults/*.trx
@@ -76,7 +76,7 @@ jobs:
 
       - name: Playwright-Bericht hochladen
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-bericht
           path: |
@@ -112,7 +112,7 @@ jobs:
 
       - name: Playwright-Bericht und Compose-Logs hochladen
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: e2e-system-bericht
           path: |
