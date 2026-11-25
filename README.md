@@ -76,9 +76,9 @@ Nötige Repository-Secrets (Settings → Secrets and variables → Actions):
 
 | Dienst | Image | Tags |
 | --- | --- | --- |
-| api (mit Frontend) | `benjamin/biber-rechnungen-api` | `latest`, `X.Y.Z` |
-| kosit | `benjamin/biber-rechnungen-kosit` | `latest`, `X.Y.Z` |
-| db-backup | `benjamin/biber-rechnungen-db-backup` | `latest`, `X.Y.Z` |
+| api (mit Frontend) | `benjaminbiber/biber-rechnungen-api` | `latest`, `X.Y.Z` |
+| kosit | `benjaminbiber/biber-rechnungen-kosit` | `latest`, `X.Y.Z` |
+| db-backup | `benjaminbiber/biber-rechnungen-db-backup` | `latest`, `X.Y.Z` |
 
 Versionierung: Quelle sind die Git-Tags `vX.Y.Z`; ohne Tag startet die Zählung bei `0.0.0`. `major` setzt Minor und Patch auf 0, `minor` setzt Patch auf 0. Es gibt keinen Commit zurück auf `main`, `frontend/package.json` bleibt bei `0.0.0`. Das api-Image trägt die Version als Assembly-Version (Build-Argument `APP_VERSION`); ein lokaler Build ohne Argument ergibt `0.0.0`. Die Rechnung lässt sich lokal prüfen: `bash .github/scripts/naechste-version.test.sh`.
 

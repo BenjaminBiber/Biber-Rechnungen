@@ -109,8 +109,8 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: |
-            benjamin/${{ matrix.name }}:latest
-            benjamin/${{ matrix.name }}:${{ needs.pruefen.outputs.version }}
+            benjaminbiber/${{ matrix.name }}:latest
+            benjaminbiber/${{ matrix.name }}:${{ needs.pruefen.outputs.version }}
           # Nur das api-Image wertet APP_VERSION aus.
           build-args: |
             APP_VERSION=${{ needs.pruefen.outputs.version }}
