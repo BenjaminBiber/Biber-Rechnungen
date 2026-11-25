@@ -95,9 +95,10 @@ public sealed class GreenMail : IAsyncLifetime
         {
             (await http.PostAsync("/api/service/reset", null)).EnsureSuccessStatusCode();
         }
-        catch (HttpRequestException ex) when (ex.InnerException is HttpIOException)
+        catch (HttpRequestException ex) when (ex.InnerException is IOException)
         {
-            // GreenMail startet beim Reset neu und schließt die Verbindung dabei teils vor der Antwort.
+            // GreenMail startet beim Reset neu und schließt die Verbindung dabei teils vor der Antwort
+            // (Windows: HttpIOException, Linux: IOException „Connection reset by peer“; beides IOException).
         }
         await BereitAsync();
     }
