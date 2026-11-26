@@ -201,8 +201,31 @@ public sealed partial class DocumentIntelligenceClient : IDocumentIntelligenceCl
             }
         }
 
-        return [.. positionen.Select(MengeAusText).Select((p, i) => p with { Nr = i + 1 })];
+        return [.. positionen
+            .Select(OhneFuellzeilen)
+            .OfType<ExtrahiertePosition>()
+            .Select(MengeAusText)
+            .Select((p, i) => p with { Nr = i + 1 })];
     }
+
+    /// <summary>
+    /// VetStar setzt vor jede Datumszeile einen winzigen, unsichtbaren Strich (1 pt); DI liest ihn als eigene
+    /// Tabellenzeile und liefert dann mitunter ein Item „-“ ohne Betrag, manchmal mit dem Datum darunter. Strich- und
+    /// Datumszeilen fallen aus dem Text; bleibt nichts übrig und hat die Position keinen Preis, entfällt sie.
+    /// </summary>
+    private static ExtrahiertePosition? OhneFuellzeilen(ExtrahiertePosition p)
+    {
+        var zeilen = p.Text.Split('\n', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        var rest = zeilen.Where(z => !IstFuellzeile(z)).ToList();
+        if (rest.Count == 0)
+        {
+            return p.Gesamt is null && p.Einzelpreis is null ? null : p;
+        }
+
+        return rest.Count == zeilen.Length ? p : p with { Text = string.Join('\n', rest) };
+    }
+
+    private static bool IstFuellzeile(string zeile) => DatumszeileMuster().IsMatch(zeile) || StrichzeileMuster().IsMatch(zeile);
 
     /// <summary>
     /// Erstreckt sich eine Position über einen Seitenumbruch, erkennt DI oft nur die Betragszeile auf der Folgeseite
@@ -257,7 +280,7 @@ public sealed partial class DocumentIntelligenceClient : IDocumentIntelligenceCl
                 teile.Add(new ExtrahiertePosition(0, string.Join(' ', text), null, null, null, BetragAusText(zeile), null));
                 text.Clear();
             }
-            else if (!DatumszeileMuster().IsMatch(zeile) && zeile != "-")
+            else if (!IstFuellzeile(zeile))
             {
                 text.Add(zeile);
             }
@@ -310,6 +333,9 @@ public sealed partial class DocumentIntelligenceClient : IDocumentIntelligenceCl
 
     [GeneratedRegex(@"^\d{1,2}\.\d{1,2}\.\d{2,4}$")]
     private static partial Regex DatumszeileMuster();
+
+    [GeneratedRegex(@"^[-–—]+$")]
+    private static partial Regex StrichzeileMuster();
 
     [GeneratedRegex(@"^(?<menge>\d{1,4})\s*[x×X]\s+(?<text>\S.*)$", RegexOptions.Singleline)]
     private static partial Regex MengeImTextMuster();

@@ -36,6 +36,39 @@ public sealed class DiPositionenTests
     }
 
     [Fact]
+    public void Strich_Items_ohne_Betrag_fallen_weg()
+    {
+        // VetStar-Rechnung 20433/2086: Vor jeder Datumszeile steht ein 1-pt-Strich, den DI als eigenes Item liefert.
+        var e = Abbilden(
+            ItemOhneBetrag("-", "-"),
+            Item("03.09.2026\nRind Euthanasie\n35,94", "Rind Euthanasie", 35.94),
+            ItemOhneBetrag("-\n21.09.2026", null),
+            Item("30 x Trächtigkeitsuntersuchung\n231,00", "30 x Trächtigkeitsuntersuchung", 231.00));
+
+        e.Positionen.ShouldBe(
+        [
+            new ExtrahiertePosition(1, "Rind Euthanasie", null, null, null, 35.94m, null),
+            new ExtrahiertePosition(2, "Trächtigkeitsuntersuchung", 30m, null, 7.70m, 231.00m, null),
+        ]);
+    }
+
+    [Fact]
+    public void Strich_und_Datum_vor_der_Bezeichnung_fallen_aus_dem_Text()
+    {
+        var e = Abbilden(Item("-\n24.09.2026\nRind Euthanasie\n35,94", "-\n24.09.2026\nRind Euthanasie", 35.94));
+
+        e.Positionen.ShouldBe([new ExtrahiertePosition(1, "Rind Euthanasie", null, null, null, 35.94m, null)]);
+    }
+
+    [Fact]
+    public void Ein_Strich_mit_Betrag_bleibt_als_Position_erhalten()
+    {
+        var e = Abbilden(Item("-\n12,00", "-", 12.00));
+
+        e.Positionen.ShouldBe([new ExtrahiertePosition(1, "-", null, null, null, 12.00m, null)]);
+    }
+
+    [Fact]
     public void Passt_der_DI_Betrag_nicht_zur_ersten_Teilposition_bleibt_das_Item_ganz()
     {
         var e = Abbilden(Item("Wartung\n50,00\nAnfahrt\n20,00", "Wartung Anfahrt", 70.00));
@@ -128,6 +161,17 @@ public sealed class DiPositionenTests
             },
         },
     };
+
+    private static JsonObject ItemOhneBetrag(string inhalt, string? beschreibung)
+    {
+        var felder = new JsonObject();
+        if (beschreibung is not null)
+        {
+            felder["Description"] = new JsonObject { ["type"] = "string", ["valueString"] = beschreibung, ["content"] = beschreibung };
+        }
+
+        return new JsonObject { ["type"] = "object", ["content"] = inhalt, ["valueObject"] = felder };
+    }
 
     private static ExtraktionsErgebnis Abbilden(params JsonObject[] items) => AbbildenMitVolltext(null, items);
 
