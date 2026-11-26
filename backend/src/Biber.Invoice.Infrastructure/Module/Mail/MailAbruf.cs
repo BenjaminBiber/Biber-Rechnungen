@@ -104,6 +104,7 @@ public sealed class MailAbruf(
             await eingang.OpenAsync(FolderAccess.ReadOnly, ct);
             var anzahl = eingang.Count;
             await client.DisconnectAsync(true, ct);
+            await FehlerVerwerfenAsync(ct);
             return new AktionErgebnisDto(true, $"Verbindung erfolgreich · {Anzahl(anzahl, "Mail", "Mails")} im Eingang");
         }
         catch (Exception fehler) when (fehler is not OperationCanceledException)
@@ -357,6 +358,16 @@ public sealed class MailAbruf(
     {
         using var scope = scopes.CreateScope();
         return await scope.ServiceProvider.GetRequiredService<IEinstellungen>().LesenAsync<MailEinstellungen>(ct);
+    }
+
+    /// <summary>Ein alter Fehler ist nach gelungener Anmeldung überholt; der nächste Job-Lauf prüft den Abruf neu.</summary>
+    private async Task FehlerVerwerfenAsync(CancellationToken ct)
+    {
+        using var scope = scopes.CreateScope();
+        if (await MailStatusSpeicher.FehlerVerwerfenAsync(scope.ServiceProvider.GetRequiredService<BiberDbContext>(), ct))
+        {
+            log.LogInformation("Verbindungstest gelungen; alter Fehler des Mail-Abrufs verworfen");
+        }
     }
 
     private async Task StatusSchreibenAsync(MailAbrufStatus status, CancellationToken ct)

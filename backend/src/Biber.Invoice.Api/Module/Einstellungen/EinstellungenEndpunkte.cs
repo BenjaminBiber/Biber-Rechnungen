@@ -4,6 +4,7 @@ using Biber.Invoice.Contracts.Dienste;
 using Biber.Invoice.Contracts.Dto.Einstellungen;
 using Biber.Invoice.Domain.Module;
 using Biber.Invoice.Infrastructure.Module.Einstellungen;
+using Biber.Invoice.Infrastructure.Module.Mail;
 using Biber.Invoice.Infrastructure.Persistenz;
 using Microsoft.EntityFrameworkCore;
 
@@ -127,6 +128,12 @@ public sealed class EinstellungenEndpunkte : IEndpunktModul
         }
 
         await einstellungen.SpeichernAsync(wert, ct);
+        if (wert is MailEinstellungen)
+        {
+            // Ein Fehler aus der Zeit vor der Änderung (oder vor dem Aktivieren) ist überholt; der Job ruft gleich neu ab.
+            await MailStatusSpeicher.FehlerVerwerfenAsync(db, ct);
+        }
+
         return Results.NoContent();
     }
 

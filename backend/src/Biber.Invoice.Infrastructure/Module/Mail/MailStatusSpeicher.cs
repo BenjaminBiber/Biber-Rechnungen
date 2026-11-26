@@ -33,4 +33,23 @@ public static class MailStatusSpeicher
         eintrag.GeaendertAm = jetzt;
         await db.SaveChangesAsync(ct);
     }
+
+    /// <summary>
+    /// Verwirft einen gespeicherten Fehler samt Status, z. B. nach geänderten Einstellungen oder einem gelungenen
+    /// Verbindungstest. Ohne Status gilt der Abruf als fällig: Der Job ruft im nächsten Minutentakt ab und schreibt
+    /// einen fortbestehenden Fehler neu.
+    /// </summary>
+    /// <returns><c>true</c>, wenn ein Fehler verworfen wurde.</returns>
+    public static async Task<bool> FehlerVerwerfenAsync(BiberDbContext db, CancellationToken ct)
+    {
+        var eintrag = await db.Einstellungen.SingleOrDefaultAsync(e => e.Schluessel == Schluessel, ct);
+        if (eintrag is null || JsonSerializer.Deserialize<MailAbrufStatus>(eintrag.Wert, EinstellungenDienst.Json)?.Fehler is null)
+        {
+            return false;
+        }
+
+        db.Einstellungen.Remove(eintrag);
+        await db.SaveChangesAsync(ct);
+        return true;
+    }
 }
