@@ -6,7 +6,8 @@ namespace Biber.Invoice.Domain.Regeln;
 
 /// <summary>
 /// Liest Skonto aus dem Text eines Belegs: zuerst die XRechnung-Syntax <c>#SKONTO#TAGE=14#PROZENT=2.00#</c>, dann
-/// deutsche Zahlungsbedingungen wie „14 Tage 2 % Skonto“ oder „bis 12.12.2026 abzüglich 3 % Skonto“.
+/// deutsche Zahlungsbedingungen wie „14 Tage 2 % Skonto“ oder „bis 12.12.2026 abzüglich 3 % Skonto“, zuletzt einen
+/// schon abgezogenen Nachlass wie „2,00% Rabatt aus 529,81 €“ mit „-10,59 €“ (dann ohne Frist).
 /// </summary>
 public static partial class SkontoErkenner
 {
@@ -14,6 +15,11 @@ public static partial class SkontoErkenner
     public const decimal MaxProzent = 10m;
 
     public const int MaxTage = 120;
+
+    /// <summary>Abweichung zwischen Abzug und Prozentsatz des Bezugsbetrags (Lieferanten runden auch ab).</summary>
+    private const decimal AbzugToleranz = 0.01m;
+
+    private static readonly CultureInfo Deutsch = CultureInfo.GetCultureInfo("de-DE");
 
     /// <summary>Erste Skonto-Angabe im Text; <c>null</c>, wenn keine erkennbar ist oder Skonto ausgeschlossen wird.</summary>
     public static SkontoAngabe? AusText(string? text)
@@ -72,8 +78,76 @@ public static partial class SkontoErkenner
             }
         }
 
+        return Abgezogen(text);
+    }
+
+    /// <summary>
+    /// Ein Nachlass, den der Lieferant schon von der Rechnung abgezogen hat, z. B. „2,00% Rabatt aus 529,81 €“ mit
+    /// „-10,59 €“ in derselben oder der nächsten Zeile (WAHL Agrar bei Lastschrift). Nötig ist ein ausdrücklich
+    /// negativer Betrag. „Rabatt“ und „Nachlass“ zählen nur mit Bezugsbetrag („aus“, „von“, „auf“), damit
+    /// Positionsrabatte wie „Rabatt 10 % -5,00“ kein Skonto werden; ist ein Bezugsbetrag genannt, muss der Abzug zum
+    /// Prozentsatz passen.
+    /// </summary>
+    private static SkontoAngabe? Abgezogen(string text)
+    {
+        var zeilen = text.Split('\n', StringSplitOptions.TrimEntries);
+        for (var i = 0; i < zeilen.Length; i++)
+        {
+            var zeile = zeilen[i];
+            var wort = AbzugWort().Match(zeile);
+            if (!wort.Success || AusschlussMuster().IsMatch(zeile))
+            {
+                continue;
+            }
+
+            var abzug = NegativerBetragMuster().Match(zeile);
+            var bezeichnung = abzug.Success ? zeile[..abzug.Index] : zeile;
+            if (!abzug.Success && i + 1 < zeilen.Length)
+            {
+                abzug = NegativerBetragMuster().Match(zeilen[i + 1]);
+                if (abzug.Index > 0)
+                {
+                    continue; // In der Folgezeile zählt nur ein Betrag allein, nicht „Porto -5,80 €“.
+                }
+            }
+
+            if (!abzug.Success || BetragAusText(abzug.Groups["betrag"].Value) is not { } betrag)
+            {
+                continue;
+            }
+
+            var prozent = ProzentMuster().Matches(bezeichnung)
+                .Select(m => Prozent(m.Groups["wert"].Value))
+                .FirstOrDefault(p => p is > 0m and <= MaxProzent);
+            if (prozent is not { } p)
+            {
+                continue;
+            }
+
+            var basis = BasisMuster().Match(bezeichnung);
+            if (basis.Success)
+            {
+                if (BetragAusText(basis.Groups["betrag"].Value) is not { } b || Math.Abs(b * p / 100m - betrag) > AbzugToleranz)
+                {
+                    continue;
+                }
+            }
+            else if (!SkontoWort().IsMatch(wort.Value))
+            {
+                continue;
+            }
+
+            return new SkontoAngabe(p, null, null);
+        }
+
         return null;
     }
+
+    /// <summary>Deutscher Betrag wie „529,81“ oder „1.234,56“.</summary>
+    private static decimal? BetragAusText(string text) =>
+        decimal.TryParse(text.Replace(" ", "", StringComparison.Ordinal).Replace(".", "", StringComparison.Ordinal), NumberStyles.AllowDecimalPoint, Deutsch, out var wert)
+            ? wert
+            : null;
 
     private static (int? Tage, DateOnly? Bis)? Frist(string abschnitt, Match? schluessel)
     {
@@ -148,6 +222,19 @@ public static partial class SkontoErkenner
 
     [GeneratedRegex(@"skonto", RegexOptions.IgnoreCase)]
     private static partial Regex SkontoWort();
+
+    [GeneratedRegex(@"skonto|rabatt|nachlass", RegexOptions.IgnoreCase)]
+    private static partial Regex AbzugWort();
+
+    /// <summary>Negativer Betrag am Zeilenende: „-10,59 €“, „− 1.234,56 EUR“, „10,59-“ oder „10,59 €-“.</summary>
+    [GeneratedRegex(
+        @"(?:^|(?<=\s))(?:[-−–]\s?(?<betrag>\d{1,3}(?:[. ]?\d{3})*,\d{2})(?:\s?(?:€|EUR))?|(?<betrag>\d{1,3}(?:[. ]?\d{3})*,\d{2})(?:\s?(?:€|EUR))?\s?-)$",
+        RegexOptions.IgnoreCase)]
+    private static partial Regex NegativerBetragMuster();
+
+    /// <summary>Bezugsbetrag eines Nachlasses: „aus 529,81 €“, „von 1.250,00“.</summary>
+    [GeneratedRegex(@"\b(?:aus|von|auf)\s+(?<betrag>\d{1,3}(?:[. ]?\d{3})*,\d{2})", RegexOptions.IgnoreCase)]
+    private static partial Regex BasisMuster();
 
     [GeneratedRegex(@"(?<!\d)(?<wert>\d{1,2}(?:[.,]\d{1,2})?)\s?(?:%|prozent)", RegexOptions.IgnoreCase)]
     private static partial Regex ProzentMuster();

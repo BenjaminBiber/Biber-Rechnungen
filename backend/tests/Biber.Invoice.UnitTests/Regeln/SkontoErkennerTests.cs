@@ -40,6 +40,44 @@ public sealed class SkontoErkennerTests
         SkontoErkenner.AusText(text).ShouldBeNull();
     }
 
+    [Theory]
+    [InlineData("2,00% Rabatt aus 529,81 €\n-10,59 €", 2)]
+    [InlineData("2,00% Rabatt aus 529,81 € -10,59 €", 2)]
+    [InlineData("abzüglich 3 % Skonto -15,00 €", 3)]
+    [InlineData("Skonto 2 % von 1.250,00 EUR 25,00-", 2)]
+    [InlineData("Sondernachlass 5 % auf 200,00 € − 10,00 €", 5)]
+    public void Erkennt_bereits_abgezogenes_Skonto_ohne_Frist(string text, decimal prozent)
+    {
+        SkontoErkenner.AusText(text).ShouldBe(new SkontoAngabe(prozent, null, null));
+    }
+
+    [Fact]
+    public void Erkennt_den_abgezogenen_Rabatt_auf_der_WAHL_Rechnung()
+    {
+        // Volltext von Document Intelligence, Rechnung 965662 (WAHL Agrar): Rabatt unter der letzten Position,
+        // Betrag in der Zeile darunter, danach der Summenblock; bezahlt wird per Lastschrift.
+        const string volltext = "12x Mischkanüle für MUH-GLUE 160 & 250ml\n0,00 €\n0,00 €\npassend für 160ml & 250ml Kartusche\n"
+            + "2,00% Rabatt aus 529,81 €\n-10,59 €\nPorto\nFracht/Verpack.\nVersicherung\nWarenwert\nMwSt. 19,0%\nEndbetrag\n"
+            + "5,80 €\n519,22 €\n99,75 €\nEntsorgung\nSonderkost.\nNeb.kost. ges.\nNettobetrag\n624,77 €\n5,80 €\n525,02 €\n"
+            + "Die Bezahlung erfolgt wunschgemäß per Lastschrift\nGewicht 41,3 kg\n"
+            + "Wir reichen die SEPA-Lastschrift mit verkürzter Vorlagefrist ein.\nDie Belastung erfolgt frühestens am\n03.11.26.";
+
+        SkontoErkenner.AusText(volltext).ShouldBe(new SkontoAngabe(2m, null, null));
+    }
+
+    [Theory]
+    [InlineData("Rabatt 10 % -5,00 €")] // Positionsrabatt ohne Bezugsbetrag
+    [InlineData("2,00% Rabatt aus 529,81 €\n-25,00 €")] // Abzug passt nicht zum Prozentsatz
+    [InlineData("2,00% Rabatt aus 529,81 €\n10,59 €")] // nicht negativ
+    [InlineData("2 % Skonto\nPorto -5,80 €")] // Betrag in der Folgezeile gehört zu etwas anderem
+    [InlineData("Skonto 2 %\n-")]
+    [InlineData("Kein Skonto 2 % -12,50 €")]
+    [InlineData("Rabatt 15 % aus 100,00 €\n-15,00 €")] // über dem Höchstsatz
+    public void Erkennt_keinen_abgezogenen_Nachlass(string text)
+    {
+        SkontoErkenner.AusText(text).ShouldBeNull();
+    }
+
     [Fact]
     public void Bis_rechnet_Tage_ab_Rechnungsdatum()
     {
