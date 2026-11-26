@@ -34,7 +34,8 @@ test('vierseitigen Scan in 1–2 und 3–4 aufteilen → zwei neue Belege, Origi
 
   const bekannte = new Set((await vorgaenge(page.request)).map((v) => v.id))
   await page.goto(`/belege/${beleg.id}`)
-  await page.getByRole('link', { name: 'Aufteilen' }).click()
+  await page.getByRole('button', { name: 'Weitere Aktionen' }).click()
+  await page.getByRole('menuitem', { name: 'Aufteilen …' }).click()
   const dialog = page.getByRole('dialog', { name: 'Beleg aufteilen' })
   await expect(dialog.getByRole('img', { name: /^Seite \d$/ })).toHaveCount(4)
   await dialog.getByRole('button', { name: 'Schnitt nach Seite 2' }).click()

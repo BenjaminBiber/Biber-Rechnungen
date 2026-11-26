@@ -45,10 +45,10 @@ test('fehlerhafter Scan → „zu prüfen“ mit Gründen → korrigieren → be
   // Kategorie ändern.
   await belegTabOeffnen(page, 'Daten')
   const daten = page.getByRole('form', { name: 'Daten' })
-  await daten.getByLabel('Kategorie').click()
+  await daten.getByLabel('Kategorie', { exact: true }).click()
   await page.getByRole('listbox', { name: 'Kategorien' }).getByRole('option', { name: kategorieName }).click()
-  await page.getByRole('button', { name: 'Änderungen speichern' }).click()
-  await expect(page.getByText('Gespeichert')).toBeVisible()
+  // Auswahlfelder speichern sofort, ohne Knopf.
+  await expect(page.getByText('Gespeichert', { exact: true })).toBeVisible()
 
   // Bestätigen (Konfidenz bleibt ein offener Befund) → Tag „zu prüfen“ weg.
   await page.getByRole('button', { name: 'Bestätigen' }).click()
