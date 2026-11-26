@@ -207,6 +207,21 @@ function seitenDaten(beleg: BelegDetail) {
   }
 }
 
+/** Betragsregeln des Servers (`BelegBearbeitungsDienst`) mit dessen Fehlerschlüsseln; `null`, wenn alles passt. */
+function betraegePruefen(eingabe: BelegAendern): Record<string, string[]> | null {
+  const fehler: Record<string, string[]> = {}
+  const negativ = 'Negative Beträge gibt es nur bei Gutschriften.'
+  if (eingabe.belegart !== 'Gutschrift') {
+    for (const feld of ['netto', 'steuer', 'brutto'] as const) if ((eingabe[feld] ?? 0) < 0) fehler[feld] = [negativ]
+    eingabe.steuerzeilen.forEach((z, i) => {
+      if (z.netto < 0 || z.steuer < 0) fehler[`steuerzeilen[${i}]`] = [negativ]
+    })
+  }
+  if (new Set(eingabe.steuerzeilen.map((z) => z.satz)).size < eingabe.steuerzeilen.length)
+    fehler.steuerzeilen = ['Jeder Steuersatz darf nur einmal vorkommen.']
+  return Object.keys(fehler).length > 0 ? fehler : null
+}
+
 function ersetze(beleg: BelegDetail): BelegDetail {
   db.belege = db.belege.map((b) => (b.id === beleg.id ? beleg : b))
   return beleg
@@ -338,7 +353,8 @@ export const belegeRouten: Route[] = [
     const beleg = findeBeleg(params.id)
     if (!beleg) return nichtGefunden('Beleg')
     const eingabe = await jsonKoerper<BelegAendern>(request)
-    if (!eingabe.titel?.trim()) return ungueltig('titel', 'Titel ist erforderlich.')
+    const betragsFehler = betraegePruefen(eingabe)
+    if (betragsFehler) return problem(400, 'Die Eingabe ist ungültig.', betragsFehler)
     const korrespondent = verweis(db.korrespondenten, eingabe.korrespondentId)
     if (korrespondent === undefined) return ungueltig('korrespondentId', 'Unbekannter Korrespondent.')
     const kategorie = verweis(db.kategorien, eingabe.kategorieId)
@@ -362,7 +378,8 @@ export const belegeRouten: Route[] = [
       korrespondentErkennung: beleg.korrespondent?.id !== korrespondent?.id ? 'Manuell' : beleg.korrespondentErkennung,
       belegart: eingabe.belegart,
       rechnungsnummer: eingabe.rechnungsnummer ?? null,
-      titel: eingabe.titel,
+      // Wie der Server: ohne Titel zeigt der Beleg Rechnungsnummer bzw. Korrespondent.
+      titel: eingabe.titel?.trim() || eingabe.rechnungsnummer || korrespondent?.name || '',
       rechnungsdatum: eingabe.rechnungsdatum ?? null,
       leistungsdatum: eingabe.leistungsdatum ?? null,
       leistungVon: eingabe.leistungVon ?? null,

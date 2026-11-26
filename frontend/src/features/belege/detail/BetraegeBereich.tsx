@@ -2,7 +2,7 @@ import { useId } from 'react'
 import { Icon } from '@/components/Icon'
 import { formatZahl } from '@/lib/format'
 import { betragEingabe, parseBetrag, parseSatz, STEUER_TOLERANZ } from './gemeinsam'
-import type { FeldFehler, Formular } from './formular'
+import { neuerSatz, type FeldFehler, type Formular } from './formular'
 
 type Zeile = Formular['steuerzeilen'][number]
 type ZeilenFeld = keyof Zeile
@@ -86,6 +86,11 @@ export function BetraegeBereich({
   const abweichungen =
     zeilen.filter((z) => z.stimmt === false).length + kopf.filter((k) => k.vergleich?.stimmt === false).length
   const hatZeilen = zeilen.length > 0
+  // Fehler ohne eigenes Eingabefeld: die Rechnungswerte (nur über „Rechnungswert auf … setzen“ änderbar) und die Tabelle.
+  const bereichsFehler = [
+    ...kopf.flatMap((k) => (fehler[k.feld] ? [`${k.label} laut Rechnung: ${fehler[k.feld]}`] : [])),
+    ...(fehler.steuerzeilen ? [fehler.steuerzeilen] : []),
+  ]
 
   return (
     <div>
@@ -213,6 +218,11 @@ export function BetraegeBereich({
                   {`${formatZahl(pruefung.satz!)} % von ${euro(pruefung.netto!)} wären ${euro(pruefung.erwartet!)} – eingetragen sind ${euro(pruefung.steuer!)} (Differenz ${euro(cent(Math.abs(pruefung.erwartet! - pruefung.steuer!)))})`}
                 </span>
               )}
+              {fehler[`steuerzeilen.${i}`] && (
+                <span role="alert" className="col-[1/6] -mt-0.5 text-xs text-rot-text">
+                  {`Steuerzeile ${nr}: ${fehler[`steuerzeilen.${i}`]}`}
+                </span>
+              )}
             </div>
           )
         })}
@@ -228,7 +238,9 @@ export function BetraegeBereich({
             <button
               type="button"
               className="col-[1/3] cursor-pointer justify-self-start border-0 bg-transparent p-0 text-[13px] font-medium text-akzent-text"
-              onClick={() => onZeilen([...werte.steuerzeilen, { satz: '19', netto: '', steuer: '' }], false)}
+              onClick={() =>
+                onZeilen([...werte.steuerzeilen, { satz: neuerSatz(werte.steuerzeilen), netto: '', steuer: '' }], false)
+              }
             >
               + Steuerzeile
             </button>
@@ -288,6 +300,11 @@ export function BetraegeBereich({
           <span role="cell" />
         </div>
       </div>
+      {bereichsFehler.map((text) => (
+        <span key={text} role="alert" className="hinweis text-rot-text">
+          {text}
+        </span>
+      ))}
     </div>
   )
 }

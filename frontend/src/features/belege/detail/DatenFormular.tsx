@@ -28,7 +28,18 @@ import { ibanFormatieren } from '@/lib/iban'
 import { cn } from '@/lib/utils'
 import { BetraegeBereich } from './BetraegeBereich'
 import { istZuPruefen, seitenText } from './gemeinsam'
-import { ausBeleg, gleich, MAX_TITEL, pruefen, serverFehler, zuDto, type FeldFehler, type Formular } from './formular'
+import {
+  ausBeleg,
+  fehlerOhneFeld,
+  feldText,
+  gleich,
+  MAX_TITEL,
+  pruefen,
+  serverFehler,
+  zuDto,
+  type FeldFehler,
+  type Formular,
+} from './formular'
 import { aenderungenAnmelden } from './offeneAenderungen'
 import { ZahlungBereich } from './ZahlungBereich'
 
@@ -175,7 +186,7 @@ export function DatenFormular({
   const entwurfRef = useRef<Formular | null>(null)
   // Stand des Servers aus dem Cache – nach dem Speichern sofort aktuell, auch vor dem nächsten Render.
   const basisAktuell = () => ausBeleg(queryClient.getQueryData<BelegDetail>(belegeKeys.detail(beleg.id)) ?? beleg)
-  // Felder (per `name`), die schon verlassen wurden: nur deren Prüffehler zeigt das Auto-Save an.
+  // Felder (per `name`), die schon verlassen wurden: Prüffehler leerer Felder zeigt das Auto-Save erst danach an.
   const beruehrt = useRef(new Set<string>())
   // Speichervorgänge laufen nacheinander, damit keine ältere Antwort einen neueren Stand überschreibt.
   const kette = useRef<Promise<unknown>>(Promise.resolve())
@@ -201,9 +212,13 @@ export function DatenFormular({
     const pruefung = pruefen(stand)
     if (Object.keys(pruefung).length > 0) {
       if (!aktuell) return false
+      // Leere, noch nicht verlassene Felder (etwa einer neuen Steuerzeile) werden gerade erst ausgefüllt. Alles andere
+      // zeigt das Auto-Save sofort – auch ungültige Werte, die schon so ausgelesen wurden; sonst blockierten sie unsichtbar.
       const sichtbar = alleFehler
         ? pruefung
-        : Object.fromEntries(Object.entries(pruefung).filter(([k]) => beruehrt.current.has(k)))
+        : Object.fromEntries(
+            Object.entries(pruefung).filter(([k]) => beruehrt.current.has(k) || feldText(stand, k).trim() !== ''),
+          )
       setFehler(sichtbar)
       setStatus(Object.keys(sichtbar).length > 0 ? 'ungueltig' : 'offen')
       return false
@@ -283,7 +298,8 @@ export function DatenFormular({
       zeilen.map((z, i) => (i === index ? { ...z, [feld]: wert } : z)),
     )
     const schluessel = `steuerzeilen.${index}.${feld}`
-    setFehler((f) => (f[schluessel] ? { ...f, [schluessel]: undefined } : f))
+    const zeile = `steuerzeilen.${index}`
+    setFehler((f) => (f[schluessel] || f[zeile] ? { ...f, [schluessel]: undefined, [zeile]: undefined } : f))
   }
 
   async function rueckgaengigMachen() {
@@ -393,6 +409,7 @@ export function DatenFormular({
 
   const extraktion = beleg.extraktion
   const konfidenz = extraktion.konfidenz ?? null
+  const sonstigeFehler = fehlerOhneFeld(fehler)
 
   return (
     <form
@@ -410,6 +427,12 @@ export function DatenFormular({
         void speichern()
       }}
     >
+      {sonstigeFehler.length > 0 && (
+        <div role="alert" className="flex gap-2 rounded-lg bg-rot-flaeche px-3 py-2.5 text-sm text-rot-text">
+          <Icon name="cloud_off" className="text-[18px]" />
+          <span>Nicht gespeichert: {sonstigeFehler.join(' ')}</span>
+        </div>
+      )}
       <Feld
         id={`${id}-titel`}
         label="Titel"
@@ -462,6 +485,7 @@ export function DatenFormular({
         <Feld
           id={`${id}-belegart`}
           label="Belegart"
+          fehler={fehler.belegart}
           onZuruecksetzen={frageStellen}
           rechtsBelegt
           vorher={vorherVon('belegart')}
@@ -472,6 +496,8 @@ export function DatenFormular({
             className="eingabe"
             value={werte.belegart}
             disabled={nurLesen}
+            aria-invalid={fehler.belegart ? true : undefined}
+            aria-describedby={fehler.belegart ? `${id}-belegart-fehler` : undefined}
             onChange={(e) => setze('belegart', e.target.value as Belegart, true)}
           >
             {belegarten.map((art) => (

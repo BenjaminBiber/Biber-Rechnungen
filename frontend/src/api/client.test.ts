@@ -38,11 +38,21 @@ describe('ApiFehler', () => {
     const { result } = renderMitQuery(() => useBelegAendern())
     const fehler = await act(() =>
       result.current
-        .mutateAsync({ id: belegIds.b1, titel: '', belegart: 'Rechnung', waehrung: 'EUR', steuerzeilen: [] })
+        .mutateAsync({
+          id: belegIds.b1,
+          titel: '',
+          belegart: 'Rechnung',
+          waehrung: 'EUR',
+          brutto: -1,
+          steuerzeilen: [],
+        })
         .catch((e: unknown) => e),
     )
     expect(fehler).toBeInstanceOf(ApiFehler)
-    expect(fehler).toMatchObject({ status: 400, fehler: { titel: ['Titel ist erforderlich.'] } })
+    expect(fehler).toMatchObject({
+      status: 400,
+      fehler: { brutto: ['Negative Beträge gibt es nur bei Gutschriften.'] },
+    })
     await waitFor(() => expect(result.current.error).toBe(fehler))
   })
 })

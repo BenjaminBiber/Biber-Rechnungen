@@ -6,7 +6,7 @@ import { problem } from '@/mocks/handlers/gemeinsam'
 import { db } from '@/mocks/db'
 import { server } from '@/mocks/server'
 import { szenario } from '@/mocks/szenarien'
-import { FEHLER_BETRAG, FEHLER_DATUM } from './formular'
+import { FEHLER_BETRAG, FEHLER_DATUM, FEHLER_NEGATIV, fehlerSatzDoppelt } from './formular'
 import { anfragenMitschneiden, b2, kopfGeladen, renderBelegDetail } from './testHilfe'
 
 vi.mock('react-pdf', () => import('./testHilfe').then((m) => m.reactPdfMock))
@@ -164,6 +164,8 @@ describe('Tab „Daten“', () => {
     const { anfragen } = anfragenMitschneiden()
     const { nutzer } = await oeffneDaten()
     await nutzer.click(screen.getByRole('button', { name: '+ Steuerzeile' }))
+    // 19 % gibt es schon – die neue Zeile beginnt mit dem nächsten freien Satz.
+    expect(screen.getByLabelText('Steuersatz Steuerzeile 2')).toHaveValue('7')
     await nutzer.click(screen.getByLabelText('Steuersatz Steuerzeile 2'))
     await nutzer.tab()
     // Netto und Steuer der neuen Zeile sind leer, aber noch nicht verlassen: kein Fehler, nur „ungespeichert“.
@@ -171,16 +173,98 @@ describe('Tab „Daten“', () => {
     expect(status()).toHaveTextContent('Ungespeicherte Änderungen')
     await nutzer.type(screen.getByLabelText('Netto Steuerzeile 2'), '100,00')
     await nutzer.tab()
-    await nutzer.type(screen.getByLabelText('Steuer Steuerzeile 2'), '19,00')
+    await nutzer.type(screen.getByLabelText('Steuer Steuerzeile 2'), '7,00')
     await nutzer.tab()
     await waitFor(() => expect(status()).toHaveTextContent('Gespeichert'))
     expect(await puts(anfragen)).toHaveLength(1)
     expect((await puts(anfragen))[0].body).toMatchObject({
       steuerzeilen: [
         { satz: 19, netto: 221.85, steuer: 42.15 },
-        { satz: 19, netto: 100, steuer: 19 },
+        { satz: 7, netto: 100, steuer: 7 },
       ],
     })
+  })
+
+  it('meldet einen doppelten Steuersatz am Feld, statt still nicht zu speichern', async () => {
+    const { anfragen } = anfragenMitschneiden()
+    const { nutzer } = await oeffneDaten()
+    await nutzer.click(screen.getByRole('button', { name: '+ Steuerzeile' }))
+    await nutzer.clear(screen.getByLabelText('Steuersatz Steuerzeile 2'))
+    await nutzer.type(screen.getByLabelText('Steuersatz Steuerzeile 2'), '19')
+    await nutzer.type(screen.getByLabelText('Netto Steuerzeile 2'), '100,00')
+    await nutzer.type(screen.getByLabelText('Steuer Steuerzeile 2'), '19,00')
+    await nutzer.tab()
+    expect(status()).toHaveTextContent('Nicht gespeichert – Eingaben prüfen')
+    expect(screen.getByLabelText('Steuersatz Steuerzeile 2')).toHaveAccessibleDescription(fehlerSatzDoppelt(1))
+    expect(await puts(anfragen)).toHaveLength(0)
+
+    await nutzer.clear(screen.getByLabelText('Steuersatz Steuerzeile 2'))
+    await nutzer.type(screen.getByLabelText('Steuersatz Steuerzeile 2'), '7')
+    await nutzer.tab()
+    await waitFor(() => expect(status()).toHaveTextContent('Gespeichert'))
+  })
+
+  it('zeigt ausgelesene negative Beträge einer Rechnung und speichert nach dem Wechsel auf Gutschrift', async () => {
+    db.belege = db.belege.map((b) =>
+      b.id === b2
+        ? {
+            ...b,
+            netto: -221.85,
+            steuer: -42.15,
+            brutto: -264,
+            steuerzeilen: [{ satz: 19, netto: -221.85, steuer: -42.15, stimmt: true }],
+          }
+        : b,
+    )
+    const { anfragen } = anfragenMitschneiden()
+    const { nutzer } = await oeffneDaten()
+    await nutzer.type(feld('Rechnungsnummer'), 'G')
+    await nutzer.tab()
+
+    // Der Beleg kam so aus der Erkennung: Die Fehler stehen trotzdem sichtbar da, nicht nur ein rotes Wölkchen.
+    expect(status()).toHaveTextContent('Nicht gespeichert – Eingaben prüfen')
+    expect(feld('Netto Steuerzeile 1')).toHaveAccessibleDescription(FEHLER_NEGATIV)
+    expect(feld('Steuer Steuerzeile 1')).toHaveAccessibleDescription(FEHLER_NEGATIV)
+    expect(within(formular()).getByText(`Brutto laut Rechnung: ${FEHLER_NEGATIV}`)).toBeInTheDocument()
+    expect(await puts(anfragen)).toHaveLength(0)
+
+    await nutzer.selectOptions(feld('Belegart'), 'Gutschrift')
+    await waitFor(() => expect(status()).toHaveTextContent('Gespeichert'))
+    expect(within(formular()).queryByText(`Brutto laut Rechnung: ${FEHLER_NEGATIV}`)).not.toBeInTheDocument()
+    expect((await puts(anfragen)).map((a) => a.body)).toEqual([
+      expect.objectContaining({ belegart: 'Gutschrift', rechnungsnummer: '2026-48817G', brutto: -264 }),
+    ])
+  })
+
+  it('zeigt Serverfehler zu Steuerzeilen, Rechnungswerten und ohne eigenes Feld', async () => {
+    server.use(
+      http.put('*/api/belege/:id', () =>
+        problem(400, 'Die Eingabe ist ungültig.', {
+          'Steuerzeilen[0].Satz': ['Der Steuersatz liegt zwischen 0 und 100 %.'],
+          'steuerzeilen[0]': ['Die Zeile passt nicht.'],
+          steuerzeilen: ['Jeder Steuersatz darf nur einmal vorkommen.'],
+          brutto: ['Negative Beträge gibt es nur bei Gutschriften.'],
+          skonto: ['Skonto passt nicht.'],
+        }),
+      ),
+    )
+    const { nutzer } = await oeffneDaten()
+    await nutzer.type(feld('Rechnungsnummer'), '-1')
+    await nutzer.tab()
+
+    await waitFor(() => expect(status()).toHaveTextContent('Nicht gespeichert – Eingaben prüfen'))
+    expect(feld('Steuersatz Steuerzeile 1')).toHaveAccessibleDescription('Der Steuersatz liegt zwischen 0 und 100 %.')
+    const tabelle = screen.getByRole('table', { name: 'Beträge nach Steuersatz' })
+    expect(within(tabelle).getByText('Steuerzeile 1: Die Zeile passt nicht.')).toBeInTheDocument()
+    expect(within(formular()).getByText('Jeder Steuersatz darf nur einmal vorkommen.')).toBeInTheDocument()
+    expect(
+      within(formular()).getByText('Brutto laut Rechnung: Negative Beträge gibt es nur bei Gutschriften.'),
+    ).toBeInTheDocument()
+    expect(within(formular()).getByText('Nicht gespeichert: Skonto passt nicht.')).toBeInTheDocument()
+
+    // Bearbeiten der Zeile nimmt ihre Meldung weg.
+    await nutzer.type(feld('Netto Steuerzeile 1'), '0')
+    expect(within(tabelle).queryByText('Steuerzeile 1: Die Zeile passt nicht.')).not.toBeInTheDocument()
   })
 
   it('zeigt Serverfehler am Feld', async () => {

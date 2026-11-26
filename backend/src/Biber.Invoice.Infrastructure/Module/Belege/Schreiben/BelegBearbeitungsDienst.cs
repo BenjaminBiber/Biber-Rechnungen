@@ -37,6 +37,9 @@ public sealed class BelegBearbeitungsDienst(
     private const int MaxEinheit = 50;
     private const int MaxBegruendung = 2000;
 
+    // Nennt den Ausweg: Ausgelesene Gutschriften kommen oft als „Rechnung“ mit negativen Beträgen an.
+    private const string NurGutschriftNegativ = "Negative Beträge gibt es nur bei Gutschriften.";
+
     public async Task<BelegDetailDto?> AendernAsync(Guid id, BelegAendernDto aenderung, CancellationToken ct)
     {
         var beleg = await db.Belege
@@ -569,7 +572,7 @@ public sealed class BelegBearbeitungsDienst(
             {
                 if (betrag < 0)
                 {
-                    Fehler(feld, "Der Betrag darf nicht negativ sein.");
+                    Fehler(feld, NurGutschriftNegativ);
                 }
             }
         }
@@ -591,7 +594,7 @@ public sealed class BelegBearbeitungsDienst(
 
             if (a.Belegart != Belegart.Gutschrift && (zeile.Netto < 0 || zeile.Steuer < 0))
             {
-                Fehler($"steuerzeilen[{i}]", "Die Beträge dürfen nicht negativ sein.");
+                Fehler($"steuerzeilen[{i}]", NurGutschriftNegativ);
             }
         }
 
