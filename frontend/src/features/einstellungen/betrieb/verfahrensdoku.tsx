@@ -3,6 +3,7 @@ import { Chip } from '@/components/Chip'
 import { Icon } from '@/components/Icon'
 import { formatDatum } from '@/lib/format'
 import { Zeile } from '../Zeile'
+import { SkelettListe } from '@/components/ui/skelett'
 
 /** Bereich „Verfahrensdokumentation“ (Einstellungen.dc.html → `s.doku`). */
 export function VerfahrensdokuBereich() {
@@ -39,7 +40,7 @@ export function VerfahrensdokuBereich() {
           {nichtGefunden ? 'Verfahrensdokumentation nicht gefunden' : error.message}
         </p>
       ) : (
-        <p className="gedaempft m-0 text-sm">Lädt …</p>
+        <SkelettListe zeilen={3} symbol={false} label="Verfahrensdokumentation wird geladen" />
       )}
     </div>
   )

@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createMemoryHistory, createRouter, RouterProvider } from '@tanstack/react-router'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { db } from '@/mocks/db'
@@ -172,7 +172,7 @@ describe('Einstellungen Eingang', { timeout: 20000 }, () => {
         verarbeitetOrdner: 'V',
         ohneBelegOrdner: 'O',
       },
-      umgebung: { imapKonfiguriert: true } as never,
+      mailZugang: { konfiguriert: true } as never,
     }
 
     it('Status-Chip in allen vier Zuständen', () => {
@@ -184,7 +184,8 @@ describe('Einstellungen Eingang', { timeout: 20000 }, () => {
         text: 'Fehler: Anmeldung abgelehnt',
         ton: 'rot',
       })
-      expect(mailStatusChip({ ...basis, umgebung: { imapKonfiguriert: false } as never }, undefined)).toEqual({
+      expect(mailStatusChip(basis, { verbunden: false }, jetzt)).toEqual({ text: 'noch nicht abgerufen', ton: 'grau' })
+      expect(mailStatusChip({ ...basis, mailZugang: { konfiguriert: false } as never }, undefined)).toEqual({
         text: 'nicht eingerichtet',
         ton: 'grau',
       })
@@ -234,7 +235,7 @@ describe('Einstellungen Eingang', { timeout: 20000 }, () => {
     })
 
     it('Fehlerfälle: IMAP nicht konfiguriert, Abruf mit Serverfehler', async () => {
-      db.einstellungen = { ...db.einstellungen, umgebung: { ...db.einstellungen.umgebung, imapKonfiguriert: false } }
+      db.einstellungen = { ...db.einstellungen, mailZugang: { ...db.einstellungen.mailZugang, konfiguriert: false } }
       szenario.fehler('/api/einstellungen/mail/jetzt-abrufen', 500, 'POST')
       const { user, ende } = renderSeite('/einstellungen/mail')
       await formular('E-Mail-Import')
@@ -243,6 +244,61 @@ describe('Einstellungen Eingang', { timeout: 20000 }, () => {
       await toastMit('IMAP ist nicht konfiguriert.')
       await user.click(knopf('Jetzt abrufen'))
       await waitFor(() => expect(screen.getAllByRole('alert').length).toBeGreaterThan(1))
+      ende()
+    })
+
+    it('IMAP-Zugang aus der .env: nur lesbar, kein Zugangsformular', async () => {
+      const { ende } = renderSeite('/einstellungen/mail')
+      await formular('E-Mail-Import')
+      expect(screen.queryByRole('form', { name: 'IMAP-Zugang' })).not.toBeInTheDocument()
+      expect(screen.getByLabelText('IMAP-Server (.env)')).toHaveAttribute('readonly')
+      ende()
+    })
+
+    it('IMAP-Zugang ohne .env: pflegbar, Passwort bleibt bei leerem Feld', async () => {
+      db.einstellungen = {
+        ...db.einstellungen,
+        mailZugang: {
+          ausUmgebung: false,
+          host: null,
+          port: 993,
+          ssl: true,
+          benutzer: null,
+          passwortGesetzt: false,
+          konfiguriert: false,
+        },
+      }
+      const { user, anfragen, ende } = renderSeite('/einstellungen/mail')
+      const zugang = await screen.findByRole('form', { name: 'IMAP-Zugang' }, { timeout: 5000 })
+      expect(screen.queryByLabelText('IMAP-Server (.env)')).not.toBeInTheDocument()
+      expect(screen.getByText('nicht eingerichtet')).toBeInTheDocument()
+
+      // Ohne gespeichertes Passwort ist es Pflicht.
+      await user.type(within(zugang).getByLabelText('IMAP-Server'), 'imap.ionos.de')
+      await user.type(within(zugang).getByLabelText('Benutzer'), 'rechnungen@firma.de')
+      await user.click(within(zugang).getByRole('button', { name: 'Speichern' }))
+      expect(within(zugang).getByText('Darf nicht leer sein.')).toBeInTheDocument()
+
+      await user.type(within(zugang).getByLabelText('Passwort'), 'geheim')
+      await user.click(within(zugang).getByRole('button', { name: 'Speichern' }))
+      await waitFor(() => expect(anfragen.at(-1)?.pfad).toBe('/api/einstellungen/mail/zugang'))
+      expect(anfragen.at(-1)).toMatchObject({
+        methode: 'PUT',
+        koerper: { host: 'imap.ionos.de', port: 993, ssl: true, benutzer: 'rechnungen@firma.de', passwort: 'geheim' },
+      })
+      await toastMit('Gespeichert')
+      await waitFor(() => expect(within(zugang).getByLabelText('Passwort')).toHaveValue(''))
+      expect(within(zugang).getByLabelText('Passwort')).toHaveAttribute(
+        'placeholder',
+        'gespeichert – leer lassen zum Behalten',
+      )
+
+      // Nur den Port ändern: Passwort geht als null mit und bleibt gespeichert.
+      await user.clear(within(zugang).getByLabelText('Port'))
+      await user.type(within(zugang).getByLabelText('Port'), '143')
+      await user.click(within(zugang).getByRole('switch', { name: 'SSL/TLS' }))
+      await user.click(within(zugang).getByRole('button', { name: 'Speichern' }))
+      await waitFor(() => expect(anfragen.at(-1)?.koerper).toMatchObject({ port: 143, ssl: false, passwort: null }))
       ende()
     })
 

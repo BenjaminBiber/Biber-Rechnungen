@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { useEinstellungen } from '@/api/einstellungen'
 import type { Einstellungen } from '@/api/typen'
+import { SkelettFormular } from '@/components/ui/skelett'
 
 /** Überschrift eines Bereichs; der Inhalt erscheint, sobald die Einstellungen geladen sind. */
 export function Bereich({ titel, children }: { titel: string; children: (e: Einstellungen) => ReactNode }) {
@@ -15,7 +16,7 @@ export function Bereich({ titel, children }: { titel: string; children: (e: Eins
           {error.message}
         </p>
       ) : (
-        <p className="gedaempft m-0 text-sm">Lädt …</p>
+        <SkelettFormular felder={4} label="Einstellungen werden geladen" />
       )}
     </div>
   )

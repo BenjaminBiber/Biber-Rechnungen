@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router'
 import { useDashboard } from '@/api/dashboard'
 import type { Dashboard } from '@/api/typen'
 import { Icon } from '@/components/Icon'
+import { LadeBereich, Skelett, SkelettKarte, SkelettListe } from '@/components/ui/skelett'
 import { monatsIndex, monatsNamenLang } from '@/features/dashboard/gemeinsam'
 import { formatEuro, formatProzent } from '@/lib/format'
 
@@ -17,9 +18,22 @@ export function MobilUebersicht({ jahr }: { jahr: number }) {
 
   if (dashboard.isPending)
     return (
-      <main className="gedaempft px-4 py-5" aria-busy="true">
-        Übersicht wird geladen …
-      </main>
+      <LadeBereich
+        als="main"
+        label="Übersicht wird geladen"
+        className="flex w-full min-w-0 flex-col gap-3.5 px-4 pt-4 pb-6"
+      >
+        <div className="grid grid-cols-2 gap-2.5">
+          {Array.from({ length: 4 }, (_, i) => (
+            <div key={i} className="karte flex min-h-[88px] flex-col justify-between gap-1 p-3.5">
+              <Skelett hoehe={10} breite="55%" />
+              <Skelett hoehe={22} breite="70%" />
+            </div>
+          ))}
+        </div>
+        <SkelettKarte hoehe={96} />
+        <SkelettListe zeilen={3} label={null} />
+      </LadeBereich>
     )
   if (!dashboard.data)
     return (
@@ -44,14 +58,14 @@ function Inhalt({ daten, jahr }: { daten: Dashboard; jahr: number }) {
       <div className="grid grid-cols-2 gap-2.5">
         <Link to="/belege" search={{ ansicht: 'Inbox' } as never} className={kachel}>
           <span className="flex items-center gap-1.5 text-[13px] text-akzent-text">
-            <Icon name="inbox" className="!text-[18px]" />
+            <Icon name="inbox" className="text-[18px]" />
             Inbox
           </span>
           <span className="num text-left text-2xl font-semibold">{inbox.anzahl}</span>
         </Link>
         <Link to="/belege" search={{ ansicht: 'ZuPruefen' } as never} className={kachel}>
           <span className="flex items-center gap-1.5 text-[13px] text-orange-text">
-            <Icon name="report" className="!text-[18px]" />
+            <Icon name="report" className="text-[18px]" />
             Zu prüfen
           </span>
           <span className="num text-left text-2xl font-semibold">{zuPruefen.anzahl}</span>

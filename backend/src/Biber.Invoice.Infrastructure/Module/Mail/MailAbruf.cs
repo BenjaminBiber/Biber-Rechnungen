@@ -14,7 +14,6 @@ using MailKit.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using MimeKit;
 
 namespace Biber.Invoice.Infrastructure.Module.Mail;
@@ -31,7 +30,7 @@ public sealed class MailAbrufFehler(string meldung, Exception ursache) : Excepti
 /// </summary>
 public sealed class MailAbruf(
     IServiceScopeFactory scopes,
-    IOptionsMonitor<ImapZugang> zugang,
+    ImapZugangQuelle zugang,
     TimeProvider zeit,
     ILogger<MailAbruf> log)
 {
@@ -51,7 +50,7 @@ public sealed class MailAbruf(
 
     private readonly SemaphoreSlim _sperre = new(1, 1);
 
-    public bool Konfiguriert => zugang.CurrentValue.Konfiguriert;
+    public async Task<bool> KonfiguriertAsync(CancellationToken ct) => (await zugang.LesenAsync(ct)).Konfiguriert;
 
     /// <summary>Ruft ab; läuft gerade ein Abruf, wird auf ihn gewartet.</summary>
     /// <exception cref="MailAbrufFehler">Verbindung, Anmeldung oder Eingangsordner scheitern.</exception>
@@ -90,7 +89,7 @@ public sealed class MailAbruf(
     /// <summary>Meldet an und öffnet den Eingangsordner, ohne etwas zu verändern.</summary>
     public async Task<AktionErgebnisDto> VerbindungTestenAsync(CancellationToken ct)
     {
-        var z = zugang.CurrentValue;
+        var z = await zugang.LesenAsync(ct);
         if (!z.Konfiguriert)
         {
             return new AktionErgebnisDto(false, NichtEingerichtet);
@@ -120,7 +119,7 @@ public sealed class MailAbruf(
     private async Task<MailAbrufErgebnis> AbrufenGesperrtAsync(CancellationToken ct)
     {
         var beginn = zeit.GetUtcNow();
-        var z = zugang.CurrentValue;
+        var z = await zugang.LesenAsync(ct);
         MailAbrufErgebnis ergebnis;
         try
         {

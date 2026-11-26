@@ -21,6 +21,13 @@ export type FormularHelfer<T> = {
 /** Erster Buchstabe klein: Der Server meldet Felder teils als `Jahre`, das Formular kennt `jahre`. */
 const feldname = (name: string) => name.charAt(0).toLowerCase() + name.slice(1)
 
+/** Feldfehler aus einer `ValidationProblem`-Antwort; erste Meldung je Feld. */
+export function serverFeldfehler(f: Error): Feldfehler | undefined {
+  return istApiFehler(f) && f.fehler
+    ? Object.fromEntries(Object.entries(f.fehler).map(([feld, meldungen]) => [feldname(feld), meldungen[0]]))
+    : undefined
+}
+
 /**
  * Gemeinsamer Rahmen eines Einstellungsbereichs: Zustand, „Verwerfen“/„Speichern“ (nur bei Änderungen aktiv),
  * Feldfehler, Toast „Gespeichert“ und Schreibschutz für Nicht-Admins.
@@ -68,10 +75,8 @@ export function EinstellungsFormular<G extends keyof EinstellungGruppen, T>({
     speichern.mutateAsync({ gruppe, werte } as EinstellungSpeichern).then(
       () => toast.erfolg('Gespeichert'),
       (f: Error) => {
-        if (istApiFehler(f) && f.fehler)
-          setFehler(
-            Object.fromEntries(Object.entries(f.fehler).map(([feld, meldungen]) => [feldname(feld), meldungen[0]])),
-          )
+        const feldfehler = serverFeldfehler(f)
+        if (feldfehler) setFehler(feldfehler)
         toast.fehler(f.message)
       },
     )

@@ -180,14 +180,13 @@ public sealed class EinstellungenTests(ApiFabrik fabrik) : IAsyncLifetime
         text.ShouldNotContain(schluessel);
         text.ShouldNotContain(passwort);
         text.ShouldNotContain(googleGeheimnis);
-        var umgebung = JsonSerializer.Deserialize<EinstellungenDto>(text, JsonTest.Optionen)!.Umgebung;
+        var dto = JsonSerializer.Deserialize<EinstellungenDto>(text, JsonTest.Optionen)!;
+        var umgebung = dto.Umgebung;
         umgebung.DiEndpunkt.ShouldBe("https://di.example.test/");
         umgebung.DiModell.ShouldBe("prebuilt-invoice");
-        umgebung.ImapServer.ShouldBe("imap.example.test:993");
-        umgebung.ImapBenutzer.ShouldBe("rechnungen@example.test");
+        dto.MailZugang.ShouldBe(new MailZugangDto(true, "imap.example.test", 993, true, "rechnungen@example.test", true, true));
         umgebung.OeffentlicheUrl.ShouldBe("http://rechnungen.lan");
         umgebung.DiKonfiguriert.ShouldBeTrue();
-        umgebung.ImapKonfiguriert.ShouldBeTrue();
         umgebung.GoogleKonfiguriert.ShouldBeTrue();
         umgebung.AblagePfad.ShouldBe(Path.Combine(fabrik.TempOrdner, "ablage"));
     }

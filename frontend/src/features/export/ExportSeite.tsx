@@ -6,6 +6,7 @@ import { useKorrespondenten } from '@/api/korrespondenten'
 import { useKategorien, useTags } from '@/api/tags'
 import type { ExportAnfrage } from '@/api/typen'
 import { useEntprellt } from '@/components/auswahl/gemeinsam'
+import { Datumseingabe } from '@/components/Datumseingabe'
 import { Icon } from '@/components/Icon'
 import { Seitenkopf } from '@/components/Seitenkopf'
 import { useRolle } from '@/components/shell/useRolle'
@@ -323,14 +324,7 @@ function Datumsfeld({
       <label className="label" htmlFor={id}>
         {label}
       </label>
-      <input
-        id={id}
-        className="eingabe"
-        placeholder="TT.MM.JJJJ"
-        value={wert}
-        aria-invalid={ungueltig}
-        onChange={(e) => onAendern(e.target.value)}
-      />
+      <Datumseingabe id={id} wert={wert} onAendern={onAendern} aria-invalid={ungueltig} />
     </div>
   )
 }

@@ -57,6 +57,7 @@ export function Suchfeld({
   onKeyDown,
   aktivId,
   listId,
+  ladend,
 }: {
   wert: string
   onAendern: (text: string) => void
@@ -64,12 +65,15 @@ export function Suchfeld({
   onKeyDown: (e: KeyboardEvent) => void
   aktivId?: string
   listId: string
+  /** Die Trefferliste lädt gerade (Drehkreis im Feld). */
+  ladend?: boolean
 }) {
   return (
     <div className="-mx-3 -mt-3 mb-2 flex h-10 items-center gap-2 border-b border-rand px-3">
       <Icon name="search" className="gedaempft" />
       <input
-        className="min-w-0 flex-1 bg-transparent outline-none"
+        className="eingabe-laden min-w-0 flex-1 bg-transparent outline-none"
+        aria-busy={ladend || undefined}
         value={wert}
         placeholder={platzhalter}
         aria-label={platzhalter}

@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { BelegListeneintrag } from '@/api/typen'
 import { Chip, type ChipTon } from '@/components/Chip'
 import { Icon } from '@/components/Icon'
+import { LadeBereich, Skelett } from '@/components/ui/skelett'
 import { ansichtTitel, zuAbfrage, type ListenZustand } from '@/features/belege/liste/suche'
 import { formatDatum, formatEuro } from '@/lib/format'
 import { cn } from '@/lib/utils'
@@ -30,7 +31,11 @@ export function MobilBelege({ zustand }: { zustand: ListenZustand }) {
     <main className="flex w-full min-w-0 flex-col text-text">
       <h1 className="sr-only">{ansichtTitel[aktuell.ansicht]}</h1>
       <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-linie bg-flaeche px-4 py-2.5">
-        <Suchfeld wert={suche.suche ?? ''} onSuche={(s) => setze({ suche: s || undefined })} />
+        <Suchfeld
+          wert={suche.suche ?? ''}
+          onSuche={(s) => setze({ suche: s || undefined })}
+          ladend={liste.isFetching && !liste.isFetchingNextPage}
+        />
         <button
           type="button"
           aria-label={aktiv ? `Filter, ${aktiv} aktiv` : 'Filter'}
@@ -53,11 +58,7 @@ export function MobilBelege({ zustand }: { zustand: ListenZustand }) {
         </button>
       </div>
 
-      {liste.isPending && (
-        <p role="status" className="gedaempft px-4 py-5">
-          Belege werden geladen …
-        </p>
-      )}
+      {liste.isPending && <BelegeSkelett />}
       {liste.isError && !liste.data && (
         <div role="alert" className="flex flex-col items-start gap-3 px-4 py-5">
           <p className="m-0 text-sm">Die Belege konnten nicht geladen werden.</p>
@@ -97,7 +98,7 @@ export function MobilBelege({ zustand }: { zustand: ListenZustand }) {
   )
 }
 
-function Suchfeld({ wert, onSuche }: { wert: string; onSuche: (suche: string) => void }) {
+function Suchfeld({ wert, onSuche, ladend }: { wert: string; onSuche: (suche: string) => void; ladend: boolean }) {
   const [eingabe, setEingabe] = useState(wert)
   const [bisher, setBisher] = useState(wert)
   const melden = useRef(onSuche)
@@ -127,10 +128,31 @@ function Suchfeld({ wert, onSuche }: { wert: string; onSuche: (suche: string) =>
         aria-label="Belege durchsuchen"
         placeholder="Volltext durchsuchen"
         value={eingabe}
+        aria-busy={ladend || eingabe.trim() !== wert || undefined}
         onChange={(e) => setEingabe(e.target.value)}
-        className="min-w-0 flex-1 border-0 bg-transparent text-[15px] text-text outline-none"
+        className="eingabe-laden min-w-0 flex-1 border-0 bg-transparent text-[15px] text-text outline-none"
       />
     </label>
+  )
+}
+
+/** Platzhalter für die Belegliste: Vorschau, zwei Textzeilen und Betrag je Eintrag. */
+function BelegeSkelett() {
+  return (
+    <LadeBereich label="Belege werden geladen" className="m-0 p-0">
+      {Array.from({ length: 6 }, (_, i) => (
+        <div key={i} className="flex min-h-11 gap-3 border-b border-linie px-4 py-3">
+          <Skelett hoehe={64} breite={48} className="flex-none rounded-md" />
+          <div className="flex min-w-0 flex-1 flex-col gap-2.5 pt-1">
+            <div className="flex justify-between gap-3">
+              <Skelett hoehe={14} breite={`${45 + ((i * 13) % 30)}%`} />
+              <Skelett hoehe={14} breite={64} />
+            </div>
+            <Skelett hoehe={11} breite="35%" />
+          </div>
+        </div>
+      ))}
+    </LadeBereich>
   )
 }
 
@@ -212,8 +234,14 @@ function Nachlader({ laedt, onNachladen }: { laedt: boolean; onNachladen: () => 
 
   return (
     <div ref={ref} className="flex justify-center px-4 py-4">
-      <button type="button" className="btn min-h-11" onClick={onNachladen} disabled={laedt}>
-        {laedt ? 'Lädt …' : 'Weitere laden'}
+      <button
+        type="button"
+        className="btn min-h-11"
+        onClick={onNachladen}
+        disabled={laedt}
+        aria-busy={laedt || undefined}
+      >
+        Weitere laden
       </button>
     </div>
   )

@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useAlleBenachrichtigungenGelesen, useBenachrichtigungen } from '@/api/benachrichtigungen'
 import { Seitenkopf } from '@/components/Seitenkopf'
 import { BenachrichtigungZeile, useBenachrichtigungOeffnen } from '@/components/shell/Glocke'
+import { SkelettListe } from '@/components/ui/skelett'
 
 export const Route = createFileRoute('/_app/benachrichtigungen')({
   component: Benachrichtigungen,
@@ -23,7 +24,12 @@ function Benachrichtigungen() {
         titel="Benachrichtigungen"
         untertitel={data && `${data.gesamt} Einträge`}
         aktionen={
-          <button type="button" className="btn" onClick={() => alleGelesen.mutate()}>
+          <button
+            type="button"
+            className="btn"
+            aria-busy={alleGelesen.isPending || undefined}
+            onClick={() => alleGelesen.mutate()}
+          >
             Alle gelesen
           </button>
         }
@@ -40,7 +46,7 @@ function Benachrichtigungen() {
         nur ungelesene
       </label>
       <div className="karte overflow-hidden">
-        {isPending && <p className="gedaempft m-0 p-6 text-center text-sm">Wird geladen …</p>}
+        {isPending && <SkelettListe zeilen={6} label="Benachrichtigungen werden geladen" className="px-4" />}
         {data?.eintraege.length === 0 && (
           <p className="gedaempft m-0 p-6 text-center text-sm">Keine Benachrichtigungen</p>
         )}

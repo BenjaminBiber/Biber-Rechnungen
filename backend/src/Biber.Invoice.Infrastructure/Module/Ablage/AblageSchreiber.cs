@@ -74,7 +74,25 @@ public sealed class AblageSchreiber(BiberDbContext db, IConfiguration konfigurat
         }
     }
 
-    public async Task<IReadOnlyList<AblageVerschiebung>> VerschiebenAsync(Beleg beleg, CancellationToken ct)
+    public Task<IReadOnlyList<AblageVerschiebung>> VerschiebenAsync(Beleg beleg, CancellationToken ct) =>
+        UmziehenAsync(beleg, async (datei, endung) =>
+        {
+            var relativ = await ZielpfadAsync(beleg, endung, ct);
+            return LiegtSchonDort(datei.Pfad, relativ, Basis(relativ, endung)) ? null : relativ;
+        }, ct);
+
+    public Task<IReadOnlyList<AblageVerschiebung>> InGeloeschtVerschiebenAsync(Beleg beleg, CancellationToken ct) =>
+        UmziehenAsync(beleg, (datei, _) => Task.FromResult(
+            datei.Pfad.StartsWith(IAblageSchreiber.GeloeschtOrdner + "/", StringComparison.Ordinal)
+                ? null
+                : $"{IAblageSchreiber.GeloeschtOrdner}/{datei.Pfad}"), ct);
+
+    /// <summary>
+    /// Benennt Original und eingebettetes XML in den Pfad um, den <paramref name="ziel"/> liefert (<c>null</c> = bleibt),
+    /// hängt bei belegtem Ziel <c>_2</c>, <c>_3</c> … an und nimmt bei einem Fehler alles Verschobene zurück.
+    /// </summary>
+    private async Task<IReadOnlyList<AblageVerschiebung>> UmziehenAsync(
+        Beleg beleg, Func<BelegDatei, string, Task<string?>> ziel, CancellationToken ct)
     {
         var wurzel = Wurzel();
         var dateien = await db.BelegDateien
@@ -87,24 +105,23 @@ public sealed class AblageSchreiber(BiberDbContext db, IConfiguration konfigurat
             foreach (var datei in dateien)
             {
                 var endung = Path.GetExtension(datei.Pfad).TrimStart('.').ToLowerInvariant();
-                var relativ = await ZielpfadAsync(beleg, endung, ct);
-                var basis = Basis(relativ, endung);
                 var quelle = Absolut(wurzel, datei.Pfad);
-                if (LiegtSchonDort(datei.Pfad, relativ, basis) || !File.Exists(quelle))
+                if (await ziel(datei, endung) is not { } relativ || !File.Exists(quelle))
                 {
                     continue;
                 }
 
+                var basis = Basis(relativ, endung);
                 for (var nummer = 1; ; nummer++)
                 {
                     var kandidat = nummer == 1 ? relativ : $"{basis}_{nummer}{relativ[basis.Length..]}";
-                    var ziel = Absolut(wurzel, kandidat);
-                    Directory.CreateDirectory(Path.GetDirectoryName(ziel)!);
+                    var absolut = Absolut(wurzel, kandidat);
+                    Directory.CreateDirectory(Path.GetDirectoryName(absolut)!);
                     try
                     {
-                        File.Move(quelle, ziel, overwrite: false);
+                        File.Move(quelle, absolut, overwrite: false);
                     }
-                    catch (IOException) when (File.Exists(ziel))
+                    catch (IOException) when (File.Exists(absolut))
                     {
                         continue;
                     }

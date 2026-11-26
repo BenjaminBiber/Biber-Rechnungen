@@ -162,7 +162,8 @@ describe('Import-Vorgänge', () => {
     const text = tabelle.textContent ?? ''
     for (const chip of ['läuft', 'fertig', 'ohne Beleg', 'wartet', 'abgelehnt'])
       expect(within(tabelle).getAllByText(chip, { exact: true }).length).toBeGreaterThan(0)
-    for (const icon of ['upload', 'mail', 'folder_open', 'smart_toy']) expect(text).toContain(icon)
+    for (const icon of ['upload', 'mail', 'folder_open', 'smart_toy'])
+      expect(tabelle.querySelector(`[data-icon="${icon}"]`)).toBeInTheDocument()
     expect(text).toContain('3 / 5')
     expect(text).toMatch(/nächster Versuch \d\d:\d\d/)
     expect(within(tabelle).getByRole('link', { name: '1 Beleg angelegt' })).toHaveAttribute(

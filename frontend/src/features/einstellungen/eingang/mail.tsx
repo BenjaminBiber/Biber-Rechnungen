@@ -1,21 +1,22 @@
 import { useEinstellungen, useMailJetztAbrufen, useMailStatus, useMailVerbindungTesten } from '@/api/einstellungen'
-import type { Einstellungen, MailStatus } from '@/api/typen'
+import type { Einstellungen, MailStatus, MailZugang } from '@/api/typen'
 import { Chip, type ChipTon } from '@/components/Chip'
 import { useRolle } from '@/components/shell/useRolle'
 import { EinstellungsFormular } from '../EinstellungsFormular'
 import { Schalter } from '../Schalter'
 import { Zeile } from '../Zeile'
 import { AktionsKnopf, BereichMitStatus, NurLesenFeld, Raster, vorZeit } from './gemeinsam'
+import { MailZugangFormular } from './mailZugang'
 
 const intervalle = [5, 15, 30, 60]
 
 /** Status-Chip: nicht eingerichtet, abgeschaltet, Fehler oder verbunden. */
 export function mailStatusChip(
-  e: Pick<Einstellungen, 'mail' | 'umgebung'>,
+  e: Pick<Einstellungen, 'mail' | 'mailZugang'>,
   status: MailStatus | undefined,
   jetzt = Date.now(),
 ): { text: string; ton: ChipTon } | undefined {
-  if (!e.umgebung.imapKonfiguriert) return { text: 'nicht eingerichtet', ton: 'grau' }
+  if (!e.mailZugang.konfiguriert) return { text: 'nicht eingerichtet', ton: 'grau' }
   if (!e.mail.aktiv) return { text: 'abgeschaltet', ton: 'grau' }
   if (!status) return undefined
   if (status.fehler) return { text: `Fehler: ${status.fehler}`, ton: 'rot' }
@@ -24,8 +25,12 @@ export function mailStatusChip(
       text: status.letzterAbruf ? `verbunden · ${vorZeit(status.letzterAbruf, jetzt)}` : 'verbunden',
       ton: 'gruen',
     }
+  // Ohne Abruf (z. B. direkt nach dem Aktivieren oder nach verworfenem Fehler) folgt der erste im nächsten Minutentakt.
+  if (!status.letzterAbruf) return { text: 'noch nicht abgerufen', ton: 'grau' }
   return { text: 'nicht verbunden', ton: 'grau' }
 }
+
+const imapServer = (z: MailZugang) => (z.host ? `${z.host}:${z.port}` : '–')
 
 function StatusChip() {
   const { data: e } = useEinstellungen()
@@ -46,6 +51,7 @@ export function MailBereich() {
     <BereichMitStatus titel="E-Mail-Import" status={<StatusChip />}>
       {(e) => (
         <>
+          {!e.mailZugang.ausUmgebung && <MailZugangFormular zugang={e.mailZugang} />}
           <EinstellungsFormular gruppe="mail" titel="E-Mail-Import" wert={e.mail}>
             {({ wert, setze, schreibgeschuetzt }) => (
               <div className="flex flex-col gap-4">
@@ -58,8 +64,12 @@ export function MailBereich() {
                   />
                 </Zeile>
                 <Raster>
-                  <NurLesenFeld id="m-server" label="IMAP-Server (.env)" wert={e.umgebung.imapServer ?? '–'} mono />
-                  <NurLesenFeld id="m-benutzer" label="Benutzer (.env)" wert={e.umgebung.imapBenutzer ?? '–'} mono />
+                  {e.mailZugang.ausUmgebung && (
+                    <>
+                      <NurLesenFeld id="m-server" label="IMAP-Server (.env)" wert={imapServer(e.mailZugang)} mono />
+                      <NurLesenFeld id="m-benutzer" label="Benutzer (.env)" wert={e.mailZugang.benutzer ?? '–'} mono />
+                    </>
+                  )}
                   <div>
                     <label className="label" htmlFor="m-intervall">
                       Abrufintervall

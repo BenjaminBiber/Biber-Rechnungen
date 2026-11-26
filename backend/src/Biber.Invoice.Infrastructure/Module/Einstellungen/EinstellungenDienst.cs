@@ -77,6 +77,7 @@ public sealed class EinstellungenDienst(
 
         eintrag.Wert = neu.ToJsonString(Json);
         eintrag.GeaendertAm = jetzt;
+        var vertraulich = VertraulicheFelder(wert.GetType());
 
         foreach (var (feld, neuerWert) in neu)
         {
@@ -85,6 +86,10 @@ public sealed class EinstellungenDienst(
             {
                 continue;
             }
+
+            var geheim = vertraulich.Contains(feld);
+            var vorher = geheim ? Maskiert(alterWert) : alterWert;
+            var nachher = geheim ? Maskiert(neuerWert) : neuerWert;
 
             db.AuditEintraege.Add(new AuditEintrag
             {
@@ -95,8 +100,8 @@ public sealed class EinstellungenDienst(
                 EntitaetId = schluessel,
                 Aktion = "Geaendert",
                 Feld = feld,
-                AlterWert = alterWert?.ToJsonString(Json) ?? "null",
-                NeuerWert = neuerWert?.ToJsonString(Json) ?? "null",
+                AlterWert = vorher?.ToJsonString(Json) ?? "null",
+                NeuerWert = nachher?.ToJsonString(Json) ?? "null",
             });
         }
 
@@ -105,4 +110,17 @@ public sealed class EinstellungenDienst(
     }
 
     private static string CacheSchluessel(string schluessel) => $"einstellungen:{schluessel}";
+
+    /// <summary>JSON-Namen der mit <see cref="VertraulichAttribute"/> markierten Eigenschaften.</summary>
+    private static HashSet<string> VertraulicheFelder(Type typ) =>
+        typ.GetProperties()
+            .Where(p => p.IsDefined(typeof(VertraulichAttribute), inherit: true))
+            .Select(p => Json.PropertyNamingPolicy?.ConvertName(p.Name) ?? p.Name)
+            .ToHashSet(StringComparer.Ordinal);
+
+    private static JsonNode? Maskiert(JsonNode? wert) => wert is null ? null : JsonValue.Create("***");
 }
+
+/// <summary>Der Wert dieser Einstellung erscheint im Audit-Protokoll nur als <c>***</c>.</summary>
+[AttributeUsage(AttributeTargets.Property)]
+public sealed class VertraulichAttribute : Attribute;

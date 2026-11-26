@@ -8,6 +8,7 @@ import { formatDatum } from '@/lib/format'
 import { Bereich } from './Bereich'
 import { EinstellungsFormular, type Feldfehler } from './EinstellungsFormular'
 import { LoeschDialog } from './LoeschDialog'
+import { SkelettListe } from '@/components/ui/skelett'
 
 const MINDEST_JAHRE = 8
 
@@ -39,7 +40,7 @@ function Leer({ jahre }: { jahre: number }) {
 function LoeschbarListe({ jahre }: { jahre: number }) {
   const { data, isPending } = useLoeschbar()
   const [gewaehlt, setGewaehlt] = useState<Loeschbar>()
-  if (isPending) return <p className="gedaempft m-0 text-sm">Lädt …</p>
+  if (isPending) return <SkelettListe zeilen={2} kompakt symbol={false} label="Löschbare Jahrgänge werden geladen" />
   return (
     <>
       {!data?.length ? (

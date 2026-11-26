@@ -1,5 +1,6 @@
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
+import { db } from '@/mocks/db'
 import { belegIds, korrespondentIds } from '@/mocks/fixtures/ids'
 import { szenario } from '@/mocks/szenarien'
 import { b2, kopfGeladen, renderBelegDetail } from './testHilfe'
@@ -14,7 +15,11 @@ async function oeffneMenue(pfad?: string, name?: string) {
   return { ...ergebnis, menue }
 }
 
-const eintraege = () => screen.getAllByRole('menuitem').map((e) => e.textContent)
+// Icon-Name (data-icon) + sichtbarer Text, z. B. „linkLink kopieren“.
+const eintraege = () =>
+  screen
+    .getAllByRole('menuitem')
+    .map((e) => (e.querySelector('[data-icon]')?.getAttribute('data-icon') ?? '') + e.textContent)
 
 describe('Mehr-Menü', () => {
   it('zeigt bei einem gescannten Beleg alle Einträge außer „XML herunterladen“ (Herunterladen ist die Hauptaktion)', async () => {
@@ -26,10 +31,31 @@ describe('Mehr-Menü', () => {
       'content_copyAls Dublette markieren …',
       'cropLogo aus diesem Beleg übernehmen',
       'swap_horizBelegart ändern',
-      'lockLöschengesperrt bis 31.12.2034',
+      'deleteLöschen (falsch zugeordnet) …Löschsperre bis 31.12.2034',
     ])
     expect(screen.queryByRole('menuitem', { name: /Original herunterladen/ })).not.toBeInTheDocument()
-    expect(screen.getByRole('menuitem', { name: /Löschen/ })).toHaveAttribute('aria-disabled', 'true')
+  })
+
+  it('Benutzer ohne Admin-Rolle sehen „Löschen“ gesperrt', async () => {
+    szenario.rolle('Benutzer')
+    await oeffneMenue()
+    const loeschen = screen.getByRole('menuitem', { name: /Löschen/ })
+    expect(loeschen).toHaveTextContent('Löschengesperrt bis 31.12.2034')
+    expect(loeschen).toHaveAttribute('aria-disabled', 'true')
+  })
+
+  it('Admin löscht einen falsch zugeordneten Beleg erst nach Bestätigung des Grundes', async () => {
+    const { nutzer, router } = await oeffneMenue()
+    await nutzer.click(screen.getByRole('menuitem', { name: /Löschen \(falsch zugeordnet\)/ }))
+    const dialog = await screen.findByRole('alertdialog')
+    const knopf = within(dialog).getByRole('button', { name: 'Beleg löschen' })
+    expect(knopf).toBeDisabled()
+    await nutzer.click(within(dialog).getByRole('checkbox', { name: /falsch zugeordnet/ }))
+    await nutzer.type(within(dialog).getByLabelText(/Bemerkung/), 'Rechnung vom Nachbarn')
+    await nutzer.click(knopf)
+    await waitFor(() => expect(router.state.location.pathname).toBe('/belege'))
+    expect(db.belege.some((b) => b.id === b2)).toBe(false)
+    expect(db.geloeschteBelege.map((g) => [g.eintrag.id, g.eintrag.bemerkung])).toEqual([[b2, 'Rechnung vom Nachbarn']])
   })
 
   it('„Aufteilen …“ gibt es nur bei mehrseitigen PDFs und öffnet den Dialog', async () => {

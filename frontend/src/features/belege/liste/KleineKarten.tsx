@@ -19,7 +19,7 @@ export function KleineKarten({
   onVorschau: (beleg: BelegListeneintrag) => void
 }) {
   const auswahl = useBelegAuswahl()
-  const herunterladen = useOriginalHerunterladen()
+  const original = useOriginalHerunterladen()
 
   return (
     <div className="grid grid-cols-[repeat(auto-fill,minmax(176px,1fr))] gap-3.5">
@@ -90,7 +90,8 @@ export function KleineKarten({
                   type="button"
                   aria-label="Original herunterladen"
                   title="Herunterladen"
-                  onClick={() => void herunterladen(beleg.id)}
+                  onClick={() => void original.herunterladen(beleg.id)}
+                  aria-busy={original.laedt(beleg.id) || undefined}
                 >
                   <Icon name="download" />
                 </button>

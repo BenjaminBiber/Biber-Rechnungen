@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
-import type { ComponentProps } from 'react'
+import { useState, type ComponentProps } from 'react'
 import { belegeKeys } from '@/api/belege'
 import { api, daten } from '@/api/client'
 import type { BelegListeneintrag, TagKurz } from '@/api/typen'
@@ -141,16 +141,24 @@ export function Vorschaubild({ beleg, gross = false }: { beleg: BelegListeneintr
  */
 export function useOriginalHerunterladen() {
   const queryClient = useQueryClient()
-  return async (id: string) => {
-    const beleg = await queryClient.fetchQuery({
-      queryKey: belegeKeys.detail(id),
-      queryFn: ({ signal }) => daten(api.GET('/api/belege/{id}', { params: { path: { id } }, signal })),
-    })
-    const original = beleg.dateien.find((d) => d.rolle === 'Original')
-    if (!original) return
-    const link = document.createElement('a')
-    link.href = original.url
-    link.download = ''
-    link.click()
+  // Id des Belegs, dessen Original gerade geholt wird – der Knopf zeigt so lange einen Drehkreis.
+  const [laufend, setLaufend] = useState<string | null>(null)
+  async function herunterladen(id: string) {
+    setLaufend(id)
+    try {
+      const beleg = await queryClient.fetchQuery({
+        queryKey: belegeKeys.detail(id),
+        queryFn: ({ signal }) => daten(api.GET('/api/belege/{id}', { params: { path: { id } }, signal })),
+      })
+      const original = beleg.dateien.find((d) => d.rolle === 'Original')
+      if (!original) return
+      const link = document.createElement('a')
+      link.href = original.url
+      link.download = ''
+      link.click()
+    } finally {
+      setLaufend(null)
+    }
   }
+  return { herunterladen, laedt: (id: string) => laufend === id }
 }

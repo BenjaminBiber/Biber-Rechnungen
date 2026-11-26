@@ -47,8 +47,18 @@ const belegAbhaengig = [
   ['import'],
 ] as const
 
-export function belegeNeuLaden(queryClient: QueryClient) {
-  return Promise.all(belegAbhaengig.map((queryKey) => queryClient.invalidateQueries({ queryKey })))
+/**
+ * Lädt alles Beleg-Abhängige neu. `ohneBeleg`: Abfragen dieses Belegs nur als veraltet markieren, nicht neu laden –
+ * etwa nach dem Löschen, solange seine Detailansicht noch offen ist (sie bekäme sonst 404).
+ */
+export async function belegeNeuLaden(queryClient: QueryClient, ohneBeleg?: string) {
+  if (ohneBeleg === undefined)
+    return Promise.all(belegAbhaengig.map((queryKey) => queryClient.invalidateQueries({ queryKey })))
+  const vomBeleg = (q: { queryKey: readonly unknown[] }) => q.queryKey.includes(ohneBeleg)
+  await queryClient.invalidateQueries({ predicate: vomBeleg, refetchType: 'none' })
+  return Promise.all(
+    belegAbhaengig.map((queryKey) => queryClient.invalidateQueries({ queryKey, predicate: (q) => !vomBeleg(q) })),
+  )
 }
 
 function useBelegeNeuLaden() {

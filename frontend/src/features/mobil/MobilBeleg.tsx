@@ -7,6 +7,7 @@ import { Chip, type ChipTon } from '@/components/Chip'
 import { Icon } from '@/components/Icon'
 import { KorrespondentLogo } from '@/components/KorrespondentLogo'
 import { useRolle } from '@/components/shell/useRolle'
+import { LadeBereich, Skelett, SkelettText } from '@/components/ui/skelett'
 import { BestaetigenDialog } from '@/features/belege/detail/BestaetigenDialog'
 import { DatenFormular } from '@/features/belege/detail/DatenFormular'
 import { istZuPruefen, original } from '@/features/belege/detail/gemeinsam'
@@ -24,7 +25,15 @@ export function MobilBeleg({ belegId, children }: { belegId: string; children: R
   const { data: beleg, error, isPending } = useBeleg(belegId)
   const { darfBearbeiten } = useRolle()
 
-  if (isPending) return <main className="gedaempft px-4 py-5">Beleg wird geladen …</main>
+  if (isPending)
+    return (
+      <LadeBereich als="main" label="Beleg wird geladen" className="flex flex-col gap-4 px-4 py-5">
+        <Skelett hoehe={22} breite="60%" />
+        <Skelett hoehe={12} breite="40%" />
+        <Skelett hoehe={160} className="w-full rounded-lg" />
+        <SkelettText zeilen={4} />
+      </LadeBereich>
+    )
   if (!beleg) {
     const nichtGefunden = istApiFehler(error) && error.status === 404
     return (

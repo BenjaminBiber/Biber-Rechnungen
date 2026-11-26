@@ -64,6 +64,12 @@ public static class ApiRouten
         public const string Massenaktion = "/api/belege/massenaktion";
         public const string Aufteilen = "/api/belege/{id}/aufteilen";
         public const string LogoUebernehmen = "/api/belege/{id}/logo-uebernehmen";
+        /// <summary>POST (Admin): trotz Löschsperre in die gelöschten Belege verschieben</summary>
+        public const string Loeschen = "/api/belege/{id}/loeschen";
+        /// <summary>GET (Admin): gelöschte (falsch zugeordnete) Belege</summary>
+        public const string Geloeschte = "/api/belege/geloeschte";
+        /// <summary>POST (Admin): gelöschten Beleg wiederherstellen</summary>
+        public const string Wiederherstellen = "/api/belege/{id}/wiederherstellen";
     }
 
     public static class Ansichten
@@ -157,6 +163,8 @@ public static class ApiRouten
         public const string MailVerbindungTesten = "/api/einstellungen/mail/verbindung-testen";
         public const string MailJetztAbrufen = "/api/einstellungen/mail/jetzt-abrufen";
         public const string MailStatus = "/api/einstellungen/mail/status";
+        /// <summary>PUT: IMAP-Zugang speichern – nur, wenn er nicht per .env gesetzt ist</summary>
+        public const string MailZugang = "/api/einstellungen/mail/zugang";
     }
 
     public static class Benachrichtigungen

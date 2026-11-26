@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { formatDatum, formatDatumZeit } from '@/lib/format'
 import { mcpBefehl, MCP_TOOLS } from './mcpBefehl'
 import { TokenErstelltDialog } from './TokenErstelltDialog'
+import { SkelettTabelle } from '@/components/ui/skelett'
 
 /** Bereich „API-Tokens (MCP)“ (Einstellungen.dc.html → `s.tokens`). */
 export function ApiTokensBereich() {
@@ -106,7 +107,7 @@ export function ApiTokensBereich() {
           {error.message}
         </p>
       ) : (
-        <p className="gedaempft m-0 text-sm">Lädt …</p>
+        <SkelettTabelle zeilen={3} spalten={4} label="API-Tokens werden geladen" />
       )}
       <h3 className="m-0 text-base font-semibold text-text">Verbinden</h3>
       <pre aria-label="Befehl zum Verbinden" className="mono m-0 rounded-lg bg-flaeche p-3 text-xs whitespace-pre-wrap">

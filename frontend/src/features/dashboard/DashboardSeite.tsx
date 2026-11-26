@@ -1,7 +1,8 @@
 import { useDashboard } from '@/api/dashboard'
 import { Icon } from '@/components/Icon'
 import { Seitenkopf } from '@/components/Seitenkopf'
-import { type DashboardZeitraum, Skelett } from './gemeinsam'
+import { LadeBereich, SkelettKarte, SkelettKennzahlen, SkelettListe } from '@/components/ui/skelett'
+import { type DashboardZeitraum } from './gemeinsam'
 import { Kennzahlen } from './Kennzahlen'
 import { KostenProMonat } from './KostenProMonat'
 import { OffenKarte } from './OffenKarte'
@@ -65,27 +66,36 @@ export function DashboardSeite({
       />
 
       {dashboard.isPending && (
-        <div className="flex flex-col gap-5" aria-busy="true" aria-label="Dashboard wird geladen">
-          <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 2xl:grid-cols-6">
-            {Array.from({ length: 6 }, (_, i) => (
-              <Skelett key={i} hoehe={104} />
-            ))}
+        <LadeBereich label="Dashboard wird geladen" className="flex flex-col gap-5">
+          <SkelettKennzahlen anzahl={6} hoehe={104} className="sm:grid-cols-3 md:grid-cols-3 2xl:grid-cols-6" />
+          <div className="flex flex-wrap gap-5">
+            <SkelettKarte hoehe={240} className="flex-[2_1_480px]" />
+            <SkelettKarte className="flex-[1_1_300px]">
+              <SkelettListe zeilen={5} kompakt label={null} />
+            </SkelettKarte>
           </div>
           <div
             className="grid gap-5"
             style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(300px, 100%), 1fr))' }}
           >
             {Array.from({ length: 3 }, (_, i) => (
-              <Skelett key={i} hoehe={280} />
+              <SkelettKarte key={i}>
+                <SkelettListe zeilen={4} symbol={false} label={null} />
+              </SkelettKarte>
             ))}
           </div>
-        </div>
+        </LadeBereich>
       )}
 
       {dashboard.isError && (
         <div role="alert" className="karte flex flex-col items-start gap-3 p-5">
           <p className="m-0 text-sm text-[var(--color-rot-text)]">Das Dashboard konnte nicht geladen werden.</p>
-          <button type="button" className="btn" onClick={() => void dashboard.refetch()}>
+          <button
+            type="button"
+            className="btn"
+            onClick={() => void dashboard.refetch()}
+            aria-busy={dashboard.isFetching || undefined}
+          >
             <Icon name="refresh" />
             Erneut versuchen
           </button>
@@ -93,6 +103,7 @@ export function DashboardSeite({
       )}
 
       {dashboard.data && (
+        // Beim Wechsel von Zeitraum oder Jahr bleiben die alten Zahlen stehen, bis die neuen da sind.
         <>
           <Kennzahlen daten={dashboard.data} zeitraum={zeitraum} jahr={jahr} heute={heute} />
           <div className="flex flex-wrap gap-5">

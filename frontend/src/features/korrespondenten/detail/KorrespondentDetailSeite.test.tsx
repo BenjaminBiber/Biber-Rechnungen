@@ -67,6 +67,16 @@ describe('Korrespondent-Detail', { timeout: 20000 }, () => {
     ende()
   })
 
+  it('kopiert die IBAN ohne Leerzeichen', async () => {
+    const { ende } = renderSeite()
+    await titel()
+    const nutzer = userEvent.setup()
+    await nutzer.click(screen.getByRole('button', { name: 'IBAN DE12 6805 0101 0012 3456 78 kopieren' }))
+    expect(await screen.findByText('IBAN kopiert')).toBeInTheDocument()
+    expect(await navigator.clipboard.readText()).toBe('DE12680501010012345678')
+    ende()
+  })
+
   it('hat zwölf Monate im Kostenverlauf und verlinkt Tabellen', async () => {
     const { ende } = renderSeite()
     await titel()

@@ -26,7 +26,7 @@ export function LoeschDialog({ eintrag, onSchliessen }: { eintrag: Loeschbar; on
   // `mutateAsync`: Nach dem Neuladen fehlt der Jahrgang in der Liste, der Dialog bleibt trotzdem offen.
   const absenden = () =>
     loeschen
-      .mutateAsync({ jahr: eintrag.jahr, bestaetigung: `${eintrag.jahr} ${BESTAETIGUNG}` })
+      .mutateAsync({ jahr: eintrag.jahr, bestaetigung: BESTAETIGUNG })
       .then(setErgebnis, (f: Error) => void toast.fehler(f.message))
 
   const kopieren = () =>

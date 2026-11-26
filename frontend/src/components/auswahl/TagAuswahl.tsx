@@ -1,8 +1,10 @@
-import { useId, useState, type ReactNode } from 'react'
+import { useId, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { useTagAnlegen, useTags } from '@/api/tags'
 import { Chip, type ChipTon } from '@/components/Chip'
 import { Icon } from '@/components/Icon'
+import { useToast } from '@/components/toast'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { SkelettListe } from '@/components/ui/skelett'
 import { Option, Suchfeld, useListenNavigation } from './gemeinsam'
 
 /** Tag-Auswahl (Beleg-Detail, Massenaktion, Filter): Mehrfachauswahl mit Suche und „neu anlegen“. */
@@ -27,8 +29,9 @@ export function TagAuswahl({
 }) {
   const listId = useId()
   const [suche, setSuche] = useState('')
-  const { data: tags = [] } = useTags()
+  const { data: tags = [], isPending } = useTags()
   const anlegen = useTagAnlegen()
+  const toast = useToast()
 
   const begriff = suche.trim()
   const treffer = tags.filter(
@@ -46,15 +49,20 @@ export function TagAuswahl({
   }
 
   async function neuAnlegen() {
-    const tag = await anlegen.mutateAsync({
-      name: begriff,
-      farbe: 'grau',
-      istInbox: false,
-      istZahlungsTag: nurZahlungsTags,
-      matching: { algorithmus: 'Keiner', muster: null, grossKlein: false },
-    })
-    setSuche('')
-    onAendern([...gewaehlt, tag.id])
+    if (anlegen.isPending) return
+    try {
+      const tag = await anlegen.mutateAsync({
+        name: begriff,
+        farbe: 'grau',
+        istInbox: false,
+        istZahlungsTag: nurZahlungsTags,
+        matching: { algorithmus: 'Keiner', muster: null, grossKlein: false },
+      })
+      setSuche('')
+      onAendern([...gewaehlt, tag.id])
+    } catch {
+      toast.fehler(`Tag „${begriff}“ konnte nicht angelegt werden`)
+    }
   }
 
   const anzahl = treffer.length + (neuMoeglich ? 1 : 0)
@@ -64,6 +72,16 @@ export function TagAuswahl({
     (i) => i >= treffer.length || systemTagsWaehlbar || !treffer[i].istSystem,
   )
 
+  // Enter ohne markierten Eintrag legt den eingetippten Namen direkt als neuen Tag an.
+  function onKeyDown(e: KeyboardEvent) {
+    if (e.key === 'Enter' && navigation.aktiv < 0 && neuMoeglich) {
+      e.preventDefault()
+      void neuAnlegen()
+      return
+    }
+    navigation.onKeyDown(e)
+  }
+
   return (
     <Popover defaultOpen={anfangsOffen}>
       <PopoverTrigger asChild>{ausloeser}</PopoverTrigger>
@@ -72,11 +90,19 @@ export function TagAuswahl({
           wert={suche}
           onAendern={setSuche}
           platzhalter="Tag suchen"
-          onKeyDown={navigation.onKeyDown}
+          ladend={anlegen.isPending}
+          onKeyDown={onKeyDown}
           listId={listId}
           aktivId={navigation.aktiv >= 0 ? `${listId}-${navigation.aktiv}` : undefined}
         />
-        <div id={listId} role="listbox" aria-label="Tags" aria-multiselectable="true">
+        {isPending && <SkelettListe zeilen={4} symbol={false} kompakt label="Tags werden geladen" />}
+        <div
+          id={listId}
+          role="listbox"
+          aria-label="Tags"
+          aria-multiselectable="true"
+          aria-busy={isPending || undefined}
+        >
           {treffer.map((tag, i) => {
             const an = gewaehlt.includes(tag.id)
             return (

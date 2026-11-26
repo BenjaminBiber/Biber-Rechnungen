@@ -129,7 +129,7 @@ export function Kennzahlen({
         >
           <span className="flex items-center gap-1.5 text-[13px] text-[var(--color-gedaempft-stark)]">
             <span style={{ color: k.iconFarbe }}>
-              <Icon name={k.icon} className="!text-[18px]" />
+              <Icon name={k.icon} className="text-[18px]" />
             </span>
             <span>{k.titel}</span>
           </span>

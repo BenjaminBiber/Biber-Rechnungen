@@ -230,9 +230,9 @@ export function BelegTabelle({
                 key={beleg.id}
                 tabIndex={0}
                 data-gewaehlt={gewaehlt || undefined}
-                className={gewaehlt ? 'bg-akzent-zart' : 'bg-karte'}
+                className={cn('cursor-pointer', gewaehlt ? 'bg-akzent-zart' : 'bg-karte')}
               >
-                <td>
+                <td data-kein-zeilenklick>
                   <input
                     type="checkbox"
                     aria-label={auswahlLabel(beleg)}
@@ -249,7 +249,7 @@ export function BelegTabelle({
                     </td>
                   )
                 })}
-                <td>
+                <td data-kein-zeilenklick>
                   <Zeilenmenue beleg={beleg} />
                 </td>
               </tr>

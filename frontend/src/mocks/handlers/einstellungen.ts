@@ -1,9 +1,9 @@
 import { HttpResponse } from 'msw'
-import type { AktionErgebnis, Einstellungen } from '@/api/typen'
+import type { AktionErgebnis, Einstellungen, MailZugangSpeichern } from '@/api/typen'
 import { db } from '../db'
-import { jsonKoerper, nichtGefunden, route, ungueltig, type Route } from './gemeinsam'
+import { jsonKoerper, keinInhalt, nichtGefunden, problem, route, ungueltig, type Route } from './gemeinsam'
 
-type Gruppe = Exclude<keyof Einstellungen, 'umgebung'>
+type Gruppe = Exclude<keyof Einstellungen, 'umgebung' | 'mailZugang'>
 
 const gruppen: Gruppe[] = ['allgemein', 'ust', 'pruefungen', 'di', 'mail', 'ordner', 'aufbewahrung', 'zugriff']
 
@@ -38,8 +38,31 @@ export const einstellungenRouten: Route[] = [
     return ok('Verarbeitung wird fortgesetzt.')
   }),
 
+  route('put', '/api/einstellungen/mail/zugang', 'Admin', async ({ request }) => {
+    const zugang = db.einstellungen.mailZugang
+    if (zugang.ausUmgebung)
+      return problem(409, 'Der IMAP-Zugang ist per .env gesetzt und lässt sich hier nicht ändern.')
+    const werte = await jsonKoerper<MailZugangSpeichern>(request)
+    if (!werte.host?.trim()) return ungueltig('host', 'Darf nicht leer sein.')
+    const passwortGesetzt = zugang.passwortGesetzt || !!werte.passwort
+    db.einstellungen = {
+      ...db.einstellungen,
+      mailZugang: {
+        ...zugang,
+        host: werte.host.trim(),
+        port: werte.port,
+        ssl: werte.ssl,
+        benutzer: werte.benutzer.trim(),
+        passwortGesetzt,
+        konfiguriert: passwortGesetzt && !!werte.benutzer.trim(),
+      },
+    }
+    if (db.mailStatus.fehler) db.mailStatus = { verbunden: false, letzterAbruf: null, fehler: null }
+    return keinInhalt()
+  }),
+
   route('post', '/api/einstellungen/mail/verbindung-testen', 'Admin', () =>
-    db.einstellungen.umgebung.imapKonfiguriert
+    db.einstellungen.mailZugang.konfiguriert
       ? ok('Verbindung zum Postfach erfolgreich.')
       : HttpResponse.json<AktionErgebnis>({ erfolg: false, meldung: 'IMAP ist nicht konfiguriert.' }),
   ),

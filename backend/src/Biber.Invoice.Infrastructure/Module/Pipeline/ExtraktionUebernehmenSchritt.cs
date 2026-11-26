@@ -66,6 +66,18 @@ public sealed class ExtraktionUebernehmenSchritt(TimeProvider zeit) : IPipelineS
             Steuer = s.Steuer,
         }));
 
+        // Keine Aufschlüsselung ausgelesen, aber die Summen passen zu einem Satz: als eine Steuerzeile übernehmen.
+        if (beleg.Steuerzeilen.Count == 0 && SteuerzeileAbleitung.Satz(e.Netto, e.Steuer, e.Brutto) is { } satz)
+        {
+            beleg.Steuerzeilen.Add(new Steuerzeile
+            {
+                BelegId = beleg.Id,
+                Satz = satz,
+                Netto = e.Netto!.Value,
+                Steuer = e.Steuer!.Value,
+            });
+        }
+
         beleg.Positionen.Clear();
         beleg.Positionen.AddRange(e.Positionen.OrderBy(p => p.Nr).Select(p => new Position
         {

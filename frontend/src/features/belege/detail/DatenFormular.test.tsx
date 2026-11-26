@@ -3,6 +3,7 @@ import { http } from 'msw'
 import { describe, expect, it, vi } from 'vitest'
 import { belegIds, kategorieIds, korrespondentIds, tagIds } from '@/mocks/fixtures/ids'
 import { problem } from '@/mocks/handlers/gemeinsam'
+import { db } from '@/mocks/db'
 import { server } from '@/mocks/server'
 import { szenario } from '@/mocks/szenarien'
 import { FEHLER_BETRAG, FEHLER_DATUM } from './formular'
@@ -12,7 +13,9 @@ vi.mock('react-pdf', () => import('./testHilfe').then((m) => m.reactPdfMock))
 
 const formular = () => screen.getByRole('form', { name: 'Daten' })
 const feld = (label: string) => within(formular()).getByLabelText(label)
-const speichern = () => screen.getByRole('button', { name: 'Änderungen speichern' })
+const status = () => within(formular()).getByRole('status')
+const puts = async (anfragen: () => Promise<{ methode: string; body: unknown }[]>) =>
+  (await anfragen()).filter((a) => a.methode === 'PUT')
 
 async function oeffneDaten(pfad?: string) {
   const ergebnis = renderBelegDetail(pfad)
@@ -35,19 +38,25 @@ describe('Tab „Daten“', () => {
     expect(feld('Kategorie')).toHaveTextContent('Bürobedarf')
     expect(within(formular()).getByText('manuell geändert · Default: Bürobedarf')).toBeInTheDocument()
     expect(feld('Währung')).toHaveValue('EUR')
-    expect(feld('Netto')).toHaveValue('221,85')
-    expect(feld('USt')).toHaveValue('42,15')
-    expect(feld('Brutto')).toHaveValue('264,00')
-    const zeilen = within(screen.getByRole('table', { name: 'Steuerzeilen' })).getAllByRole('row')
-    expect(zeilen).toHaveLength(2)
+    const zeilen = within(screen.getByRole('table', { name: 'Beträge nach Steuersatz' })).getAllByRole('row')
+    // Kopf, eine Steuerzeile, Summe
+    expect(zeilen).toHaveLength(3)
     expect(within(zeilen[1]).getByLabelText('Steuersatz Steuerzeile 1')).toHaveValue('19')
-    expect(within(zeilen[1]).getByRole('img', { name: 'stimmt' })).toBeInTheDocument()
+    expect(within(zeilen[1]).getByLabelText('Netto Steuerzeile 1')).toHaveValue('221,85')
+    expect(within(zeilen[1]).getByLabelText('Steuer Steuerzeile 1')).toHaveValue('42,15')
+    expect(within(zeilen[1]).getAllByRole('cell')[3]).toHaveTextContent('264,00')
+    expect(
+      within(zeilen[1]).getByRole('img', { name: 'Steuer passt: 19 % von 221,85 € = 42,15 €' }),
+    ).toBeInTheDocument()
+    for (const name of ['Netto', 'USt', 'Brutto'])
+      expect(within(zeilen[2]).getByRole('button', { name: new RegExp(`^${name} stimmt`) })).toBeInTheDocument()
+    expect(within(formular()).getByText('Alles stimmig')).toBeInTheDocument()
     expect(formular()).toHaveTextContent(
       'Ausgelesen mit Document Intelligence (prebuilt-invoice) · 19.11.2026 08:14 · 1 Seite',
     )
     expect(within(formular()).getByRole('meter', { name: 'Konfidenz' })).toHaveAttribute('aria-valuenow', '0.74')
     expect(formular()).toHaveTextContent('0,74')
-    expect(speichern()).toBeDisabled()
+    expect(status()).toHaveTextContent('Änderungen werden automatisch gespeichert')
   })
 
   it('zeigt bei einem Beleg „zu prüfen“ die ausgelesene IBAN mit BIC und Abgleich', async () => {
@@ -64,7 +73,7 @@ describe('Tab „Daten“', () => {
     expect(within(formular()).queryByLabelText('IBAN laut Beleg')).not.toBeInTheDocument()
   })
 
-  it('sendet beim Speichern das erwartete BelegAendernDto und meldet „Gespeichert“', async () => {
+  it('speichert Textfelder beim Verlassen, Auswahlfelder sofort, und meldet „Gespeichert“', async () => {
     const { anfragen } = anfragenMitschneiden()
     const { nutzer } = await oeffneDaten()
     await nutzer.clear(feld('Rechnungsnummer'))
@@ -74,35 +83,32 @@ describe('Tab „Daten“', () => {
     await nutzer.selectOptions(feld('Belegart'), 'Gutschrift')
     await nutzer.click(feld('Kategorie'))
     await nutzer.click(await screen.findByRole('option', { name: /Hardware/ }))
-    expect(speichern()).toBeEnabled()
-    await nutzer.click(speichern())
 
-    expect(await screen.findByText('Gespeichert')).toBeInTheDocument()
-    const puts = (await anfragen()).filter((a) => a.methode === 'PUT')
-    expect(puts).toEqual([
-      {
-        methode: 'PUT',
-        pfad: `/api/belege/${b2}`,
-        body: {
-          korrespondentId: korrespondentIds.bueroweltKraemer,
-          belegart: 'Gutschrift',
-          rechnungsnummer: '2026-48818',
-          titel: 'Büromaterial Bestellung',
-          rechnungsdatum: '2026-11-19',
-          leistungsdatum: null,
-          leistungVon: '2026-11-01',
-          leistungBis: '2026-11-15',
-          faelligkeitsdatum: '2026-12-03',
-          kategorieId: kategorieIds.hardware,
-          waehrung: 'EUR',
-          netto: 221.85,
-          steuer: 42.15,
-          brutto: 264,
-          steuerzeilen: [{ satz: 19, netto: 221.85, steuer: 42.15 }],
-        },
+    await waitFor(() => expect(status()).toHaveTextContent('Gespeichert'))
+    const gesendet = await puts(anfragen)
+    // Rechnungsnummer und Leistung beim Verlassen, Belegart und Kategorie bei der Auswahl.
+    expect(gesendet).toHaveLength(4)
+    expect(gesendet.at(-1)).toEqual({
+      methode: 'PUT',
+      pfad: `/api/belege/${b2}`,
+      body: {
+        korrespondentId: korrespondentIds.bueroweltKraemer,
+        belegart: 'Gutschrift',
+        rechnungsnummer: '2026-48818',
+        titel: 'Büromaterial Bestellung',
+        rechnungsdatum: '2026-11-19',
+        leistungsdatum: null,
+        leistungVon: '2026-11-01',
+        leistungBis: '2026-11-15',
+        faelligkeitsdatum: '2026-12-03',
+        kategorieId: kategorieIds.hardware,
+        waehrung: 'EUR',
+        netto: 221.85,
+        steuer: 42.15,
+        brutto: 264,
+        steuerzeilen: [{ satz: 19, netto: 221.85, steuer: 42.15 }],
       },
-    ])
-    await waitFor(() => expect(speichern()).toBeDisabled())
+    })
     expect(feld('Kategorie')).toHaveTextContent('Hardware')
     expect(feld('Leistungsdatum / -zeitraum')).toHaveValue('01.11.2026 – 15.11.2026')
   })
@@ -112,10 +118,10 @@ describe('Tab „Daten“', () => {
     const { nutzer } = await oeffneDaten()
     await nutzer.clear(feld('Titel'))
     await nutzer.type(feld('Titel'), '  Toner und Papier ')
-    await nutzer.click(speichern())
-    expect(await screen.findByText('Gespeichert')).toBeInTheDocument()
+    await nutzer.tab()
+    await waitFor(() => expect(status()).toHaveTextContent('Gespeichert'))
     await nutzer.clear(feld('Titel'))
-    await nutzer.click(speichern())
+    await nutzer.tab()
 
     await waitFor(async () =>
       expect(
@@ -129,18 +135,52 @@ describe('Tab „Daten“', () => {
     const { nutzer } = await oeffneDaten()
     await nutzer.clear(feld('Rechnungsdatum'))
     await nutzer.type(feld('Rechnungsdatum'), '31.02.2026')
-    await nutzer.clear(feld('Netto'))
-    await nutzer.type(feld('Netto'), '221.8x')
-    await nutzer.click(speichern())
+    await nutzer.clear(feld('Netto Steuerzeile 1'))
+    await nutzer.type(feld('Netto Steuerzeile 1'), '221.8x')
+    await nutzer.tab()
 
+    expect(status()).toHaveTextContent('Nicht gespeichert – Eingaben prüfen')
     expect(feld('Rechnungsdatum')).toHaveAttribute('aria-invalid', 'true')
     expect(feld('Rechnungsdatum')).toHaveAccessibleDescription(FEHLER_DATUM)
-    expect(feld('Netto')).toHaveAccessibleDescription(FEHLER_BETRAG)
+    expect(feld('Netto Steuerzeile 1')).toHaveAccessibleDescription(FEHLER_BETRAG)
     expect((await anfragen()).filter((a) => a.methode === 'PUT')).toHaveLength(0)
 
     await nutzer.clear(feld('Rechnungsdatum'))
     await nutzer.type(feld('Rechnungsdatum'), '20.11.2026')
     expect(feld('Rechnungsdatum')).not.toHaveAttribute('aria-invalid')
+    await nutzer.clear(feld('Netto Steuerzeile 1'))
+    await nutzer.type(feld('Netto Steuerzeile 1'), '221,80')
+    await nutzer.tab()
+    await waitFor(() => expect(status()).toHaveTextContent('Gespeichert'))
+    expect((await puts(anfragen)).map((a) => a.body)).toEqual([
+      expect.objectContaining({
+        rechnungsdatum: '2026-11-20',
+        steuerzeilen: [{ satz: 19, netto: 221.8, steuer: 42.15 }],
+      }),
+    ])
+  })
+
+  it('zeigt beim Auto-Save nur Fehler bereits verlassener Felder', async () => {
+    const { anfragen } = anfragenMitschneiden()
+    const { nutzer } = await oeffneDaten()
+    await nutzer.click(screen.getByRole('button', { name: '+ Steuerzeile' }))
+    await nutzer.click(screen.getByLabelText('Steuersatz Steuerzeile 2'))
+    await nutzer.tab()
+    // Netto und Steuer der neuen Zeile sind leer, aber noch nicht verlassen: kein Fehler, nur „ungespeichert“.
+    expect(screen.getByLabelText('Netto Steuerzeile 2')).not.toHaveAttribute('aria-invalid')
+    expect(status()).toHaveTextContent('Ungespeicherte Änderungen')
+    await nutzer.type(screen.getByLabelText('Netto Steuerzeile 2'), '100,00')
+    await nutzer.tab()
+    await nutzer.type(screen.getByLabelText('Steuer Steuerzeile 2'), '19,00')
+    await nutzer.tab()
+    await waitFor(() => expect(status()).toHaveTextContent('Gespeichert'))
+    expect(await puts(anfragen)).toHaveLength(1)
+    expect((await puts(anfragen))[0].body).toMatchObject({
+      steuerzeilen: [
+        { satz: 19, netto: 221.85, steuer: 42.15 },
+        { satz: 19, netto: 100, steuer: 19 },
+      ],
+    })
   })
 
   it('zeigt Serverfehler am Feld', async () => {
@@ -151,45 +191,94 @@ describe('Tab „Daten“', () => {
     )
     const { nutzer } = await oeffneDaten()
     await nutzer.type(feld('Rechnungsnummer'), '-1')
-    await nutzer.click(speichern())
+    await nutzer.tab()
     expect(await screen.findByText('Rechnungsnummer ist bereits vergeben.')).toBeInTheDocument()
     expect(feld('Rechnungsnummer')).toHaveAccessibleDescription('Rechnungsnummer ist bereits vergeben.')
   })
 
-  it('zeigt beim Leeren der Kategorie den Default-Hinweis', async () => {
+  it('zeigt beim Leeren der Kategorie den Default-Hinweis und speichert sofort', async () => {
+    const { anfragen } = anfragenMitschneiden()
     const { nutzer } = await oeffneDaten()
     await nutzer.click(feld('Kategorie'))
     // Erneutes Wählen der aktuellen Kategorie leert das Feld.
     await nutzer.click(await screen.findByRole('option', { name: /Bürobedarf/ }))
+    await waitFor(() => expect(status()).toHaveTextContent('Gespeichert'))
+    expect((await puts(anfragen)).map((a) => a.body)).toEqual([expect.objectContaining({ kategorieId: null })])
     expect(feld('Kategorie')).toHaveTextContent('Keine Kategorie')
     expect(within(formular()).getByText('leer · Default: Bürobedarf')).toBeInTheDocument()
-    expect(speichern()).toBeEnabled()
   })
 
-  it('fügt eine Steuerzeile hinzu und zeigt „weicht ab“', async () => {
+  it('fügt eine Steuerzeile hinzu und meldet abweichende Steuer und Summen', async () => {
     const { nutzer } = await oeffneDaten()
     await nutzer.click(screen.getByRole('button', { name: '+ Steuerzeile' }))
     await nutzer.clear(screen.getByLabelText('Steuersatz Steuerzeile 2'))
     await nutzer.type(screen.getByLabelText('Steuersatz Steuerzeile 2'), '7')
     await nutzer.type(screen.getByLabelText('Netto Steuerzeile 2'), '100,00')
     await nutzer.type(screen.getByLabelText('Steuer Steuerzeile 2'), '7,50')
-    const zeile = screen.getByLabelText('Netto Steuerzeile 2').closest('tr')!
-    expect(within(zeile).getByText('weicht ab')).toBeInTheDocument()
+    const zeile = screen.getByLabelText('Netto Steuerzeile 2').closest<HTMLElement>('[role="row"]')!
+    expect(within(zeile).getByRole('img', { name: 'Steuer passt nicht zum Satz' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Steuer Steuerzeile 2')).toHaveAccessibleDescription(
+      '7 % von 100,00 € wären 7,00 € – eingetragen sind 7,50 € (Differenz 0,50 €)',
+    )
+    // Zeile + drei Summen weichen ab.
+    expect(within(formular()).getByText('4 Abweichungen')).toBeInTheDocument()
     await nutzer.clear(screen.getByLabelText('Steuer Steuerzeile 2'))
     await nutzer.type(screen.getByLabelText('Steuer Steuerzeile 2'), '7,01')
-    expect(within(zeile).getByRole('img', { name: 'stimmt' })).toBeInTheDocument()
+    expect(within(zeile).getByRole('img', { name: 'Steuer passt: 7 % von 100,00 € = 7,00 €' })).toBeInTheDocument()
+    expect(within(formular()).getByText('3 Abweichungen')).toBeInTheDocument()
 
     await nutzer.click(screen.getByRole('button', { name: 'Steuerzeile 2 entfernen' }))
     expect(screen.queryByLabelText('Netto Steuerzeile 2')).not.toBeInTheDocument()
+    // Verlassen der Zeile und Entfernen speichern je einmal – abwarten, damit nichts in den nächsten Test läuft.
+    await waitFor(() => expect(status()).toHaveTextContent('Gespeichert'))
   })
 
-  it('„Verwerfen“ setzt das Formular zurück', async () => {
+  it('setzt einen abweichenden Rechnungswert auf die Summe der Steuerzeilen', async () => {
+    const { anfragen } = anfragenMitschneiden()
+    const { nutzer } = await oeffneDaten()
+    await nutzer.clear(feld('Steuer Steuerzeile 1'))
+    await nutzer.type(feld('Steuer Steuerzeile 1'), '40,00')
+    await nutzer.tab()
+    await waitFor(() => expect(status()).toHaveTextContent('Gespeichert'))
+    expect(
+      screen.getByRole('button', {
+        name: 'USt weicht ab: Laut Rechnung 42,15 €, das sind 2,15 € mehr als die Summe der Steuerzeilen.',
+      }),
+    ).toBeInTheDocument()
+
+    await nutzer.click(screen.getByRole('button', { name: 'Rechnungswert auf 40,00 € setzen' }))
+    await waitFor(async () => expect(await puts(anfragen)).toHaveLength(2))
+    expect((await puts(anfragen))[1].body).toMatchObject({ steuer: 40, netto: 221.85 })
+    expect(screen.getByRole('button', { name: /^USt stimmt/ })).toBeInTheDocument()
+  })
+
+  it('zeigt ohne Steuerzeilen die Werte laut Rechnung ohne Eingabefelder', async () => {
+    const { nutzer } = await oeffneDaten()
+    await nutzer.click(screen.getByRole('button', { name: 'Steuerzeile 1 entfernen' }))
+    await waitFor(() => expect(status()).toHaveTextContent('Gespeichert'))
+
+    const tabelle = screen.getByRole('table', { name: 'Beträge nach Steuersatz' })
+    expect(within(tabelle).getByText('Keine Aufschlüsselung nach Steuersätzen')).toBeInTheDocument()
+    const summe = within(tabelle).getByRole('rowheader', { name: 'Laut Rechnung' }).parentElement!
+    expect(summe).toHaveTextContent('221,85 €42,15 €264,00 €')
+    expect(within(tabelle).queryByRole('textbox')).not.toBeInTheDocument()
+    expect(within(formular()).queryByText('Alles stimmig')).not.toBeInTheDocument()
+  })
+
+  it('„Rückgängig“ speichert den Stand vor der letzten Änderung wieder', async () => {
+    const { anfragen } = anfragenMitschneiden()
     const { nutzer } = await oeffneDaten()
     await nutzer.type(feld('Rechnungsnummer'), 'X')
-    expect(speichern()).toBeEnabled()
-    await nutzer.click(screen.getByRole('button', { name: 'Verwerfen' }))
-    expect(feld('Rechnungsnummer')).toHaveValue('2026-48817')
-    expect(speichern()).toBeDisabled()
+    await nutzer.tab()
+    await nutzer.click(await within(formular()).findByRole('button', { name: 'Rückgängig' }))
+    await waitFor(() => expect(feld('Rechnungsnummer')).toHaveValue('2026-48817'))
+    await waitFor(() =>
+      expect(within(formular()).queryByRole('button', { name: 'Rückgängig' })).not.toBeInTheDocument(),
+    )
+    expect((await puts(anfragen)).map((a) => (a.body as { rechnungsnummer: string }).rechnungsnummer)).toEqual([
+      '2026-48817X',
+      '2026-48817',
+    ])
   })
 
   it('ändert Tags sofort; „zu prüfen“ ist nicht entfernbar', async () => {
@@ -211,38 +300,143 @@ describe('Tab „Daten“', () => {
       ['DELETE', `/api/belege/${b2}/tags/${tagIds.inbox}`, undefined],
       ['POST', `/api/belege/${b2}/tags`, { tagId: tagIds.reise }],
     ])
-    expect(speichern()).toBeDisabled()
   })
 
-  it('fragt beim Verlassen mit ungespeicherten Änderungen nach', async () => {
+  it('legt im Tag-Feld einen neuen Tag an und hängt ihn an den Beleg', async () => {
+    const { anfragen } = anfragenMitschneiden()
+    const { nutzer } = await oeffneDaten()
+    const tags = within(formular()).getByText('Tags').nextElementSibling as HTMLElement
+
+    await nutzer.click(within(tags).getByRole('button', { name: '+ Tag hinzufügen' }))
+    await screen.findByRole('option', { name: /Reisekosten/ })
+    await nutzer.type(screen.getByRole('combobox', { name: 'Tag suchen' }), 'Bewirtung{Enter}')
+    await waitFor(() => expect(within(tags).getByText('Bewirtung')).toBeInTheDocument())
+
+    const liste = await anfragen()
+    expect(liste.map((a) => [a.methode, a.pfad])).toEqual([
+      ['POST', '/api/tags'],
+      ['POST', `/api/belege/${b2}/tags`],
+    ])
+    expect(liste[0].body).toMatchObject({ name: 'Bewirtung', istZahlungsTag: false })
+  })
+
+  it('speichert beim Verlassen, ohne nachzufragen', async () => {
+    const { anfragen } = anfragenMitschneiden()
     const { nutzer, router } = await oeffneDaten()
     await nutzer.type(feld('Rechnungsnummer'), 'X')
     const tabs = screen.getByRole('navigation', { name: 'Belegdaten' })
     await nutzer.click(within(tabs).getByRole('link', { name: /^Positionen/ }))
-    const dialog = await screen.findByRole('alertdialog', { name: 'Ungespeicherte Änderungen verwerfen?' })
+    await waitFor(() => expect(router.state.location.pathname).toBe(`/belege/${b2}/positionen`))
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+    expect((await puts(anfragen)).map((a) => (a.body as { rechnungsnummer: string }).rechnungsnummer)).toEqual([
+      '2026-48817X',
+    ])
+  })
+
+  it('fragt beim Verlassen nach, wenn ungültige Eingaben nicht gespeichert werden können', async () => {
+    const { nutzer, router } = await oeffneDaten()
+    await nutzer.clear(feld('Fällig am'))
+    await nutzer.type(feld('Fällig am'), '99.99.2026')
+    const tabs = screen.getByRole('navigation', { name: 'Belegdaten' })
+    await nutzer.click(within(tabs).getByRole('link', { name: /^Positionen/ }))
+    const dialog = await screen.findByRole('alertdialog', { name: 'Änderungen nicht gespeichert' })
+    expect(dialog).toHaveTextContent('einige Eingaben sind ungültig')
     await nutzer.click(within(dialog).getByRole('button', { name: 'Weiter bearbeiten' }))
     expect(router.state.location.pathname).toBe(`/belege/${b2}`)
-    expect(feld('Rechnungsnummer')).toHaveValue('2026-48817X')
+    expect(feld('Fällig am')).toHaveValue('99.99.2026')
+    expect(feld('Fällig am')).toHaveAccessibleDescription(FEHLER_DATUM)
 
     await nutzer.click(within(tabs).getByRole('link', { name: /^Positionen/ }))
-    const erneut = await screen.findByRole('alertdialog', { name: 'Ungespeicherte Änderungen verwerfen?' })
+    const erneut = await screen.findByRole('alertdialog', { name: 'Änderungen nicht gespeichert' })
     await nutzer.click(within(erneut).getByRole('button', { name: 'Verwerfen und verlassen' }))
     await waitFor(() => expect(router.state.location.pathname).toBe(`/belege/${b2}/positionen`))
+  })
+
+  it('speichert offene Eingaben vor dem Bestätigen', async () => {
+    db.belege = db.belege.map((b) =>
+      b.id === b2 ? { ...b, befunde: b.befunde.filter((x) => x.ergebnis !== 'Fehlgeschlagen') } : b,
+    )
+    const { anfragen } = anfragenMitschneiden()
+    const { nutzer } = await oeffneDaten()
+    await nutzer.type(feld('Rechnungsnummer'), 'X')
+    await nutzer.click(screen.getByRole('button', { name: 'Bestätigen' }))
+    expect(await screen.findByText('Beleg bestätigt')).toBeInTheDocument()
+    expect((await anfragen()).map((a) => [a.methode, a.pfad])).toEqual([
+      ['PUT', `/api/belege/${b2}`],
+      ['POST', `/api/belege/${b2}/bestaetigen`],
+    ])
+  })
+
+  it('bestätigt nicht, solange Eingaben ungültig sind', async () => {
+    const { anfragen } = anfragenMitschneiden()
+    const { nutzer } = await oeffneDaten()
+    await nutzer.clear(feld('Netto Steuerzeile 1'))
+    await nutzer.type(feld('Netto Steuerzeile 1'), 'x')
+    await nutzer.click(screen.getByRole('button', { name: 'Bestätigen' }))
+    expect(
+      await screen.findByText('Nicht bestätigt: Änderungen im Tab „Daten“ sind nicht gespeichert'),
+    ).toBeInTheDocument()
+    expect(feld('Netto Steuerzeile 1')).toHaveAccessibleDescription(FEHLER_BETRAG)
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+    expect(await anfragen()).toEqual([])
   })
 
   it('ist für NurLesen schreibgeschützt und ohne Speichern-Leiste', async () => {
     szenario.rolle('NurLesen')
     await oeffneDaten()
-    for (const label of ['Rechnungsnummer', 'Rechnungsdatum', 'Leistungsdatum / -zeitraum', 'Fällig am', 'Netto'])
+    for (const label of ['Rechnungsnummer', 'Rechnungsdatum', 'Leistungsdatum / -zeitraum', 'Fällig am'])
       expect(feld(label)).toHaveAttribute('readonly')
+    expect(within(formular()).queryByLabelText('Netto Steuerzeile 1')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Rechnungswert auf/ })).not.toBeInTheDocument()
     expect(feld('Belegart')).toBeDisabled()
     expect(feld('Korrespondent')).toBeDisabled()
     expect(feld('Kategorie')).toBeDisabled()
-    expect(screen.queryByRole('button', { name: 'Änderungen speichern' })).not.toBeInTheDocument()
+    expect(within(formular()).queryByRole('status')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '+ Tag hinzufügen' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Inbox entfernen' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '+ Steuerzeile' })).not.toBeInTheDocument()
-    expect(screen.getByRole('table', { name: 'Steuerzeilen' })).toHaveTextContent('19 %')
+    expect(screen.getByRole('table', { name: 'Beträge nach Steuersatz' })).toHaveTextContent('19 %')
+  })
+
+  it('setzt ein geändertes Feld nach Rückfrage auf den vorherigen Wert zurück', async () => {
+    const { anfragen } = anfragenMitschneiden()
+    const { nutzer } = await oeffneDaten()
+    const zuruecksetzen = (label: string) => within(formular()).queryByRole('button', { name: `${label} zurücksetzen` })
+    expect(zuruecksetzen('Rechnungsnummer')).not.toBeInTheDocument()
+
+    await nutzer.clear(feld('Rechnungsnummer'))
+    await nutzer.type(feld('Rechnungsnummer'), '2026-48818')
+    await nutzer.tab()
+    await waitFor(() => expect(status()).toHaveTextContent('Gespeichert'))
+    expect(zuruecksetzen('Titel')).not.toBeInTheDocument()
+
+    // Abbrechen lässt den Wert stehen.
+    await nutzer.click(zuruecksetzen('Rechnungsnummer')!)
+    let dialog = await screen.findByRole('alertdialog')
+    expect(dialog).toHaveTextContent('Wollen Sie Rechnungsnummer wirklich auf „2026-48817“ zurücksetzen?')
+    await nutzer.click(within(dialog).getByRole('button', { name: 'Abbrechen' }))
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+    expect(feld('Rechnungsnummer')).toHaveValue('2026-48818')
+
+    await nutzer.click(zuruecksetzen('Rechnungsnummer')!)
+    dialog = await screen.findByRole('alertdialog')
+    await nutzer.click(within(dialog).getByRole('button', { name: 'Zurücksetzen' }))
+
+    await waitFor(async () => expect(await puts(anfragen)).toHaveLength(2))
+    expect((await puts(anfragen)).at(-1)?.body).toMatchObject({ rechnungsnummer: '2026-48817' })
+    await waitFor(() => expect(feld('Rechnungsnummer')).toHaveValue('2026-48817'))
+    expect(zuruecksetzen('Rechnungsnummer')).not.toBeInTheDocument()
+    expect(feld('Rechnungsnummer')).toHaveFocus()
+  })
+
+  it('bietet das Zurücksetzen auch bei Auswahlfeldern an', async () => {
+    const { nutzer } = await oeffneDaten()
+    await nutzer.selectOptions(feld('Belegart'), 'Gutschrift')
+    await waitFor(() => expect(status()).toHaveTextContent('Gespeichert'))
+    await nutzer.click(within(formular()).getByRole('button', { name: 'Belegart zurücksetzen' }))
+    expect(await screen.findByRole('alertdialog')).toHaveTextContent(
+      'Wollen Sie Belegart wirklich auf „Rechnung“ zurücksetzen?',
+    )
   })
 
   it('zeigt bei E-Rechnungen die Herkunft statt der Konfidenz', async () => {

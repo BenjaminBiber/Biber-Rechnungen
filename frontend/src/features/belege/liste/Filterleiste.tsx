@@ -1,4 +1,6 @@
 import { useEffect, useId, useRef, useState, type ReactElement, type ReactNode } from 'react'
+import { useIsFetching } from '@tanstack/react-query'
+import { belegeKeys } from '@/api/belege'
 import { useKorrespondenten } from '@/api/korrespondenten'
 import { useKategorien } from '@/api/tags'
 import type { ImportQuelle, Zahlstatus } from '@/api/typen'
@@ -213,6 +215,9 @@ export function Suchzeile({ zustand: { suche, setze } }: { zustand: ListenZustan
   const [text, setText] = useState(suche.suche ?? '')
   const [stand, setStand] = useState(suche.suche)
   const zeitgeber = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const listeLaedt = useIsFetching({ queryKey: belegeKeys.listen() }) > 0
+  // Drehkreis im Feld, solange der Begriff noch entprellt wird oder die Treffer laden.
+  const sucheLaeuft = text.trim() !== (suche.suche ?? '') || (!!suche.suche && listeLaedt)
 
   // Von außen geänderte Suche (Zurücksetzen, Zurück-Taste, gespeicherte Ansicht) ins Feld übernehmen.
   if (stand !== suche.suche) {
@@ -262,7 +267,8 @@ export function Suchzeile({ zustand: { suche, setze } }: { zustand: ListenZustan
         placeholder="z. B. Toner, Rechnungsnr. oder Betrag"
         value={text}
         onChange={(e) => eingeben(e.target.value)}
-        className="min-w-0 flex-1 border-0 bg-karte px-2.5 text-sm text-text outline-none"
+        aria-busy={sucheLaeuft || undefined}
+        className="eingabe-laden min-w-0 flex-1 border-0 bg-karte px-2.5 text-sm text-text outline-none"
       />
     </div>
   )

@@ -4,6 +4,7 @@ import { Icon } from '@/components/Icon'
 import { Seitenkopf } from '@/components/Seitenkopf'
 import { useRolle } from '@/components/shell/useRolle'
 import { Button } from '@/components/ui/button'
+import { SkelettTabelle } from '@/components/ui/skelett'
 import { korrespondentenTypen, type KorrespondentenTyp } from './gemeinsam'
 import { KorrespondentenTabelle } from './KorrespondentenTabelle'
 import { KorrespondentFormular } from './KorrespondentFormular'
@@ -36,7 +37,7 @@ export function KorrespondentenSeite({
   onWahl: (wahl: KorrespondentenWahl) => void
 }) {
   const { darfBearbeiten } = useRolle()
-  const { data: eintraege = [], isPending } = useKorrespondenten({ suche: suche || undefined, typ, jahr })
+  const { data: eintraege = [], isPending, isFetching } = useKorrespondenten({ suche: suche || undefined, typ, jahr })
   const [eingabe, setEingabe] = useState(suche)
   const [auswahl, setAuswahl] = useState<string[]>([])
 
@@ -74,6 +75,7 @@ export function KorrespondentenSeite({
           <input
             type="search"
             className="eingabe pl-9"
+            aria-busy={isFetching || eingabe !== suche || undefined}
             placeholder="Name, Alias, USt-IdNr. oder IBAN"
             value={eingabe}
             onChange={(e) => setEingabe(e.target.value)}
@@ -89,7 +91,12 @@ export function KorrespondentenSeite({
       </div>
       <div className="karte overflow-hidden p-0">
         {isPending ? (
-          <p className="gedaempft m-0 p-6 text-sm">Lädt …</p>
+          <SkelettTabelle
+            zeilen={8}
+            spalten={darfBearbeiten ? 8 : 7}
+            mitKarte={false}
+            label="Korrespondenten werden geladen"
+          />
         ) : (
           <KorrespondentenTabelle
             eintraege={eintraege}

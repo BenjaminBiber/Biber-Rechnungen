@@ -19,7 +19,12 @@ public sealed class TagVerwaltung(BiberDbContext db)
     public async Task<IReadOnlyList<TagDto>> ListeAsync(CancellationToken ct)
     {
         var tags = await db.Tags.AsNoTracking()
-            .Select(t => new { Tag = t, Anzahl = db.BelegTags.Count(bt => bt.TagId == t.Id) })
+            // Über db.Belege, damit gelöschte (falsch zugeordnete) Belege nicht mitzählen.
+            .Select(t => new
+            {
+                Tag = t,
+                Anzahl = db.BelegTags.Count(bt => bt.TagId == t.Id && db.Belege.Any(b => b.Id == bt.BelegId)),
+            })
             .ToListAsync(ct);
 
         return tags
@@ -62,7 +67,8 @@ public sealed class TagVerwaltung(BiberDbContext db)
         }
 
         await db.SaveChangesAsync(ct);
-        return ZuDto(tag, await db.BelegTags.CountAsync(bt => bt.TagId == id, ct));
+        return ZuDto(tag, await db.BelegTags.CountAsync(
+            bt => bt.TagId == id && db.Belege.Any(b => b.Id == bt.BelegId), ct));
     }
 
     public async Task<Fehler?> LoeschenAsync(Guid id, CancellationToken ct)

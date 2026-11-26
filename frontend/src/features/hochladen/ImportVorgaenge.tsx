@@ -5,6 +5,7 @@ import type { ImportQuelle, ImportStatus, ImportVorgang } from '@/api/typen'
 import { Chip, type ChipTon } from '@/components/Chip'
 import { Icon } from '@/components/Icon'
 import { formatDatumZeit } from '@/lib/format'
+import { SkelettTabelle } from '@/components/ui/skelett'
 
 const quellen: { wert?: ImportQuelle; text: string; icon: string }[] = [
   { text: 'Alle Quellen', icon: '' },
@@ -105,8 +106,8 @@ export function ImportVorgaenge() {
           )}
           {isPending && (
             <tr>
-              <td colSpan={6} className="gedaempft">
-                Lädt …
+              <td colSpan={6} className="p-0">
+                <SkelettTabelle zeilen={5} spalten={6} mitKarte={false} label="Import-Vorgänge werden geladen" />
               </td>
             </tr>
           )}

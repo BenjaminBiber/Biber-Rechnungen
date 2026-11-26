@@ -1,5 +1,6 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { useId, useState } from 'react'
-import { useBelegBestaetigen } from '@/api/belege'
+import { belegeKeys, useBelegBestaetigen } from '@/api/belege'
 import type { BelegDetail } from '@/api/typen'
 import { Icon } from '@/components/Icon'
 import { useToast } from '@/components/toast'
@@ -11,14 +12,17 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { fehlgeschlageneBefunde } from './gemeinsam'
+import { aenderungenSpeichern } from './offeneAenderungen'
 
 /**
  * „Bestätigen“ im Kopf: ohne fehlgeschlagene Befunde sofort, sonst über den Dialog
- * „Beleg mit n offenen Befunden bestätigen?“ mit optionaler Begründung.
+ * „Beleg mit n offenen Befunden bestätigen?“ mit optionaler Begründung. Offene Eingaben im Tab „Daten“ werden vorher
+ * gespeichert; sind sie ungültig, wird nicht bestätigt.
  */
 export function BestaetigenDialog({ beleg }: { beleg: BelegDetail }) {
   const begruendungId = useId()
   const toast = useToast()
+  const queryClient = useQueryClient()
   const bestaetigen = useBelegBestaetigen()
   const [offen, setOffen] = useState(false)
   const [begruendung, setBegruendung] = useState('')
@@ -37,8 +41,14 @@ export function BestaetigenDialog({ beleg }: { beleg: BelegDetail }) {
     }
   }
 
-  function klick() {
-    if (befunde.length === 0) void ausfuehren()
+  async function klick() {
+    if (!(await aenderungenSpeichern(beleg.id))) {
+      toast.fehler('Nicht bestätigt: Änderungen im Tab „Daten“ sind nicht gespeichert')
+      return
+    }
+    // Das Speichern kann die Befunde neu berechnen – deshalb den aktuellen Stand aus dem Cache.
+    const aktuell = queryClient.getQueryData<BelegDetail>(belegeKeys.detail(beleg.id)) ?? beleg
+    if (fehlgeschlageneBefunde(aktuell).length === 0) void ausfuehren()
     else setOffen(true)
   }
 
@@ -47,7 +57,7 @@ export function BestaetigenDialog({ beleg }: { beleg: BelegDetail }) {
       <button
         type="button"
         className="btn btn-primaer"
-        onClick={klick}
+        onClick={() => void klick()}
         disabled={bestaetigen.isPending}
         aria-busy={bestaetigen.isPending}
       >

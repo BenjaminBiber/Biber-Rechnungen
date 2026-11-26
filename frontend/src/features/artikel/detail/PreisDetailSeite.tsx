@@ -17,6 +17,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
+import { SkelettDetailSeite } from '@/components/ui/skelett'
 import { formatEuro, formatProzent, formatZahl } from '@/lib/format'
 import { einheitKurz, grundpreisBezug, hatGrundpreis, type Preisart } from './gemeinsam'
 import { Kaeufe } from './Kaeufe'
@@ -149,7 +150,7 @@ export function PreisDetailSeite({
   onPreisart: (preisart: Preisart) => void
 }) {
   const { darfBearbeiten } = useRolle()
-  if (istPending) return <main className="seite" aria-busy="true" />
+  if (istPending) return <SkelettDetailSeite label="Artikel wird geladen" />
   if (!detail)
     return (
       <main className="seite">

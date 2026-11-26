@@ -68,4 +68,31 @@ describe('TagAuswahl', () => {
     await nutzer.click(screen.getByRole('option', { name: /„Bewirtung“ als neuen Tag anlegen/ }))
     await waitFor(() => expect(onAendern).toHaveBeenCalledWith([expect.any(String)]))
   })
+
+  it('Enter ohne Markierung legt den eingetippten Namen als neuen Tag an', async () => {
+    const { nutzer, onAendern } = oeffnen({ neuAnlegenErlaubt: true, gewaehlt: [tagIds.bez] })
+    await nutzer.click(screen.getByRole('button', { name: 'Tags' }))
+    await screen.findByRole('option', { name: /Inbox/ })
+    await nutzer.type(screen.getByRole('combobox'), 'Bewirtung{Enter}')
+    await waitFor(() => expect(onAendern).toHaveBeenCalledWith([tagIds.bez, expect.any(String)]))
+    expect(screen.getByRole('combobox')).toHaveValue('')
+  })
+
+  it('Enter legt nichts an, wenn der Name schon existiert oder Anlegen nicht erlaubt ist', async () => {
+    const { nutzer, onAendern } = oeffnen({ neuAnlegenErlaubt: true })
+    await nutzer.click(screen.getByRole('button', { name: 'Tags' }))
+    await screen.findByRole('option', { name: /Inbox/ })
+    await nutzer.type(screen.getByRole('combobox'), 'inbox{Enter}')
+    expect(screen.queryByRole('option', { name: /als neuen Tag anlegen/ })).not.toBeInTheDocument()
+    expect(onAendern).not.toHaveBeenCalled()
+  })
+
+  it('ohne neuAnlegenErlaubt gibt es keine Anlage-Option', async () => {
+    const { nutzer, onAendern } = oeffnen()
+    await nutzer.click(screen.getByRole('button', { name: 'Tags' }))
+    await screen.findByRole('option', { name: /Inbox/ })
+    await nutzer.type(screen.getByRole('combobox'), 'Bewirtung{Enter}')
+    expect(screen.queryByRole('option')).not.toBeInTheDocument()
+    expect(onAendern).not.toHaveBeenCalled()
+  })
 })

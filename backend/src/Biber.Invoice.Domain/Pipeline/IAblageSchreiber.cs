@@ -22,6 +22,15 @@ public interface IAblageSchreiber
     /// </summary>
     Task<IReadOnlyList<AblageVerschiebung>> VerschiebenAsync(Beleg beleg, CancellationToken ct);
 
+    /// <summary>Ordner unter der Ablage-Wurzel für die Originale gelöschter (falsch zugeordneter) Belege.</summary>
+    const string GeloeschtOrdner = "_Geloescht";
+
+    /// <summary>
+    /// Verschiebt Original und eingebettetes XML eines gelöschten Belegs nach <c>_Geloescht/{bisheriger Pfad}</c>
+    /// (noch nicht gespeichert). Zurück an den regulären Pfad bringt sie <see cref="VerschiebenAsync"/>.
+    /// </summary>
+    Task<IReadOnlyList<AblageVerschiebung>> InGeloeschtVerschiebenAsync(Beleg beleg, CancellationToken ct);
+
     /// <summary>Macht <see cref="VerschiebenAsync"/> rückgängig, z. B. wenn das Speichern danach scheitert.</summary>
     void Zuruecknehmen(IReadOnlyList<AblageVerschiebung> verschiebungen);
 

@@ -25,10 +25,16 @@ function istEingabe(ziel: EventTarget | null): boolean {
   return ziel.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(ziel.tagName)
 }
 
+/** Bedienelemente und Zellen in der Zeile, deren Klick nicht den Beleg öffnet. */
+const EIGENER_KLICK =
+  'a, button, input, label, select, textarea, [role="button"], [role="checkbox"], [role="menuitem"], [data-kein-zeilenklick]'
+
 /**
- * Tastaturkürzel und Rechtsklick für die Zeilen der Belegtabelle: Enter öffnet den Beleg, T die Tag-Auswahl,
+ * Tastaturkürzel und Maus für die Zeilen der Belegtabelle: Enter öffnet den Beleg, T die Tag-Auswahl,
  * K die Kategorie-Auswahl, Leertaste wählt aus; Rechtsklick öffnet das Zeilenmenü. Gilt nur für die
  * fokussierte Zeile selbst – nicht, solange ein Eingabefeld (z. B. die Suche) den Fokus hat.
+ * Ein Klick auf die Zeile öffnet den Beleg (auch wenn die Titel-Spalte ausgeblendet ist) – außer auf
+ * Bedienelementen, der Auswahl- und der Menüspalte oder wenn dabei Text markiert wurde.
  */
 export function useListenKuerzel(eintraege: BelegListeneintrag[]) {
   const tabelle = useRef<HTMLTableSectionElement>(null)
@@ -72,11 +78,23 @@ export function useListenKuerzel(eintraege: BelegListeneintrag[]) {
       zeileOeffnen(beleg.id, 'menue')
     }
 
+    function klick(e: MouseEvent) {
+      if (e.button !== 0 || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return
+      if (!(e.target instanceof Element) || e.target.closest(EIGENER_KLICK)) return
+      // Wer Text markiert (z. B. die Rechnungsnummer kopieren will), soll nicht weggeleitet werden.
+      if (window.getSelection()?.toString()) return
+      const beleg = zeileVon(e.target)
+      if (!beleg) return
+      void stand.current.navigate({ to: '/belege/$belegId', params: { belegId: beleg.id } })
+    }
+
     tbody.addEventListener('keydown', taste)
     tbody.addEventListener('contextmenu', kontextmenue)
+    tbody.addEventListener('click', klick)
     return () => {
       tbody.removeEventListener('keydown', taste)
       tbody.removeEventListener('contextmenu', kontextmenue)
+      tbody.removeEventListener('click', klick)
     }
   }, [])
 

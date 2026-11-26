@@ -8,6 +8,7 @@ import { Icon } from '@/components/Icon'
 import { useRolle } from '@/components/shell/useRolle'
 import { useToast } from '@/components/toast'
 import { Button } from '@/components/ui/button'
+import { SkelettDetailSeite } from '@/components/ui/skelett'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { formatDatum, formatDatumZeit, formatEuro, formatProzent } from '@/lib/format'
 import { matchingKurztext } from '@/lib/matching'
@@ -72,6 +73,7 @@ function Aliase({ detail, darfBearbeiten }: { detail: KorrespondentDetail; darfB
             className="eingabe h-7 w-48 text-[13px]"
             value={eingabe}
             disabled={laeuft}
+            aria-busy={laeuft || undefined}
             onChange={(e) => setEingabe(e.target.value)}
             onBlur={() => !eingabe.trim() && setEingabe(null)}
             onKeyDown={(e) => {
@@ -129,6 +131,28 @@ function Eintrag({ titel, children }: { titel: string; children: ReactNode }) {
 
 const leer = <span className="gedaempft">—</span>
 
+/** Kopiert die IBAN ohne Leerzeichen in die Zwischenablage. */
+function IbanKopieren({ iban }: { iban: string }) {
+  const toast = useToast()
+  const kopieren = () =>
+    navigator.clipboard.writeText(iban).then(
+      () => toast.erfolg('IBAN kopiert'),
+      () => toast.fehler('Kopieren nicht möglich'),
+    )
+  return (
+    <Button
+      variant="geist"
+      size="icon-klein"
+      className="h-6 w-6 shrink-0 text-gedaempft opacity-0 group-hover:opacity-100 hover:text-text focus-visible:opacity-100 [@media(hover:none)]:opacity-60"
+      aria-label={`IBAN ${ibanFormatiert(iban)} kopieren`}
+      title="IBAN kopieren"
+      onClick={() => void kopieren()}
+    >
+      <Icon name="content_copy" className="text-[15px]" />
+    </Button>
+  )
+}
+
 function Stammdaten({ detail }: { detail: KorrespondentDetail }) {
   return (
     <section className="karte p-5" aria-labelledby="stammdaten-titel">
@@ -146,8 +170,11 @@ function Stammdaten({ detail }: { detail: KorrespondentDetail }) {
         <Eintrag titel="Bankverbindungen">
           {detail.bankverbindungen.length
             ? detail.bankverbindungen.map((b) => (
-                <div key={b.iban} className="mono">
-                  {ibanFormatiert(b.iban)}
+                <div key={b.iban} className="group mono">
+                  <div className="flex items-center gap-1">
+                    <span>{ibanFormatiert(b.iban)}</span>
+                    <IbanKopieren iban={b.iban} />
+                  </div>
                   {b.bic && <div className="gedaempft text-xs">BIC {b.bic}</div>}
                 </div>
               ))
@@ -257,7 +284,7 @@ export function KorrespondentDetailSeite({
   const { darfBearbeiten } = useRolle()
   const [logoReiter, setLogoReiter] = useState<LogoReiter | null>(null)
   const [bearbeiten, setBearbeiten] = useState(false)
-  if (istPending) return <main className="seite" aria-busy="true" />
+  if (istPending) return <SkelettDetailSeite symbolRund label="Korrespondent wird geladen" />
   if (!detail)
     return (
       <main className="seite">
@@ -287,7 +314,7 @@ export function KorrespondentDetailSeite({
                 onClick={() => setLogoReiter('ausschnitt')}
                 className="absolute -bottom-1.5 -right-1.5 flex size-6 items-center justify-center rounded-full border border-rand bg-karte text-[var(--color-gedaempft-stark)] hover:bg-hover"
               >
-                <Icon name="photo_camera" className="!text-[14px]" />
+                <Icon name="photo_camera" className="text-[14px]" />
               </button>
             )}
           </div>

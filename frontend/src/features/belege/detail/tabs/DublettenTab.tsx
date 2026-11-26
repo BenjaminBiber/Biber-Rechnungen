@@ -5,6 +5,7 @@ import type { BelegDetail, BelegListeneintrag } from '@/api/typen'
 import { Icon } from '@/components/Icon'
 import { useToast } from '@/components/toast'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { SkelettListe } from '@/components/ui/skelett'
 import { formatDatum, formatEuro } from '@/lib/format'
 
 function belegName(b: { rechnungsnummer?: string | null; titel: string }): string {
@@ -217,7 +218,7 @@ function MarkierenDialog({
 }) {
   const [suche, setSuche] = useState('')
   const [gewaehlt, setGewaehlt] = useState<BelegListeneintrag | null>(null)
-  const { data, isPending } = useBelege({ suche: suche.trim() || undefined })
+  const { data, isPending, isFetching, isPlaceholderData } = useBelege({ suche: suche.trim() || undefined })
   const treffer = (data?.eintraege ?? []).filter((b) => b.id !== belegId)
 
   return (
@@ -234,10 +235,19 @@ function MarkierenDialog({
             placeholder="Rechnungsnr., Korrespondent, Titel …"
             value={suche}
             onChange={(e) => setSuche(e.target.value)}
+            aria-busy={isFetching || undefined}
           />
         </label>
-        <ul aria-label="Suchtreffer" className="m-0 flex max-h-72 list-none flex-col overflow-y-auto p-0">
-          {isPending && <li className="gedaempft py-2 text-[13px]">Suche läuft …</li>}
+        <ul
+          aria-label="Suchtreffer"
+          aria-busy={(isPlaceholderData && isFetching) || undefined}
+          className="veraltet m-0 flex max-h-72 list-none flex-col overflow-y-auto p-0"
+        >
+          {isPending && (
+            <li>
+              <SkelettListe zeilen={4} kompakt label="Suche läuft" />
+            </li>
+          )}
           {!isPending && treffer.length === 0 && <li className="gedaempft py-2 text-[13px]">Keine Belege gefunden</li>}
           {treffer.map((b) => (
             <li key={b.id}>

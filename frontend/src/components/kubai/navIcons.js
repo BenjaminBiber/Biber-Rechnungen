@@ -131,3 +131,6 @@ export const NAV_ICONS = [
     draw(p, E) { at(E.rad, { transform: `rotate(${f(p.rot)} 12 12)` }); }
   }
 ];
+
+// Linien-Icons brauchen weder Verläufe noch Filter.
+NAV_ICONS.forEach((i) => { i.mono = true; });

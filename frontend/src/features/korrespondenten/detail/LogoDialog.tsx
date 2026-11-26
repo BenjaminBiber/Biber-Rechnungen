@@ -5,9 +5,11 @@ import type { KorrespondentDetail } from '@/api/typen'
 import { Icon } from '@/components/Icon'
 import { useToast } from '@/components/toast'
 import { Button } from '@/components/ui/button'
+import { Skelett } from '@/components/ui/skelett'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatDatum } from '@/lib/format'
+import { cn } from '@/lib/utils'
 import { skalieren, startAusschnitt, verschieben, type Rechteck } from './ausschnitt'
 
 export type LogoReiter = 'ausschnitt' | 'upload' | 'favicon'
@@ -48,6 +50,8 @@ function AusschnittWaehler({
 }) {
   const flaeche = useRef<HTMLDivElement>(null)
   const zug = useRef<{ art: 'move' | 'size'; x: number; y: number; start: Rechteck } | null>(null)
+  const [geladenBild, setGeladenBild] = useState<string | null>(null)
+  const geladen = geladenBild === bild
 
   const tasten = (e: KeyboardEvent) => {
     const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key]
@@ -75,8 +79,23 @@ function AusschnittWaehler({
   const ende = () => (zug.current = null)
 
   return (
-    <div ref={flaeche} className="relative select-none overflow-hidden rounded-lg border border-rand bg-karte">
-      <img src={bild} alt="Seite 1 des Belegs" className="block w-full" draggable={false} />
+    <div
+      ref={flaeche}
+      aria-busy={!geladen || undefined}
+      className={cn(
+        'relative select-none overflow-hidden rounded-lg border border-rand bg-karte',
+        !geladen && 'aspect-[1000/1414]',
+      )}
+    >
+      {!geladen && <Skelett className="absolute inset-0 !h-full w-full" />}
+      <img
+        src={bild}
+        alt="Seite 1 des Belegs"
+        className="block w-full"
+        draggable={false}
+        onLoad={() => setGeladenBild(bild)}
+        onError={() => setGeladenBild(bild)}
+      />
       <div
         role="slider"
         tabIndex={0}

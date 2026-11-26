@@ -227,7 +227,7 @@ public sealed partial class BelegAbfrageDienst(BiberDbContext db, IEinstellungen
                        cardinality(a.liste) AS begriffe,
                        coalesce(ts_rank(b.suchvektor, a.q), 0) AS rang
                 FROM beleg b CROSS JOIN anfrage a
-                WHERE b.id <> {id} AND b.status IN ('Fertig', 'Fehler'))
+                WHERE b.id <> {id} AND b.status IN ('Fertig', 'Fehler') AND b.geloescht_am IS NULL)
             SELECT id AS "Value"
             FROM kandidaten
             WHERE gleicher OR (gemeinsam > 0 AND gemeinsam >= least(3, begriffe))
@@ -317,8 +317,10 @@ public sealed partial class BelegAbfrageDienst(BiberDbContext db, IEinstellungen
             .ToListAsync(ct);
 
         var hashes = beleg.Dateien.Where(d => d.Rolle == DateiRolle.Original).Select(d => d.Sha256).ToList();
+        // Über db.Belege, damit gelöschte (falsch zugeordnete) Belege nicht als Treffer zählen.
         var hashTreffer = hashes.Count > 0 && await db.BelegDateien.AnyAsync(
-            d => d.BelegId != beleg.Id && d.Rolle == DateiRolle.Original && hashes.Contains(d.Sha256), ct);
+            d => d.BelegId != beleg.Id && d.Rolle == DateiRolle.Original && hashes.Contains(d.Sha256)
+                && db.Belege.Any(b => b.Id == d.BelegId), ct);
 
         return new DubletteDto(
             duplikatVon,

@@ -1,6 +1,7 @@
 import { useBelegHistorie } from '@/api/belege'
 import type { AuditEintrag } from '@/api/typen'
 import { Icon } from '@/components/Icon'
+import { LadeBereich, Skelett } from '@/components/ui/skelett'
 import { formatDatumZeit } from '@/lib/format'
 
 const icons: Record<string, string> = {
@@ -26,7 +27,7 @@ export function HistorieTab({ belegId }: { belegId: string }) {
   return (
     <div className="flex flex-col">
       <p className="gedaempft m-0 mb-3 text-[13px]">Lückenloses Änderungsprotokoll · nicht änderbar oder löschbar</p>
-      {isPending && <p className="gedaempft m-0 text-[13px]">Historie wird geladen …</p>}
+      {isPending && <HistorieSkelett />}
       {isError && <p className="m-0 text-[13px] text-rot-text">Historie konnte nicht geladen werden.</p>}
       <ol className="m-0 list-none p-0">
         {eintraege?.map((e) => (
@@ -53,5 +54,25 @@ export function HistorieTab({ belegId }: { belegId: string }) {
         ))}
       </ol>
     </div>
+  )
+}
+
+/** Zeitleiste als Platzhalter: Kreis mit Linie, daneben Wer/Wann und Text. */
+function HistorieSkelett() {
+  return (
+    <LadeBereich label="Historie wird geladen" className="flex flex-col">
+      {[70, 55, 82, 60].map((breite, i) => (
+        <div key={i} className="flex gap-3">
+          <div className="flex flex-col items-center">
+            <Skelett rund breite={28} hoehe={28} />
+            <span className="min-h-3.5 w-0.5 flex-1 bg-rand" />
+          </div>
+          <div className="flex flex-1 flex-col gap-2 pt-1 pb-5">
+            <Skelett hoehe={11} breite={180} />
+            <Skelett hoehe={11} breite={`${breite}%`} />
+          </div>
+        </div>
+      ))}
+    </LadeBereich>
   )
 }

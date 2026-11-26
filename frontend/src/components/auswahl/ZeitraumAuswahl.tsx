@@ -1,4 +1,5 @@
 import { useId, useState, type ReactNode } from 'react'
+import { Datumseingabe } from '@/components/Datumseingabe'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { formatDatum } from '@/lib/format'
 import { datumEinlesen, zeitraumVorgabe, zeitraumVorgaben } from '@/lib/zeitraum'
@@ -82,26 +83,26 @@ export function ZeitraumAuswahl({
               <label className="label" htmlFor={`${id}-von`}>
                 Von
               </label>
-              <input
+              <Datumseingabe
                 id={`${id}-von`}
-                className="eingabe mono"
-                placeholder="TT.MM.JJJJ"
-                value={von}
+                className="mono"
+                wert={von}
+                heute={heute}
                 aria-invalid={fehler ? true : undefined}
-                onChange={(e) => setVon(e.target.value)}
+                onAendern={setVon}
               />
             </div>
             <div>
               <label className="label" htmlFor={`${id}-bis`}>
                 Bis
               </label>
-              <input
+              <Datumseingabe
                 id={`${id}-bis`}
-                className="eingabe mono"
-                placeholder="TT.MM.JJJJ"
-                value={bis}
+                className="mono"
+                wert={bis}
+                heute={heute}
                 aria-invalid={fehler ? true : undefined}
-                onChange={(e) => setBis(e.target.value)}
+                onAendern={setBis}
               />
             </div>
           </div>

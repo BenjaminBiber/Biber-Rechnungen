@@ -44,7 +44,7 @@ describe('Aufbewahrung und Integrität', () => {
     const { result } = renderMitQuery(() => ({ loeschbar: useLoeschbar(), loeschen: useAufbewahrungLoeschen() }))
     expect(await erwarteDaten(() => result.current.loeschbar)).toEqual([])
     const fehler = await act(() =>
-      result.current.loeschen.mutateAsync({ jahr: 2018, bestaetigung: '2018 LÖSCHEN' }).catch((e: unknown) => e),
+      result.current.loeschen.mutateAsync({ jahr: 2018, bestaetigung: 'LÖSCHEN' }).catch((e: unknown) => e),
     )
     expect(fehler).toMatchObject({ status: 409 })
   })

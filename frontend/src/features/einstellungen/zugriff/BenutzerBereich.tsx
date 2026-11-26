@@ -21,6 +21,7 @@ import { formatDatum } from '@/lib/format'
 import { Schalter } from '../Schalter'
 import { Zeile } from '../Zeile'
 import { Feld, MINDEST_LAENGE, Rueckfrage, rollen, rollenText } from './gemeinsam'
+import { SkelettTabelle } from '@/components/ui/skelett'
 
 const FUENF_MINUTEN = 5 * 60 * 1000
 
@@ -266,6 +267,7 @@ function BenutzerZeile({ benutzer, eigener }: { benutzer: Benutzer; eigener: boo
             aria-label={`Rolle von ${benutzer.name}`}
             value={benutzer.rolle}
             disabled={eigener || aendern.isPending}
+            aria-busy={aendern.isPending || undefined}
             onChange={(e) => void aendernMit(e.target.value as Rolle, benutzer.freigegeben)}
           >
             {rollen.map((r) => (
@@ -396,7 +398,7 @@ function Verwaltung() {
           {error.message}
         </p>
       ) : (
-        <p className="gedaempft m-0 text-sm">Lädt …</p>
+        <SkelettTabelle zeilen={4} spalten={4} label="Benutzer werden geladen" />
       )}
       <ZugriffSchalter />
     </>

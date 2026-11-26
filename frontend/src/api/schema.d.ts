@@ -722,6 +722,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/belege/{id}/loeschen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Falsch zugeordneten Beleg trotz Löschsperre löschen (wird nur ausgeblendet) */
+        post: operations["postBelegeLoeschen"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/belege/geloeschte": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Gelöschte (falsch zugeordnete) Belege */
+        get: operations["getBelegeGeloeschte"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/belege/{id}/wiederherstellen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Gelöschten Beleg wiederherstellen */
+        post: operations["postBelegeWiederherstellen"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/import/upload": {
         parameters: {
             query?: never;
@@ -1327,6 +1378,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/einstellungen/mail/zugang": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** IMAP-Zugang speichern (nur ohne IMAP_HOST in der .env) */
+        put: operations["putEinstellungenMailZugang"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/benachrichtigungen": {
         parameters: {
             query?: never;
@@ -1876,6 +1944,10 @@ export interface components {
             /** Format: date */
             leistungsdatum?: string | null;
         };
+        BelegLoeschenDto: {
+            grund?: components["schemas"]["LoeschGrund"] | null;
+            bemerkung?: string | null;
+        };
         BelegNachbarnDto: {
             /** Format: uuid */
             vorherId?: string | null;
@@ -2033,6 +2105,7 @@ export interface components {
             ordner: components["schemas"]["OrdnerEinstellungen"];
             aufbewahrung: components["schemas"]["AufbewahrungEinstellungen"];
             zugriff: components["schemas"]["ZugriffEinstellungen"];
+            mailZugang: components["schemas"]["MailZugangDto"];
             umgebung: components["schemas"]["UmgebungDto"];
         };
         ErsteinrichtungDto: {
@@ -2106,6 +2179,25 @@ export interface components {
         };
         /** @enum {string} */
         ExtraktionsQuelle: "XRechnung" | "ZUGFeRD" | "DocumentIntelligence" | "Manuell";
+        GeloeschterBelegDto: {
+            /** Format: uuid */
+            id: string;
+            titel?: string | null;
+            rechnungsnummer?: string | null;
+            /** Format: date */
+            rechnungsdatum?: string | null;
+            korrespondent?: string | null;
+            /** Format: decimal */
+            brutto?: number | null;
+            waehrung: string;
+            grund: components["schemas"]["LoeschGrund"];
+            bemerkung?: string | null;
+            /** Format: date-time */
+            geloeschtAm: string;
+            geloeschtVon?: string | null;
+            /** Format: uuid */
+            originalId?: string | null;
+        };
         GespeicherteAnsichtAnlegenDto: {
             name: string;
             filter: components["schemas"]["BelegFilterDto"];
@@ -2333,6 +2425,8 @@ export interface components {
             geloescht: number;
             pfade: string[];
         };
+        /** @enum {string} */
+        LoeschGrund: "FalschZugeordnet";
         LoeschbarDto: {
             /** Format: int32 */
             jahr: number;
@@ -2385,6 +2479,24 @@ export interface components {
             /** Format: date-time */
             letzterAbruf?: string | null;
             fehler?: string | null;
+        };
+        MailZugangDto: {
+            ausUmgebung: boolean;
+            host?: string | null;
+            /** Format: int32 */
+            port: number;
+            ssl: boolean;
+            benutzer?: string | null;
+            passwortGesetzt: boolean;
+            konfiguriert: boolean;
+        };
+        MailZugangSpeichernDto: {
+            host: string;
+            /** Format: int32 */
+            port: number;
+            ssl: boolean;
+            benutzer: string;
+            passwort?: string | null;
         };
         /** @enum {string} */
         MassenaktionArt: "TagsSetzen" | "TagsEntfernen" | "KategorieSetzen" | "Bestaetigen";
@@ -2740,10 +2852,7 @@ export interface components {
             oeffentlicheUrl?: string | null;
             diEndpunkt?: string | null;
             diModell?: string | null;
-            imapServer?: string | null;
-            imapBenutzer?: string | null;
             diKonfiguriert: boolean;
-            imapKonfiguriert: boolean;
             googleKonfiguriert: boolean;
         };
         UstEinstellungen: {
@@ -4085,6 +4194,98 @@ export interface operations {
             404: components["responses"]["NichtGefunden"];
         };
     };
+    postBelegeLoeschen: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BelegLoeschenDto"];
+            };
+        };
+        responses: {
+            /** @description Erledigt */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["Ungueltig"];
+            401: components["responses"]["NichtAngemeldet"];
+            403: components["responses"]["KeinRecht"];
+            404: components["responses"]["NichtGefunden"];
+            /** @description Der Beleg wird gerade verarbeitet */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        type?: string;
+                        title?: string;
+                        /** Format: int32 */
+                        status?: number;
+                        detail?: string;
+                        errors?: {
+                            [key: string]: string[];
+                        };
+                    };
+                };
+            };
+        };
+    };
+    getBelegeGeloeschte: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GeloeschterBelegDto"][];
+                };
+            };
+            401: components["responses"]["NichtAngemeldet"];
+            403: components["responses"]["KeinRecht"];
+        };
+    };
+    postBelegeWiederherstellen: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Erledigt */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["Ungueltig"];
+            401: components["responses"]["NichtAngemeldet"];
+            403: components["responses"]["KeinRecht"];
+            404: components["responses"]["NichtGefunden"];
+        };
+    };
     postImportUpload: {
         parameters: {
             query?: never;
@@ -5357,6 +5558,49 @@ export interface operations {
             };
             401: components["responses"]["NichtAngemeldet"];
             403: components["responses"]["KeinRecht"];
+        };
+    };
+    putEinstellungenMailZugang: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MailZugangSpeichernDto"];
+            };
+        };
+        responses: {
+            /** @description Erledigt */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["Ungueltig"];
+            401: components["responses"]["NichtAngemeldet"];
+            403: components["responses"]["KeinRecht"];
+            /** @description Der IMAP-Zugang ist per .env gesetzt */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        type?: string;
+                        title?: string;
+                        /** Format: int32 */
+                        status?: number;
+                        detail?: string;
+                        errors?: {
+                            [key: string]: string[];
+                        };
+                    };
+                };
+            };
         };
     };
     getBenachrichtigungenListe: {

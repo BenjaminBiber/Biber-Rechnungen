@@ -3,18 +3,24 @@ import { useKorrespondent, useKorrespondentenZusammenfuehren } from '@/api/korre
 import type { KorrespondentListeneintrag } from '@/api/typen'
 import { useToast } from '@/components/toast'
 import { Button } from '@/components/ui/button'
+import { Skelett } from '@/components/ui/skelett'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 
 /** Kennzeile: USt-IdNr., Anzahl IBANs (aus dem Detail), Logo. */
 function Kennzeile({ k }: { k: KorrespondentListeneintrag }) {
-  const { data } = useKorrespondent(k.id)
+  const { data, isPending } = useKorrespondent(k.id)
   const teile = [
     k.ustIdNr ?? 'keine USt-IdNr.',
     data && `${data.bankverbindungen.length} ${data.bankverbindungen.length === 1 ? 'IBAN' : 'IBANs'}`,
     k.logo.quelle !== 'Keine' && 'Logo',
   ].filter(Boolean)
-  return <span className="gedaempft block text-xs">{teile.join(' · ')}</span>
+  return (
+    <span className="gedaempft flex items-center gap-2 text-xs">
+      {teile.join(' · ')}
+      {isPending && <Skelett hoehe={10} breite={48} />}
+    </span>
+  )
 }
 
 function belegeText(anzahl: number) {

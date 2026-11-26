@@ -21,6 +21,7 @@ import { GoogleZeichen } from '@/features/anmeldung/gemeinsam'
 import { formatDatum } from '@/lib/format'
 import { Zeile } from '../Zeile'
 import { Feld, MINDEST_LAENGE, Rueckfrage, StaerkeAnzeige } from './gemeinsam'
+import { SkelettFormular, LadeBereich, Skelett } from '@/components/ui/skelett'
 
 type Toast = ReturnType<typeof useToast>
 const fehlerMelden = (toast: Toast) => (f: Error) => void toast.fehler(f.message)
@@ -275,7 +276,10 @@ function TotpDialog({ onSchliessen }: { onSchliessen: () => void }) {
                 </div>
               </>
             ) : (
-              <p className="gedaempft m-0">Lädt …</p>
+              <LadeBereich label="QR-Code wird geladen" className="flex flex-col items-center gap-3">
+                <Skelett hoehe={168} breite={168} className="rounded-lg" />
+                <Skelett hoehe={12} breite={220} />
+              </LadeBereich>
             )}
             <DialogFooter>
               <Button type="button" onClick={onSchliessen}>
@@ -460,7 +464,7 @@ export function KontoBereich({ google }: { google?: GoogleRueckkehr }) {
           {error.message}
         </p>
       ) : (
-        <p className="gedaempft m-0 text-sm">Lädt …</p>
+        <SkelettFormular felder={4} label="Konto wird geladen" />
       )}
     </div>
   )

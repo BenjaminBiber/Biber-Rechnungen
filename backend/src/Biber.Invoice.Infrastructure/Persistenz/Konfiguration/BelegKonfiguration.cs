@@ -25,6 +25,11 @@ public sealed class BelegKonfiguration : IEntityTypeConfiguration<Beleg>
         builder.Property(b => b.Waehrung).HasMaxLength(3).HasDefaultValue("EUR");
         builder.Property(b => b.DiKonfidenz).HasPrecision(5, 4);
         builder.Property(b => b.Bankverbindungen).AlsJsonb();
+        builder.Property(b => b.LoeschGrund).HasMaxLength(30);
+        builder.Property(b => b.LoeschBemerkung).HasMaxLength(2000);
+
+        // Gelöschte Belege (falsch zugeordnet) sind überall unsichtbar; nur Papierkorb und Aufbewahrung sehen sie.
+        builder.HasQueryFilter(b => b.GeloeschtAm == null);
 
         builder.Property<NpgsqlTsVector>(Suchvektor)
             .HasColumnType("tsvector")
@@ -50,6 +55,7 @@ public sealed class BelegKonfiguration : IEntityTypeConfiguration<Beleg>
         builder.HasOne<Beleg>().WithMany().HasForeignKey(b => b.AufgeteiltAusBelegId).OnDelete(DeleteBehavior.SetNull);
         builder.HasOne<Benutzer>().WithMany().HasForeignKey(b => b.BestaetigtVonId).OnDelete(DeleteBehavior.SetNull);
         builder.HasOne<Benutzer>().WithMany().HasForeignKey(b => b.ErstelltVonId).OnDelete(DeleteBehavior.SetNull);
+        builder.HasOne<Benutzer>().WithMany().HasForeignKey(b => b.GeloeschtVonId).OnDelete(DeleteBehavior.SetNull);
 
         builder.HasMany(b => b.Dateien).WithOne().HasForeignKey(d => d.BelegId).OnDelete(DeleteBehavior.Cascade);
         builder.HasMany(b => b.Steuerzeilen).WithOne().HasForeignKey(s => s.BelegId).OnDelete(DeleteBehavior.Cascade);

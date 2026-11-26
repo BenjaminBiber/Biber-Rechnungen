@@ -12,6 +12,7 @@ import { useGlobaleKuerzel } from '@/features/befehlspalette/useGlobaleKuerzel'
 import { formatEuro } from '@/lib/format'
 import { useBefehlspalette } from './befehlspalette-store'
 import { useRolle } from './useRolle'
+import { SkelettListe } from '@/components/ui/skelett'
 
 /** Ab so vielen Zeichen wird gesucht. */
 const MIN_ZEICHEN = 2
@@ -47,7 +48,7 @@ export function Befehlspalette() {
 
   const entprellt = useEntprellt(eingabe.trim(), ENTPRELLUNG_MS)
   const suchen = eingabe.trim().length >= MIN_ZEICHEN && entprellt.length >= MIN_ZEICHEN
-  const { data } = useSuche(suchen ? entprellt : '')
+  const { data, isFetching } = useSuche(suchen ? entprellt : '')
   const treffer = suchen ? data : undefined
   const keineTreffer =
     !!treffer &&
@@ -83,10 +84,12 @@ export function Befehlspalette() {
               onValueChange={setEingabe}
               placeholder="Belege, Korrespondenten, Artikel durchsuchen …"
               aria-label="Suchen oder Befehl ausführen"
+              aria-busy={(suchen && isFetching) || undefined}
             />
             <Kbd>Esc</Kbd>
           </div>
           <CommandList className="border-t border-linie">
+            {suchen && !treffer && <SkelettListe zeilen={3} kompakt label="Suche läuft" />}
             {keineTreffer && (
               <>
                 <p className="px-2.5 pt-2 pb-1 text-sm text-gedaempft">Nichts gefunden für ‚{entprellt}‘</p>

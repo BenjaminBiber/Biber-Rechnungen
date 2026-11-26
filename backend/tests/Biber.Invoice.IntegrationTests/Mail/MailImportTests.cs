@@ -302,6 +302,130 @@ public sealed class MailImportTests(ApiFabrik fabrik, GreenMail greenMail) : ICl
         eintrag.Text.ShouldBe(abruf.Meldung);
     }
 
+    [Fact]
+    public async Task Alter_Fehler_wird_beim_Speichern_der_Mail_Einstellungen_verworfen()
+    {
+        await AlterFehlerAsync();
+        var admin = Mail.ErzeugeClient(Rolle.Admin);
+
+        var antwort = await admin.PutJsonAsync(ApiRouten.Einstellungen.Alle + "/mail", new MailEinstellungen { Aktiv = true });
+
+        antwort.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        (await admin.GetJsonAsync<MailStatusDto>(ApiRouten.Einstellungen.MailStatus)).ShouldBe(new MailStatusDto(false, null, null));
+
+        // Ohne Status ist der Abruf sofort fällig und schreibt den neuen Stand.
+        await Mail.Services.GetServices<IWiederkehrenderJob>().OfType<MailAbrufJob>().Single().AusfuehrenAsync(default);
+        (await admin.GetJsonAsync<MailStatusDto>(ApiRouten.Einstellungen.MailStatus)).ShouldBe(new MailStatusDto(true, Mail.Zeit.GetUtcNow(), null));
+    }
+
+    [Fact]
+    public async Task Gelungener_Verbindungstest_verwirft_alten_Fehler()
+    {
+        await AlterFehlerAsync();
+        var admin = Mail.ErzeugeClient(Rolle.Admin);
+
+        var test = (await (await admin.PostAsync(ApiRouten.Einstellungen.MailVerbindungTesten, null)).Content.LesenAsync<AktionErgebnisDto>())!;
+
+        test.Erfolg.ShouldBeTrue(test.Meldung);
+        (await admin.GetJsonAsync<MailStatusDto>(ApiRouten.Einstellungen.MailStatus)).ShouldBe(new MailStatusDto(false, null, null));
+    }
+
+    [Fact]
+    public async Task Fehlgeschlagener_Verbindungstest_laesst_den_Fehler_stehen()
+    {
+        await using var falscheFabrik = MitPostfach("falsch");
+        using (var scope = falscheFabrik.ErzeugeScope())
+        {
+            await MailStatusSpeicher.SchreibenAsync(
+                scope.ServiceProvider.GetRequiredService<BiberDbContext>(),
+                new MailAbrufStatus(falscheFabrik.Zeit.GetUtcNow(), "Anmeldung abgelehnt", 0, 0, 0),
+                falscheFabrik.Zeit.GetUtcNow(),
+                default);
+        }
+
+        var admin = falscheFabrik.ErzeugeClient(Rolle.Admin);
+        await admin.PostAsync(ApiRouten.Einstellungen.MailVerbindungTesten, null);
+
+        (await admin.GetJsonAsync<MailStatusDto>(ApiRouten.Einstellungen.MailStatus))!.Fehler.ShouldBe("Anmeldung abgelehnt");
+    }
+
+    [Fact]
+    public async Task Zugang_aus_der_env_wird_angezeigt_und_ist_nicht_aenderbar()
+    {
+        var admin = Mail.ErzeugeClient(Rolle.Admin);
+
+        var zugang = (await admin.GetJsonAsync<EinstellungenDto>(ApiRouten.Einstellungen.Alle))!.MailZugang;
+
+        zugang.ShouldBe(new MailZugangDto(true, greenMail.Host, greenMail.Imap, false, GreenMail.Benutzer, true, true));
+        var antwort = await admin.PutJsonAsync(
+            ApiRouten.Einstellungen.MailZugang, new MailZugangSpeichernDto("imap.example.de", 993, true, "x", "y"));
+        antwort.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
+    public async Task Ohne_Host_in_der_env_gilt_der_in_den_Einstellungen_gepflegte_Zugang()
+    {
+        await using var ohneEnv = fabrik.MitDiensten(d => d.AddSingleton(_protokoll).AddScoped<IImportDienst, FakeImport>());
+        var admin = ohneEnv.ErzeugeClient(Rolle.Admin);
+        (await admin.GetJsonAsync<EinstellungenDto>(ApiRouten.Einstellungen.Alle))!.MailZugang
+            .ShouldBe(new MailZugangDto(false, null, 993, true, null, false, false));
+
+        // Solange keins gespeichert ist, ist das Passwort Pflicht.
+        var ohnePasswort = await admin.PutJsonAsync(
+            ApiRouten.Einstellungen.MailZugang, new MailZugangSpeichernDto(greenMail.Host, greenMail.Imap, false, GreenMail.Benutzer, null));
+        ohnePasswort.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        var antwort = await admin.PutJsonAsync(
+            ApiRouten.Einstellungen.MailZugang,
+            new MailZugangSpeichernDto($" {greenMail.Host} ", greenMail.Imap, false, GreenMail.Benutzer, GreenMail.Passwort));
+
+        antwort.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        (await admin.GetJsonAsync<EinstellungenDto>(ApiRouten.Einstellungen.Alle))!.MailZugang
+            .ShouldBe(new MailZugangDto(false, greenMail.Host, greenMail.Imap, false, GreenMail.Benutzer, true, true));
+
+        using (var scope = ohneEnv.ErzeugeScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<BiberDbContext>();
+            (await db.Einstellungen.SingleAsync(e => e.Schluessel == "imap")).Wert.ShouldNotContain(GreenMail.Passwort);
+            var audit = await db.AuditEintraege.SingleAsync(a => a.EntitaetId == "imap" && a.Feld == "passwortVerschluesselt");
+            audit.AlterWert.ShouldBe("null");
+            audit.NeuerWert.ShouldBe("\"***\"");
+        }
+
+        // Verbindungstest und Abruf nutzen den gespeicherten Zugang.
+        await greenMail.SendenAsync(Nachricht("<db@lieferant.test>", "DB", ("db.pdf", Pdf)));
+        var test = (await (await admin.PostAsync(ApiRouten.Einstellungen.MailVerbindungTesten, null)).Content.LesenAsync<AktionErgebnisDto>())!;
+        test.Erfolg.ShouldBeTrue(test.Meldung);
+        var abruf = (await (await admin.PostAsync(ApiRouten.Einstellungen.MailJetztAbrufen, null)).Content.LesenAsync<AktionErgebnisDto>())!;
+        abruf.Erfolg.ShouldBeTrue(abruf.Meldung);
+        _protokoll.Aufrufe.ShouldHaveSingleItem().Dateiname.ShouldBe("db.pdf");
+
+        // Ohne Passwort gespeichert: Das bisherige bleibt.
+        (await admin.PutJsonAsync(
+                ApiRouten.Einstellungen.MailZugang,
+                new MailZugangSpeichernDto(greenMail.Host, greenMail.Imap, false, GreenMail.Benutzer, null)))
+            .StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        test = (await (await admin.PostAsync(ApiRouten.Einstellungen.MailVerbindungTesten, null)).Content.LesenAsync<AktionErgebnisDto>())!;
+        test.Erfolg.ShouldBeTrue(test.Meldung);
+    }
+
+    [Fact]
+    public async Task Zugang_speichern_prueft_die_Felder_und_ist_nur_fuer_Admin()
+    {
+        await using var ohneEnv = fabrik.MitDiensten(d => d.AddSingleton(_protokoll).AddScoped<IImportDienst, FakeImport>());
+        var zugang = new MailZugangSpeichernDto(" ", 0, true, "", "geheim");
+
+        var antwort = await ohneEnv.ErzeugeClient(Rolle.Admin).PutJsonAsync(ApiRouten.Einstellungen.MailZugang, zugang);
+
+        antwort.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        var problem = (await antwort.Content.LesenAsync<ValidierungsProblem>())!;
+        problem.Errors.Keys.ShouldBe(["host", "port", "benutzer"], ignoreOrder: true);
+        (await ohneEnv.ErzeugeClient(Rolle.Benutzer).PutJsonAsync(ApiRouten.Einstellungen.MailZugang, zugang))
+            .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    private sealed record ValidierungsProblem(Dictionary<string, string[]> Errors);
+
     [Theory]
     [InlineData(ApiRouten.Einstellungen.MailVerbindungTesten)]
     [InlineData(ApiRouten.Einstellungen.MailJetztAbrufen)]
@@ -336,6 +460,18 @@ public sealed class MailImportTests(ApiFabrik fabrik, GreenMail greenMail) : ICl
         d.AddSingleton(_protokoll);
         d.AddScoped<IImportDienst, FakeImport>();
     });
+
+    /// <summary>Ein Fehler aus einem früheren Abruf, z. B. mit damals falschem Zugang.</summary>
+    private async Task AlterFehlerAsync()
+    {
+        using var scope = Mail.ErzeugeScope();
+        var vorher = Mail.Zeit.GetUtcNow().AddDays(-3);
+        await MailStatusSpeicher.SchreibenAsync(
+            scope.ServiceProvider.GetRequiredService<BiberDbContext>(),
+            new MailAbrufStatus(vorher, "Anmeldung am Postfach fehlgeschlagen – Benutzer oder Passwort falsch.", 0, 0, 0),
+            vorher,
+            default);
+    }
 
     private async Task MailEinstellenAsync(MailEinstellungen einstellungen)
     {

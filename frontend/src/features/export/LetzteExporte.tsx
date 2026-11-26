@@ -3,6 +3,7 @@ import { exportDateiHerunterladen, exportDateiUrl, useExportLaeufe } from '@/api
 import { useToast } from '@/components/toast'
 import { formatDatumZeit } from '@/lib/format'
 import { exportFehlertext } from './fehler'
+import { SkelettTabelle } from '@/components/ui/skelett'
 
 /** Tabelle „Letzte Exporte“ mit Download je Lauf; fehlt die Datei auf dem Server (410), erscheint ein Hinweis. */
 export function LetzteExporte() {
@@ -61,6 +62,13 @@ export function LetzteExporte() {
                 </td>
               </tr>
             ))}
+            {isPending && (
+              <tr>
+                <td colSpan={6}>
+                  <SkelettTabelle zeilen={3} spalten={6} mitKarte={false} label="Exporte werden geladen" />
+                </td>
+              </tr>
+            )}
             {!isPending && laeufe.length === 0 && (
               <tr>
                 <td colSpan={6} className="gedaempft">

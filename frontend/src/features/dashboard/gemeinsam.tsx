@@ -46,15 +46,3 @@ export function DashboardKarte({
     </section>
   )
 }
-
-/** Platzhalter beim Laden: graue Fläche in Kartenform. */
-export function Skelett({ hoehe }: { hoehe: number }) {
-  return (
-    <div
-      className="karte animate-pulse bg-[var(--color-linie)]"
-      style={{ height: hoehe }}
-      data-testid="skelett"
-      aria-hidden="true"
-    />
-  )
-}

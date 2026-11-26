@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Icon-Galerie – Biber Rechnungen</title>
+    <!--
+      Prüfseite für die animierten Icons (nur im Dev-Server: /icon-galerie.html, nicht Teil des Builds).
+      Jede Kachel zeigt das Icon groß und in 20 px, daneben zum Vergleich das Material-Symbol der Schrift.
+      Mauszeiger über der Kachel spielt die Bewegung; „Alle bewegt“ hält alle im Hover-Zustand.
+    -->
+    <style>
+      body {
+        margin: 24px;
+        font:
+          13px/1.4 system-ui,
+          sans-serif;
+        color: #1f2328;
+        background: #fff;
+      }
+      header {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+      h1 {
+        font-size: 18px;
+        margin: 0 auto 0 0;
+      }
+      #raster {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 10px;
+      }
+      .kachel {
+        border: 1px solid #d9dee5;
+        border-radius: 10px;
+        padding: 12px 10px 8px;
+        text-align: center;
+        cursor: pointer;
+      }
+      .kachel:hover {
+        border-color: #5393ff;
+      }
+      .reihe {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        justify-content: center;
+        height: 52px;
+      }
+      .gross {
+        font-size: 48px;
+      }
+      .klein {
+        font-size: 20px;
+      }
+      .schrift {
+        font-size: 20px;
+        color: #8a94a3;
+      }
+      .name {
+        margin-top: 6px;
+        font:
+          11px ui-monospace,
+          monospace;
+        color: #5b6573;
+        overflow-wrap: anywhere;
+      }
+      .einmal .name::after {
+        content: ' ↻';
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Icon-Galerie</h1>
+      <span id="anzahl"></span>
+      <label><input type="checkbox" id="alle" /> Alle bewegt</label>
+    </header>
+    <div id="raster"></div>
+    <script type="module">
+      import 'material-symbols/outlined.css'
+      import '/src/components/kubai/kubai.css'
+      import { DUR, go, mountIcon, runtime, springe } from '/src/components/kubai/engine.js'
+      import { SYMBOLE } from '/src/components/kubai/symbole.js'
+
+      runtime.palette = { name: 'Schrift', colors: ['#2E3036'] }
+      const raster = document.getElementById('raster')
+      const namen = Object.keys(SYMBOLE).sort()
+      document.getElementById('anzahl').textContent = `${namen.length} Icons`
+      const alle = []
+      let id = 0
+      for (const name of namen) {
+        const def = SYMBOLE[name]
+        const kachel = document.createElement('div')
+        kachel.className = 'kachel' + (def.einmal ? ' einmal' : '')
+        kachel.dataset.name = name
+        kachel.innerHTML = `<div class="reihe"><span class="symbol gross"></span><span class="symbol klein"></span>
+          <span class="material-symbols-outlined schrift">${name}</span></div><div class="name">${name}</div>`
+        raster.appendChild(kachel)
+        const insts = [...kachel.querySelectorAll('.symbol')].map((el) => mountIcon(def, 0, el, `g${id++}`))
+        alle.push(...insts)
+        let uhr = 0
+        const setze = (h) =>
+          insts.forEach((inst) => {
+            inst.hover = h
+            go(inst)
+          })
+        kachel.addEventListener('pointerenter', () => {
+          clearTimeout(uhr)
+          if (!def.einmal) return setze(1)
+          insts.forEach((inst) => {
+            inst.hover = 0
+            springe(inst)
+          })
+          setze(1)
+          uhr = setTimeout(
+            () =>
+              insts.forEach((inst) => {
+                inst.hover = 0
+                springe(inst)
+              }),
+            DUR,
+          )
+        })
+        kachel.addEventListener('pointerleave', () => {
+          if (!def.einmal) setze(0)
+        })
+      }
+      document.getElementById('alle').addEventListener('change', (e) => {
+        alle.forEach((inst) => {
+          inst.hover = e.target.checked ? 1 : 0
+          springe(inst)
+        })
+      })
+      // Für Bildschirmfotos einer Zwischenlage: window.stelle(0.3) hält alle Icons bei 30 % der Bewegung an.
+      window.stelle = (o) =>
+        alle.forEach((inst) => {
+          cancelAnimationFrame(inst.raf)
+          inst.cur = { ...inst.cur, o }
+          if (inst.icon.viewBox && 'o' in inst.icon.target(false)) inst.icon.draw(inst.cur, inst.E, inst)
+        })
+    </script>
+  </body>
+</html>

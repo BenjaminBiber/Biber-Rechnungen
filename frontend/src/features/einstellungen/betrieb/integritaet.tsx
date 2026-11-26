@@ -1,4 +1,4 @@
-import { Fragment, useState } from 'react'
+import { Fragment, useState, type ReactNode } from 'react'
 import { useBackupStatus } from '@/api/dashboard'
 import { useIntegritaetsLaeufe, useIntegritaetStarten } from '@/api/integritaet'
 import type { BackupStatus, IntegritaetsLauf } from '@/api/typen'
@@ -8,6 +8,7 @@ import { useRolle } from '@/components/shell/useRolle'
 import { useToast } from '@/components/toast'
 import { Button } from '@/components/ui/button'
 import { formatDatumZeit, formatZahl } from '@/lib/format'
+import { LadeBereich, Skelett } from '@/components/ui/skelett'
 
 /** Backups älter als das gelten nicht mehr als aktuell. */
 const BACKUP_MAX_ALTER_MS = 36 * 60 * 60 * 1000
@@ -51,7 +52,7 @@ const kasten = {
   grau: 'bg-flaeche text-gedaempft-stark',
 }
 
-function Kasten({ titel, ton, children }: { titel: string; ton: keyof typeof kasten; children: string }) {
+function Kasten({ titel, ton, children }: { titel: string; ton: keyof typeof kasten; children: ReactNode }) {
   return (
     <div className={`rounded-[10px] p-4 text-sm ${kasten[ton]}`} data-ton={ton}>
       <strong>{titel}</strong>
@@ -99,7 +100,13 @@ export function IntegritaetBereich() {
           </Kasten>
         ) : (
           <Kasten titel="Letzte Integritätsprüfung" ton="grau">
-            {laeufe ? 'noch keine Prüfung gelaufen' : 'Lädt …'}
+            {laeufe ? (
+              'noch keine Prüfung gelaufen'
+            ) : (
+              <LadeBereich label="Prüfung wird geladen">
+                <Skelett hoehe={12} breite="60%" />
+              </LadeBereich>
+            )}
           </Kasten>
         )}
         {backup &&

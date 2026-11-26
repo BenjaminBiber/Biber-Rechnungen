@@ -279,6 +279,14 @@ namespace Biber.Invoice.Infrastructure.Persistenz.Migrationen
                         .HasColumnType("date")
                         .HasColumnName("faelligkeitsdatum");
 
+                    b.Property<DateTimeOffset?>("GeloeschtAm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("geloescht_am");
+
+                    b.Property<Guid?>("GeloeschtVonId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("geloescht_von_id");
+
                     b.Property<Guid?>("ImportVorgangId")
                         .HasColumnType("uuid")
                         .HasColumnName("import_vorgang_id");
@@ -312,6 +320,16 @@ namespace Biber.Invoice.Infrastructure.Persistenz.Migrationen
                     b.Property<DateOnly?>("Leistungsdatum")
                         .HasColumnType("date")
                         .HasColumnName("leistungsdatum");
+
+                    b.Property<string>("LoeschBemerkung")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("loesch_bemerkung");
+
+                    b.Property<string>("LoeschGrund")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("loesch_grund");
 
                     b.Property<decimal?>("Netto")
                         .HasPrecision(14, 2)
@@ -394,6 +412,9 @@ namespace Biber.Invoice.Infrastructure.Persistenz.Migrationen
 
                     b.HasIndex("Faelligkeitsdatum")
                         .HasDatabaseName("ix_beleg_faelligkeitsdatum");
+
+                    b.HasIndex("GeloeschtVonId")
+                        .HasDatabaseName("ix_beleg_geloescht_von_id");
 
                     b.HasIndex("ImportVorgangId")
                         .HasDatabaseName("ix_beleg_import_vorgang_id");
@@ -1643,6 +1664,12 @@ namespace Biber.Invoice.Infrastructure.Persistenz.Migrationen
                         .HasForeignKey("ErstelltVonId")
                         .OnDelete(DeleteBehavior.SetNull)
                         .HasConstraintName("fk_beleg_benutzer_erstellt_von_id");
+
+                    b.HasOne("Biber.Invoice.Domain.Entitaeten.Benutzer", null)
+                        .WithMany()
+                        .HasForeignKey("GeloeschtVonId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_beleg_benutzer_geloescht_von_id");
 
                     b.HasOne("Biber.Invoice.Domain.Entitaeten.ImportVorgang", null)
                         .WithMany()

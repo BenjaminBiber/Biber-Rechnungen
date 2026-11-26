@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { authKeys } from './auth'
 import { api, daten, erledigt } from './client'
 import { dashboardKeys, systemKeys } from './dashboard'
-import type { EinstellungGruppe, EinstellungInhalt, Einstellungen } from './typen'
+import type { EinstellungGruppe, EinstellungInhalt, Einstellungen, MailZugangSpeichern } from './typen'
 
 export const einstellungenKeys = {
   alle: ['einstellungen'] as const,
@@ -77,6 +77,20 @@ export function useDiFortsetzen() {
         queryClient.invalidateQueries({ queryKey: einstellungenKeys.diVerbrauch() }),
         queryClient.invalidateQueries({ queryKey: ['import'] }),
         queryClient.invalidateQueries({ queryKey: dashboardKeys.alle }),
+      ]),
+  })
+}
+
+/** PUT /api/einstellungen/mail/zugang – IMAP-Zugang, nur wenn er nicht per .env gesetzt ist. Leeres Passwort = behalten. */
+export function useMailZugangSpeichern() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (zugang: MailZugangSpeichern) => erledigt(api.PUT('/api/einstellungen/mail/zugang', { body: zugang })),
+    onSuccess: () =>
+      Promise.all([
+        // Werte samt Zugang und Mail-Status (ein alter Fehler wird verworfen).
+        queryClient.invalidateQueries({ queryKey: einstellungenKeys.alle }),
+        queryClient.invalidateQueries({ queryKey: systemKeys.alle }),
       ]),
   })
 }

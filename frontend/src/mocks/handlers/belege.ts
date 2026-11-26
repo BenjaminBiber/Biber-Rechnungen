@@ -13,6 +13,7 @@ import type {
   BelegZaehler,
   Bestaetigen,
   DubletteSetzen,
+  GeloeschterBeleg,
   GespeicherteAnsichtAnlegen,
   ImportQuelle,
   ImportVorgang,
@@ -270,6 +271,11 @@ export const belegeRouten: Route[] = [
       summeBrutto: runden(treffer.reduce((summe, b) => summe + (b.brutto ?? 0), 0)),
     })
   }),
+
+  // Vor `/api/belege/{id}`: Als falsch zugeordnet gelöschte Belege (Wiederherstellen und Löschen in system.ts).
+  route('get', '/api/belege/geloeschte', 'Admin', () =>
+    HttpResponse.json<GeloeschterBeleg[]>(db.geloeschteBelege.map((g) => g.eintrag)),
+  ),
 
   route('get', '/api/belege/zaehler', 'Lesen', () =>
     HttpResponse.json<BelegZaehler>({

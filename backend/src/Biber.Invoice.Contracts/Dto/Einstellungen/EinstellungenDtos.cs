@@ -12,6 +12,7 @@ public sealed record EinstellungenDto(
     OrdnerEinstellungen Ordner,
     AufbewahrungEinstellungen Aufbewahrung,
     ZugriffEinstellungen Zugriff,
+    MailZugangDto MailZugang,
     UmgebungDto Umgebung);
 
 public sealed record AllgemeinEinstellungen
@@ -93,13 +94,26 @@ public sealed record UmgebungDto(
     string? OeffentlicheUrl,
     string? DiEndpunkt,
     string? DiModell,
-    string? ImapServer,
-    string? ImapBenutzer,
     bool DiKonfiguriert,
-    bool ImapKonfiguriert,
     bool GoogleKonfiguriert);
 
 /// <summary>Document-Intelligence-Verbrauch des Monats (<c>yyyy-MM</c>).</summary>
 public sealed record DiVerbrauchDto(string Monat, int Seiten, int Limit, int Prozent, bool Pausiert, int Wartend);
+
+/// <summary>
+/// IMAP-Zugang des Mail-Imports. <see cref="AusUmgebung"/>: per <c>.env</c> gesetzt (<c>IMAP_HOST</c>) und hier nicht änderbar,
+/// sonst über <c>PUT einstellungen/mail/zugang</c> gepflegt. Das Passwort wird nie ausgeliefert.
+/// </summary>
+public sealed record MailZugangDto(
+    bool AusUmgebung,
+    string? Host,
+    int Port,
+    bool Ssl,
+    string? Benutzer,
+    bool PasswortGesetzt,
+    bool Konfiguriert);
+
+/// <summary>Neuer IMAP-Zugang; <see cref="Passwort"/> leer oder <c>null</c> behält das gespeicherte Passwort.</summary>
+public sealed record MailZugangSpeichernDto(string Host, int Port, bool Ssl, string Benutzer, string? Passwort);
 
 public sealed record MailStatusDto(bool Verbunden, DateTimeOffset? LetzterAbruf, string? Fehler);

@@ -10,11 +10,13 @@ import { KategorieAuswahl } from '@/components/auswahl/KategorieAuswahl'
 import { KorrespondentAuswahl } from '@/components/auswahl/KorrespondentAuswahl'
 import { TagAuswahl } from '@/components/auswahl/TagAuswahl'
 import { Chip, type ChipTon } from '@/components/Chip'
+import { Datumseingabe } from '@/components/Datumseingabe'
 import { Icon } from '@/components/Icon'
 import { KorrespondentLogo } from '@/components/KorrespondentLogo'
 import { useToast } from '@/components/toast'
 import {
   AlertDialog,
+  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -23,10 +25,29 @@ import {
 } from '@/components/ui/alert-dialog'
 import { formatDatumZeit, formatZahl } from '@/lib/format'
 import { ibanFormatieren } from '@/lib/iban'
-import { istZuPruefen, parseBetrag, parseSatz, seitenText, steuerStimmt } from './gemeinsam'
+import { cn } from '@/lib/utils'
+import { BetraegeBereich } from './BetraegeBereich'
+import { istZuPruefen, seitenText } from './gemeinsam'
 import { ausBeleg, gleich, MAX_TITEL, pruefen, serverFehler, zuDto, type FeldFehler, type Formular } from './formular'
+import { aenderungenAnmelden } from './offeneAenderungen'
 
 const belegarten: Belegart[] = ['Rechnung', 'Gutschrift', 'Quittung']
+
+/** Stand des Auto-Saves: Icon unten rechts in der Karte, Text beim Hovern. */
+type Status = 'bereit' | 'offen' | 'speichert' | 'gespeichert' | 'ungueltig' | 'fehlgeschlagen'
+
+const statusAnzeige: Record<Status, { icon: string; text: string; klasse?: string }> = {
+  bereit: { icon: 'cloud_done', text: 'Änderungen werden automatisch gespeichert' },
+  offen: { icon: 'cloud', text: 'Ungespeicherte Änderungen' },
+  speichert: { icon: 'progress_activity', text: 'Speichert …', klasse: '[&_.material-symbols-outlined]:animate-spin' },
+  gespeichert: {
+    icon: 'cloud_done',
+    text: 'Gespeichert',
+    klasse: 'text-gruen-text icon-gefuellt',
+  },
+  ungueltig: { icon: 'cloud_off', text: 'Nicht gespeichert – Eingaben prüfen', klasse: 'text-rot-text' },
+  fehlgeschlagen: { icon: 'cloud_off', text: 'Speichern fehlgeschlagen', klasse: 'text-rot-text' },
+}
 
 const erkennung: Record<KorrespondentErkennung, string | null> = {
   UstIdNr: 'erkannt über USt-IdNr.',
@@ -37,26 +58,61 @@ const erkennung: Record<KorrespondentErkennung, string | null> = {
   Keine: null,
 }
 
-/** Feld mit Label, Hinweis und Fehlermeldung (per `aria-describedby` am Eingabefeld). */
+/** Felder mit Anzeige des vorherigen Werts (die Beträge haben eigene Prüfhinweise). */
+type VorherFeld = Exclude<keyof Formular, 'netto' | 'steuer' | 'brutto' | 'steuerzeilen'>
+
+/** Wert eines Felds vor der ersten Änderung in dieser Ansicht – zum Anzeigen und Zurücksetzen. */
+type Vorher = { feld: VorherFeld; text: string; mono?: boolean }
+
+/** Rückfrage vor dem Zurücksetzen eines Felds. */
+type ZuruecksetzenFrage = Vorher & { label: string; fokusId: string }
+
+/**
+ * Feld mit Label, Hinweis und Fehlermeldung (per `aria-describedby` am Eingabefeld). Ist es geändert (`vorher`),
+ * sitzt rechts im Eingabefeld ein Knopf zum Zurücksetzen – bei `rechtsBelegt` (Kalender, Auswahlpfeil) links davon.
+ */
 function Feld({
   id,
   label,
   fehler,
   hinweis,
+  vorher,
+  rechtsBelegt = false,
+  onZuruecksetzen,
   children,
 }: {
   id: string
   label: string
   fehler?: string
   hinweis?: ReactNode
+  vorher?: Vorher
+  rechtsBelegt?: boolean
+  onZuruecksetzen?: (frage: ZuruecksetzenFrage) => void
   children: ReactNode
 }) {
+  const knopf = vorher && onZuruecksetzen
   return (
     <div>
       <label className="label" htmlFor={id}>
         {label}
       </label>
-      {children}
+      <div className={cn('relative', knopf && (rechtsBelegt ? '[&_.eingabe]:pr-16' : '[&_.eingabe]:pr-9'))}>
+        {children}
+        {knopf && (
+          <button
+            type="button"
+            aria-label={`${label} zurücksetzen`}
+            title={`Geändert – zurücksetzen auf ${vorher.text ? `„${vorher.text}“` : 'leer'}`}
+            className={cn(
+              'absolute top-1/2 grid size-7 -translate-y-1/2 cursor-pointer place-items-center rounded-md border-0 bg-transparent text-akzent-text hover:bg-hover focus-visible:outline-2 focus-visible:outline-akzent',
+              rechtsBelegt ? 'right-8' : 'right-1',
+            )}
+            onClick={() => onZuruecksetzen({ ...vorher, label, fokusId: id })}
+          >
+            <Icon name="history" className="text-[18px]" />
+          </button>
+        )}
+      </div>
       {fehler && (
         <span id={`${id}-fehler`} role="alert" className="hinweis text-rot-text">
           {fehler}
@@ -66,6 +122,10 @@ function Feld({
     </div>
   )
 }
+
+// Unsichtbar bis Hover/Fokus, aber per Tastatur erreichbar (sr-only statt hidden).
+const statusKnopf =
+  'sr-only cursor-pointer border-0 bg-transparent p-0 text-xs font-medium text-akzent-text group-hover:not-sr-only group-focus-within:not-sr-only'
 
 const auswahlKnopf =
   'eingabe flex cursor-pointer items-center gap-2 text-left disabled:cursor-default disabled:bg-flaeche disabled:text-gedaempft-stark'
@@ -96,12 +156,103 @@ export function DatenFormular({
   const basis = ausBeleg(beleg)
   const [entwurf, setEntwurf] = useState<Formular | null>(null)
   const [fehler, setFehler] = useState<FeldFehler>({})
+  const [status, setStatus] = useState<Status>('bereit')
+  // Stand vor dem letzten Speichern – „Rückgängig“ speichert ihn wieder.
+  const [rueckgaengig, setRueckgaengig] = useState<Formular | null>(null)
+  // Wert jedes Felds vor seiner ersten Änderung in dieser Ansicht; bleibt nach dem Auto-Save erhalten.
+  const [ursprung, setUrsprung] = useState<{ belegId: string; werte: Partial<Formular> }>({
+    belegId: beleg.id,
+    werte: {},
+  })
+  const ursprungWerte = ursprung.belegId === beleg.id ? ursprung.werte : {}
+  // Die Frage bleibt nach dem Schließen stehen: für die Schließ-Animation und den Fokus zurück ins Feld.
+  const [frage, setFrage] = useState<ZuruecksetzenFrage | null>(null)
+  const [frageOffen, setFrageOffen] = useState(false)
   const werte = entwurf ?? basis
-  const geaendert = entwurf !== null && !gleich(entwurf, basis)
 
+  // Speichern läuft asynchron nach Blur/Auswahl: Refs liefern den aktuellen Stand ohne auf ein Re-Render zu warten.
+  const entwurfRef = useRef<Formular | null>(null)
+  // Stand des Servers aus dem Cache – nach dem Speichern sofort aktuell, auch vor dem nächsten Render.
+  const basisAktuell = () => ausBeleg(queryClient.getQueryData<BelegDetail>(belegeKeys.detail(beleg.id)) ?? beleg)
+  // Felder (per `name`), die schon verlassen wurden: nur deren Prüffehler zeigt das Auto-Save an.
+  const beruehrt = useRef(new Set<string>())
+  // Speichervorgänge laufen nacheinander, damit keine ältere Antwort einen neueren Stand überschreibt.
+  const kette = useRef<Promise<unknown>>(Promise.resolve())
+
+  const offen = () => entwurfRef.current !== null && !gleich(entwurfRef.current, basisAktuell())
+
+  function entwurfSetzen(neu: Formular | null) {
+    entwurfRef.current = neu
+    setEntwurf(neu)
+  }
+
+  /** Speichert `stand` (den Entwurf beim Auslösen). Anzeige nur anpassen, solange er noch der aktuelle Entwurf ist. */
+  async function speichernJetzt(stand: Formular | null, alleFehler: boolean): Promise<boolean> {
+    const aktuell = entwurfRef.current === stand
+    if (!stand || gleich(stand, basisAktuell())) {
+      if (aktuell) {
+        if (stand) entwurfSetzen(null)
+        setFehler({})
+        setStatus((s) => (s === 'gespeichert' ? s : 'bereit'))
+      }
+      return true
+    }
+    const pruefung = pruefen(stand)
+    if (Object.keys(pruefung).length > 0) {
+      if (!aktuell) return false
+      const sichtbar = alleFehler
+        ? pruefung
+        : Object.fromEntries(Object.entries(pruefung).filter(([k]) => beruehrt.current.has(k)))
+      setFehler(sichtbar)
+      setStatus(Object.keys(sichtbar).length > 0 ? 'ungueltig' : 'offen')
+      return false
+    }
+    const vorher = basisAktuell()
+    setStatus('speichert')
+    try {
+      const neu = await aendern.mutateAsync({ id: beleg.id, ...zuDto(stand) })
+      queryClient.setQueryData(belegeKeys.detail(beleg.id), neu)
+      // Während des Speicherns weitergetippt? Dann bleibt der neuere Entwurf stehen und wird beim nächsten Blur gespeichert.
+      if (entwurfRef.current === stand) entwurfSetzen(null)
+      setFehler({})
+      beruehrt.current.clear()
+      setRueckgaengig(vorher)
+      setStatus(entwurfRef.current === null ? 'gespeichert' : 'offen')
+      return true
+    } catch (e) {
+      if (istApiFehler(e) && e.fehler) {
+        setFehler(serverFehler(e.fehler))
+        setStatus('ungueltig')
+      } else {
+        setStatus('fehlgeschlagen')
+        toast.fehler('Speichern fehlgeschlagen')
+      }
+      return false
+    }
+  }
+
+  /**
+   * Speichert den jetzigen Entwurf, falls er geändert und gültig ist – nach einem eventuell noch laufenden Speichern.
+   * `alleFehler` zeigt auch Fehler unberührter Felder.
+   */
+  function speichern(alleFehler = false): Promise<boolean> {
+    const stand = entwurfRef.current
+    const lauf = kette.current.then(() => speichernJetzt(stand, alleFehler))
+    kette.current = lauf.catch(() => undefined)
+    return lauf
+  }
+  const speichernRef = useRef(speichern)
+  useEffect(() => {
+    speichernRef.current = speichern
+  })
+
+  useEffect(() => aenderungenAnmelden(beleg.id, () => speichernRef.current(true)), [beleg.id])
+
+  // Beim Verlassen wird gespeichert; nachgefragt wird nur, wenn das nicht geht (ungültig oder Fehler).
   const blocker = useBlocker({
-    shouldBlockFn: ({ current, next }) => geaendert && current.pathname !== next.pathname,
-    enableBeforeUnload: () => geaendert,
+    shouldBlockFn: async ({ current, next }) =>
+      current.pathname !== next.pathname && !(await speichernRef.current(true)),
+    enableBeforeUnload: offen,
     withResolver: true,
   })
 
@@ -111,41 +262,33 @@ export function DatenFormular({
     onFokusErledigt?.()
   }, [fokus, onFokusErledigt])
 
-  function setze<K extends keyof Formular>(feld: K, wert: Formular[K]) {
-    setEntwurf({ ...werte, [feld]: wert })
-    if (fehler[feld]) setFehler({ ...fehler, [feld]: undefined })
+  /** Übernimmt eine Eingabe; `sofort` (Auswahlfelder, Zeile entfernen) speichert gleich, Textfelder beim Verlassen. */
+  function setze<K extends keyof Formular>(feld: K, wert: Formular[K], sofort = false) {
+    const vorher = entwurfRef.current ?? basisAktuell()
+    setUrsprung((u) => {
+      const bisher = u.belegId === beleg.id ? u.werte : {}
+      return feld in bisher ? u : { belegId: beleg.id, werte: { ...bisher, [feld]: vorher[feld] } }
+    })
+    entwurfSetzen({ ...vorher, [feld]: wert })
+    setFehler((f) => (f[feld] ? { ...f, [feld]: undefined } : f))
+    setStatus('offen')
+    if (sofort) void speichern()
   }
 
   function setzeZeile(index: number, feld: 'satz' | 'netto' | 'steuer', wert: string) {
+    const zeilen = (entwurfRef.current ?? basisAktuell()).steuerzeilen
     setze(
       'steuerzeilen',
-      werte.steuerzeilen.map((z, i) => (i === index ? { ...z, [feld]: wert } : z)),
+      zeilen.map((z, i) => (i === index ? { ...z, [feld]: wert } : z)),
     )
     const schluessel = `steuerzeilen.${index}.${feld}`
-    if (fehler[schluessel]) setFehler({ ...fehler, [schluessel]: undefined })
+    setFehler((f) => (f[schluessel] ? { ...f, [schluessel]: undefined } : f))
   }
 
-  function verwerfen() {
-    setEntwurf(null)
-    setFehler({})
-  }
-
-  async function speichern() {
-    const pruefung = pruefen(werte)
-    if (Object.keys(pruefung).length > 0) {
-      setFehler(pruefung)
-      return
-    }
-    try {
-      const neu = await aendern.mutateAsync({ id: beleg.id, ...zuDto(werte) })
-      queryClient.setQueryData(belegeKeys.detail(beleg.id), neu)
-      setEntwurf(null)
-      setFehler({})
-      toast.erfolg('Gespeichert')
-    } catch (e) {
-      if (istApiFehler(e) && e.fehler) setFehler(serverFehler(e.fehler))
-      else toast.fehler('Speichern fehlgeschlagen')
-    }
+  async function rueckgaengigMachen() {
+    if (!rueckgaengig) return
+    entwurfSetzen(rueckgaengig)
+    if (await speichern(true)) setRueckgaengig(null)
   }
 
   async function tagsAendern(ids: string[]) {
@@ -210,28 +353,42 @@ export function DatenFormular({
     extra = '',
   ) => ({
     id: `${id}-${feld}`,
+    name: feld,
     className: `eingabe ${extra}`,
     value: werte[feld],
     readOnly: nurLesen,
     'aria-invalid': fehler[feld] ? true : undefined,
     'aria-describedby': fehler[feld] ? `${id}-${feld}-fehler` : undefined,
-    onChange: (e: { target: { value: string } }) => setze(feld, e.target.value),
   })
 
-  const betragFeld = (feld: 'netto' | 'steuer' | 'brutto', label: string) => (
-    <Feld id={`${id}-${feld}`} label={label} fehler={fehler[feld]}>
-      <input
-        id={`${id}-${feld}`}
-        className={`eingabe num ${feld === 'brutto' ? 'font-semibold' : ''}`}
-        inputMode="decimal"
-        value={werte[feld]}
-        readOnly={nurLesen}
-        aria-invalid={fehler[feld] ? true : undefined}
-        aria-describedby={fehler[feld] ? `${id}-${feld}-fehler` : undefined}
-        onChange={(e) => setze(feld, e.target.value)}
-      />
-    </Feld>
-  )
+  /** Vorheriger Wert eines geänderten Felds samt Zurücksetzen; `undefined`, solange das Feld unverändert ist. */
+  function vorherVon<K extends VorherFeld>(
+    feld: K,
+    { anzeige, mono }: { anzeige?: (wert: Formular[K]) => string; mono?: boolean } = {},
+  ): Vorher | undefined {
+    if (nurLesen || !(feld in ursprungWerte)) return undefined
+    const alt = ursprungWerte[feld] as Formular[K]
+    if (alt === werte[feld]) return undefined
+    return { feld, text: anzeige ? anzeige(alt) : String(alt ?? ''), mono }
+  }
+  function frageStellen(neu: ZuruecksetzenFrage) {
+    setFrage(neu)
+    setFrageOffen(true)
+  }
+  function zuruecksetzen(feld: VorherFeld) {
+    if (!(feld in ursprungWerte)) return
+    setze(feld, ursprungWerte[feld] as Formular[typeof feld], true)
+  }
+  const korrespondentNameVon = (kid: string | null) =>
+    kid === null
+      ? ''
+      : (korrespondenten.find((k) => k.id === kid)?.name ??
+        (kid === beleg.korrespondent?.id ? beleg.korrespondent.name : 'Unbekannter Korrespondent'))
+  const kategorieNameVon = (kid: string | null) =>
+    kid === null
+      ? ''
+      : (kategorien.find((k) => k.id === kid)?.name ??
+        (kid === beleg.kategorie?.id ? beleg.kategorie.name : 'Unbekannte Kategorie'))
 
   const extraktion = beleg.extraktion
   const konfidenz = extraktion.konfidenz ?? null
@@ -242,7 +399,14 @@ export function DatenFormular({
       aria-label="Daten"
       onSubmit={(e) => {
         e.preventDefault()
-        if (geaendert) void speichern()
+        void speichern(true)
+      }}
+      onBlur={(e) => {
+        // Textfelder speichern beim Verlassen; Auswahlfelder speichern schon bei der Änderung (`setze(…, true)`).
+        const name = e.target instanceof HTMLInputElement ? e.target.name : ''
+        if (nurLesen || !name) return
+        beruehrt.current.add(name)
+        void speichern()
       }}
     >
       <Feld
@@ -250,8 +414,10 @@ export function DatenFormular({
         label="Titel"
         hinweis={nurLesen ? undefined : 'Wird in der Übersicht angezeigt. Leer = Rechnungsnummer bzw. Korrespondent.'}
         fehler={fehler.titel}
+        onZuruecksetzen={frageStellen}
+        vorher={vorherVon('titel')}
       >
-        <input {...eingabe('titel')} maxLength={MAX_TITEL} />
+        <input onChange={(e) => setze('titel', e.target.value)} {...eingabe('titel')} maxLength={MAX_TITEL} />
       </Feld>
       <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3.5">
         <Feld
@@ -259,10 +425,13 @@ export function DatenFormular({
           label="Korrespondent"
           hinweis={korrespondentHinweis}
           fehler={fehler.korrespondentId}
+          onZuruecksetzen={frageStellen}
+          rechtsBelegt
+          vorher={vorherVon('korrespondentId', { anzeige: korrespondentNameVon })}
         >
           <KorrespondentAuswahl
             wert={werte.korrespondentId}
-            onAendern={(k) => setze('korrespondentId', k)}
+            onAendern={(k) => setze('korrespondentId', k, true)}
             ausloeser={
               <button type="button" id={`${id}-korrespondent`} className={auswahlKnopf} disabled={nurLesen}>
                 {korrespondentLogo && <KorrespondentLogo logo={korrespondentLogo} groesse={22} ton="orange" />}
@@ -289,36 +458,93 @@ export function DatenFormular({
             </div>
           </Feld>
         )}
-        <Feld id={`${id}-belegart`} label="Belegart">
+        <Feld
+          id={`${id}-belegart`}
+          label="Belegart"
+          onZuruecksetzen={frageStellen}
+          rechtsBelegt
+          vorher={vorherVon('belegart')}
+        >
           <select
             id={`${id}-belegart`}
             ref={belegartRef}
             className="eingabe"
             value={werte.belegart}
             disabled={nurLesen}
-            onChange={(e) => setze('belegart', e.target.value as Belegart)}
+            onChange={(e) => setze('belegart', e.target.value as Belegart, true)}
           >
             {belegarten.map((art) => (
               <option key={art}>{art}</option>
             ))}
           </select>
         </Feld>
-        <Feld id={`${id}-rechnungsnummer`} label="Rechnungsnummer" fehler={fehler.rechnungsnummer}>
-          <input {...eingabe('rechnungsnummer', 'mono')} />
+        <Feld
+          id={`${id}-rechnungsnummer`}
+          label="Rechnungsnummer"
+          fehler={fehler.rechnungsnummer}
+          onZuruecksetzen={frageStellen}
+          vorher={vorherVon('rechnungsnummer', { mono: true })}
+        >
+          <input onChange={(e) => setze('rechnungsnummer', e.target.value)} {...eingabe('rechnungsnummer', 'mono')} />
         </Feld>
-        <Feld id={`${id}-rechnungsdatum`} label="Rechnungsdatum" fehler={fehler.rechnungsdatum}>
-          <input {...eingabe('rechnungsdatum')} placeholder="TT.MM.JJJJ" />
+        <Feld
+          id={`${id}-rechnungsdatum`}
+          label="Rechnungsdatum"
+          fehler={fehler.rechnungsdatum}
+          onZuruecksetzen={frageStellen}
+          rechtsBelegt
+          vorher={vorherVon('rechnungsdatum')}
+        >
+          <Datumseingabe
+            {...eingabe('rechnungsdatum')}
+            wert={werte.rechnungsdatum}
+            onAendern={(t) => setze('rechnungsdatum', t)}
+            onGewaehlt={() => void speichern()}
+          />
         </Feld>
-        <Feld id={`${id}-leistung`} label="Leistungsdatum / -zeitraum" fehler={fehler.leistung}>
-          <input {...eingabe('leistung')} placeholder="TT.MM.JJJJ oder von – bis" />
+        <Feld
+          id={`${id}-leistung`}
+          label="Leistungsdatum / -zeitraum"
+          fehler={fehler.leistung}
+          onZuruecksetzen={frageStellen}
+          rechtsBelegt
+          vorher={vorherVon('leistung')}
+        >
+          <Datumseingabe
+            {...eingabe('leistung')}
+            zeitraum
+            wert={werte.leistung}
+            onAendern={(t) => setze('leistung', t)}
+            onGewaehlt={() => void speichern()}
+          />
         </Feld>
-        <Feld id={`${id}-faelligkeitsdatum`} label="Fällig am" fehler={fehler.faelligkeitsdatum}>
-          <input {...eingabe('faelligkeitsdatum')} placeholder="TT.MM.JJJJ" />
+        <Feld
+          id={`${id}-faelligkeitsdatum`}
+          label="Fällig am"
+          fehler={fehler.faelligkeitsdatum}
+          onZuruecksetzen={frageStellen}
+          rechtsBelegt
+          vorher={vorherVon('faelligkeitsdatum')}
+        >
+          <Datumseingabe
+            {...eingabe('faelligkeitsdatum')}
+            wert={werte.faelligkeitsdatum}
+            onAendern={(t) => setze('faelligkeitsdatum', t)}
+            onGewaehlt={() => void speichern()}
+          />
         </Feld>
-        <Feld id={`${id}-kategorie`} label="Kategorie" hinweis={kategorieHinweis} fehler={fehler.kategorieId}>
+        <Feld
+          id={`${id}-kategorie`}
+          label="Kategorie"
+          hinweis={kategorieHinweis}
+          fehler={fehler.kategorieId}
+          onZuruecksetzen={frageStellen}
+          rechtsBelegt
+          vorher={vorherVon('kategorieId', { anzeige: kategorieNameVon })}
+        >
           <KategorieAuswahl
             wert={werte.kategorieId}
-            onAendern={(k) => setze('kategorieId', k)}
+            onAendern={(k) => setze('kategorieId', k, true)}
             leerText={defaultName ? `Leer lassen = Default: ${defaultName}` : undefined}
             ausloeser={
               <button type="button" id={`${id}-kategorie`} className={auswahlKnopf} disabled={nurLesen}>
@@ -328,13 +554,20 @@ export function DatenFormular({
             }
           />
         </Feld>
-        <Feld id={`${id}-waehrung`} label="Währung" fehler={fehler.waehrung}>
+        <Feld
+          id={`${id}-waehrung`}
+          label="Währung"
+          fehler={fehler.waehrung}
+          onZuruecksetzen={frageStellen}
+          rechtsBelegt
+          vorher={vorherVon('waehrung')}
+        >
           <select
             id={`${id}-waehrung`}
             className="eingabe"
             value={werte.waehrung}
             disabled={nurLesen}
-            onChange={(e) => setze('waehrung', e.target.value)}
+            onChange={(e) => setze('waehrung', e.target.value, true)}
           >
             {waehrungen.map((w) => (
               <option key={w}>{w}</option>
@@ -365,6 +598,7 @@ export function DatenFormular({
           )}
           {!nurLesen && (
             <TagAuswahl
+              neuAnlegenErlaubt
               gewaehlt={beleg.tags.map((t) => t.id)}
               onAendern={(ids) => void tagsAendern(ids)}
               ausloeser={
@@ -381,137 +615,14 @@ export function DatenFormular({
         </div>
       </div>
 
-      <div>
-        <h2 className="m-0 mb-2.5 text-[15px] font-semibold">Beträge</h2>
-        <div className="grid grid-cols-3 gap-3">
-          {betragFeld('netto', 'Netto')}
-          {betragFeld('steuer', 'USt')}
-          {betragFeld('brutto', 'Brutto')}
-        </div>
-        {/* `relative`: sonst entkommt der absolut positionierte sr-only-Text dem Clipping und verbreitert die Seite. */}
-        {/* Feste Spaltenanteile statt fester Feldbreiten: passt auch auf Laptop-Breiten ohne Querscrollen. */}
-        <div className="relative mt-3 overflow-x-auto">
-          <table
-            className="tabelle table-fixed text-[13px] [&_td]:px-1.5! [&_td:first-child]:pl-2.5! [&_th]:px-1.5! [&_th:first-child]:pl-2.5!"
-            aria-label="Steuerzeilen"
-          >
-            <colgroup>
-              <col className="w-[19%]" />
-              <col />
-              <col />
-              <col className="w-[72px]" />
-              {!nurLesen && <col className="w-10" />}
-            </colgroup>
-            <thead>
-              <tr>
-                <th scope="col">Steuersatz</th>
-                <th scope="col" className="num">
-                  Netto
-                </th>
-                <th scope="col" className="num">
-                  Steuer
-                </th>
-                <th scope="col" className="num">
-                  Prüfung
-                </th>
-                {!nurLesen && (
-                  <th scope="col">
-                    <span className="sr-only">Aktionen</span>
-                  </th>
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {werte.steuerzeilen.map((zeile, i) => {
-                const satz = parseSatz(zeile.satz)
-                const netto = parseBetrag(zeile.netto)
-                const steuer = parseBetrag(zeile.steuer)
-                const pruefbar = satz !== null && netto !== null && steuer !== null
-                const nr = i + 1
-                const zelle = (feld: 'satz' | 'netto' | 'steuer', label: string) => {
-                  const schluessel = `steuerzeilen.${i}.${feld}`
-                  return nurLesen ? (
-                    feld === 'satz' ? (
-                      `${zeile.satz} %`
-                    ) : (
-                      `${zeile[feld]} €`
-                    )
-                  ) : (
-                    <>
-                      <input
-                        className={`eingabe h-8 w-full min-w-0 ${feld === 'satz' ? '' : 'num'}`}
-                        aria-label={`${label} Steuerzeile ${nr}`}
-                        inputMode="decimal"
-                        value={zeile[feld]}
-                        aria-invalid={fehler[schluessel] ? true : undefined}
-                        onChange={(e) => setzeZeile(i, feld, e.target.value)}
-                      />
-                      {fehler[schluessel] && (
-                        <span role="alert" className="hinweis text-rot-text">
-                          {fehler[schluessel]}
-                        </span>
-                      )}
-                    </>
-                  )
-                }
-                return (
-                  <tr key={i}>
-                    <td>{zelle('satz', 'Steuersatz')}</td>
-                    <td className="num">{zelle('netto', 'Netto')}</td>
-                    <td className="num">{zelle('steuer', 'Steuer')}</td>
-                    <td className="num">
-                      {!pruefbar ? (
-                        <span className="gedaempft">—</span>
-                      ) : steuerStimmt(satz, netto, steuer) ? (
-                        <Icon
-                          name="check_circle"
-                          label="stimmt"
-                          className="align-middle text-[20px] text-gruen-text [font-variation-settings:'FILL'_1]"
-                        />
-                      ) : (
-                        <Chip ton="orange">weicht ab</Chip>
-                      )}
-                    </td>
-                    {!nurLesen && (
-                      <td className="w-10">
-                        <button
-                          type="button"
-                          className="inline-flex size-8 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent text-gedaempft-stark hover:bg-hover"
-                          aria-label={`Steuerzeile ${nr} entfernen`}
-                          onClick={() =>
-                            setze(
-                              'steuerzeilen',
-                              werte.steuerzeilen.filter((_, j) => j !== i),
-                            )
-                          }
-                        >
-                          <Icon name="delete" />
-                        </button>
-                      </td>
-                    )}
-                  </tr>
-                )
-              })}
-              {werte.steuerzeilen.length === 0 && (
-                <tr>
-                  <td colSpan={nurLesen ? 4 : 5} className="gedaempft">
-                    Keine Steuerzeilen
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-        {!nurLesen && (
-          <button
-            type="button"
-            className="mt-2 cursor-pointer border-0 bg-transparent p-0 text-[13px] font-medium text-akzent-text"
-            onClick={() => setze('steuerzeilen', [...werte.steuerzeilen, { satz: '19', netto: '', steuer: '' }])}
-          >
-            + Steuerzeile
-          </button>
-        )}
-      </div>
+      <BetraegeBereich
+        werte={werte}
+        fehler={fehler}
+        nurLesen={nurLesen}
+        onZeile={setzeZeile}
+        onZeilen={(zeilen, sofort) => setze('steuerzeilen', zeilen, sofort)}
+        onKopf={(feld, wert) => setze(feld, wert, true)}
+      />
 
       <div className="flex flex-wrap items-center gap-3 rounded-[10px] bg-flaeche px-3.5 py-3 text-[13px] text-gedaempft-stark">
         <Icon name={extraktion.quelle === 'Manuell' ? 'edit_note' : 'document_scanner'} />
@@ -552,26 +663,54 @@ export function DatenFormular({
       </div>
 
       {!nurLesen && (
-        <div className="flex justify-end gap-2">
-          <button type="button" className="btn" onClick={verwerfen} disabled={!geaendert}>
-            Verwerfen
-          </button>
-          <button
-            type="submit"
-            className="btn btn-primaer"
-            disabled={!geaendert || aendern.isPending}
-            aria-busy={aendern.isPending}
-          >
-            Änderungen speichern
-          </button>
+        // Absolut zur Karte (BelegDetailSeite), nicht zum Scrollbereich: bleibt beim Scrollen in der Ecke.
+        <div className="group absolute right-4 bottom-1.5 z-10 flex items-center gap-2 rounded-md py-0.5 pr-0.5 pl-2 text-xs whitespace-nowrap text-gedaempft-stark hover:bg-karte hover:shadow-sm focus-within:bg-karte focus-within:shadow-sm">
+          {status === 'gespeichert' && rueckgaengig && (
+            <button type="button" className={statusKnopf} onClick={() => void rueckgaengigMachen()}>
+              Rückgängig
+            </button>
+          )}
+          {status === 'fehlgeschlagen' && (
+            <button type="button" className={statusKnopf} onClick={() => void speichern(true)}>
+              Erneut versuchen
+            </button>
+          )}
+          <span role="status" className={`flex items-center gap-1.5 ${statusAnzeige[status].klasse ?? ''}`}>
+            <span className="sr-only group-hover:not-sr-only group-focus-within:not-sr-only">
+              {statusAnzeige[status].text}
+            </span>
+            <Icon name={statusAnzeige[status].icon} className="text-[17px]" />
+          </span>
         </div>
       )}
 
+      <AlertDialog open={frageOffen} onOpenChange={setFrageOffen}>
+        <AlertDialogContent
+          onCloseAutoFocus={(e) => {
+            // Der Knopf im Feld ist dann meist weg – Fokus ins Feld statt auf die Seite.
+            e.preventDefault()
+            if (frage) document.getElementById(frage.fokusId)?.focus()
+          }}
+        >
+          <AlertDialogTitle>Wert zurücksetzen</AlertDialogTitle>
+          <AlertDialogDescription>
+            Wollen Sie {frage?.label} wirklich auf{' '}
+            {frage?.text ? <strong className={cn('text-text', frage.mono && 'mono')}>„{frage.text}“</strong> : 'leer'}{' '}
+            zurücksetzen?
+          </AlertDialogDescription>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={() => frage && zuruecksetzen(frage.feld)}>Zurücksetzen</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <AlertDialog open={blocker.status === 'blocked'} onOpenChange={(offen) => !offen && blocker.reset?.()}>
         <AlertDialogContent>
-          <AlertDialogTitle>Ungespeicherte Änderungen verwerfen?</AlertDialogTitle>
+          <AlertDialogTitle>Änderungen nicht gespeichert</AlertDialogTitle>
           <AlertDialogDescription>
-            Die Änderungen an Beleg {beleg.rechnungsnummer ?? beleg.titel} sind noch nicht gespeichert.
+            Die Änderungen an Beleg {beleg.rechnungsnummer ?? beleg.titel} konnten nicht gespeichert werden
+            {status === 'fehlgeschlagen' ? '.' : ' – einige Eingaben sind ungültig.'} Beim Verlassen gehen sie verloren.
           </AlertDialogDescription>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => blocker.reset?.()}>Weiter bearbeiten</AlertDialogCancel>

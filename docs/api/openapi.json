@@ -2262,6 +2262,158 @@
         }
       }
     },
+    "/api/belege/{id}/loeschen": {
+      "post": {
+        "tags": [
+          "Belege"
+        ],
+        "summary": "Falsch zugeordneten Beleg trotz Löschsperre löschen (wird nur ausgeblendet)",
+        "operationId": "postBelegeLoeschen",
+        "x-richtlinie": "Admin",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BelegLoeschenDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Erledigt"
+          },
+          "400": {
+            "$ref": "#/components/responses/Ungueltig"
+          },
+          "401": {
+            "$ref": "#/components/responses/NichtAngemeldet"
+          },
+          "403": {
+            "$ref": "#/components/responses/KeinRecht"
+          },
+          "404": {
+            "$ref": "#/components/responses/NichtGefunden"
+          },
+          "409": {
+            "description": "Der Beleg wird gerade verarbeitet",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object",
+                  "description": "ProblemDetails nach RFC 9457",
+                  "properties": {
+                    "type": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/belege/geloeschte": {
+      "get": {
+        "tags": [
+          "Belege"
+        ],
+        "summary": "Gelöschte (falsch zugeordnete) Belege",
+        "operationId": "getBelegeGeloeschte",
+        "x-richtlinie": "Admin",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GeloeschterBelegDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/NichtAngemeldet"
+          },
+          "403": {
+            "$ref": "#/components/responses/KeinRecht"
+          }
+        }
+      }
+    },
+    "/api/belege/{id}/wiederherstellen": {
+      "post": {
+        "tags": [
+          "Belege"
+        ],
+        "summary": "Gelöschten Beleg wiederherstellen",
+        "operationId": "postBelegeWiederherstellen",
+        "x-richtlinie": "Admin",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Erledigt"
+          },
+          "400": {
+            "$ref": "#/components/responses/Ungueltig"
+          },
+          "401": {
+            "$ref": "#/components/responses/NichtAngemeldet"
+          },
+          "403": {
+            "$ref": "#/components/responses/KeinRecht"
+          },
+          "404": {
+            "$ref": "#/components/responses/NichtGefunden"
+          }
+        }
+      }
+    },
     "/api/import/upload": {
       "post": {
         "tags": [
@@ -4473,6 +4625,75 @@
         }
       }
     },
+    "/api/einstellungen/mail/zugang": {
+      "put": {
+        "tags": [
+          "Einstellungen"
+        ],
+        "summary": "IMAP-Zugang speichern (nur ohne IMAP_HOST in der .env)",
+        "operationId": "putEinstellungenMailZugang",
+        "x-richtlinie": "Admin",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MailZugangSpeichernDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Erledigt"
+          },
+          "400": {
+            "$ref": "#/components/responses/Ungueltig"
+          },
+          "401": {
+            "$ref": "#/components/responses/NichtAngemeldet"
+          },
+          "403": {
+            "$ref": "#/components/responses/KeinRecht"
+          },
+          "409": {
+            "description": "Der IMAP-Zugang ist per .env gesetzt",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object",
+                  "description": "ProblemDetails nach RFC 9457",
+                  "properties": {
+                    "type": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/benachrichtigungen": {
       "get": {
         "tags": [
@@ -6346,6 +6567,27 @@
           "istDublette"
         ]
       },
+      "BelegLoeschenDto": {
+        "type": "object",
+        "properties": {
+          "grund": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LoeschGrund"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "bemerkung": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
       "BelegNachbarnDto": {
         "type": "object",
         "properties": {
@@ -6905,6 +7147,9 @@
           "zugriff": {
             "$ref": "#/components/schemas/ZugriffEinstellungen"
           },
+          "mailZugang": {
+            "$ref": "#/components/schemas/MailZugangDto"
+          },
           "umgebung": {
             "$ref": "#/components/schemas/UmgebungDto"
           }
@@ -6918,6 +7163,7 @@
           "ordner",
           "aufbewahrung",
           "zugriff",
+          "mailZugang",
           "umgebung"
         ]
       },
@@ -7172,6 +7418,82 @@
           "ZUGFeRD",
           "DocumentIntelligence",
           "Manuell"
+        ]
+      },
+      "GeloeschterBelegDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "titel": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rechnungsnummer": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rechnungsdatum": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "korrespondent": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "brutto": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "decimal"
+          },
+          "waehrung": {
+            "type": "string"
+          },
+          "grund": {
+            "$ref": "#/components/schemas/LoeschGrund"
+          },
+          "bemerkung": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "geloeschtAm": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "geloeschtVon": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "originalId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "id",
+          "waehrung",
+          "grund",
+          "geloeschtAm"
         ]
       },
       "GespeicherteAnsichtAnlegenDto": {
@@ -8049,6 +8371,12 @@
           "pfade"
         ]
       },
+      "LoeschGrund": {
+        "type": "string",
+        "enum": [
+          "FalschZugeordnet"
+        ]
+      },
       "LoeschbarDto": {
         "type": "object",
         "properties": {
@@ -8204,6 +8532,76 @@
         },
         "required": [
           "verbunden"
+        ]
+      },
+      "MailZugangDto": {
+        "type": "object",
+        "properties": {
+          "ausUmgebung": {
+            "type": "boolean"
+          },
+          "host": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "port": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "ssl": {
+            "type": "boolean"
+          },
+          "benutzer": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "passwortGesetzt": {
+            "type": "boolean"
+          },
+          "konfiguriert": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ausUmgebung",
+          "port",
+          "ssl",
+          "passwortGesetzt",
+          "konfiguriert"
+        ]
+      },
+      "MailZugangSpeichernDto": {
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string"
+          },
+          "port": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "ssl": {
+            "type": "boolean"
+          },
+          "benutzer": {
+            "type": "string"
+          },
+          "passwort": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "host",
+          "port",
+          "ssl",
+          "benutzer"
         ]
       },
       "MassenaktionArt": {
@@ -9449,22 +9847,7 @@
               "null"
             ]
           },
-          "imapServer": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "imapBenutzer": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
           "diKonfiguriert": {
-            "type": "boolean"
-          },
-          "imapKonfiguriert": {
             "type": "boolean"
           },
           "googleKonfiguriert": {
@@ -9475,7 +9858,6 @@
           "ablagePfad",
           "eingangPfad",
           "diKonfiguriert",
-          "imapKonfiguriert",
           "googleKonfiguriert"
         ]
       },

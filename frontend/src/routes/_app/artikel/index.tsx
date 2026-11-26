@@ -5,6 +5,7 @@ import { useKorrespondenten } from '@/api/korrespondenten'
 import type { ArtikelListeneintrag } from '@/api/typen'
 import { Icon } from '@/components/Icon'
 import { useRolle } from '@/components/shell/useRolle'
+import { LadeBereich, Skelett, SkelettTabelle } from '@/components/ui/skelett'
 import { ArtikelFilter } from '@/features/artikel/ArtikelFilter'
 import { ArtikelTabelle } from '@/features/artikel/ArtikelTabelle'
 import { StammartikelDialog } from '@/features/artikel/StammartikelDialog'
@@ -88,23 +89,33 @@ function ArtikelSeite() {
         )}
       </div>
 
-      <ArtikelFilter suche={suche} setze={setze} reiter={reiter} />
+      <ArtikelFilter
+        suche={suche}
+        setze={setze}
+        reiter={reiter}
+        ladend={reiter === 'artikel' ? liste.isFetching : stammartikel.isFetching}
+      />
 
       {reiter === 'artikel' ? (
         <>
           {liste.isPending ? (
-            <Laden />
+            <SkelettTabelle zeilen={8} spalten={darfBearbeiten ? 9 : 8} label="Artikel werden geladen" />
           ) : liste.isError && !liste.data ? (
             <p className="karte m-0 p-6 text-center">Die Artikel konnten nicht geladen werden.</p>
           ) : liste.data.eintraege.length === 0 ? (
             <p className="karte m-0 p-6 text-center">Keine Artikel für diese Filter</p>
           ) : (
             <>
-              <ArtikelTabelle
-                eintraege={liste.data.eintraege}
-                gewaehlt={darfBearbeiten ? gewaehlt.map((a) => a.id) : undefined}
-                onUmschalten={darfBearbeiten ? umschalten : undefined}
-              />
+              <div
+                className={cn(liste.isPlaceholderData && 'veraltet')}
+                aria-busy={(liste.isPlaceholderData && liste.isFetching) || undefined}
+              >
+                <ArtikelTabelle
+                  eintraege={liste.data.eintraege}
+                  gewaehlt={darfBearbeiten ? gewaehlt.map((a) => a.id) : undefined}
+                  onUmschalten={darfBearbeiten ? umschalten : undefined}
+                />
+              </div>
               <Blaettern
                 seite={liste.data.seite}
                 seiten={Math.max(1, Math.ceil(liste.data.gesamt / liste.data.seitengroesse))}
@@ -115,7 +126,7 @@ function ArtikelSeite() {
           )}
         </>
       ) : stammartikel.isPending ? (
-        <Laden />
+        <StammartikelSkelett />
       ) : (stammartikel.data?.length ?? 0) > 0 && stammartikelTreffer.length === 0 ? (
         <p className="karte m-0 p-6 text-center">Keine Stammartikel für diese Filter</p>
       ) : (
@@ -170,12 +181,22 @@ function Blaettern({
   )
 }
 
-function Laden() {
+/** Kartenraster wie in `StammartikelKarten`. */
+function StammartikelSkelett() {
   return (
-    <div className="karte flex flex-col gap-3 p-4" role="status" aria-label="Wird geladen">
+    <LadeBereich
+      als="div"
+      label="Stammartikel werden geladen"
+      className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-3.5 p-0"
+    >
       {Array.from({ length: 6 }, (_, i) => (
-        <div key={i} className="h-6 animate-pulse rounded bg-segment" />
+        <div key={i} className="karte flex flex-col gap-2.5 p-4">
+          <Skelett hoehe={14} breite={`${60 + ((i * 11) % 30)}%`} />
+          <Skelett hoehe={10} breite="40%" />
+          <Skelett hoehe={32} className="w-full rounded" />
+          <Skelett hoehe={12} breite="55%" />
+        </div>
       ))}
-    </div>
+    </LadeBereich>
   )
 }

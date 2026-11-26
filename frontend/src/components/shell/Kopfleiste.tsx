@@ -3,6 +3,7 @@ import { Icon } from '@/components/Icon'
 import { useBefehlspalette } from './befehlspalette-store'
 import { Benutzermenue } from './Benutzermenue'
 import { Glocke } from './Glocke'
+import { Ladebalken } from './Ladebalken'
 import { useRolle } from './useRolle'
 
 /** Kopfleiste ab 1024 px (Topbar.dc.html): Suche (öffnet die Befehlspalette), Hochladen, Glocke, Benutzermenü. */
@@ -35,6 +36,7 @@ export function Kopfleiste() {
       )}
       <Glocke />
       <Benutzermenue />
+      <Ladebalken />
     </header>
   )
 }

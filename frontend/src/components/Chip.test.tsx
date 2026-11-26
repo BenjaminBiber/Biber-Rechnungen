@@ -20,7 +20,7 @@ describe('Chip', () => {
     )
     const chip = screen.getByText('zu prüfen')
     const icon = chip.querySelector('.material-symbols-outlined')
-    expect(icon).toHaveTextContent('error')
+    expect(icon).toHaveAttribute('data-icon', 'error')
     expect(icon).toHaveAttribute('aria-hidden', 'true')
   })
 

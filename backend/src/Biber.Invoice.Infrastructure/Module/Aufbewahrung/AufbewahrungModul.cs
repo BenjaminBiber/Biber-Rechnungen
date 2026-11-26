@@ -13,5 +13,6 @@ public sealed class AufbewahrungModul : IDienstModul
         dienste.AddScoped<IAufbewahrungsFreigabe, AufbewahrungsFreigabe>();
         dienste.AddScoped<IInterceptor, AufbewahrungsSchutz>();
         dienste.AddScoped<AufbewahrungsDienst>();
+        dienste.AddScoped<GeloeschteBelegeDienst>();
     }
 }

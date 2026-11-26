@@ -3,6 +3,7 @@ import { Icon } from '@/components/Icon'
 import { Seitenkopf } from '@/components/Seitenkopf'
 import { useRolle } from '@/components/shell/useRolle'
 import { Button } from '@/components/ui/button'
+import { SkelettTabelle } from '@/components/ui/skelett'
 import { BearbeitenDialog } from './BearbeitenDialog'
 import type { Reiter } from './gemeinsam'
 import { KategorieTabelle } from './KategorieTabelle'
@@ -76,7 +77,12 @@ export function TagsSeite({
       {/* relative: Die absolut positionierten sr-only-Spaltenköpfe bleiben im Scrollbereich und verbreitern die Seite nicht. */}
       <div className="karte relative overflow-x-auto p-0">
         {!geladen ? (
-          <p className="gedaempft m-0 p-6 text-sm">Lädt …</p>
+          <SkelettTabelle
+            zeilen={6}
+            spalten={(istTags ? 4 : 5) + (oeffnen ? 1 : 0)}
+            mitKarte={false}
+            label={istTags ? 'Tags werden geladen' : 'Kategorien werden geladen'}
+          />
         ) : istTags ? (
           <TagTabelle tags={alleTags} gewaehlt={bearbeiten} onBearbeiten={oeffnen} />
         ) : (

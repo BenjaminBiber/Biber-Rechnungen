@@ -4,6 +4,7 @@ import { useBeleg } from '@/api/belege'
 import { istApiFehler } from '@/api/client'
 import type { BelegeAbfrage } from '@/api/typen'
 import { useRolle } from '@/components/shell/useRolle'
+import { LadeBereich, Skelett, SkelettFormular } from '@/components/ui/skelett'
 import { Kopf } from './Kopf'
 import { TabLeiste } from './TabLeiste'
 import { Viewer } from './Viewer'
@@ -47,7 +48,7 @@ export function BelegDetailSeite({
   const [originalOffen, setOriginalOffen] = useState(true)
   const [hoeheMessen, hoehe] = useFensterhoehe()
 
-  if (isPending) return <main className="seite gedaempft">Beleg wird geladen …</main>
+  if (isPending) return <BelegDetailSkelett />
   if (!beleg) {
     const nichtGefunden = istApiFehler(error) && error.status === 404
     return (
@@ -71,11 +72,41 @@ export function BelegDetailSeite({
         darfBearbeiten={darfBearbeiten}
         onOriginalZeigen={originalOffen ? undefined : () => setOriginalOffen(true)}
       />
-      <section className="karte flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+      {/* `relative`: Der Auto-Save-Status im Tab „Daten“ sitzt fest in der unteren rechten Ecke der Karte. */}
+      <section className="karte relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <TabLeiste beleg={beleg} />
         <div className="flex min-h-0 flex-1 flex-col gap-[18px] overflow-y-auto p-5">{children}</div>
       </section>
       <Viewer key={beleg.id} beleg={beleg} offen={originalOffen} onSchliessen={() => setOriginalOffen(false)} />
     </main>
+  )
+}
+
+/** Platzhalter in der Form des Details: Kopf mit Logo und Aktionen, Tab-Leiste, Formularfelder. */
+function BelegDetailSkelett() {
+  return (
+    <LadeBereich als="main" label="Beleg wird geladen" className="seite flex flex-col gap-3 pt-4! pb-4!">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <div className="flex min-w-0 flex-[1_1_320px] items-center gap-3">
+          <Skelett breite={36} hoehe={36} className="rounded-[var(--radius-button)]" />
+          <Skelett rund breite={36} hoehe={36} />
+          <Skelett hoehe={22} breite={260} className="max-w-[50vw]" />
+        </div>
+        <div className="ml-auto flex gap-2">
+          <Skelett hoehe={36} breite={96} className="rounded-[var(--radius-button)]" />
+          <Skelett hoehe={36} breite={120} className="rounded-[var(--radius-button)]" />
+        </div>
+      </div>
+      <section className="karte flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <div className="flex h-11 items-center gap-6 border-b border-rand px-5">
+          {[64, 84, 72, 92, 70].map((b, i) => (
+            <Skelett key={i} hoehe={12} breite={b} />
+          ))}
+        </div>
+        <div className="p-5">
+          <SkelettFormular felder={10} label={null} />
+        </div>
+      </section>
+    </LadeBereich>
   )
 }

@@ -18,3 +18,27 @@
   stroke-width: 1.6;
   stroke-linecap: round;
 }
+
+/*
+ * Icons der Komponente `Icon`: ein Quadrat von 1em, damit sie sich wie das frühere Schriftzeichen verhalten –
+ * `text-[18px]` setzt die Größe, die Textfarbe die Farbe. Die Klasse `material-symbols-outlined` bleibt am Element,
+ * damit alle bestehenden Größen- und Abstandsregeln weiter greifen.
+ */
+.symbol {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  flex: none;
+}
+.symbol svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+/* Gefüllte Variante (früher FILL 1 der Schrift): der Körper des Icons bekommt eine leichte Fläche. */
+.icon-gefuellt .symbol .koerper,
+.symbol.icon-gefuellt .koerper {
+  fill: currentColor;
+  fill-opacity: 0.16;
+}

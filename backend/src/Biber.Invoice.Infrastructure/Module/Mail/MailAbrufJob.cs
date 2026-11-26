@@ -46,7 +46,7 @@ public sealed class MailAbrufJob(
 
     private async Task<bool> FaelligAsync(CancellationToken ct)
     {
-        if (!abruf.Konfiguriert)
+        if (!await abruf.KonfiguriertAsync(ct))
         {
             return false;
         }

@@ -75,15 +75,46 @@ public sealed class MigrationTests(ApiFabrik fabrik)
         var gekauft = Artikel(korrespondent.Id, "toner", gemischt.Id);
         var verwaist = Artikel(korrespondent.Id, "papier", leer.Id);
         var verwaistImGemischten = Artikel(korrespondent.Id, "toner alt", gemischt.Id);
-        var beleg = Testdaten.Beleg(korrespondentId: korrespondent.Id);
-        beleg.Positionen = [new Position { Id = Guid.NewGuid(), Nr = 1, Text = "Toner", ArtikelId = gekauft.Id }];
-        db.AddRange(korrespondent, leer, gemischt, gekauft, verwaist, verwaistImGemischten, beleg);
+        db.AddRange(korrespondent, leer, gemischt, gekauft, verwaist, verwaistImGemischten);
         await db.SaveChangesAsync();
+        var beleg = await BelegEinfuegenAsync(db, korrespondentId: korrespondent.Id);
+        await db.Database.ExecuteSqlAsync(
+            $"INSERT INTO position (id, beleg_id, nr, text, artikel_id) VALUES ({Guid.NewGuid()}, {beleg}, 1, 'Toner', {gekauft.Id})");
 
         await migrator.MigrateAsync();
 
         (await db.Artikel.AsNoTracking().Select(a => a.Id).ToListAsync()).ShouldBe([gekauft.Id]);
         (await db.Stammartikel.AsNoTracking().Select(s => s.Id).ToListAsync()).ShouldBe([gemischt.Id]);
+    }
+
+    [Fact]
+    public async Task SteuerzeilenAbleiten_ergaenzt_nur_eindeutige_Belege_ohne_Steuerzeile()
+    {
+        await using var datenbank = await FrischeDatenbank.AnlegenAsync(fabrik);
+        await using var db = datenbank.Kontext();
+        var migrator = db.GetInfrastructure().GetRequiredService<IMigrator>();
+        await migrator.MigrateAsync("VerwaisteArtikelEntfernen");
+        Task<Guid> Mit(decimal? netto, decimal? steuer, decimal? brutto) => BelegEinfuegenAsync(db, netto, steuer, brutto);
+
+        var neunzehn = await Mit(221.85m, 42.15m, 264.00m);
+        var sieben = await Mit(100.00m, 7.00m, 107.00m);
+        var ohneSteuer = await Mit(50.00m, 0m, 50.00m);
+        await Mit(221.85m, 42.15m, 260.00m); // Summe falsch
+        await Mit(100.00m, 12.00m, 112.00m); // kein üblicher Satz
+        await Mit(null, null, 119.00m); // nur Brutto
+        var schonAufgeteilt = await Mit(100.00m, 19.00m, 119.00m);
+        await db.Database.ExecuteSqlAsync(
+            $"INSERT INTO steuerzeile (id, beleg_id, satz, netto, steuer) VALUES ({Guid.NewGuid()}, {schonAufgeteilt}, 19, 100.00, 19.00)");
+
+        await migrator.MigrateAsync();
+
+        var zeilen = await db.Set<Steuerzeile>().AsNoTracking().ToListAsync();
+        zeilen.Count.ShouldBe(4);
+        zeilen.Single(z => z.BelegId == neunzehn).ShouldSatisfyAllConditions(
+            z => z.Satz.ShouldBe(19m), z => z.Netto.ShouldBe(221.85m), z => z.Steuer.ShouldBe(42.15m));
+        zeilen.Single(z => z.BelegId == sieben).Satz.ShouldBe(7m);
+        zeilen.Single(z => z.BelegId == ohneSteuer).Satz.ShouldBe(0m);
+        zeilen.Single(z => z.BelegId == schonAufgeteilt).Satz.ShouldBe(19m);
     }
 
     [Fact]
@@ -105,6 +136,24 @@ public sealed class MigrationTests(ApiFabrik fabrik)
             "SELECT count(*)::int AS \"Value\" FROM pg_extension WHERE extname = 'pg_trgm'").SingleAsync()).ShouldBe(1);
         (await db.Database.SqlQueryRaw<int>(
             "SELECT count(*)::int AS \"Value\" FROM pg_trigger WHERE tgname = 'audit_eintrag_unveraenderlich'").SingleAsync()).ShouldBe(1);
+    }
+
+    /// <summary>
+    /// Legt einen Beleg per SQL an. Ein Zwischenstand der Migrationen kennt nicht alle Spalten des aktuellen Modells
+    /// (z. B. <c>geloescht_am</c>), deshalb nicht über den DbContext speichern.
+    /// </summary>
+    private static async Task<Guid> BelegEinfuegenAsync(
+        BiberDbContext db, decimal? netto = null, decimal? steuer = null, decimal? brutto = null, Guid? korrespondentId = null)
+    {
+        var id = Guid.NewGuid();
+        await db.Database.ExecuteSqlAsync(
+            $"""
+            INSERT INTO beleg (id, richtung, belegart, status, quelle, korrespondent_erkennung, kategorie_manuell,
+                extraktions_quelle, seitenanzahl, erstellt_am, korrespondent_id, netto, steuer, brutto)
+            VALUES ({id}, 'Eingang', 'Rechnung', 'Fertig', 'Upload', 'Keine', false, 'Manuell', 1, now(),
+                {korrespondentId}, {netto}, {steuer}, {brutto})
+            """);
+        return id;
     }
 
     private static Artikel Artikel(Guid korrespondentId, string name, Guid? stammartikelId) => new()

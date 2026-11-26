@@ -2,6 +2,7 @@ import { useEffect, useId, useState } from 'react'
 import { useMatchingAnwenden, useMatchingTesten } from '@/api/tags'
 import type { Matching } from '@/api/typen'
 import { Chip } from '@/components/Chip'
+import { LadeBereich, Skelett } from '@/components/ui/skelett'
 import { Dialog, DialogContent, DialogFooter, DialogTitle } from '@/components/ui/dialog'
 import { matchingKurztext, ohneMuster } from '@/lib/matching'
 
@@ -47,6 +48,7 @@ export function MatchingTestDialog({
   const testen = useMatchingTesten()
   const anwenden = useMatchingAnwenden()
   const [auchBestehende, setAuchBestehende] = useState(false)
+  const [speichert, setSpeichert] = useState(false)
   const { mutate } = testen
 
   useEffect(() => {
@@ -57,9 +59,14 @@ export function MatchingTestDialog({
   const ohne = ergebnis?.ohneZuweisung ?? 0
 
   async function speichern() {
-    await onSpeichern?.()
-    if (auchBestehende && zielId && ohne > 0) await anwenden.mutateAsync({ ziel, zielId })
-    onOffenAendern(false)
+    setSpeichert(true)
+    try {
+      await onSpeichern?.()
+      if (auchBestehende && zielId && ohne > 0) await anwenden.mutateAsync({ ziel, zielId })
+      onOffenAendern(false)
+    } finally {
+      setSpeichert(false)
+    }
   }
 
   return (
@@ -93,8 +100,13 @@ export function MatchingTestDialog({
               </div>
             )}
           </>
+        ) : testen.isError ? (
+          <p className="gedaempft">Test fehlgeschlagen.</p>
         ) : (
-          <p className="gedaempft">{testen.isError ? 'Test fehlgeschlagen.' : 'Wird getestet …'}</p>
+          <LadeBereich label="Regel wird getestet" className="flex flex-col gap-3">
+            <Skelett hoehe={48} className="w-full rounded-md" />
+            <Skelett hoehe={14} breite="55%" />
+          </LadeBereich>
         )}
         <DialogFooter>
           <button type="button" className="btn" onClick={() => onOffenAendern(false)}>
@@ -104,8 +116,8 @@ export function MatchingTestDialog({
             <button
               type="button"
               className="btn btn-primaer"
-              disabled={anwenden.isPending}
-              aria-busy={anwenden.isPending}
+              disabled={speichert || anwenden.isPending}
+              aria-busy={speichert || anwenden.isPending || undefined}
               onClick={() => void speichern()}
             >
               Regel speichern

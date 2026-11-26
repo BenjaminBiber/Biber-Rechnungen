@@ -183,6 +183,7 @@ Die Finanzverwaltung erhält Zugriff über einen Nur-Lesen-Benutzer (Z1) oder ü
 
 - Aufbewahrungsfrist für Buchungsbelege: 8 Jahre ab Ende des Kalenderjahres (§ 147 AO in der Fassung ab 2025). Das System sperrt Belege bis Fristende gegen Löschung; die Frist ist auf der Einstellungsseite hinterlegt.
 - Nach Fristende erscheint der Beleg in der Liste „Löschung möglich“. Gelöscht wird nur nach Freigabe durch den Admin; die Anwendung entfernt die Daten aus der Datenbank und protokolliert die Löschung. Die Datei auf der WORM-Ablage löscht der Admin anschließend auf dem Host.
+- **Falsch zugeordnete Belege:** Gehört ein Beleg nicht in dieses Archiv (z. B. versehentlich hochgeladen oder die Rechnung eines anderen Unternehmens), kann ihn ausschließlich der Admin vor Fristende löschen – nur mit dem Grund „falsch zugeordnet“ und optionaler Bemerkung. Dabei wird nichts vernichtet: Der Beleg wird ausgeblendet (Belege, Auswertungen, Exporte), seine Originaldatei mit unverändertem Inhalt und Hash in der Ablage nach `_Geloescht/` verschoben. Unter Einstellungen → Gelöschte Belege ist er einsehbar und wiederherstellbar. Löschung und Wiederherstellung stehen mit Benutzer, Zeitpunkt und Bemerkung im Änderungsprotokoll. Nach Ende seiner regulären Frist wird er mit seinem Jahrgang endgültig gelöscht.
 - Papieroriginale werden nach denselben Fristen aufbewahrt.
 
 ### 4.3 Zugriffsschutz

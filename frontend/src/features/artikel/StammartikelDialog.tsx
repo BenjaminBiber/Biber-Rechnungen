@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { SkelettFormular } from '@/components/ui/skelett'
 import { formatEuro, formatZahl } from '@/lib/format'
 import { grundpreis } from './grundpreis'
 import { kurzname } from './suche'
@@ -59,7 +60,16 @@ function Auswahl(props: InhaltProps) {
 
 /** Lädt den vorhandenen Stammartikel, damit seine bisherigen Zuordnungen erhalten bleiben. */
 function MitStammartikel({ id, ...props }: InhaltProps & { id: string }) {
-  const { data } = useStammartikelDetail(id)
+  const { data, isPending } = useStammartikelDetail(id)
+  if (isPending)
+    return (
+      <div className="grid gap-4">
+        <DialogHeader>
+          <DialogTitle>Stammartikel zuordnen</DialogTitle>
+        </DialogHeader>
+        <SkelettFormular felder={2} spalten={1} label="Stammartikel wird geladen" />
+      </div>
+    )
   return <Inhalt {...props} stamm={data} />
 }
 
@@ -224,7 +234,7 @@ function Inhalt({ artikel, onSchliessen, stamm }: InhaltProps & { stamm?: PreisD
         <button type="button" className="btn" onClick={onSchliessen}>
           Abbrechen
         </button>
-        <button type="submit" className="btn btn-primaer" disabled={laeuft} aria-busy={laeuft}>
+        <button type="submit" className="btn btn-primaer" disabled={laeuft} aria-busy={laeuft || undefined}>
           {vorhanden ? 'Zuordnen' : 'Stammartikel anlegen'}
         </button>
       </DialogFooter>

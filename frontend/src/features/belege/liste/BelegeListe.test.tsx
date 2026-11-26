@@ -298,13 +298,13 @@ describe('Belegliste', () => {
     const kopf = () => screen.getByRole('columnheader', { name: /^Brutto/ })
     const pfeil = () => kopf().querySelector('button[title="Sortieren"] .material-symbols-outlined')!
     expect(screen.getByRole('columnheader', { name: /^Rechnungsdatum/ })).toHaveAttribute('aria-sort', 'descending')
-    expect(pfeil()).toHaveTextContent('arrow_downward')
+    expect(pfeil()).toHaveAttribute('data-icon', 'arrow_downward')
 
     await nutzer.click(within(kopf()).getByRole('button', { name: 'Brutto sortieren' }))
     await waitFor(() => expect(letzte().get('sortierung')).toBe('Brutto'))
     expect(letzte().get('absteigend')).toBe('false')
     expect(kopf()).toHaveAttribute('aria-sort', 'ascending')
-    expect(pfeil()).toHaveTextContent('arrow_upward')
+    expect(pfeil()).toHaveAttribute('data-icon', 'arrow_upward')
     expect(pfeil()).toHaveClass('text-akzent-text')
     await waitFor(() => expect(within(tabellenzeilen()[0]).getByText('118,40 €')).toBeInTheDocument())
 
@@ -313,7 +313,7 @@ describe('Belegliste', () => {
     expect(letzte().get('sortierung')).toBe('Brutto')
     expect(kopf()).toHaveAttribute('aria-sort', 'descending')
     // Absteigend ist der leere Zustand: grauer Pfeil, nur bei Hover sichtbar.
-    expect(pfeil()).toHaveTextContent('arrow_downward')
+    expect(pfeil()).toHaveAttribute('data-icon', 'arrow_downward')
     expect(pfeil()).toHaveClass('opacity-0')
     await waitFor(() => expect(within(tabellenzeilen()[0]).getByText('534,00 €')).toBeInTheDocument())
   })
@@ -455,6 +455,21 @@ describe('Belegliste', () => {
     await tabelleGeladen()
     await nutzer.click(screen.getByRole('link', { name: 'Büromaterial Bestellung' }))
     await waitFor(() => expect(router.state.location.pathname).toMatch(/^\/belege\/[0-9a-f-]+$/))
+  })
+
+  it('Klick auf die Zeile öffnet den Beleg – auch ohne Titel-Spalte', async () => {
+    const { nutzer, router } = renderBelege()
+    await tabelleGeladen()
+    const zeile = screen.getByRole('row', { name: /EH-4471/ })
+    await nutzer.click(within(zeile).getByText('EH-4471'))
+    await waitFor(() => expect(router.state.location.pathname).toMatch(/^\/belege\/[0-9a-f-]+$/))
+  })
+
+  it('Klick auf die Auswahl-Checkbox öffnet den Beleg nicht', async () => {
+    const { nutzer, router } = renderBelege()
+    await tabelleGeladen()
+    await nutzer.click(screen.getByRole('checkbox', { name: 'Bürowelt Krämer KG 2026-48817 auswählen' }))
+    expect(router.state.location.pathname).toBe('/belege')
   })
 
   it('stellt den Zustand aus der URL wieder her', async () => {

@@ -56,6 +56,7 @@ export function Massenaktionen() {
   const toast = useToast()
   // Einträge aus „Alle N auswählen“ – damit Summe und „Bestätigen“ auch Belege anderer Seiten kennen.
   const [alleEintraege, setAlleEintraege] = useState<BelegListeneintrag[]>([])
+  const [alleLaden, setAlleLaden] = useState(false)
 
   const anzahl = auswahl.ids.length
   const bekannt = new Map([...alleEintraege, ...(liste?.eintraege ?? [])].map((b) => [b.id, b]))
@@ -74,13 +75,22 @@ export function Massenaktionen() {
   async function alleWaehlen() {
     if (gesamt === 0) return
     const alleAbfrage = { ...abfrage, seite: 1, seitengroesse: gesamt }
-    const alle = await queryClient.fetchQuery({
-      queryKey: belegeKeys.liste(alleAbfrage),
-      queryFn: ({ signal }) => daten(api.GET('/api/belege', { params: { query: alleAbfrage }, signal })),
-    })
-    setAlleEintraege(alle.eintraege)
-    auswahl.alleSetzen(alle.eintraege.map((b) => b.id))
+    setAlleLaden(true)
+    try {
+      const alle = await queryClient.fetchQuery({
+        queryKey: belegeKeys.liste(alleAbfrage),
+        queryFn: ({ signal }) => daten(api.GET('/api/belege', { params: { query: alleAbfrage }, signal })),
+      })
+      setAlleEintraege(alle.eintraege)
+      auswahl.alleSetzen(alle.eintraege.map((b) => b.id))
+    } finally {
+      setAlleLaden(false)
+    }
   }
+
+  /** Läuft gerade eine der Aktionen? Nur deren Knopf zeigt den Drehkreis, die übrigen sind bloß gesperrt. */
+  const laeuft = (...aktionen: Massenaktion['aktion'][]) =>
+    (massenaktion.isPending && aktionen.includes(massenaktion.variables.aktion)) || undefined
 
   function ausfuehren(eingabe: Omit<Massenaktion, 'belegIds'>, erfolg: (n: number) => string) {
     const belegIds = auswahl.ids
@@ -141,6 +151,8 @@ export function Massenaktionen() {
                 <button
                   type="button"
                   onClick={() => void alleWaehlen()}
+                  disabled={alleLaden}
+                  aria-busy={alleLaden || undefined}
                   className="cursor-pointer border-0 bg-transparent p-0 text-xs font-semibold text-white underline underline-offset-2 hover:no-underline"
                 >
                   Alle {gesamt} auswählen
@@ -155,7 +167,14 @@ export function Massenaktionen() {
             <TagAuswahl
               gewaehlt={gemeinsameTags}
               onAendern={tagsAendern}
-              ausloeser={<Knopf icon="sell" label="Tags" disabled={massenaktion.isPending} />}
+              ausloeser={
+                <Knopf
+                  icon="sell"
+                  label="Tags"
+                  disabled={massenaktion.isPending}
+                  aria-busy={laeuft('TagsSetzen', 'TagsEntfernen')}
+                />
+              }
             />
             <KategorieAuswahl
               wert={null}
@@ -163,7 +182,14 @@ export function Massenaktionen() {
                 kategorieId &&
                 ausfuehren({ aktion: 'KategorieSetzen', kategorieId }, (n) => `Kategorie bei ${belegenText(n)} gesetzt`)
               }
-              ausloeser={<Knopf icon="category" label="Kategorie" disabled={massenaktion.isPending} />}
+              ausloeser={
+                <Knopf
+                  icon="category"
+                  label="Kategorie"
+                  disabled={massenaktion.isPending}
+                  aria-busy={laeuft('KategorieSetzen')}
+                />
+              }
             />
             <Trenner />
             {zahlungsTags.length === 1 ? (
@@ -171,13 +197,18 @@ export function Massenaktionen() {
                 icon="paid"
                 label="Als bezahlt markieren"
                 disabled={massenaktion.isPending}
-                aria-busy={massenaktion.isPending && massenaktion.variables?.aktion === 'TagsSetzen'}
+                aria-busy={laeuft('TagsSetzen')}
                 onClick={() => alsBezahlt(zahlungsTags[0].id)}
               />
             ) : (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Knopf icon="paid" label="Als bezahlt markieren" disabled={massenaktion.isPending} />
+                  <Knopf
+                    icon="paid"
+                    label="Als bezahlt markieren"
+                    disabled={massenaktion.isPending}
+                    aria-busy={laeuft('TagsSetzen')}
+                  />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" aria-label="Zahlungs-Tag wählen">
                   {zahlungsTags.length === 0 ? (
@@ -207,7 +238,7 @@ export function Massenaktionen() {
             type="button"
             title="Bestätigen"
             disabled={massenaktion.isPending}
-            aria-busy={massenaktion.isPending && massenaktion.variables?.aktion === 'Bestaetigen'}
+            aria-busy={laeuft('Bestaetigen')}
             onClick={() => ausfuehren({ aktion: 'Bestaetigen' }, (n) => `${belegeText(n)} bestätigt`)}
             className="[--btn-laden-farbe:var(--color-seitenleiste)] inline-flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border-0 bg-white px-4 text-[13px] font-semibold whitespace-nowrap text-seitenleiste hover:bg-white/90 disabled:cursor-default disabled:opacity-60 @max-2xl:px-2.5 [&_.material-symbols-outlined]:text-[18px]"
           >

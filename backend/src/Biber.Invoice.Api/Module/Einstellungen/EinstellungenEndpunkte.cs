@@ -27,6 +27,7 @@ public sealed class EinstellungenEndpunkte : IEndpunktModul
         IEinstellungen einstellungen,
         BiberDbContext db,
         IConfiguration konfiguration,
+        ImapZugangQuelle imap,
         CancellationToken ct)
     {
         var allgemein = await einstellungen.LesenAsync<AllgemeinEinstellungen>(ct);
@@ -41,6 +42,7 @@ public sealed class EinstellungenEndpunkte : IEndpunktModul
             await einstellungen.LesenAsync<OrdnerEinstellungen>(ct),
             await einstellungen.LesenAsync<AufbewahrungEinstellungen>(ct),
             await einstellungen.LesenAsync<ZugriffEinstellungen>(ct),
+            await imap.BeschreibenAsync(einstellungen, ct),
             Umgebung(konfiguration));
         return Results.Json(dto, EinstellungenDienst.Json);
     }
@@ -51,18 +53,13 @@ public sealed class EinstellungenEndpunkte : IEndpunktModul
         static string? Wert(IConfiguration k, string schluessel) =>
             string.IsNullOrWhiteSpace(k[schluessel]) ? null : k[schluessel];
 
-        var imapHost = Wert(k, "Imap:Host");
-        var imapPort = Wert(k, "Imap:Port");
         return new UmgebungDto(
             AblagePfad: k["Pfade:Ablage"] ?? "",
             EingangPfad: k["Pfade:Eingang"] ?? "",
             OeffentlicheUrl: Wert(k, "Anwendung:OeffentlicheUrl"),
             DiEndpunkt: Wert(k, "DocumentIntelligence:Endpunkt"),
             DiModell: DiModell,
-            ImapServer: imapHost is null ? null : imapPort is null ? imapHost : $"{imapHost}:{imapPort}",
-            ImapBenutzer: Wert(k, "Imap:Benutzer"),
             DiKonfiguriert: Wert(k, "DocumentIntelligence:Endpunkt") is not null && Wert(k, "DocumentIntelligence:Schluessel") is not null,
-            ImapKonfiguriert: imapHost is not null && Wert(k, "Imap:Benutzer") is not null && Wert(k, "Imap:Passwort") is not null,
             GoogleKonfiguriert: Wert(k, "Google:ClientId") is not null && Wert(k, "Google:ClientSecret") is not null);
     }
 

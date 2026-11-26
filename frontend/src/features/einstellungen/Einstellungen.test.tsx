@@ -51,10 +51,10 @@ async function gespeichert(anfragen: Anfrage[]) {
 }
 
 describe('Einstellungen', { timeout: 20000 }, () => {
-  it('Navigation: zwölf Einträge in drei Gruppen, Chips für USt-Status und DI-Verbrauch, aktiver Eintrag', async () => {
+  it('Navigation: dreizehn Einträge in drei Gruppen, Chips für USt-Status und DI-Verbrauch, aktiver Eintrag', async () => {
     const { ende } = renderSeite('/einstellungen')
     const nav = await screen.findByRole('navigation', { name: 'Einstellungsbereiche' }, { timeout: 5000 })
-    expect(within(nav).getAllByRole('link')).toHaveLength(12)
+    expect(within(nav).getAllByRole('link')).toHaveLength(13)
     expect(
       within(nav)
         .getAllByRole('group')
@@ -185,7 +185,7 @@ describe('Einstellungen', { timeout: 20000 }, () => {
     expect(within(dialog).getByRole('button', { name: 'Liste kopieren' })).toBeInTheDocument()
     expect(anfragen.at(-1)).toMatchObject({
       pfad: '/api/aufbewahrung/loeschen',
-      koerper: { jahr: 2016, bestaetigung: '2016 LÖSCHEN' },
+      koerper: { jahr: 2016, bestaetigung: 'LÖSCHEN' },
     })
     ende()
   })
@@ -205,6 +205,61 @@ describe('Einstellungen', { timeout: 20000 }, () => {
     await formular('Prüfungen & Schwellen')
     for (const schalter of screen.getAllByRole('switch')) expect(schalter).toBeDisabled()
     expect(screen.getByLabelText('Datum plausibel Schwelle')).toBeDisabled()
+    ende()
+  })
+
+  it('Gelöschte Belege: Leerzustand', async () => {
+    const { ende } = renderSeite('/einstellungen/geloeschte-belege')
+    expect(await screen.findByText('Keine gelöschten Belege', undefined, { timeout: 5000 })).toBeInTheDocument()
+    ende()
+  })
+
+  it('Gelöschte Belege: Liste mit Bemerkung, Link zum Original und Wiederherstellen', async () => {
+    const beleg = db.belege[0]
+    db.belege = db.belege.slice(1)
+    db.geloeschteBelege = [
+      {
+        beleg,
+        eintrag: {
+          id: beleg.id,
+          titel: beleg.titel,
+          rechnungsnummer: 'RE-FALSCH',
+          rechnungsdatum: '2026-03-01',
+          korrespondent: 'Fremde GmbH',
+          brutto: 119,
+          waehrung: 'EUR',
+          grund: 'FalschZugeordnet',
+          bemerkung: 'Rechnung vom Nachbarn',
+          geloeschtAm: '2026-11-20T09:30:00Z',
+          geloeschtVon: 'Martin Keller',
+          originalId: beleg.dateien[0].id,
+        },
+      },
+    ]
+    const { user, ende } = renderSeite('/einstellungen/geloeschte-belege')
+    const liste = await screen.findByRole('list', { name: 'Gelöschte Belege' }, { timeout: 5000 })
+    expect(within(liste).getByText(/Fremde GmbH · RE-FALSCH · 01\.03\.2026/)).toBeInTheDocument()
+    expect(within(liste).getByText('„Rechnung vom Nachbarn“')).toBeInTheDocument()
+    expect(within(liste).getByText(/von Martin Keller · falsch zugeordnet/)).toBeInTheDocument()
+    expect(within(liste).getByRole('link', { name: /Original ansehen/ })).toHaveAttribute(
+      'href',
+      `/api/belege/${beleg.id}/dateien/${beleg.dateien[0].id}`,
+    )
+    await user.click(within(liste).getByRole('button', { name: /Wiederherstellen/ }))
+    expect(await screen.findByText('Keine gelöschten Belege')).toBeInTheDocument()
+    expect(db.belege.some((b) => b.id === beleg.id)).toBe(true)
+    ende()
+  })
+
+  it('Gelöschte Belege: Nicht-Admins sehen nur einen Hinweis', async () => {
+    szenario.rolle('Benutzer')
+    const { ende } = renderSeite('/einstellungen/geloeschte-belege')
+    expect(
+      await screen.findByText('Gelöschte Belege sehen und wiederherstellen kann nur ein Admin.', undefined, {
+        timeout: 5000,
+      }),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('list', { name: 'Gelöschte Belege' })).not.toBeInTheDocument()
     ende()
   })
 })

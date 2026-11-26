@@ -9,7 +9,7 @@ Final other-errors prompt: Edit this existing beaver illustration with one preci
 
 Earlier iteration (superseded):
 Reference: biber-rechnungen-logo.svg, rendered as biber-logo-reference.png.
-Final assets: frontend/src/assets/fehler/biber-suche.png and biber-reparatur.png.
+Final assets (ersetzt): biber-suche.png und biber-reparatur.png. Aktuell nutzt die Fehlerseite nur frontend/src/assets/fehler/biber-fehler.png (Biber mit Schraubenschlüssel, zugeschnitten, aus dem Design „Fehlerseite (502 · 503 · 500 · 404 · 403)“).
 
 Final edit prompt:
 Edit the reference illustration. Show ONLY the beaver character. Remove ALL props and objects: no magnifying glass, no loose paper, no wrench, no cable, no plugs, no ground objects, no symbols or decorations. Preserve the exact mascot identity, long left-facing snout, round ear, dot eye, large tooth, white body, bold black smooth outlines and attached receipt-shaped tail (this tail is part of its body and MUST stay). Both front paws naturally resting near belly.

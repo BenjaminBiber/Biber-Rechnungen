@@ -1,6 +1,7 @@
 import { useSystemStatus } from '@/api/dashboard'
 import type { SystemStatusEintrag } from '@/api/typen'
 import { Icon } from '@/components/Icon'
+import { SkelettListe } from '@/components/ui/skelett'
 import { DashboardKarte } from './gemeinsam'
 
 const icons: Record<string, string> = {
@@ -22,11 +23,16 @@ export function SystemKarte() {
   const status = useSystemStatus()
   return (
     <DashboardKarte titel="Ablage & Sicherung">
-      {status.isPending && <p className="gedaempft m-0 text-sm">Wird geladen …</p>}
+      {status.isPending && <SkelettListe zeilen={3} kompakt label="Systemstatus wird geladen" />}
       {status.isError && (
         <div role="alert" className="flex flex-col items-start gap-2 text-sm">
           <span className="text-[var(--color-rot-text)]">Systemstatus konnte nicht geladen werden.</span>
-          <button type="button" className="btn btn-klein" onClick={() => void status.refetch()}>
+          <button
+            type="button"
+            className="btn btn-klein"
+            onClick={() => void status.refetch()}
+            aria-busy={status.isFetching || undefined}
+          >
             Erneut versuchen
           </button>
         </div>

@@ -11,6 +11,7 @@ import { Icon } from '@/components/Icon'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { formatDatumZeit } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import { SkelettListe } from '@/components/ui/skelett'
 
 /** Icon und Farbe je Schweregrad (Warnung orange, Fehler rot, Ok grün, Info blau). */
 export const schweregradDarstellung: Record<Schweregrad, { icon: string; klasse: string; text: string }> = {
@@ -68,7 +69,7 @@ export function useBenachrichtigungOeffnen(nachher?: () => void) {
 export function Glocke() {
   const [offen, setOffen] = useState(false)
   const { data: zaehler } = useBenachrichtigungZaehler()
-  const { data: liste } = useBenachrichtigungen()
+  const { data: liste, isPending } = useBenachrichtigungen()
   const alleGelesen = useAlleBenachrichtigungenGelesen()
   const oeffnen = useBenachrichtigungOeffnen(() => setOffen(false))
   const ungelesen = zaehler?.ungelesen ?? 0
@@ -105,12 +106,14 @@ export function Glocke() {
           <button
             type="button"
             className="cursor-pointer border-0 bg-transparent text-[13px] font-medium text-akzent-text"
+            aria-busy={alleGelesen.isPending || undefined}
             onClick={() => alleGelesen.mutate()}
           >
             Alle gelesen
           </button>
         </div>
-        {neueste.length === 0 && (
+        {isPending && <SkelettListe zeilen={3} label="Benachrichtigungen werden geladen" className="px-4" />}
+        {!isPending && neueste.length === 0 && (
           <p className="gedaempft m-0 px-4 py-6 text-center text-sm">Keine Benachrichtigungen</p>
         )}
         {neueste.map((n) => (

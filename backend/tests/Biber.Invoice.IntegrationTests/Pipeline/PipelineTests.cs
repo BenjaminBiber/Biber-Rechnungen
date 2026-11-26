@@ -430,6 +430,25 @@ public sealed class PipelineTests(ApiFabrik fabrik)
         await job.Received(1).AusfuehrenAsync(Arg.Any<CancellationToken>());
     }
 
+    [Fact]
+    public async Task ExtraktionUebernehmen_leitet_fehlende_Steuerzeile_aus_den_Summen_ab()
+    {
+        var protokoll = new ConcurrentQueue<string>();
+        var f = NurOrchestrator().MitDiensten(d =>
+            d.AddSingleton<IPipelineSchritt>(new TestSchritt(SchrittReihenfolge.DocumentIntelligence, "Document Intelligence", protokoll, k =>
+            {
+                k.Extraktion = Extraktion() with { Steuerzeilen = [] };
+                return SchrittErgebnis.Weiter;
+            })));
+        var vorgang = await f.ImportiereAsync("rechnung.pdf", Pdf);
+        vorgang.Status.ShouldBe(ImportStatus.Fertig);
+
+        var zeile = (await BelegAsync(f, vorgang.BelegId!.Value)).Steuerzeilen.ShouldHaveSingleItem();
+        zeile.Satz.ShouldBe(19m);
+        zeile.Netto.ShouldBe(100.00m);
+        zeile.Steuer.ShouldBe(19.00m);
+    }
+
     private static ExtraktionsErgebnis Extraktion() => new()
     {
         Quelle = ExtraktionsQuelle.DocumentIntelligence,

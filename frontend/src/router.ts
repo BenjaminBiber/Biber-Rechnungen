@@ -1,6 +1,7 @@
 import { QueryClient } from '@tanstack/react-query'
 import { createRouter } from '@tanstack/react-router'
 import { Fehlerseite } from '@/components/fehler/Fehlerseiten'
+import { SkelettSeite } from '@/components/ui/skelett'
 import { routeTree } from './routeTree.gen'
 
 export type RouterKontext = { queryClient: QueryClient }
@@ -25,6 +26,10 @@ export function erzeugeRouter(queryClient: QueryClient) {
     scrollRestoration: true,
     // Fehler einer Seite ersetzen nur deren Inhalt; Shell und Navigation bleiben bedienbar.
     defaultErrorComponent: Fehlerseite,
+    // Lädt eine Seite (Code-Splitting) länger als 250 ms, steht bis dahin ein Skelett statt der alten Seite da.
+    defaultPendingComponent: SkelettSeite,
+    defaultPendingMs: 250,
+    defaultPendingMinMs: 300,
   })
 }
 

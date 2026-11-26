@@ -45,6 +45,16 @@ public class Beleg
     public DateTimeOffset ErstelltAm { get; set; }
     public Guid? ErstelltVonId { get; set; }
 
+    /// <summary>
+    /// Gesetzt, wenn ein Admin den Beleg als falsch zugeordnet gelöscht hat. Er bleibt mit allen Daten erhalten, seine
+    /// Originale liegen unter <c>_Geloescht/</c> in der Ablage, und er erscheint nur noch unter „Gelöschte Belege“.
+    /// </summary>
+    public DateTimeOffset? GeloeschtAm { get; set; }
+
+    public Guid? GeloeschtVonId { get; set; }
+    public LoeschGrund? LoeschGrund { get; set; }
+    public string? LoeschBemerkung { get; set; }
+
     public Korrespondent? Korrespondent { get; set; }
     public Kategorie? Kategorie { get; set; }
     public List<BelegDatei> Dateien { get; set; } = [];

@@ -10,10 +10,12 @@ import { useBefehlspalette } from '@/components/shell/befehlspalette-store'
 import { Benutzermenue } from '@/components/shell/Benutzermenue'
 import { BottomNavigation } from '@/components/shell/BottomNavigation'
 import { Kopfleiste } from '@/components/shell/Kopfleiste'
+import { Ladebalken } from '@/components/shell/Ladebalken'
 import { seitentitel } from '@/components/shell/navigation'
 import { Seitenleiste } from '@/components/shell/Seitenleiste'
 import { SeitenpanelZiel } from '@/components/shell/Seitenpanel'
 import { ToastBereich } from '@/components/toast'
+import { SkelettSeite } from '@/components/ui/skelett'
 import { EinstellungenNavigation } from '@/features/einstellungen/EinstellungenNavigation'
 import { useIstMobil } from '@/lib/useIstMobil'
 
@@ -57,6 +59,7 @@ function MobilKopfzeile() {
         <Icon name="search" className="text-[24px]" />
       </button>
       <Benutzermenue kompakt />
+      <Ladebalken />
     </header>
   )
 }
@@ -67,7 +70,7 @@ function MobilKopfzeile() {
  */
 function Inhalt() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<SkelettSeite />}>
       <Outlet />
     </Suspense>
   )

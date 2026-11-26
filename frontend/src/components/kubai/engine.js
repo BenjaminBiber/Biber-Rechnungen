@@ -3,7 +3,8 @@
 // runtime that mounts, paints and animates an icon.
 // Biber-Rechnungen: als ES-Modul eingebunden (Exporte am Ende); mountIcon nimmt eine eigene
 // uid für eindeutige ids, damit dasselbe Icon mehrfach im Dokument stehen kann; ein Icon kann
-// mit `viewBox` sein eigenes Raster mitbringen.
+// mit `viewBox` sein eigenes Raster mitbringen; `mono: true` (einfarbige Linien-Icons) lässt
+// Verläufe und Filter weg; `DUR` und `springe` sind für die Auslöser im Frontend exportiert.
 
 // ---------- Color: the same tint rule as Lumno's tintFolderColor ----------
 const REF = [83, 147, 255];
@@ -215,7 +216,7 @@ function mountIcon(icon, i, host, uid = i) {
   const k = 'k' + uid;
   const u = makeU(k);
   const body = icon.svg(u);
-  host.innerHTML = `<svg viewBox="${icon.viewBox || ICON_VIEWBOX}" fill="none" aria-hidden="true">${defs(k, u.grads)}${body}</svg>`;
+  host.innerHTML = `<svg viewBox="${icon.viewBox || ICON_VIEWBOX}" fill="none" aria-hidden="true">${icon.mono ? '<defs></defs>' : defs(k, u.grads)}${body}</svg>`;
   const svg = host.querySelector('svg');
   const E = {};
   svg.querySelectorAll('[data-n]').forEach((el) => { E[el.dataset.n] = el; });
@@ -279,6 +280,7 @@ function render(inst) {
     const base = tint(stop.dataset.src, pick(stop.dataset.src));
     stop.setAttribute('stop-color', deep && stop.dataset.pure === '0' ? soften(base, 0.72) : base);
   }
+  if (!inst.shadow) return;
   const sh = rgb(tint('#8AB6FF', p.c));
   inst.shadow.setAttribute('values', `0 0 0 0 ${f(sh[0] / 255)} 0 0 0 0 ${f(sh[1] / 255)} 0 0 0 0 ${f(sh[2] / 255)} 0 0 0 0.21 0`);
 }
@@ -298,4 +300,11 @@ function go(inst) {
   inst.raf = requestAnimationFrame(tick);
 }
 
-export { KR, CR, R, rp, rr, circ, poly, lines, star, gear, cloud, frontPiece, sector, at, f, clearTone, flatTone, runtime, mountIcon, go };
+// Setzt das Icon ohne Animation auf sein Ziel (Ruhe oder Hover, je nach `hover`).
+function springe(inst) {
+  cancelAnimationFrame(inst.raf);
+  inst.cur = targetOf(inst);
+  render(inst);
+}
+
+export { DUR, springe, KR, CR, R, rp, rr, circ, poly, lines, star, gear, cloud, frontPiece, sector, at, f, clearTone, flatTone, runtime, mountIcon, go };

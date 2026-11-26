@@ -14,9 +14,9 @@ public sealed class PostfachStatus(MailAbruf abruf, IServiceScopeFactory scopes,
 
     public async Task<SystemStatusEintragDto> LesenAsync(CancellationToken ct)
     {
-        if (!abruf.Konfiguriert)
+        if (!await abruf.KonfiguriertAsync(ct))
         {
-            return Eintrag(Schweregrad.Info, "E-Mail-Import nicht eingerichtet", "IMAP-Zugang fehlt in der Konfiguration");
+            return Eintrag(Schweregrad.Info, "E-Mail-Import nicht eingerichtet", "IMAP-Zugang fehlt – in den Einstellungen oder per .env eintragen");
         }
 
         using var scope = scopes.CreateScope();

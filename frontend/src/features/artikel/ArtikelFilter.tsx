@@ -26,10 +26,13 @@ export function ArtikelFilter({
   suche,
   setze,
   reiter = 'artikel',
+  ladend = false,
 }: {
   suche: ArtikelSuche
   setze: (teil: Partial<ArtikelSuche>) => void
   reiter?: 'artikel' | 'stammartikel'
+  /** Die Liste lädt gerade nach (Suchfeld zeigt den Drehkreis). */
+  ladend?: boolean
 }) {
   const korrespondenten = useKorrespondenten()
   const korrespondentName = suche.korrespondentId
@@ -102,7 +105,12 @@ export function ArtikelFilter({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <Suchfeld suche={suche} setze={setze} label={reiter === 'artikel' ? 'Artikel suchen' : 'Stammartikel suchen'} />
+      <Suchfeld
+        suche={suche}
+        setze={setze}
+        ladend={ladend}
+        label={reiter === 'artikel' ? 'Artikel suchen' : 'Stammartikel suchen'}
+      />
       <FilterPills
         filter={filter}
         weitereAktiv={!!suche.suche}
@@ -124,10 +132,12 @@ function Suchfeld({
   suche,
   setze,
   label,
+  ladend,
 }: {
   suche: ArtikelSuche
   setze: (teil: Partial<ArtikelSuche>) => void
   label: string
+  ladend: boolean
 }) {
   const [text, setText] = useState(suche.suche ?? '')
   const [stand, setStand] = useState(suche.suche)
@@ -152,10 +162,11 @@ function Suchfeld({
       <input
         type="search"
         aria-label={label}
+        aria-busy={ladend || undefined}
         placeholder={label}
         value={text}
         onChange={(e) => eingeben(e.target.value)}
-        className="min-w-0 flex-1 border-0 bg-transparent text-sm text-text outline-none"
+        className="eingabe-laden min-w-0 flex-1 border-0 bg-transparent text-sm text-text outline-none"
       />
     </div>
   )

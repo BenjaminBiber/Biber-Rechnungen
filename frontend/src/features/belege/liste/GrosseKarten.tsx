@@ -19,7 +19,7 @@ export function GrosseKarten({
   onVorschau: (beleg: BelegListeneintrag) => void
 }) {
   const auswahl = useBelegAuswahl()
-  const herunterladen = useOriginalHerunterladen()
+  const original = useOriginalHerunterladen()
 
   return (
     <div className="flex flex-col gap-3.5">
@@ -73,7 +73,11 @@ export function GrosseKarten({
                     <Icon name="visibility" />
                     Vorschau
                   </button>
-                  <button type="button" onClick={() => void herunterladen(beleg.id)}>
+                  <button
+                    type="button"
+                    onClick={() => void original.herunterladen(beleg.id)}
+                    aria-busy={original.laedt(beleg.id) || undefined}
+                  >
                     <Icon name="download" />
                     Herunterladen
                   </button>

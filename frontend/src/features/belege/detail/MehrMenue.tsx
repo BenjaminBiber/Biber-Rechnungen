@@ -1,8 +1,9 @@
 import { useNavigate } from '@tanstack/react-router'
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { belegDateiUrl, useErneutAuslesen } from '@/api/belege'
 import type { BelegDetail } from '@/api/typen'
 import { Icon } from '@/components/Icon'
+import { useRolle } from '@/components/shell/useRolle'
 import { useToast } from '@/components/toast'
 import {
   DropdownMenu,
@@ -13,12 +14,15 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { formatDatum } from '@/lib/format'
+import { BelegLoeschenDialog } from './BelegLoeschenDialog'
 import { istPdf, original, xmlDatei } from './gemeinsam'
+import { aenderungenSpeichern } from './offeneAenderungen'
 
 /**
  * Beleg-Aktionen neben „Bestätigen“ als geteilter Knopf: Hauptaktion „Original herunterladen“,
  * der Pfeil daneben öffnet das Menü mit „Erneut auslesen“ und den übrigen Aktionen.
- * Ohne Original bleibt nur der Menüknopf (⋯). NurLesen sieht nur Herunterladen und Kopieren.
+ * Ohne Original bleibt nur der Menüknopf (⋯). NurLesen sieht nur Herunterladen und Kopieren. „Löschen“ ist gesperrt;
+ * nur Admins können einen falsch zugeordneten Beleg trotz Löschsperre löschen (wiederherstellbar).
  *
  * `kompakt` (mobile Kopfzeile): nur ⋯, „Original herunterladen“ steht dann im Menü; „Erneut auslesen“ hat dort
  * einen eigenen Knopf.
@@ -35,6 +39,8 @@ export function MehrMenue({
   const navigate = useNavigate()
   const toast = useToast()
   const erneutAuslesen = useErneutAuslesen()
+  const { istAdmin } = useRolle()
+  const [loeschenOffen, setLoeschenOffen] = useState(false)
   // „Belegart ändern“ setzt den Fokus ins Formular – das Menü darf ihn beim Schließen nicht zurückholen.
   const fokusBehalten = useRef(false)
   const datei = original(beleg)
@@ -43,6 +49,10 @@ export function MehrMenue({
   const aufteilbar = istPdf(datei) && beleg.seitenanzahl > 1
 
   async function auslesen() {
+    if (!(await aenderungenSpeichern(beleg.id))) {
+      toast.fehler('Nicht erneut ausgelesen: Änderungen im Tab „Daten“ sind nicht gespeichert')
+      return
+    }
     try {
       await erneutAuslesen.mutateAsync(beleg.id)
       toast.info('Beleg wird erneut ausgelesen')
@@ -170,16 +180,28 @@ export function MehrMenue({
             </>
           )}
           <DropdownMenuSeparator />
-          <DropdownMenuItem disabled className="h-auto py-2">
-            <Icon name="lock" />
-            <span className="leading-tight">
-              Löschen
-              <br />
-              <span className="text-xs">gesperrt bis {formatDatum(beleg.loeschsperreBis)}</span>
-            </span>
-          </DropdownMenuItem>
+          {istAdmin ? (
+            <DropdownMenuItem gefaehrlich className="h-auto py-2" onSelect={() => setLoeschenOffen(true)}>
+              <Icon name="delete" />
+              <span className="leading-tight">
+                Löschen (falsch zugeordnet) …
+                <br />
+                <span className="text-xs">Löschsperre bis {formatDatum(beleg.loeschsperreBis)}</span>
+              </span>
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem disabled className="h-auto py-2">
+              <Icon name="lock" />
+              <span className="leading-tight">
+                Löschen
+                <br />
+                <span className="text-xs">gesperrt bis {formatDatum(beleg.loeschsperreBis)}</span>
+              </span>
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
+      {loeschenOffen && <BelegLoeschenDialog beleg={beleg} onSchliessen={() => setLoeschenOffen(false)} />}
     </div>
   )
 }

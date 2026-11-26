@@ -5,6 +5,7 @@ import type { AktionErgebnis, Einstellungen } from '@/api/typen'
 import { useToast } from '@/components/toast'
 import { Button } from '@/components/ui/button'
 import { zahlLesen } from '../pruefungen'
+import { SkelettFormular } from '@/components/ui/skelett'
 
 /**
  * Wie `Bereich`, aber mit Platz für einen Status-Chip neben der Überschrift
@@ -33,7 +34,7 @@ export function BereichMitStatus({
           {error.message}
         </p>
       ) : (
-        <p className="gedaempft m-0 text-sm">Lädt …</p>
+        <SkelettFormular felder={4} label="Einstellungen werden geladen" />
       )}
     </div>
   )

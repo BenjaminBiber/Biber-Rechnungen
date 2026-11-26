@@ -32,7 +32,8 @@ public sealed class AufbewahrungsDienst(
     public async Task<LoeschbarDto[]> LoeschbarAsync(CancellationToken ct)
     {
         var (jahre, heute) = await FristAsync(ct);
-        var kandidaten = await db.Belege.AsNoTracking()
+        // Gelöschte (falsch zugeordnete) Belege zählen mit: Nach Fristende verschwinden sie endgültig.
+        var kandidaten = await db.Belege.IgnoreQueryFilters().AsNoTracking()
             .Select(b => new Beleg { Id = b.Id, Rechnungsdatum = b.Rechnungsdatum, ErstelltAm = b.ErstelltAm })
             .ToListAsync(ct);
 
@@ -50,6 +51,7 @@ public sealed class AufbewahrungsDienst(
     {
         var (jahre, heute) = await FristAsync(ct);
         var belege = (await db.Belege
+                .IgnoreQueryFilters()
                 .Where(b => b.Rechnungsdatum == null || b.Rechnungsdatum.Value.Year == jahr)
                 .Include(b => b.Korrespondent)
                 .Include(b => b.Dateien)

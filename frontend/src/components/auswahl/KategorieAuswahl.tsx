@@ -2,6 +2,7 @@ import { useId, useState, type ReactNode } from 'react'
 import { useKategorien } from '@/api/tags'
 import { Icon } from '@/components/Icon'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { SkelettListe } from '@/components/ui/skelett'
 import { Option, Suchfeld, useListenNavigation } from './gemeinsam'
 
 /** „Kategorie setzen“ (Massenaktion, Beleg-Detail): Einfachauswahl; erneutes Wählen leert. */
@@ -19,7 +20,9 @@ export function KategorieAuswahl({
   const listId = useId()
   const [offen, setOffen] = useState(false)
   const [suche, setSuche] = useState('')
-  const { data: kategorien = [] } = useKategorien()
+  const { data } = useKategorien()
+  const kategorien = data ?? []
+  const laedt = data === undefined
 
   const begriff = suche.trim().toLocaleLowerCase('de')
   const treffer = kategorien.filter((k) => k.name.toLocaleLowerCase('de').includes(begriff))
@@ -43,7 +46,8 @@ export function KategorieAuswahl({
           listId={listId}
           aktivId={navigation.aktiv >= 0 ? `${listId}-${navigation.aktiv}` : undefined}
         />
-        <div id={listId} role="listbox" aria-label="Kategorien">
+        {laedt && <SkelettListe zeilen={4} kompakt label="Kategorien werden geladen" />}
+        <div id={listId} role="listbox" aria-label="Kategorien" aria-busy={laedt || undefined}>
           {treffer.map((kategorie, i) => (
             <Option
               key={kategorie.id}

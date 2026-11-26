@@ -10,6 +10,7 @@ import type {
   DiVerbrauch,
   Einstellungen,
   ExportLauf,
+  GeloeschterBeleg,
   GespeicherteAnsicht,
   ImportVorgang,
   IntegritaetsLauf,
@@ -78,6 +79,8 @@ export type MockZustand = {
   mailStatus: MailStatus
   benachrichtigungen: Benachrichtigung[]
   loeschbar: Loeschbar[]
+  /** Als falsch zugeordnet gelöschte Belege: die Liste und der ausgeblendete Beleg zum Wiederherstellen. */
+  geloeschteBelege: { eintrag: GeloeschterBeleg; beleg: BelegDetail }[]
   integritaetsLaeufe: IntegritaetsLauf[]
   tokens: ApiToken[]
   verfahrensdoku: Verfahrensdoku
@@ -118,6 +121,7 @@ function erzeuge(): MockZustand {
     mailStatus,
     benachrichtigungen,
     loeschbar,
+    geloeschteBelege: [],
     integritaetsLaeufe,
     tokens: apiTokens,
     verfahrensdoku,

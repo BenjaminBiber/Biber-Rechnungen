@@ -59,7 +59,7 @@ cp .env.example .env
 | `OEFFENTLICHE_URL` | Adresse im LAN, für Links und Google-Redirect | `https://rechnungen.example.lan` | ja, aber für Google-Anmeldung nötig |
 | `AZURE_DI_ENDPUNKT` | Endpunkt von Azure Document Intelligence | `https://<name>.cognitiveservices.azure.com/` | ja (Auslesen von PDFs ohne E-Rechnung aus) |
 | `AZURE_DI_SCHLUESSEL` | Schlüssel dazu | `…` | ja |
-| `IMAP_HOST` | IMAP-Server des Rechnungspostfachs | `imap.ionos.de` | ja (Mail-Import aus) |
+| `IMAP_HOST` | IMAP-Server des Rechnungspostfachs; gesetzt = Zugang nur aus `.env` | `imap.ionos.de` | ja (Zugang dann auf der Einstellungsseite) |
 | `IMAP_PORT` | IMAP-Port (TLS) | `993` | ja (Standard 993) |
 | `IMAP_BENUTZER` | Anmeldename des Postfachs | `rechnungen@example.de` | ja |
 | `IMAP_PASSWORT` | App-Passwort des Postfachs | `…` | ja |
@@ -104,6 +104,7 @@ Am Scanner ein Scan-to-SMB-Ziel anlegen: `\\<host>\Rechnungen-Eingang`, Konto au
 ## Postfach
 
 - IMAP mit TLS (Port 993) und einem **App-Passwort**, nicht dem Hauptpasswort.
+- Den Zugang (Server, Port, SSL, Benutzer, Passwort) gibt es an zwei Stellen: Ist `IMAP_HOST` in der `.env` gesetzt, gilt ausschließlich die `.env`, und die Einstellungsseite zeigt Server und Benutzer nur an. Ist `IMAP_HOST` leer, pflegt ein Admin den Zugang unter *Einstellungen → E-Mail-Import*. Das Passwort wird dort mit dem Data-Protection-Schlüssel aus `PFAD_DATEN/schluessel` verschlüsselt gespeichert. Geht dieser Ordner verloren, muss das Passwort neu eingegeben werden.
 - Das Postfach wird alle 5 Minuten abgerufen; verarbeitet werden Anhänge (PDF, XML, Bilder).
 - Verarbeitete Mails landen im IMAP-Ordner `Verarbeitet`, Mails ohne verwertbaren Anhang in `Ohne Beleg`. Die Ordner werden bei Bedarf angelegt; nichts wird gelöscht.
 

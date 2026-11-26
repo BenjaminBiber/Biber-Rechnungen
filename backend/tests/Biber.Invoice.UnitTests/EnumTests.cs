@@ -26,6 +26,7 @@ public sealed class EnumTests
         { "UstStatus", ["Unbekannt", "Regelbesteuerung", "Kleinunternehmer"] },
         { "UstvaZeitraum", ["Monatlich", "Quartalsweise", "Jaehrlich"] },
         { "Rolle", ["Admin", "Benutzer", "NurLesen"] },
+        { "LoeschGrund", ["FalschZugeordnet"] },
         { "Zahlstatus", ["Offen", "Bezahlt", "Ueberfaellig"] },
         { "Schweregrad", ["Info", "Ok", "Warnung", "Fehler"] },
         { "BenachrichtigungArt", ["DiLimitWarnung", "DiLimitErreicht", "ImportFehler", "KositFehler", "Integritaetsfehler", "IntegritaetOk", "KontoWartetAufFreigabe", "Sonstiges"] },

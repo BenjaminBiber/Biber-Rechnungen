@@ -3,6 +3,7 @@ import type {
   ApiToken,
   ApiTokenAnlegen,
   ApiTokenErstellt,
+  BelegLoeschen,
   BenachrichtigungZaehler,
   IntegritaetsLauf,
   LoeschErgebnis,
@@ -63,7 +64,7 @@ export const systemRouten: Route[] = [
     const { jahr, bestaetigung } = await jsonKoerper<Loeschen>(request)
     const eintrag = db.loeschbar.find((l) => l.jahr === jahr)
     if (!eintrag) return problem(409, `Der Jahrgang ${jahr} ist noch nicht löschbar`)
-    if (bestaetigung !== `${jahr} LÖSCHEN`) return ungueltig('bestaetigung', `Bitte „${jahr} LÖSCHEN“ eingeben.`)
+    if (bestaetigung !== 'LÖSCHEN') return ungueltig('bestaetigung', 'Zur Bestätigung „LÖSCHEN“ eingeben.')
     db.loeschbar = db.loeschbar.filter((l) => l.jahr !== jahr)
     const geloeschte = db.belege.filter((b) => b.rechnungsdatum?.startsWith(String(jahr)))
     db.belege = db.belege.filter((b) => !geloeschte.includes(b))
@@ -71,6 +72,46 @@ export const systemRouten: Route[] = [
       geloescht: eintrag.anzahl,
       pfade: geloeschte.flatMap((b) => b.dateien.map((d) => d.pfad)),
     })
+  }),
+
+  route('post', '/api/belege/{id}/loeschen', 'Admin', async ({ params, request }) => {
+    const beleg = db.belege.find((b) => b.id === params.id)
+    if (!beleg) return nichtGefunden('Beleg')
+    const { grund, bemerkung } = await jsonKoerper<BelegLoeschen>(request)
+    if (grund !== 'FalschZugeordnet')
+      return ungueltig('grund', 'Ein Beleg darf nur gelöscht werden, wenn er falsch zugeordnet ist.')
+    if (beleg.status === 'InVerarbeitung')
+      return problem(409, 'Der Beleg wird gerade verarbeitet und kann erst danach gelöscht werden.')
+    db.belege = db.belege.filter((b) => b !== beleg)
+    db.geloeschteBelege = [
+      {
+        beleg,
+        eintrag: {
+          id: beleg.id,
+          titel: beleg.titel,
+          rechnungsnummer: beleg.rechnungsnummer,
+          rechnungsdatum: beleg.rechnungsdatum,
+          korrespondent: beleg.korrespondent?.name ?? null,
+          brutto: beleg.brutto,
+          waehrung: beleg.waehrung,
+          grund,
+          bemerkung: bemerkung?.trim() || null,
+          geloeschtAm: new Date().toISOString(),
+          geloeschtVon: db.benutzer.name,
+          originalId: beleg.dateien.find((d) => d.rolle === 'Original')?.id ?? null,
+        },
+      },
+      ...db.geloeschteBelege,
+    ]
+    return keinInhalt()
+  }),
+
+  route('post', '/api/belege/{id}/wiederherstellen', 'Admin', ({ params }) => {
+    const geloescht = db.geloeschteBelege.find((g) => g.eintrag.id === params.id)
+    if (!geloescht) return nichtGefunden('Beleg')
+    db.geloeschteBelege = db.geloeschteBelege.filter((g) => g !== geloescht)
+    db.belege = [...db.belege, geloescht.beleg]
+    return keinInhalt()
   }),
 
   route('get', '/api/integritaet/laeufe', 'Lesen', () => HttpResponse.json(db.integritaetsLaeufe)),

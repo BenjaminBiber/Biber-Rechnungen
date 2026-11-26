@@ -25,8 +25,8 @@ describe('Tab Prüfung', () => {
       'nicht anwendbar',
     ])
     expect(eintraege[0]).toHaveTextContent('Summe der Positionen = Netto')
-    expect(eintraege[0]).toHaveTextContent('report')
-    expect(eintraege[9]).toHaveTextContent('remove_circle_outline')
+    expect(eintraege[0].querySelector('[data-icon="report"]')).toBeInTheDocument()
+    expect(eintraege[9].querySelector('[data-icon="remove_circle_outline"]')).toBeInTheDocument()
   })
 
   it('zeigt ohne Befunde „Noch nicht geprüft“', async () => {

@@ -11,6 +11,7 @@ type BereichPfad =
   | 'umsatzsteuer'
   | 'pruefungen'
   | 'aufbewahrung'
+  | 'geloeschte-belege'
   | 'document-intelligence'
   | 'mail'
   | 'eingangsordner'
@@ -22,7 +23,7 @@ type BereichPfad =
 
 type Bereich = { pfad: BereichPfad; icon: string; label: string }
 
-/** Alle zwölf Bereiche in drei Gruppen (Einstellungen.dc.html, Navigation links). */
+/** Alle dreizehn Bereiche in drei Gruppen (Einstellungen.dc.html, Navigation links). */
 export const bereichsGruppen: { label: string; bereiche: Bereich[] }[] = [
   {
     label: 'Fachlich',
@@ -31,6 +32,7 @@ export const bereichsGruppen: { label: string; bereiche: Bereich[] }[] = [
       { pfad: 'umsatzsteuer', icon: 'percent', label: 'Umsatzsteuer' },
       { pfad: 'pruefungen', icon: 'fact_check', label: 'Prüfungen' },
       { pfad: 'aufbewahrung', icon: 'lock_clock', label: 'Aufbewahrung' },
+      { pfad: 'geloeschte-belege', icon: 'delete', label: 'Gelöschte Belege' },
     ],
   },
   {

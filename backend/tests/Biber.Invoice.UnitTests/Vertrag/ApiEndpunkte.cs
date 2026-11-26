@@ -128,6 +128,9 @@ internal static class ApiEndpunkte
         Post(Belege.Massenaktion, R.Bearbeiten, "Aktion auf mehrere Belege anwenden") with { Body = typeof(MassenaktionDto), Antwort = typeof(AnzahlGeaendertDto) },
         Post(Belege.Aufteilen, R.Bearbeiten, "Beleg nach Seiten aufteilen") with { Body = typeof(AufteilenDto), Antwort = typeof(ImportVorgangDto[]), Status = 202 },
         Post(Belege.LogoUebernehmen, R.Bearbeiten, "Ausschnitt als Logo des Korrespondenten übernehmen") with { Body = typeof(LogoAusschnittDto), Antwort = typeof(LogoDto) },
+        Post(Belege.Loeschen, R.Admin, "Falsch zugeordneten Beleg trotz Löschsperre löschen (wird nur ausgeblendet)") with { Body = typeof(BelegLoeschenDto), Status = 204, Fehler = [new(409, "Der Beleg wird gerade verarbeitet")] },
+        Get(Belege.Geloeschte, R.Admin, "Gelöschte (falsch zugeordnete) Belege") with { Antwort = typeof(GeloeschterBelegDto[]) },
+        Post(Belege.Wiederherstellen, R.Admin, "Gelöschten Beleg wiederherstellen") with { Status = 204 },
 
         // Import
         Post(Import.Upload, R.Bearbeiten, "Dateien hochladen") with { Multipart = "dateien", MultipartMehrere = true, Antwort = typeof(ImportVorgangDto[]), Status = 202 },
@@ -213,6 +216,12 @@ internal static class ApiEndpunkte
         Post(Einstellungen.MailVerbindungTesten, R.Admin, "IMAP-Verbindung testen") with { Antwort = typeof(AktionErgebnisDto) },
         Post(Einstellungen.MailJetztAbrufen, R.Admin, "Postfach jetzt abrufen") with { Antwort = typeof(AktionErgebnisDto) },
         Get(Einstellungen.MailStatus, R.Lesen, "Status des Mail-Abrufs") with { Antwort = typeof(MailStatusDto) },
+        Put(Einstellungen.MailZugang, R.Admin, "IMAP-Zugang speichern (nur ohne IMAP_HOST in der .env)") with
+        {
+            Body = typeof(MailZugangSpeichernDto),
+            Status = 204,
+            Fehler = [new(409, "Der IMAP-Zugang ist per .env gesetzt")],
+        },
 
         // Sonstiges
         Get(Benachrichtigungen.Liste, R.Lesen, "Benachrichtigungen") with { Query = [new("nurUngelesen", typeof(bool), false), Seite], Antwort = typeof(SeiteDto<BenachrichtigungDto>) },

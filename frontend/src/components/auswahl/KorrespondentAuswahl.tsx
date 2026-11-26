@@ -5,6 +5,7 @@ import { Chip } from '@/components/Chip'
 import { Icon } from '@/components/Icon'
 import { KorrespondentLogo } from '@/components/KorrespondentLogo'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { SkelettListe } from '@/components/ui/skelett'
 import { Option, Suchfeld, useEntprellt, useListenNavigation } from './gemeinsam'
 
 /** Name ohne Umlaute, Rechtsform-Abstände und Satzzeichen – „Bürowelt Krämer KG“ → „bueroweltkraemerkg“. */
@@ -52,7 +53,7 @@ export function KorrespondentAuswahl({
   const [offen, setOffen] = useState(anfangsOffen)
   const [suche, setSuche] = useState('')
   const entprellt = useEntprellt(suche.trim(), 250)
-  const { data: treffer = [] } = useKorrespondenten(entprellt ? { suche: entprellt } : {})
+  const { data: treffer = [], isPending, isFetching } = useKorrespondenten(entprellt ? { suche: entprellt } : {})
 
   function waehlen(id: string) {
     onAendern(id)
@@ -74,11 +75,13 @@ export function KorrespondentAuswahl({
           wert={suche}
           onAendern={setSuche}
           platzhalter="Korrespondent suchen"
+          ladend={isFetching || entprellt !== suche.trim()}
           onKeyDown={navigation.onKeyDown}
           listId={listId}
           aktivId={navigation.aktiv >= 0 ? `${listId}-${navigation.aktiv}` : undefined}
         />
-        <div id={listId} role="listbox" aria-label="Korrespondenten">
+        {isPending && <SkelettListe zeilen={4} kompakt label="Korrespondenten werden geladen" />}
+        <div id={listId} role="listbox" aria-label="Korrespondenten" aria-busy={isPending || undefined}>
           {treffer.map((k, i) => (
             <Option
               key={k.id}

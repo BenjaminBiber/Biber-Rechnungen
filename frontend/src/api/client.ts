@@ -8,14 +8,23 @@ export class ApiFehler extends Error {
   readonly fehler?: Record<string, string[]>
   /** Vollständiger ProblemDetails-Körper, z. B. für Erweiterungen wie `korrespondentId` oder `pfade`. */
   readonly problem: Record<string, unknown>
+  /** Methode und Pfad der fehlgeschlagenen Anfrage, z. B. `GET /api/belege?ansicht=inbox` (für die Fehlerseite). */
+  readonly anfrage?: string
 
-  constructor(status: number, titel: string, fehler?: Record<string, string[]>, problem: Record<string, unknown> = {}) {
+  constructor(
+    status: number,
+    titel: string,
+    fehler?: Record<string, string[]>,
+    problem: Record<string, unknown> = {},
+    anfrage?: string,
+  ) {
     super(titel)
     this.name = 'ApiFehler'
     this.status = status
     this.titel = titel
     this.fehler = fehler
     this.problem = problem
+    this.anfrage = anfrage
   }
 }
 
@@ -26,7 +35,7 @@ export function istApiFehler(wert: unknown): wert is ApiFehler {
 type ProblemDetails = { title?: string | null; detail?: string | null; errors?: Record<string, string[]> | null }
 
 /** Baut aus Status und Antwortkörper (ProblemDetails oder Text) einen `ApiFehler`. */
-export function zuApiFehler(status: number, koerper: unknown, statusText = ''): ApiFehler {
+export function zuApiFehler(status: number, koerper: unknown, statusText = '', anfrage?: string): ApiFehler {
   const problem: ProblemDetails = typeof koerper === 'object' && koerper !== null ? (koerper as ProblemDetails) : {}
   const titel =
     problem.title ||
@@ -34,7 +43,7 @@ export function zuApiFehler(status: number, koerper: unknown, statusText = ''): 
     (typeof koerper === 'string' && koerper.trim() ? koerper.trim() : '') ||
     statusText ||
     `Fehler ${status}`
-  return new ApiFehler(status, titel, problem.errors ?? undefined, problem as Record<string, unknown>)
+  return new ApiFehler(status, titel, problem.errors ?? undefined, problem as Record<string, unknown>, anfrage)
 }
 
 /**
@@ -62,6 +71,17 @@ const weiterleitungBei401: Middleware = {
   },
 }
 
+/** Methode und Pfad je Antwort, damit `daten` sie an den `ApiFehler` hängen kann. */
+const anfrageJeAntwort = new WeakMap<Response, string>()
+
+const anfrageMerken: Middleware = {
+  onResponse({ request, response }) {
+    const url = new URL(request.url)
+    anfrageJeAntwort.set(response, `${request.method} ${url.pathname}${url.search}`)
+    return undefined
+  },
+}
+
 /**
  * Typisierter Client für alle Endpunkte aus `docs/api/openapi.json`. Die Pfade im Vertrag
  * beginnen bereits mit `/api`, die Basis ist daher nur der Ursprung (absolut, weil Node/jsdom
@@ -72,7 +92,7 @@ export const api = createClient<paths>({
   credentials: 'include',
   fetch: (anfrage) => globalThis.fetch(anfrage),
 })
-api.use(weiterleitungBei401)
+api.use(weiterleitungBei401, anfrageMerken)
 
 /** Relative URL für Datei-Endpunkte (`<a href>`, `<img src>`); leere Parameter entfallen. */
 export function apiUrl(pfad: string, abfrage: Record<string, string | number | boolean | undefined> = {}): string {
@@ -87,7 +107,7 @@ type Antwort<D> = { data?: D; error?: unknown; response: Response }
 /** Wartet auf eine Client-Antwort und liefert die Daten oder wirft einen `ApiFehler`. */
 export async function daten<D>(anfrage: Promise<Antwort<D>>): Promise<D> {
   const { data, error, response } = await anfrage
-  if (!response.ok) throw zuApiFehler(response.status, error, response.statusText)
+  if (!response.ok) throw zuApiFehler(response.status, error, response.statusText, anfrageJeAntwort.get(response))
   return data as D
 }
 
