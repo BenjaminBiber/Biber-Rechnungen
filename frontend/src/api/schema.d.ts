@@ -1582,6 +1582,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/neu-auslesen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Stand von „Alle Belege erneut auslesen“ mit Restzeit */
+        get: operations["getNeuAuslesenStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/neu-auslesen/starten": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Alle Belege im Hintergrund erneut auslesen */
+        post: operations["postNeuAuslesenStarten"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/neu-auslesen/abbrechen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Laufendes erneutes Auslesen nach dem aktuellen Beleg abbrechen */
+        post: operations["postNeuAuslesenAbbrechen"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/suche": {
         parameters: {
             query?: never;
@@ -2627,6 +2678,36 @@ export interface components {
             /** Format: decimal */
             summeVorjahr: number;
             nachKategorie: components["schemas"]["KategorieAnteilDto"][];
+        };
+        NeuAuslesenLaufDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            gestartetAm: string;
+            /** Format: date-time */
+            beendetAm?: string | null;
+            laeuft: boolean;
+            abgebrochen: boolean;
+            abbruchgrund?: string | null;
+            /** Format: int32 */
+            gesamt: number;
+            /** Format: int32 */
+            verarbeitet: number;
+            /** Format: int32 */
+            anzahlFehler: number;
+            /** Format: int32 */
+            anzahlUebersprungen: number;
+            /** Format: int32 */
+            restSekunden?: number | null;
+            /** Format: int32 */
+            dauerSekunden: number;
+            letzterFehler?: string | null;
+            fehlerBelege: string[];
+        };
+        NeuAuslesenStatusDto: {
+            /** Format: int32 */
+            anzahlBelege: number;
+            lauf?: components["schemas"]["NeuAuslesenLaufDto"] | null;
         };
         NeuesPasswortDto: {
             neuesPasswort: string;
@@ -6004,6 +6085,108 @@ export interface operations {
             };
             401: components["responses"]["NichtAngemeldet"];
             403: components["responses"]["KeinRecht"];
+        };
+    };
+    getNeuAuslesenStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NeuAuslesenStatusDto"];
+                };
+            };
+            401: components["responses"]["NichtAngemeldet"];
+            403: components["responses"]["KeinRecht"];
+        };
+    };
+    postNeuAuslesenStarten: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Angenommen */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NeuAuslesenStatusDto"];
+                };
+            };
+            401: components["responses"]["NichtAngemeldet"];
+            403: components["responses"]["KeinRecht"];
+            /** @description Es läuft bereits ein Lauf */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        type?: string;
+                        title?: string;
+                        /** Format: int32 */
+                        status?: number;
+                        detail?: string;
+                        errors?: {
+                            [key: string]: string[];
+                        };
+                    };
+                };
+            };
+        };
+    };
+    postNeuAuslesenAbbrechen: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NeuAuslesenStatusDto"];
+                };
+            };
+            401: components["responses"]["NichtAngemeldet"];
+            403: components["responses"]["KeinRecht"];
+            /** @description Es läuft kein Lauf */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        type?: string;
+                        title?: string;
+                        /** Format: int32 */
+                        status?: number;
+                        detail?: string;
+                        errors?: {
+                            [key: string]: string[];
+                        };
+                    };
+                };
+            };
         };
     };
     getSucheGlobal: {

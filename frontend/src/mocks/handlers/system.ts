@@ -8,6 +8,7 @@ import type {
   IntegritaetsLauf,
   LoeschErgebnis,
   Loeschen,
+  NeuAuslesenStatus,
   Suchergebnis,
 } from '@/api/typen'
 import { beispielPdf } from '../dateien'
@@ -31,7 +32,33 @@ import {
 } from './gemeinsam'
 import { korrespondentEintrag } from './korrespondenten'
 
-/** Benachrichtigungen, Aufbewahrung, Integrität, Suche, API-Tokens und Verfahrensdoku. */
+/** Sekunden, die der Mock je Beleg veranschlagt. */
+const sekundenJeBeleg = 4
+
+/**
+ * Simulierter Fortschritt von „Alle Belege erneut auslesen“: Jeder Abruf liest ein Viertel der Belege weiter aus;
+ * ein angeforderter Abbruch greift beim nächsten Abruf (wie im Backend nach dem aktuellen Beleg).
+ */
+function neuAuslesenWeiter(): void {
+  const lauf = db.neuAuslesenLauf
+  if (!lauf?.laeuft) return
+  const verarbeitet = lauf.abgebrochen
+    ? lauf.verarbeitet
+    : Math.min(lauf.gesamt, lauf.verarbeitet + Math.max(1, Math.ceil(lauf.gesamt / 4)))
+  const fertig = lauf.abgebrochen || verarbeitet >= lauf.gesamt
+  db.neuAuslesenLauf = {
+    ...lauf,
+    verarbeitet,
+    laeuft: !fertig,
+    beendetAm: fertig ? new Date().toISOString() : null,
+    restSekunden: fertig ? null : (lauf.gesamt - verarbeitet) * sekundenJeBeleg,
+    dauerSekunden: verarbeitet * sekundenJeBeleg,
+  }
+}
+
+const neuAuslesenStand = (): NeuAuslesenStatus => ({ anzahlBelege: db.belege.length, lauf: db.neuAuslesenLauf })
+
+/** Benachrichtigungen, Aufbewahrung, Integrität, Neu-Auslesen, Suche, API-Tokens und Verfahrensdoku. */
 export const systemRouten: Route[] = [
   route('get', '/api/benachrichtigungen', 'Lesen', ({ request }) => {
     const parameter = abfrage(request)
@@ -127,6 +154,39 @@ export const systemRouten: Route[] = [
     }
     db.integritaetsLaeufe = [lauf, ...db.integritaetsLaeufe]
     return angenommen()
+  }),
+
+  route('get', '/api/neu-auslesen', 'Admin', () => {
+    neuAuslesenWeiter()
+    return HttpResponse.json(neuAuslesenStand())
+  }),
+
+  route('post', '/api/neu-auslesen/starten', 'Admin', () => {
+    if (db.neuAuslesenLauf?.laeuft) return problem(409, 'Lauf läuft bereits')
+    db.neuAuslesenLauf = {
+      id: neueId(),
+      gestartetAm: new Date().toISOString(),
+      beendetAm: null,
+      laeuft: true,
+      abgebrochen: false,
+      abbruchgrund: null,
+      gesamt: db.belege.length,
+      verarbeitet: 0,
+      anzahlFehler: 0,
+      anzahlUebersprungen: 0,
+      restSekunden: null,
+      dauerSekunden: 0,
+      letzterFehler: null,
+      fehlerBelege: [],
+    }
+    return HttpResponse.json(neuAuslesenStand(), { status: 202 })
+  }),
+
+  route('post', '/api/neu-auslesen/abbrechen', 'Admin', () => {
+    const lauf = db.neuAuslesenLauf
+    if (!lauf?.laeuft) return problem(409, 'Kein Lauf aktiv')
+    db.neuAuslesenLauf = { ...lauf, abgebrochen: true, abbruchgrund: 'Von Hand abgebrochen' }
+    return HttpResponse.json(neuAuslesenStand())
   }),
 
   route('get', '/api/suche', 'Lesen', ({ request }) => {

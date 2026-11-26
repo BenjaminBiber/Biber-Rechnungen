@@ -15,6 +15,7 @@ import * as importe from './import'
 import * as integritaet from './integritaet'
 import * as konto from './konto'
 import * as korrespondenten from './korrespondenten'
+import * as neuAuslesen from './neuAuslesen'
 import * as suche from './suche'
 import * as tags from './tags'
 import * as tokens from './tokens'
@@ -34,6 +35,7 @@ const module = {
   integritaet,
   konto,
   korrespondenten,
+  neuAuslesen,
   suche,
   tags,
   tokens,
@@ -151,6 +153,9 @@ const zuordnung: Record<string, `${keyof typeof module}.${string}` | null> = {
   postBelegeWiederherstellen: 'aufbewahrung.useBelegWiederherstellen',
   getIntegritaetLaeufe: 'integritaet.useIntegritaetsLaeufe',
   postIntegritaetStarten: 'integritaet.useIntegritaetStarten',
+  getNeuAuslesenStatus: 'neuAuslesen.useNeuAuslesenStatus',
+  postNeuAuslesenStarten: 'neuAuslesen.useNeuAuslesenStarten',
+  postNeuAuslesenAbbrechen: 'neuAuslesen.useNeuAuslesenAbbrechen',
   getSucheGlobal: 'suche.useSuche',
   getTokensListe: 'tokens.useTokens',
   postTokensListe: 'tokens.useTokenAnlegen',

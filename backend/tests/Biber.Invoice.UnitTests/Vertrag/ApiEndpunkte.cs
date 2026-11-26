@@ -235,6 +235,20 @@ internal static class ApiEndpunkte
         Post(Aufbewahrung.Loeschen, R.Admin, "Belege eines Jahres löschen") with { Body = typeof(LoeschenDto), Antwort = typeof(LoeschErgebnisDto), Fehler = [new(409, "Keine Belege mit abgelaufener Aufbewahrungsfrist")] },
         Get(Integritaet.Laeufe, R.Lesen, "Läufe der Integritätsprüfung") with { Antwort = typeof(IntegritaetsLaufDto[]) },
         Post(Integritaet.Starten, R.Admin, "Integritätsprüfung starten") with { Status = 202 },
+
+        // Alle Belege erneut auslesen
+        Get(NeuAuslesen.Status, R.Admin, "Stand von „Alle Belege erneut auslesen“ mit Restzeit") with { Antwort = typeof(NeuAuslesenStatusDto) },
+        Post(NeuAuslesen.Starten, R.Admin, "Alle Belege im Hintergrund erneut auslesen") with
+        {
+            Antwort = typeof(NeuAuslesenStatusDto),
+            Status = 202,
+            Fehler = [new(409, "Es läuft bereits ein Lauf")],
+        },
+        Post(NeuAuslesen.Abbrechen, R.Admin, "Laufendes erneutes Auslesen nach dem aktuellen Beleg abbrechen") with
+        {
+            Antwort = typeof(NeuAuslesenStatusDto),
+            Fehler = [new(409, "Es läuft kein Lauf")],
+        },
         Get(Suche.Global, R.Lesen, "Globale Suche (Befehlspalette)") with { Query = [new("q", typeof(string), Pflicht: true)], Antwort = typeof(SuchergebnisDto) },
         Get(Tokens.Liste, R.Lesen, "Eigene API-Tokens") with { Antwort = typeof(ApiTokenDto[]) },
         Post(Tokens.Liste, R.Bearbeiten, "API-Token erzeugen") with { Body = typeof(ApiTokenAnlegenDto), Antwort = typeof(ApiTokenErstelltDto), Status = 201 },

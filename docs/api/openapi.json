@@ -78,6 +78,9 @@
       "name": "Integritaet"
     },
     {
+      "name": "NeuAuslesen"
+    },
+    {
       "name": "Suche"
     },
     {
@@ -5140,6 +5143,160 @@
         }
       }
     },
+    "/api/neu-auslesen": {
+      "get": {
+        "tags": [
+          "NeuAuslesen"
+        ],
+        "summary": "Stand von „Alle Belege erneut auslesen“ mit Restzeit",
+        "operationId": "getNeuAuslesenStatus",
+        "x-richtlinie": "Admin",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NeuAuslesenStatusDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/NichtAngemeldet"
+          },
+          "403": {
+            "$ref": "#/components/responses/KeinRecht"
+          }
+        }
+      }
+    },
+    "/api/neu-auslesen/starten": {
+      "post": {
+        "tags": [
+          "NeuAuslesen"
+        ],
+        "summary": "Alle Belege im Hintergrund erneut auslesen",
+        "operationId": "postNeuAuslesenStarten",
+        "x-richtlinie": "Admin",
+        "responses": {
+          "202": {
+            "description": "Angenommen",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NeuAuslesenStatusDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/NichtAngemeldet"
+          },
+          "403": {
+            "$ref": "#/components/responses/KeinRecht"
+          },
+          "409": {
+            "description": "Es läuft bereits ein Lauf",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object",
+                  "description": "ProblemDetails nach RFC 9457",
+                  "properties": {
+                    "type": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/neu-auslesen/abbrechen": {
+      "post": {
+        "tags": [
+          "NeuAuslesen"
+        ],
+        "summary": "Laufendes erneutes Auslesen nach dem aktuellen Beleg abbrechen",
+        "operationId": "postNeuAuslesenAbbrechen",
+        "x-richtlinie": "Admin",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NeuAuslesenStatusDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/NichtAngemeldet"
+          },
+          "403": {
+            "$ref": "#/components/responses/KeinRecht"
+          },
+          "409": {
+            "description": "Es läuft kein Lauf",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object",
+                  "description": "ProblemDetails nach RFC 9457",
+                  "properties": {
+                    "type": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/suche": {
       "get": {
         "tags": [
@@ -9074,6 +9231,112 @@
           "summe",
           "summeVorjahr",
           "nachKategorie"
+        ]
+      },
+      "NeuAuslesenLaufDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "gestartetAm": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "beendetAm": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "laeuft": {
+            "type": "boolean"
+          },
+          "abgebrochen": {
+            "type": "boolean"
+          },
+          "abbruchgrund": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "gesamt": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "verarbeitet": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "anzahlFehler": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "anzahlUebersprungen": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "restSekunden": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "dauerSekunden": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "letzterFehler": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fehlerBelege": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "gestartetAm",
+          "laeuft",
+          "abgebrochen",
+          "gesamt",
+          "verarbeitet",
+          "anzahlFehler",
+          "anzahlUebersprungen",
+          "dauerSekunden",
+          "fehlerBelege"
+        ]
+      },
+      "NeuAuslesenStatusDto": {
+        "type": "object",
+        "properties": {
+          "anzahlBelege": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lauf": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NeuAuslesenLaufDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "anzahlBelege"
         ]
       },
       "NeuesPasswortDto": {

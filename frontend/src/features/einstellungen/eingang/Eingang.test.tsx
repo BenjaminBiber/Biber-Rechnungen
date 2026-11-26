@@ -10,6 +10,8 @@ import { routeTree } from '@/routeTree.gen'
 import { balkenFarbe } from './documentIntelligence'
 import { vorZeit } from './gemeinsam'
 import { mailStatusChip } from './mail'
+import { dauerText, fortschrittText, restzeitText, zustand } from './neuAuslesen'
+import type { NeuAuslesenLauf } from '@/api/typen'
 
 type Anfrage = { methode: string; pfad: string; koerper?: unknown }
 
@@ -158,6 +160,146 @@ describe('Einstellungen Eingang', { timeout: 20000 }, () => {
       expect(screen.getByLabelText('Monatslimit (Seiten)')).toBeDisabled()
       expect(screen.queryByRole('button', { name: 'Verbindung testen' })).not.toBeInTheDocument()
       expect(screen.queryByRole('button', { name: 'Warteschlange jetzt fortsetzen' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Alle neu auslesen' })).not.toBeInTheDocument()
+      ende()
+    })
+  })
+
+  describe('Alle Belege erneut auslesen', () => {
+    const lauf = (teil: Partial<NeuAuslesenLauf> = {}): NeuAuslesenLauf => ({
+      id: 'b0000000-0000-4000-8000-000000000001',
+      gestartetAm: '2026-11-26T09:00:00Z',
+      beendetAm: null,
+      laeuft: true,
+      abgebrochen: false,
+      abbruchgrund: null,
+      gesamt: 412,
+      verarbeitet: 120,
+      anzahlFehler: 0,
+      anzahlUebersprungen: 0,
+      restSekunden: 480,
+      dauerSekunden: 200,
+      letzterFehler: null,
+      fehlerBelege: [],
+      ...teil,
+    })
+    const fortschritt = () => screen.findByRole('region', { name: 'Fortschritt erneutes Auslesen' }, { timeout: 5000 })
+
+    it('Restzeit, Dauer und Fortschrittszeile', () => {
+      expect(restzeitText(null)).toBe('Restzeit wird berechnet …')
+      expect(restzeitText(30)).toBe('gleich fertig')
+      expect(restzeitText(480)).toBe('noch ca. 8 Min.')
+      expect(restzeitText(3900)).toBe('noch ca. 1 Std. 5 Min.')
+      expect(restzeitText(7200)).toBe('noch ca. 2 Std.')
+      expect(dauerText(0)).toBe('Dauer 1 Sek.')
+      expect(dauerText(45)).toBe('Dauer 45 Sek.')
+      expect(dauerText(840)).toBe('Dauer 14 Min.')
+      expect(fortschrittText(lauf({ anzahlFehler: 2, anzahlUebersprungen: 1 }))).toBe(
+        '117 neu ausgelesen · 2 Fehler · 1 übersprungen · noch ca. 8 Min.',
+      )
+      expect(fortschrittText(lauf({ laeuft: false, verarbeitet: 412, dauerSekunden: 840 }))).toBe(
+        '412 neu ausgelesen · Dauer 14 Min.',
+      )
+      expect(zustand(lauf())).toBe('laeuft')
+      expect(zustand(lauf({ abgebrochen: true }))).toBe('wirdAbgebrochen')
+      expect(zustand(lauf({ laeuft: false }))).toBe('fertig')
+      expect(zustand(lauf({ laeuft: false, abbruchgrund: 'Von Hand abgebrochen' }))).toBe('abgebrochen')
+    })
+
+    it('Start fragt nach, nennt das DI-Limit und zeigt danach den Fortschritt mit Restzeit', async () => {
+      const anzahl = db.belege.length
+      const { user, ende } = renderSeite('/einstellungen/document-intelligence')
+      await formular('Document Intelligence')
+      expect(await screen.findByText(`Liest alle ${anzahl} Belege`, { exact: false })).toBeInTheDocument()
+      expect(screen.queryByRole('region', { name: 'Fortschritt erneutes Auslesen' })).not.toBeInTheDocument()
+
+      await user.click(knopf('Alle neu auslesen'))
+      const dialog = await screen.findByRole('alertdialog')
+      expect(within(dialog).getByText(`Alle ${anzahl} Belege erneut auslesen?`)).toBeInTheDocument()
+      expect(within(dialog).getByText(/aktuell 412 von 500 Seiten/)).toBeInTheDocument()
+      await user.click(within(dialog).getByRole('button', { name: 'Jetzt auslesen' }))
+      await toastMit('Erneutes Auslesen gestartet')
+
+      const bereich = await fortschritt()
+      expect(within(bereich).getByText('Belege werden erneut ausgelesen')).toBeInTheDocument()
+      expect(within(bereich).getByRole('progressbar')).toHaveAttribute('aria-valuemax', String(anzahl))
+      expect(knopf('Alle neu auslesen')).toBeDisabled()
+      // Der nächste Abruf (Polling) rückt den Mock-Lauf um ein Viertel vor (4 s je Beleg) und liefert eine Restzeit.
+      const schritt = Math.ceil(anzahl / 4)
+      expect(
+        await within(bereich).findByText(
+          `${schritt} neu ausgelesen · ${restzeitText((anzahl - schritt) * 4)}`,
+          {},
+          { timeout: 5000 },
+        ),
+      ).toBeInTheDocument()
+      expect(within(bereich).getByRole('progressbar')).toHaveAttribute('aria-valuenow', String(schritt))
+      ende()
+    })
+
+    it('Abbrechen beendet den Lauf und nennt den Grund', async () => {
+      db.neuAuslesenLauf = lauf({ gesamt: 400, verarbeitet: 0 })
+      const { user, ende } = renderSeite('/einstellungen/document-intelligence')
+      const bereich = await fortschritt()
+      await user.click(within(bereich).getByRole('button', { name: 'Abbrechen' }))
+      expect(await within(bereich).findByText('Wird nach dem aktuellen Beleg abgebrochen …')).toBeInTheDocument()
+      expect(within(bereich).getByRole('button', { name: 'Abbrechen' })).toBeDisabled()
+      expect(
+        await within(bereich).findByText('Erneutes Auslesen vorzeitig beendet', {}, { timeout: 5000 }),
+      ).toBeInTheDocument()
+      expect(within(bereich).getByText('Grund: Von Hand abgebrochen')).toBeInTheDocument()
+      expect(within(bereich).queryByRole('button', { name: 'Abbrechen' })).not.toBeInTheDocument()
+      expect(knopf('Alle neu auslesen')).toBeEnabled()
+      ende()
+    })
+
+    it('abgeschlossener Lauf: Dauer, Fehlerzahl und Links zu den Belegen mit Fehler', async () => {
+      const kaputt = db.belege[0].id
+      db.neuAuslesenLauf = lauf({
+        laeuft: false,
+        beendetAm: '2026-11-26T09:14:00Z',
+        verarbeitet: 412,
+        anzahlFehler: 1,
+        restSekunden: null,
+        dauerSekunden: 840,
+        letzterFehler: 'Original nicht lesbar',
+        fehlerBelege: [kaputt],
+      })
+      const { user, ende } = renderSeite('/einstellungen/document-intelligence')
+      const bereich = await fortschritt()
+      expect(within(bereich).getByText('Erneutes Auslesen abgeschlossen')).toBeInTheDocument()
+      expect(within(bereich).getByText('412 / 412 Belege · 100 %')).toBeInTheDocument()
+      expect(within(bereich).getByText('411 neu ausgelesen · 1 Fehler · Dauer 14 Min.')).toBeInTheDocument()
+      await user.click(within(bereich).getByText('1 Beleg mit Fehler'))
+      expect(within(bereich).getByText('Letzter Fehler: Original nicht lesbar')).toBeInTheDocument()
+      const links = within(within(bereich).getByRole('list', { name: 'Belege mit Fehler' })).getAllByRole('link')
+      expect(links.map((l) => l.getAttribute('href'))).toEqual([`/belege/${kaputt}`])
+      ende()
+    })
+
+    it('am DI-Limit angehaltener Lauf nennt den Grund', async () => {
+      db.neuAuslesenLauf = lauf({
+        laeuft: false,
+        beendetAm: '2026-11-26T09:05:00Z',
+        abbruchgrund: 'Document Intelligence: Monatslimit erreicht',
+        anzahlFehler: 1,
+      })
+      const { ende } = renderSeite('/einstellungen/document-intelligence')
+      const bereich = await fortschritt()
+      expect(within(bereich).getByText('Erneutes Auslesen vorzeitig beendet')).toBeInTheDocument()
+      expect(within(bereich).getByText('Grund: Document Intelligence: Monatslimit erreicht')).toBeInTheDocument()
+      ende()
+    })
+
+    it('Start während eines Laufs (409) erscheint als Fehler-Toast', async () => {
+      szenario.fehler('/api/neu-auslesen/starten', 409, 'POST')
+      const { user, ende } = renderSeite('/einstellungen/document-intelligence')
+      await formular('Document Intelligence')
+      await user.click(await screen.findByRole('button', { name: 'Alle neu auslesen' }))
+      await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Jetzt auslesen' }))
+      expect(await screen.findByText('Erzwungener Fehler 409 (Szenario)', {}, { timeout: 5000 })).toBeInTheDocument()
+      expect(screen.getByRole('alertdialog')).toBeInTheDocument()
+      expect(screen.queryByRole('region', { name: 'Fortschritt erneutes Auslesen' })).not.toBeInTheDocument()
       ende()
     })
   })

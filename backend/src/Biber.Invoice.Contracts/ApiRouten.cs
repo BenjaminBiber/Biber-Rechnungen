@@ -193,6 +193,14 @@ public static class ApiRouten
         public const string Starten = "/api/integritaet/starten";
     }
 
+    /// <summary>„Alle Belege erneut auslesen“ (Admin).</summary>
+    public static class NeuAuslesen
+    {
+        public const string Status = "/api/neu-auslesen";
+        public const string Starten = "/api/neu-auslesen/starten";
+        public const string Abbrechen = "/api/neu-auslesen/abbrechen";
+    }
+
     public static class SystemInfo
     {
         public const string Status = "/api/system/status";

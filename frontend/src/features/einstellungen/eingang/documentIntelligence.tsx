@@ -5,6 +5,7 @@ import { formatZahl } from '@/lib/format'
 import { Bereich } from '../Bereich'
 import { EinstellungsFormular, type Feldfehler } from '../EinstellungsFormular'
 import { AktionsKnopf, NurLesenFeld, Raster, ZahlFeld, ganzzahl } from './gemeinsam'
+import { NeuAuslesenKarte } from './neuAuslesen'
 
 type DiFormular = Record<keyof DiEinstellungen, string>
 
@@ -77,7 +78,7 @@ const zuWerten = (f: DiFormular): DiEinstellungen => ({
   maxSeitenJeBeleg: Number(f.maxSeitenJeBeleg),
 })
 
-/** Bereich „Document Intelligence“: Verbrauch, Limits, Verbindung und Warteschlange. */
+/** Bereich „Document Intelligence“: Verbrauch, Limits, Verbindung, Warteschlange und (Admin) alle Belege neu auslesen. */
 export function DocumentIntelligenceBereich() {
   const { data: verbrauch } = useDiVerbrauch()
   const { istAdmin } = useRolle()
@@ -144,6 +145,7 @@ export function DocumentIntelligenceBereich() {
               </AktionsKnopf>
             </div>
           )}
+          {istAdmin && <NeuAuslesenKarte verbrauch={verbrauch} diKonfiguriert={e.umgebung.diKonfiguriert} />}
         </>
       )}
     </Bereich>

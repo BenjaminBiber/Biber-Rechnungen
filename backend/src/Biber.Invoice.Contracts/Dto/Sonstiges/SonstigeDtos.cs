@@ -34,6 +34,32 @@ public sealed record IntegritaetsLaufDto(
     int AnzahlAbweichungen,
     string[] Abweichungen);
 
+/// <summary>
+/// „Alle Belege erneut auslesen“: wie viele Belege ein neuer Lauf umfassen würde und der jüngste Lauf
+/// (<c>null</c>, solange noch keiner gestartet wurde).
+/// </summary>
+public sealed record NeuAuslesenStatusDto(int AnzahlBelege, NeuAuslesenLaufDto? Lauf);
+
+/// <summary>
+/// Stand eines Laufs. <see cref="Verarbeitet"/> zählt Fehler und übersprungene Belege mit; <see cref="RestSekunden"/>
+/// schätzt die verbleibende Dauer aus dem bisherigen Tempo (nur während des Laufs und nach dem ersten Beleg).
+/// </summary>
+public sealed record NeuAuslesenLaufDto(
+    Guid Id,
+    DateTimeOffset GestartetAm,
+    DateTimeOffset? BeendetAm,
+    bool Laeuft,
+    bool Abgebrochen,
+    string? Abbruchgrund,
+    int Gesamt,
+    int Verarbeitet,
+    int AnzahlFehler,
+    int AnzahlUebersprungen,
+    int? RestSekunden,
+    int DauerSekunden,
+    string? LetzterFehler,
+    Guid[] FehlerBelege);
+
 public sealed record BackupStatusDto(DateTimeOffset? LetztesBackup, long? Groesse, int AnzahlDumps);
 
 public sealed record SuchergebnisDto(

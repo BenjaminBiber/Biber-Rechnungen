@@ -14,6 +14,7 @@ import type {
   GespeicherteAnsicht,
   ImportVorgang,
   IntegritaetsLauf,
+  NeuAuslesenLauf,
   Kategorie,
   Konto,
   Loeschbar,
@@ -82,6 +83,8 @@ export type MockZustand = {
   /** Als falsch zugeordnet gelöschte Belege: die Liste und der ausgeblendete Beleg zum Wiederherstellen. */
   geloeschteBelege: { eintrag: GeloeschterBeleg; beleg: BelegDetail }[]
   integritaetsLaeufe: IntegritaetsLauf[]
+  /** Jüngster Lauf „Alle Belege erneut auslesen“; jeder Abruf des Stands rückt ihn ein Stück vor. */
+  neuAuslesenLauf: NeuAuslesenLauf | null
   tokens: ApiToken[]
   verfahrensdoku: Verfahrensdoku
   fehler: ErzwungenerFehler[]
@@ -123,6 +126,7 @@ function erzeuge(): MockZustand {
     loeschbar,
     geloeschteBelege: [],
     integritaetsLaeufe,
+    neuAuslesenLauf: null,
     tokens: apiTokens,
     verfahrensdoku,
     fehler: [],

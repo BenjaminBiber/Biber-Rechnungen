@@ -1249,6 +1249,69 @@ namespace Biber.Invoice.Infrastructure.Persistenz.Migrationen
                     b.ToTable("matching_modell");
                 });
 
+            modelBuilder.Entity("Biber.Invoice.Domain.Entitaeten.NeuAuslesenLauf", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("AbbruchAngefordert")
+                        .HasColumnType("boolean")
+                        .HasColumnName("abbruch_angefordert");
+
+                    b.Property<string>("Abbruchgrund")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("abbruchgrund");
+
+                    b.Property<DateTimeOffset>("AktualisiertAm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("aktualisiert_am");
+
+                    b.Property<int>("AnzahlFehler")
+                        .HasColumnType("integer")
+                        .HasColumnName("anzahl_fehler");
+
+                    b.Property<int>("AnzahlUebersprungen")
+                        .HasColumnType("integer")
+                        .HasColumnName("anzahl_uebersprungen");
+
+                    b.Property<DateTimeOffset?>("BeendetAm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("beendet_am");
+
+                    b.Property<string>("FehlerBelege")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("fehler_belege");
+
+                    b.Property<int>("Gesamt")
+                        .HasColumnType("integer")
+                        .HasColumnName("gesamt");
+
+                    b.Property<DateTimeOffset>("GestartetAm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("gestartet_am");
+
+                    b.Property<string>("LetzterFehler")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("letzter_fehler");
+
+                    b.Property<int>("Verarbeitet")
+                        .HasColumnType("integer")
+                        .HasColumnName("verarbeitet");
+
+                    b.HasKey("Id")
+                        .HasName("pk_neu_auslesen_lauf");
+
+                    b.HasIndex("GestartetAm")
+                        .HasDatabaseName("ix_neu_auslesen_lauf_gestartet_am");
+
+                    b.ToTable("neu_auslesen_lauf");
+                });
+
             modelBuilder.Entity("Biber.Invoice.Domain.Entitaeten.Position", b =>
                 {
                     b.Property<Guid>("Id")

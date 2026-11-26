@@ -70,8 +70,7 @@ public sealed class VerarbeitungsStarter(
                     await VerwaisteArtikel.EntfernenAsync(db, bisherigeArtikel, ct);
                     return;
                 default:
-                    throw new InvalidOperationException(
-                        $"Erneutes Auslesen bei Schritt „{schritt.Name}“ abgebrochen: {ergebnis.Text}");
+                    throw new VerarbeitungAbgebrochenException(schritt.Name, ergebnis.Ausgang, ergebnis.Text);
             }
         }
 

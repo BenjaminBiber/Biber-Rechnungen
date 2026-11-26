@@ -34,6 +34,7 @@ public class BiberDbContext(DbContextOptions<BiberDbContext> options)
     public DbSet<MatchingModell> MatchingModelle => Set<MatchingModell>();
     public DbSet<ExportLauf> ExportLaeufe => Set<ExportLauf>();
     public DbSet<IntegritaetsLauf> IntegritaetsLaeufe => Set<IntegritaetsLauf>();
+    public DbSet<NeuAuslesenLauf> NeuAuslesenLaeufe => Set<NeuAuslesenLauf>();
     public DbSet<GespeicherteAnsicht> GespeicherteAnsichten => Set<GespeicherteAnsicht>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
