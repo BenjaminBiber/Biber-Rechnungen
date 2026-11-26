@@ -329,6 +329,7 @@ const pruefNamen: Record<PruefungArt, string> = {
   Konfidenz: 'Erkennungssicherheit',
   Kosit: 'KoSIT-Validierung',
   Bankverbindung: 'Bankverbindung bekannt',
+  UstIdNr: 'USt-IdNr. gültig (VIES)',
 }
 
 /** Fehlgeschlagene Prüfungen der fünf Belege „zu prüfen“ (`Main.dc.html`, Liste „Zu prüfen“). */
@@ -358,6 +359,7 @@ function befunde(zeile: Zeile, istERechnung: boolean): PruefBefund[] {
     Konfidenz: 'Konfidenz über der Schwelle 0,80',
     Kosit: 'XRechnung gültig',
     Bankverbindung: 'IBAN ist beim Korrespondenten hinterlegt',
+    UstIdNr: 'USt-IdNr. ist laut VIES gültig',
   }
   const reihenfolge = Object.keys(pruefNamen) as PruefungArt[]
   const fehlgeschlageneArten = new Set(fehler.map(([art]) => art))
@@ -626,6 +628,16 @@ function baueBeleg(zeile: Zeile): BelegDetail {
     istERechnung,
     aufgeteiltAusBelegId: null,
     teilbelege: [],
+    bezug: { rechnung: null, gutschriften: [], restbetrag: null, kandidaten: [] },
+    skonto:
+      zeile.schluessel === 'b4'
+        ? {
+            prozent: 2,
+            bis: zeile.faellig,
+            betrag: runden(zeile.brutto * 0.02),
+            abgelaufen: zeile.faellig < mockHeute,
+          }
+        : null,
   }
 }
 

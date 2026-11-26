@@ -103,6 +103,7 @@ export function TagsSeite({
           key={kategorie?.id ?? 'neu'}
           art="kategorie"
           kategorie={neu ? undefined : kategorie}
+          alleKategorien={alleKategorien}
           onSchliessen={schliessen}
         />
       )}

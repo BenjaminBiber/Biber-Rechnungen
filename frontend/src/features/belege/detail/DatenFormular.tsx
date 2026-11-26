@@ -30,6 +30,7 @@ import { BetraegeBereich } from './BetraegeBereich'
 import { istZuPruefen, seitenText } from './gemeinsam'
 import { ausBeleg, gleich, MAX_TITEL, pruefen, serverFehler, zuDto, type FeldFehler, type Formular } from './formular'
 import { aenderungenAnmelden } from './offeneAenderungen'
+import { ZahlungBereich } from './ZahlungBereich'
 
 const belegarten: Belegart[] = ['Rechnung', 'Gutschrift', 'Quittung']
 
@@ -623,6 +624,8 @@ export function DatenFormular({
         onZeilen={(zeilen, sofort) => setze('steuerzeilen', zeilen, sofort)}
         onKopf={(feld, wert) => setze(feld, wert, true)}
       />
+
+      <ZahlungBereich beleg={beleg} nurLesen={nurLesen} />
 
       <div className="flex flex-wrap items-center gap-3 rounded-[10px] bg-flaeche px-3.5 py-3 text-[13px] text-gedaempft-stark">
         <Icon name={extraktion.quelle === 'Manuell' ? 'edit_note' : 'document_scanner'} />

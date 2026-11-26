@@ -146,10 +146,40 @@ describe('Tags & Kategorien', { timeout: 20000 }, () => {
         name: 'Sonstiges',
         farbe: '#E3893B',
         euerZeile: 'Sonstige Kosten',
+        elternId: null,
         matching: { algorithmus: 'Keiner', muster: null, grossKlein: false },
       },
     })
     expect(await screen.findByText('Sonstige Kosten')).toBeInTheDocument()
+    ende()
+  })
+
+  it('macht eine Kategorie zur Unterkategorie, die Hauptkategorie zählt sie mit', async () => {
+    const { anfragen, ende } = renderSeite(`/tags?reiter=kategorien&bearbeiten=${kategorieIds.hardware}`)
+    const dialog = await screen.findByRole('dialog', { name: 'Kategorie bearbeiten' })
+    const auswahl = within(dialog).getByLabelText('Oberkategorie')
+    expect(within(auswahl).queryByRole('option', { name: 'Hardware' })).not.toBeInTheDocument()
+    await userEvent.selectOptions(auswahl, 'Fahrzeug')
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Speichern' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    expect(anfragen).toContainEqual(
+      expect.objectContaining({
+        methode: 'PUT',
+        pfad: `/api/kategorien/${kategorieIds.hardware}`,
+        koerper: expect.objectContaining({ elternId: kategorieIds.fahrzeug }),
+      }),
+    )
+    await waitFor(async () => {
+      const namen = (await zeilen()).map((z) => within(z).getAllByRole('cell')[0].textContent)
+      expect(namen.indexOf('└Hardware')).toBe(namen.indexOf('Fahrzeug') + 1)
+    })
+    // Fahrzeug 22 Belege + Hardware 8 Belege
+    expect(within(zeile('Fahrzeug')).getByText('30')).toBeInTheDocument()
+
+    await userEvent.click(within(zeile('Fahrzeug')).getByRole('button', { name: 'Fahrzeug bearbeiten' }))
+    const haupt = await screen.findByRole('dialog', { name: 'Kategorie bearbeiten' })
+    expect(within(haupt).getByLabelText('Oberkategorie')).toBeDisabled()
+    expect(within(haupt).getByText(/Hat eine Unterkategorie/)).toBeInTheDocument()
     ende()
   })
 

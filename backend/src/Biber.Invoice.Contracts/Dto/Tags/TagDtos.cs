@@ -23,9 +23,11 @@ public sealed record KategorieDto(
     string? EuerZeile,
     MatchingDto Matching,
     int AnzahlBelege,
-    decimal SummeBrutto);
+    decimal SummeBrutto,
+    Guid? ElternId);
 
-public sealed record KategorieAendernDto(string Name, string Farbe, string? EuerZeile, MatchingDto Matching);
+/// <summary><see cref="ElternId"/>: Oberkategorie; leer = Hauptkategorie. Nur eine Ebene.</summary>
+public sealed record KategorieAendernDto(string Name, string Farbe, string? EuerZeile, MatchingDto Matching, Guid? ElternId = null);
 
 /// <summary>Testet eine Regel gegen den Bestand. <see cref="Ziel"/>: „Tag“, „Kategorie“ oder „Korrespondent“.</summary>
 public sealed record MatchingTestDto(string Ziel, Guid? ZielId, MatchingDto Matching);

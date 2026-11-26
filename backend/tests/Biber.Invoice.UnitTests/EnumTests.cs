@@ -20,7 +20,7 @@ public sealed class EnumTests
         { "DateiRolle", ["Original", "EingebettetesXml", "Visualisierung", "Vorschau"] },
         { "LogoQuelle", ["Keine", "Upload", "Pdf", "Favicon"] },
         { "MatchingAlgorithmus", ["Keiner", "EinWort", "AlleWoerter", "Exakt", "Regex", "Unscharf", "Auto"] },
-        { "PruefungArt", ["Positionssumme", "NettoSteuerBrutto", "Pflichtfelder", "Datum", "Paragraph14", "Dublette", "NeuerKorrespondent", "Konfidenz", "Kosit", "Bankverbindung"] },
+        { "PruefungArt", ["Positionssumme", "NettoSteuerBrutto", "Pflichtfelder", "Datum", "Paragraph14", "Dublette", "NeuerKorrespondent", "Konfidenz", "Kosit", "Bankverbindung", "UstIdNr"] },
         { "PruefErgebnis", ["Ok", "Fehlgeschlagen", "NichtAnwendbar"] },
         { "KorrespondentErkennung", ["Keine", "UstIdNr", "Iban", "Name", "Manuell", "Auto"] },
         { "UstStatus", ["Unbekannt", "Regelbesteuerung", "Kleinunternehmer"] },
@@ -29,7 +29,8 @@ public sealed class EnumTests
         { "LoeschGrund", ["FalschZugeordnet"] },
         { "Zahlstatus", ["Offen", "Bezahlt", "Ueberfaellig"] },
         { "Schweregrad", ["Info", "Ok", "Warnung", "Fehler"] },
-        { "BenachrichtigungArt", ["DiLimitWarnung", "DiLimitErreicht", "ImportFehler", "KositFehler", "Integritaetsfehler", "IntegritaetOk", "KontoWartetAufFreigabe", "Sonstiges"] },
+        { "BenachrichtigungArt", ["DiLimitWarnung", "DiLimitErreicht", "ImportFehler", "KositFehler", "Integritaetsfehler", "IntegritaetOk", "KontoWartetAufFreigabe", "Sonstiges", "UstIdUngueltig", "SkontoLaeuftAb"] },
+        { "UstIdStatus", ["Ungeprueft", "Gueltig", "Ungueltig", "NichtErreichbar", "NichtPruefbar"] },
     };
 
     [Theory]

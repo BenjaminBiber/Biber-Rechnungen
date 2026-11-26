@@ -45,6 +45,15 @@ public sealed record BestaetigenDto(string? Begruendung);
 /// <summary>Markiert den Beleg als Dublette von <see cref="DuplikatVonId"/>; <c>null</c> hebt die Markierung auf.</summary>
 public sealed record DubletteSetzenDto(Guid? DuplikatVonId);
 
+/// <summary>Verknüpft eine Gutschrift mit der Rechnung <see cref="BezugBelegId"/>; <c>null</c> löst die Verknüpfung.</summary>
+public sealed record BezugSetzenDto(Guid? BezugBelegId);
+
+/// <summary>
+/// Setzt das Skonto einer Rechnung; <see cref="Prozent"/> <c>null</c> entfernt es. Den Betrag errechnet der Server aus dem
+/// Bruttobetrag.
+/// </summary>
+public sealed record SkontoSetzenDto(decimal? Prozent, DateOnly? Bis);
+
 public sealed record MassenaktionDto(Guid[] BelegIds, MassenaktionArt Aktion, Guid[]? TagIds, Guid? KategorieId);
 
 public sealed record AufteilenDto(AufteilenTeilDto[] Teile);

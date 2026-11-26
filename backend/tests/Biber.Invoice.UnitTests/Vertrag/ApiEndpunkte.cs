@@ -125,6 +125,8 @@ internal static class ApiEndpunkte
         Post(Belege.Bestaetigen, R.Bearbeiten, "Beleg bestätigen (entfernt „zu prüfen“)") with { Body = typeof(BestaetigenDto), Status = 204 },
         Post(Belege.ErneutAuslesen, R.Bearbeiten, "Extraktion erneut anstoßen") with { Status = 202 },
         Post(Belege.Dublette, R.Bearbeiten, "Dubletten-Markierung setzen oder aufheben") with { Body = typeof(DubletteSetzenDto), Status = 204 },
+        Post(Belege.Bezug, R.Bearbeiten, "Gutschrift mit einer Rechnung verknüpfen oder die Verknüpfung lösen") with { Body = typeof(BezugSetzenDto), Status = 204 },
+        Put(Belege.Skonto, R.Bearbeiten, "Skonto setzen oder entfernen") with { Body = typeof(SkontoSetzenDto), Antwort = typeof(BelegDetailDto) },
         Post(Belege.Massenaktion, R.Bearbeiten, "Aktion auf mehrere Belege anwenden") with { Body = typeof(MassenaktionDto), Antwort = typeof(AnzahlGeaendertDto) },
         Post(Belege.Aufteilen, R.Bearbeiten, "Beleg nach Seiten aufteilen") with { Body = typeof(AufteilenDto), Antwort = typeof(ImportVorgangDto[]), Status = 202 },
         Post(Belege.LogoUebernehmen, R.Bearbeiten, "Ausschnitt als Logo des Korrespondenten übernehmen") with { Body = typeof(LogoAusschnittDto), Antwort = typeof(LogoDto) },
@@ -151,6 +153,7 @@ internal static class ApiEndpunkte
         Put(Korrespondenten.Logo, R.Bearbeiten, "Logo hochladen") with { Multipart = "datei", Antwort = typeof(LogoDto) },
         Delete(Korrespondenten.Logo, R.Bearbeiten, "Logo entfernen"),
         Post(Korrespondenten.LogoFavicon, R.Bearbeiten, "Favicon der Website als Logo laden") with { Antwort = typeof(LogoDto) },
+        Post(Korrespondenten.UstIdPruefen, R.Bearbeiten, "USt-IdNr. sofort über VIES prüfen") with { Antwort = typeof(KorrespondentDetailDto) },
 
         // Tags, Kategorien, Matching
         Get(Tags.Liste, R.Lesen, "Tags") with { Antwort = typeof(TagDto[]) },

@@ -40,6 +40,7 @@ public sealed class BelegKonfiguration : IEntityTypeConfiguration<Beleg>
 
         builder.HasIndex(b => b.Rechnungsdatum);
         builder.HasIndex(b => b.Faelligkeitsdatum);
+        builder.HasIndex(b => b.SkontoBis);
         builder.HasIndex(b => b.KorrespondentId);
         builder.HasIndex(b => b.KategorieId);
         builder.HasIndex(b => b.Status);
@@ -53,6 +54,7 @@ public sealed class BelegKonfiguration : IEntityTypeConfiguration<Beleg>
         builder.HasOne<ImportVorgang>().WithMany().HasForeignKey(b => b.ImportVorgangId).OnDelete(DeleteBehavior.SetNull);
         builder.HasOne<Beleg>().WithMany().HasForeignKey(b => b.DuplikatVonId).OnDelete(DeleteBehavior.SetNull);
         builder.HasOne<Beleg>().WithMany().HasForeignKey(b => b.AufgeteiltAusBelegId).OnDelete(DeleteBehavior.SetNull);
+        builder.HasOne<Beleg>().WithMany().HasForeignKey(b => b.BezugBelegId).OnDelete(DeleteBehavior.SetNull);
         builder.HasOne<Benutzer>().WithMany().HasForeignKey(b => b.BestaetigtVonId).OnDelete(DeleteBehavior.SetNull);
         builder.HasOne<Benutzer>().WithMany().HasForeignKey(b => b.ErstelltVonId).OnDelete(DeleteBehavior.SetNull);
         builder.HasOne<Benutzer>().WithMany().HasForeignKey(b => b.GeloeschtVonId).OnDelete(DeleteBehavior.SetNull);

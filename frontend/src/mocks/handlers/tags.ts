@@ -136,7 +136,9 @@ export const tagsRouten: Route[] = [
     if (!db.kategorien.some((k) => k.id === params.id)) return nichtGefunden('Kategorie')
     const belege = db.belege.filter((b) => b.kategorie?.id === params.id).length
     const korrespondenten = db.korrespondenten.filter((k) => k.defaultKategorie?.id === params.id).length
-    db.kategorien = db.kategorien.filter((k) => k.id !== params.id)
+    db.kategorien = db.kategorien
+      .filter((k) => k.id !== params.id)
+      .map((k) => (k.elternId === params.id ? { ...k, elternId: null } : k))
     db.belege = db.belege.map((b) => (b.kategorie?.id === params.id ? { ...b, kategorie: null } : b))
     db.korrespondenten = db.korrespondenten.map((k) =>
       k.defaultKategorie?.id === params.id ? { ...k, defaultKategorie: null } : k,

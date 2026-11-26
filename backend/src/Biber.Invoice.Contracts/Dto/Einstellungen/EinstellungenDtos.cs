@@ -44,6 +44,12 @@ public sealed record PruefEinstellungen
     public decimal KleinbetragGrenze { get; init; } = 250m;
 
     public decimal KonfidenzSchwelle { get; init; } = 0.8m;
+
+    /// <summary>USt-IdNr. der Korrespondenten regelmäßig über VIES (EU-Kommission) prüfen; dafür geht nur die Nummer nach außen.</summary>
+    public bool UstIdOnlinePruefen { get; init; } = true;
+
+    /// <summary>So viele Tage vor Ablauf der Skontofrist erscheint ein Hinweis in der Glocke; 0 schaltet den Hinweis ab.</summary>
+    public int SkontoVorlaufTage { get; init; } = 3;
 }
 
 public sealed record DiEinstellungen

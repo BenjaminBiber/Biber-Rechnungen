@@ -174,6 +174,7 @@ export const korrespondentenRouten: Route[] = [
         defaultKategorie: null,
         matching: eingabe.matching,
         autoTrainiertAm: null,
+        ustIdPruefung: { status: 'Ungeprueft', geprueftAm: null, amtlicherName: null, amtlicheAnschrift: null },
         kennzahlen: {
           kostenJahr: 0,
           aenderungVorjahr: null,
@@ -263,5 +264,30 @@ export const korrespondentenRouten: Route[] = [
     const k = finde(params.id)
     if (!k) return nichtGefunden('Korrespondent')
     return HttpResponse.json(setzeLogo(k, 'Favicon'))
+  }),
+
+  route('post', '/api/korrespondenten/{id}/ustid-pruefen', 'Bearbeiten', ({ params }) => {
+    const k = finde(params.id)
+    if (!k) return nichtGefunden('Korrespondent')
+    const ust = k.ustIdNr ? ustNormalisiert(k.ustIdNr) : null
+    // Wie VIES: nur EU-Präfixe sind prüfbar; „…000“ am Ende gilt im Mock als ungültig.
+    const status = !ust
+      ? 'Ungeprueft'
+      : !/^(AT|BE|BG|CY|CZ|DE|DK|EE|EL|GR|ES|FI|FR|HR|HU|IE|IT|LT|LU|LV|MT|NL|PL|PT|RO|SE|SI|SK|XI)/.test(ust)
+        ? 'NichtPruefbar'
+        : ust.endsWith('000')
+          ? 'Ungueltig'
+          : 'Gueltig'
+    const neu: KorrespondentDatensatz = {
+      ...k,
+      ustIdPruefung: {
+        status,
+        geprueftAm: ust ? new Date().toISOString() : null,
+        amtlicherName: null,
+        amtlicheAnschrift: null,
+      },
+    }
+    db.korrespondenten = db.korrespondenten.map((x) => (x.id === k.id ? neu : x))
+    return HttpResponse.json(korrespondentDetail(neu))
   }),
 ]

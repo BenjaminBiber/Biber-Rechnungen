@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { kategorieBaum } from '@/lib/kategorien'
 import { filterWert, useNamen, type Namen } from './filterWerte'
 import {
   filterZurueckgesetzt,
@@ -292,7 +293,15 @@ function MehrfachAuswahl({
   const [suche, setSuche] = useState('')
   const korrespondenten = useKorrespondenten()
   const kategorien = useKategorien()
-  const eintraege = (art === 'korrespondent' ? korrespondenten.data : kategorien.data) ?? []
+  // Kategorien als Baum: eine Oberkategorie filtert ihre Unterkategorien mit.
+  const eintraege =
+    art === 'korrespondent'
+      ? (korrespondenten.data ?? []).map((k) => ({ id: k.id, name: k.name, ebene: 0 }))
+      : kategorieBaum(kategorien.data ?? []).map(({ kategorie, ebene }) => ({
+          id: kategorie.id,
+          name: kategorie.name,
+          ebene,
+        }))
   const begriff = suche.trim().toLocaleLowerCase('de')
   const treffer = eintraege.filter((e) => e.name.toLocaleLowerCase('de').includes(begriff))
 
@@ -331,6 +340,7 @@ function MehrfachAuswahl({
                 aktiv={navigation.aktiv === i}
                 onWaehlen={() => umschalten(e.id)}
               >
+                {e.ebene > 0 && <span aria-hidden className="w-3 shrink-0" />}
                 <Icon name={an ? 'check_box' : 'check_box_outline_blank'} />
                 <span className="truncate">{e.name}</span>
               </Option>

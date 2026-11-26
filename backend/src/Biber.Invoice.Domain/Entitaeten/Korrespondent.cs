@@ -9,6 +9,19 @@ public class Korrespondent
     public string Name { get; set; } = "";
     public List<string> Aliase { get; set; } = [];
     public string? UstIdNr { get; set; }
+
+    /// <summary>Ergebnis der letzten VIES-Prüfung; gilt nur, solange <see cref="UstIdGeprueftNummer"/> = <see cref="UstIdNr"/>.</summary>
+    public UstIdStatus UstIdStatus { get; set; }
+
+    public DateTimeOffset? UstIdGeprueftAm { get; set; }
+
+    /// <summary>Die USt-IdNr., auf die sich <see cref="UstIdStatus"/> bezieht.</summary>
+    public string? UstIdGeprueftNummer { get; set; }
+
+    /// <summary>Name laut VIES; manche Staaten (z. B. DE) geben ihn nicht heraus.</summary>
+    public string? UstIdAmtlicherName { get; set; }
+
+    public string? UstIdAmtlicheAnschrift { get; set; }
     public string? Steuernummer { get; set; }
     public List<Bankverbindung> Bankverbindungen { get; set; } = [];
     public Anschrift Anschrift { get; set; } = new();
@@ -27,4 +40,8 @@ public class Korrespondent
     public bool Geprueft { get; set; }
 
     public Kategorie? DefaultKategorie { get; set; }
+
+    /// <summary>VIES-Ergebnis für die aktuelle USt-IdNr.; nach einer Änderung der Nummer wieder „ungeprüft“.</summary>
+    public UstIdStatus AktuellerUstIdStatus() =>
+        UstIdNr is not null && UstIdGeprueftNummer == UstIdNr ? UstIdStatus : UstIdStatus.Ungeprueft;
 }

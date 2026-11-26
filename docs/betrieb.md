@@ -166,7 +166,7 @@ Die Datenbankmigration läuft beim Start automatisch. Vorher prüfen, dass der l
 
 ## Fehlersuche
 
-- **Logs:** `docker compose logs -f api` (ebenso `postgres`, `kosit`, `db-backup`).
+- **Logs:** `docker compose logs -f api` (ebenso `postgres`, `kosit`, `db-backup`). Die API schreibt eine lesbare Zeile pro Eintrag (`Zeit Stufe Klasse Meldung`); für einen Log-Sammler schaltet `Protokoll__Format=json` auf Compact-JSON um. Health-Checks und statische Dateien stehen nur auf Stufe Debug im Log.
 - **Healthchecks:** `docker compose ps`; die API meldet `/health/live` (Prozess läuft) und `/health/ready` (Datenbank erreichbar). `db-backup` ist ungesund, wenn der jüngste Dump älter als 26 Stunden ist.
 - **Häufige Ursachen:**
   - Dateien im Eingang werden nicht übernommen → Rechte: Besitzer muss `APP_UID:APP_GID` sein (`force user`/`force group` in der Freigabe prüfen).

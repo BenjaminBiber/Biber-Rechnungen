@@ -112,7 +112,7 @@ describe('Einstellungen', { timeout: 20000 }, () => {
   it('Prüfungen: Schwelle „0,85“ wird als 0.85 gesendet, Schalter aus als false', async () => {
     const { user, anfragen, ende } = renderSeite('/einstellungen/pruefungen')
     await formular('Prüfungen & Schwellen')
-    expect(screen.getAllByRole('switch')).toHaveLength(10)
+    expect(screen.getAllByRole('switch')).toHaveLength(12)
     const konfidenz = screen.getByLabelText('Erkennungssicherheit (Konfidenz) Schwelle')
     expect(konfidenz).toHaveValue('0,80')
     expect(screen.getByLabelText('Datum plausibel Schwelle')).toHaveValue('2')
@@ -129,7 +129,9 @@ describe('Einstellungen', { timeout: 20000 }, () => {
       summenToleranz: 0.02,
       maxAlterJahre: 2,
       kleinbetragGrenze: 250,
-      aktiv: { Kosit: false, Dublette: true },
+      ustIdOnlinePruefen: true,
+      skontoVorlaufTage: 3,
+      aktiv: { Kosit: false, Dublette: true, UstIdNr: true },
     })
     ende()
   })

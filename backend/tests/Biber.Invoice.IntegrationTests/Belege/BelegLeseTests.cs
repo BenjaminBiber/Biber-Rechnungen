@@ -180,6 +180,21 @@ public sealed class BelegLeseTests(ApiFabrik fabrik) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Filter_Oberkategorie_schliesst_Unterkategorien_ein()
+    {
+        var ober = await fabrik.SpeichernAsync(Testdaten.Kategorie());
+        var unter = Testdaten.Kategorie();
+        unter.ElternId = ober.Id;
+        await fabrik.SpeichernAsync(unter);
+        var direkt = await BelegAsync(b => b.KategorieId = ober.Id);
+        var ueberUnter = await BelegAsync(b => b.KategorieId = unter.Id);
+        await BelegAsync();
+
+        Ids(await ListeAsync($"kategorieIds={ober.Id}")).ShouldBe([direkt.Id, ueberUnter.Id], ignoreOrder: true);
+        Ids(await ListeAsync($"kategorieIds={unter.Id}")).ShouldBe([ueberUnter.Id]);
+    }
+
+    [Fact]
     public async Task Filter_Von_und_Bis_auf_Rechnungsdatum_einschliesslich()
     {
         await BelegAsync(b => b.Rechnungsdatum = new DateOnly(2025, 12, 31));

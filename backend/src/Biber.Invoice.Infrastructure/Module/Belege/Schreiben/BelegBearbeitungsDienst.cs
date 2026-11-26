@@ -4,6 +4,7 @@ using Biber.Invoice.Contracts.Dto.Belege;
 using Biber.Invoice.Domain.Entitaeten;
 using Biber.Invoice.Domain.Enums;
 using Biber.Invoice.Domain.Pipeline;
+using Biber.Invoice.Domain.Regeln;
 using Biber.Invoice.Infrastructure.Module.Korrespondenten;
 using Biber.Invoice.Infrastructure.Module.Positionen;
 using Biber.Invoice.Infrastructure.Persistenz;
@@ -87,6 +88,20 @@ public sealed class BelegBearbeitungsDienst(
         beleg.Netto = aenderung.Netto;
         beleg.Steuer = aenderung.Steuer;
         beleg.Brutto = aenderung.Brutto;
+
+        // Nur Gutschriften beziehen sich auf eine Rechnung, nur Rechnungen haben Skonto; der Betrag folgt dem Brutto.
+        if (beleg.Belegart != Belegart.Gutschrift || korrespondentGewechselt)
+        {
+            beleg.BezugBelegId = null;
+        }
+
+        if (beleg.Belegart != Belegart.Rechnung)
+        {
+            beleg.SkontoProzent = null;
+            beleg.SkontoBis = null;
+        }
+
+        beleg.SkontoBetrag = SkontoErkenner.Betrag(beleg.Brutto, beleg.SkontoProzent);
 
         db.Steuerzeilen.RemoveRange(beleg.Steuerzeilen);
         beleg.Steuerzeilen = [.. (aenderung.Steuerzeilen ?? []).Select(z => new Steuerzeile
@@ -312,6 +327,87 @@ public sealed class BelegBearbeitungsDienst(
         }
 
         return true;
+    }
+
+    public async Task<bool> BezugSetzenAsync(Guid id, Guid? bezugBelegId, CancellationToken ct)
+    {
+        var beleg = await db.Belege.FirstOrDefaultAsync(b => b.Id == id, ct);
+        if (beleg is null)
+        {
+            return false;
+        }
+
+        PruefeAenderbar(beleg);
+        if (bezugBelegId is { } bezugId)
+        {
+            if (beleg.Belegart != Belegart.Gutschrift)
+            {
+                throw BelegValidierungsAusnahme.Fuer("bezugBelegId", "Nur eine Gutschrift kann sich auf eine Rechnung beziehen.");
+            }
+
+            var rechnung = await db.Belege.AsNoTracking()
+                .Where(b => b.Id == bezugId)
+                .Select(b => new { b.Belegart, b.KorrespondentId })
+                .FirstOrDefaultAsync(ct)
+                ?? throw BelegValidierungsAusnahme.Fuer("bezugBelegId", "Den Beleg gibt es nicht.");
+            if (rechnung.Belegart != Belegart.Rechnung)
+            {
+                throw BelegValidierungsAusnahme.Fuer("bezugBelegId", "Der Beleg ist keine Rechnung.");
+            }
+
+            if (rechnung.KorrespondentId != beleg.KorrespondentId)
+            {
+                throw BelegValidierungsAusnahme.Fuer("bezugBelegId", "Die Rechnung gehört zu einem anderen Korrespondenten.");
+            }
+        }
+
+        if (beleg.BezugBelegId != bezugBelegId)
+        {
+            beleg.BezugBelegId = bezugBelegId;
+            await db.SaveChangesAsync(ct);
+            log.LogInformation("Gutschrift {Beleg} bezieht sich auf {Rechnung}", id, bezugBelegId);
+        }
+
+        return true;
+    }
+
+    public async Task<BelegDetailDto?> SkontoSetzenAsync(Guid id, SkontoSetzenDto skonto, CancellationToken ct)
+    {
+        var beleg = await db.Belege.FirstOrDefaultAsync(b => b.Id == id, ct);
+        if (beleg is null)
+        {
+            return null;
+        }
+
+        PruefeAenderbar(beleg);
+        if (skonto.Prozent is { } prozent)
+        {
+            var fehler = new Dictionary<string, string[]>();
+            if (beleg.Belegart != Belegart.Rechnung)
+            {
+                fehler["prozent"] = ["Skonto gibt es nur auf Rechnungen."];
+            }
+            else if (prozent is <= 0m or > 100m)
+            {
+                fehler["prozent"] = ["Das Skonto liegt über 0 und höchstens bei 100 %."];
+            }
+
+            if (skonto.Bis is { Year: < 2000 or > 2100 })
+            {
+                fehler["bis"] = ["Das Datum muss zwischen 2000 und 2100 liegen."];
+            }
+
+            if (fehler.Count > 0)
+            {
+                throw new BelegValidierungsAusnahme(fehler);
+            }
+        }
+
+        beleg.SkontoProzent = skonto.Prozent;
+        beleg.SkontoBis = skonto.Prozent is null ? null : skonto.Bis;
+        beleg.SkontoBetrag = SkontoErkenner.Betrag(beleg.Brutto, beleg.SkontoProzent);
+        await db.SaveChangesAsync(ct);
+        return await abfrage.AbrufenAsync(id, ct);
     }
 
     public async Task<bool> ErneutAuslesenAsync(Guid id, CancellationToken ct)

@@ -13,6 +13,7 @@ public static class SchrittReihenfolge
     public const int Korrespondent = 400;
     public const int Positionen = 500;
     public const int FachlicheDublette = 600;
+    public const int GutschriftBezug = 650;
     public const int Zuordnung = 700;
     public const int AutoZuordnung = 710;
     public const int Pruefungen = 800;

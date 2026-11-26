@@ -12,6 +12,7 @@ import type {
   BelegSortierung,
   BelegZaehler,
   Bestaetigen,
+  BezugSetzen,
   DubletteSetzen,
   GeloeschterBeleg,
   GespeicherteAnsichtAnlegen,
@@ -20,6 +21,7 @@ import type {
   LogoAusschnitt,
   Massenaktion,
   PositionAendern,
+  SkontoSetzen,
   TagZuordnen,
   Zahlstatus,
 } from '@/api/typen'
@@ -140,7 +142,12 @@ export function filtereBelege(parameter: URLSearchParams): BelegDetail[] {
   const ansicht = (parameter.get('ansicht') ?? 'Alle') as BelegAnsicht
   const tagIds = parameter.getAll('tagIds')
   const korrespondentIds = parameter.getAll('korrespondentIds')
-  const kategorieIds = parameter.getAll('kategorieIds')
+  // Eine Oberkategorie schließt ihre Unterkategorien ein (wie im Backend).
+  const gefiltert = parameter.getAll('kategorieIds')
+  const kategorieIds = [
+    ...gefiltert,
+    ...db.kategorien.filter((k) => k.elternId && gefiltert.includes(k.elternId)).map((k) => k.id),
+  ]
   const quellen = parameter.getAll('quellen') as ImportQuelle[]
   const von = parameter.get('von')
   const bis = parameter.get('bis')
@@ -513,6 +520,60 @@ export const belegeRouten: Route[] = [
       original ? `Als Dublette von ${original.rechnungsnummer} markiert` : 'Dubletten-Markierung aufgehoben',
     )
     return keinInhalt()
+  }),
+
+  route('post', '/api/belege/{id}/bezug', 'Bearbeiten', async ({ request, params }) => {
+    const beleg = findeBeleg(params.id)
+    if (!beleg) return nichtGefunden('Beleg')
+    const { bezugBelegId } = await jsonKoerper<BezugSetzen>(request)
+    const rechnung = bezugBelegId ? findeBeleg(bezugBelegId) : null
+    if (bezugBelegId && !rechnung) return ungueltig('bezugBelegId', 'Den Beleg gibt es nicht.')
+    if (rechnung && beleg.belegart !== 'Gutschrift')
+      return ungueltig('bezugBelegId', 'Nur eine Gutschrift kann sich auf eine Rechnung beziehen.')
+    if (rechnung && rechnung.belegart !== 'Rechnung') return ungueltig('bezugBelegId', 'Der Beleg ist keine Rechnung.')
+    const verweis = (b: BelegDetail) => ({
+      id: b.id,
+      rechnungsnummer: b.rechnungsnummer ?? null,
+      rechnungsdatum: b.rechnungsdatum ?? null,
+      brutto: b.brutto ?? null,
+      waehrung: b.waehrung,
+    })
+    ersetze({ ...beleg, bezug: { ...beleg.bezug, rechnung: rechnung ? verweis(rechnung) : null } })
+    for (const b of db.belege.filter((x) => x.belegart === 'Rechnung')) {
+      const gutschriften = b.bezug.gutschriften.filter((g) => g.id !== beleg.id)
+      if (rechnung?.id === b.id) gutschriften.push(verweis(beleg))
+      const summe = gutschriften.reduce((s, g) => s + Math.abs(g.brutto ?? 0), 0)
+      ersetze({
+        ...b,
+        bezug: {
+          ...b.bezug,
+          gutschriften,
+          restbetrag:
+            gutschriften.length && b.brutto !== null && b.brutto !== undefined ? runden(b.brutto - summe) : null,
+        },
+      })
+    }
+    return keinInhalt()
+  }),
+
+  route('put', '/api/belege/{id}/skonto', 'Bearbeiten', async ({ request, params }) => {
+    const beleg = findeBeleg(params.id)
+    if (!beleg) return nichtGefunden('Beleg')
+    const { prozent, bis } = await jsonKoerper<SkontoSetzen>(request)
+    if (prozent !== null && prozent !== undefined && beleg.belegart !== 'Rechnung')
+      return ungueltig('prozent', 'Skonto gibt es nur auf Rechnungen.')
+    if (prozent !== null && prozent !== undefined && (prozent <= 0 || prozent > 100))
+      return ungueltig('prozent', 'Das Skonto liegt über 0 und höchstens bei 100 %.')
+    const skonto =
+      prozent === null || prozent === undefined
+        ? null
+        : {
+            prozent,
+            bis: bis ?? null,
+            betrag: beleg.brutto === null || beleg.brutto === undefined ? null : runden((beleg.brutto * prozent) / 100),
+            abgelaufen: !!bis && bis < mockHeute,
+          }
+    return HttpResponse.json(ersetze({ ...beleg, skonto }))
   }),
 
   route('post', '/api/belege/{id}/aufteilen', 'Bearbeiten', async ({ request, params }) => {

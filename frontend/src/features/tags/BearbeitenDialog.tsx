@@ -32,6 +32,8 @@ type Werte = {
   farbe: string
   sonderform: Sonderform
   euerZeile: string
+  /** Oberkategorie; leer = Hauptkategorie. */
+  elternId: string
   matching: Matching
 }
 
@@ -44,7 +46,8 @@ function betroffen(belege: number, korrespondenten: number): string {
   return `${b} und ${k} ohne Kategorie`
 }
 
-type Ziel = { art: 'tag'; tag?: Tag; alleTags: Tag[] } | { art: 'kategorie'; kategorie?: Kategorie }
+type Ziel =
+  { art: 'tag'; tag?: Tag; alleTags: Tag[] } | { art: 'kategorie'; kategorie?: Kategorie; alleKategorien: Kategorie[] }
 
 function startwerte(ziel: Ziel): Werte {
   if (ziel.art === 'tag') {
@@ -54,6 +57,7 @@ function startwerte(ziel: Ziel): Werte {
       farbe: t?.farbe ?? farben[0].ton,
       sonderform: t?.istInbox ? 'inbox' : t?.istZahlungsTag ? 'zahlung' : 'keine',
       euerZeile: '',
+      elternId: '',
       matching: t?.matching ?? keinMatching,
     }
   }
@@ -63,6 +67,7 @@ function startwerte(ziel: Ziel): Werte {
     farbe: k?.farbe ?? farben[0].hex,
     sonderform: 'keine',
     euerZeile: k?.euerZeile ?? '',
+    elternId: k?.elternId ?? '',
     matching: k?.matching ?? keinMatching,
   }
 }
@@ -93,6 +98,19 @@ export function BearbeitenDialog({ onSchliessen, ...ziel }: Ziel & { onSchliesse
   const laeuft = [tagAnlegen, tagAendern, katAnlegen, katAendern].some((m) => m.isPending)
   const setze = <S extends keyof Werte>(schluessel: S, wert: Werte[S]) =>
     setWerte((alt) => ({ ...alt, [schluessel]: wert }))
+
+  // Nur eine Ebene: Oberkategorie kann nur eine Hauptkategorie sein, und wer Unterkategorien hat, bleibt Hauptkategorie.
+  const moeglicheEltern =
+    ziel.art === 'kategorie'
+      ? ziel.alleKategorien
+          .filter((k) => !k.elternId && k.id !== ziel.kategorie?.id)
+          .sort((a, b) => a.name.localeCompare(b.name, 'de', { sensitivity: 'base' }))
+      : []
+  const unterkategorien =
+    ziel.art === 'kategorie' && ziel.kategorie
+      ? ziel.alleKategorien.filter((k) => k.elternId === ziel.kategorie?.id)
+      : []
+  const elternEuerZeile = moeglicheEltern.find((k) => k.id === werte.elternId)?.euerZeile
 
   const bisherigerInbox =
     ziel.art === 'tag' && werte.sonderform === 'inbox'
@@ -135,6 +153,7 @@ export function BearbeitenDialog({ onSchliessen, ...ziel }: Ziel & { onSchliesse
         name,
         farbe: werte.farbe,
         euerZeile: werte.euerZeile.trim() || null,
+        elternId: werte.elternId || null,
         matching: werte.matching,
       }
       if (ziel.kategorie) katAendern.mutate({ id: ziel.kategorie.id, ...eingabe }, optionen)
@@ -251,18 +270,51 @@ export function BearbeitenDialog({ onSchliessen, ...ziel }: Ziel & { onSchliesse
               )}
             </fieldset>
           ) : (
-            <div>
-              <label className="label" htmlFor={`${id}-euer`}>
-                EÜR-Zeile (optional)
-              </label>
-              <input
-                id={`${id}-euer`}
-                className="eingabe"
-                value={werte.euerZeile}
-                onChange={(e) => setze('euerZeile', e.target.value)}
-              />
-              <span className="hinweis">Wird in „Summen je Kategorie“ im Export mit ausgegeben.</span>
-            </div>
+            <>
+              <div>
+                <label className="label" htmlFor={`${id}-eltern`}>
+                  Oberkategorie
+                </label>
+                <select
+                  id={`${id}-eltern`}
+                  className="eingabe"
+                  value={werte.elternId}
+                  disabled={unterkategorien.length > 0}
+                  aria-describedby={unterkategorien.length > 0 ? `${id}-eltern-hinweis` : undefined}
+                  onChange={(e) => setze('elternId', e.target.value)}
+                >
+                  <option value="">Keine – Hauptkategorie</option>
+                  {moeglicheEltern.map((k) => (
+                    <option key={k.id} value={k.id}>
+                      {k.name}
+                    </option>
+                  ))}
+                </select>
+                {unterkategorien.length > 0 && (
+                  <span id={`${id}-eltern-hinweis`} className="hinweis">
+                    Hat{' '}
+                    {unterkategorien.length === 1 ? 'eine Unterkategorie' : `${unterkategorien.length} Unterkategorien`}{' '}
+                    und bleibt deshalb Hauptkategorie.
+                  </span>
+                )}
+              </div>
+              <div>
+                <label className="label" htmlFor={`${id}-euer`}>
+                  EÜR-Zeile (optional)
+                </label>
+                <input
+                  id={`${id}-euer`}
+                  className="eingabe"
+                  value={werte.euerZeile}
+                  placeholder={elternEuerZeile ? `${elternEuerZeile} (von der Oberkategorie)` : undefined}
+                  onChange={(e) => setze('euerZeile', e.target.value)}
+                />
+                <span className="hinweis">
+                  Wird in „Summen je Kategorie“ im Export mit ausgegeben
+                  {werte.elternId ? '; leer = EÜR-Zeile der Oberkategorie' : ''}.
+                </span>
+              </div>
+            </>
           )}
           <div className="grid gap-2.5 border-t border-linie pt-4">
             <span className="label m-0">Matching – automatisch zuweisen, wenn …</span>
@@ -302,6 +354,8 @@ export function BearbeitenDialog({ onSchliessen, ...ziel }: Ziel & { onSchliesse
                     ? '1 Beleg ist betroffen.'
                     : `${vorhanden.anzahlBelege} Belege sind betroffen.`}{' '}
                   {istTag ? 'Der Tag wird von ihnen entfernt.' : 'Sie verlieren ihre Kategorie.'}
+                  {unterkategorien.length > 0 &&
+                    ` ${unterkategorien.length === 1 ? 'Die Unterkategorie wird' : 'Die Unterkategorien werden'} zur Hauptkategorie.`}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>

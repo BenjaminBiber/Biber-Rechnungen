@@ -24,7 +24,15 @@ public sealed class KorrespondentEndpunkte : IEndpunktModul
             .RequireAuthorization(Richtlinien.Lesen);
         app.MapPut(ApiRouten.Korrespondenten.Einzeln, AendernAsync)
             .RequireAuthorization(Richtlinien.Bearbeiten);
+        app.MapPost(ApiRouten.Korrespondenten.UstIdPruefen, UstIdPruefenAsync)
+            .RequireAuthorization(Richtlinien.Bearbeiten);
     }
+
+    private static async Task<IResult> UstIdPruefenAsync(
+        Guid id, IUstIdPruefDienst pruefung, IKorrespondentDienst dienst, TimeProvider zeit, CancellationToken ct) =>
+        await pruefung.PruefenAsync(id, ct) && await dienst.AbrufenAsync(id, Jahr(zeit), ct) is { } detail
+            ? TypedResults.Ok(detail)
+            : NichtGefunden();
 
     private static async Task<IResult> ListeAsync(
         IKorrespondentDienst dienst, TimeProvider zeit, CancellationToken ct, string? suche = null, string? typ = null, int? jahr = null)

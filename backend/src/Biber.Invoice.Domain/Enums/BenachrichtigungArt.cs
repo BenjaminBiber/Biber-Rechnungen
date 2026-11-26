@@ -10,4 +10,6 @@ public enum BenachrichtigungArt
     IntegritaetOk,
     KontoWartetAufFreigabe,
     Sonstiges,
+    UstIdUngueltig,
+    SkontoLaeuftAb,
 }

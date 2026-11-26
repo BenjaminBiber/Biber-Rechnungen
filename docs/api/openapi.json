@@ -2108,6 +2108,109 @@
         }
       }
     },
+    "/api/belege/{id}/bezug": {
+      "post": {
+        "tags": [
+          "Belege"
+        ],
+        "summary": "Gutschrift mit einer Rechnung verknüpfen oder die Verknüpfung lösen",
+        "operationId": "postBelegeBezug",
+        "x-richtlinie": "Bearbeiten",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BezugSetzenDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Erledigt"
+          },
+          "400": {
+            "$ref": "#/components/responses/Ungueltig"
+          },
+          "401": {
+            "$ref": "#/components/responses/NichtAngemeldet"
+          },
+          "403": {
+            "$ref": "#/components/responses/KeinRecht"
+          },
+          "404": {
+            "$ref": "#/components/responses/NichtGefunden"
+          }
+        }
+      }
+    },
+    "/api/belege/{id}/skonto": {
+      "put": {
+        "tags": [
+          "Belege"
+        ],
+        "summary": "Skonto setzen oder entfernen",
+        "operationId": "putBelegeSkonto",
+        "x-richtlinie": "Bearbeiten",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SkontoSetzenDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BelegDetailDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Ungueltig"
+          },
+          "401": {
+            "$ref": "#/components/responses/NichtAngemeldet"
+          },
+          "403": {
+            "$ref": "#/components/responses/KeinRecht"
+          },
+          "404": {
+            "$ref": "#/components/responses/NichtGefunden"
+          }
+        }
+      }
+    },
     "/api/belege/massenaktion": {
       "post": {
         "tags": [
@@ -3084,6 +3187,51 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/LogoDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Ungueltig"
+          },
+          "401": {
+            "$ref": "#/components/responses/NichtAngemeldet"
+          },
+          "403": {
+            "$ref": "#/components/responses/KeinRecht"
+          },
+          "404": {
+            "$ref": "#/components/responses/NichtGefunden"
+          }
+        }
+      }
+    },
+    "/api/korrespondenten/{id}/ustid-pruefen": {
+      "post": {
+        "tags": [
+          "Korrespondenten"
+        ],
+        "summary": "USt-IdNr. sofort über VIES prüfen",
+        "operationId": "postKorrespondentenUstIdPruefen",
+        "x-richtlinie": "Bearbeiten",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KorrespondentDetailDto"
                 }
               }
             }
@@ -6253,6 +6401,19 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          "bezug": {
+            "$ref": "#/components/schemas/GutschriftBezugDto"
+          },
+          "skonto": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SkontoDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -6280,7 +6441,8 @@
           "dubletten",
           "loeschsperreBis",
           "istERechnung",
-          "teilbelege"
+          "teilbelege",
+          "bezug"
         ]
       },
       "BelegFilterDto": {
@@ -6703,7 +6865,9 @@
           "Integritaetsfehler",
           "IntegritaetOk",
           "KontoWartetAufFreigabe",
-          "Sonstiges"
+          "Sonstiges",
+          "UstIdUngueltig",
+          "SkontoLaeuftAb"
         ]
       },
       "BenachrichtigungDto": {
@@ -6875,6 +7039,54 @@
         "enum": [
           "Brutto",
           "Netto"
+        ]
+      },
+      "BezugSetzenDto": {
+        "type": "object",
+        "properties": {
+          "bezugBelegId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "BezugVerweisDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rechnungsnummer": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rechnungsdatum": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "brutto": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "decimal"
+          },
+          "waehrung": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "waehrung"
         ]
       },
       "CodeDto": {
@@ -7553,6 +7765,44 @@
           "darstellung"
         ]
       },
+      "GutschriftBezugDto": {
+        "type": "object",
+        "properties": {
+          "rechnung": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BezugVerweisDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "gutschriften": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BezugVerweisDto"
+            }
+          },
+          "restbetrag": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "decimal"
+          },
+          "kandidaten": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BezugVerweisDto"
+            }
+          }
+        },
+        "required": [
+          "gutschriften",
+          "kandidaten"
+        ]
+      },
       "ImportQuelle": {
         "type": "string",
         "enum": [
@@ -7743,6 +7993,13 @@
           },
           "matching": {
             "$ref": "#/components/schemas/MatchingDto"
+          },
+          "elternId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
           }
         },
         "required": [
@@ -7806,6 +8063,13 @@
           "summeBrutto": {
             "type": "number",
             "format": "decimal"
+          },
+          "elternId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
           }
         },
         "required": [
@@ -8123,6 +8387,9 @@
           "anzahlArtikel": {
             "type": "integer",
             "format": "int32"
+          },
+          "ustIdPruefung": {
+            "$ref": "#/components/schemas/UstIdPruefungDto"
           }
         },
         "required": [
@@ -8138,7 +8405,8 @@
           "kostenverlaufMonate",
           "letzteBelege",
           "artikel",
-          "anzahlArtikel"
+          "anzahlArtikel",
+          "ustIdPruefung"
         ]
       },
       "KorrespondentErkennung": {
@@ -9292,6 +9560,15 @@
             "type": "number",
             "format": "decimal",
             "default": 0.8
+          },
+          "ustIdOnlinePruefen": {
+            "type": "boolean",
+            "default": true
+          },
+          "skontoVorlaufTage": {
+            "type": "integer",
+            "format": "int32",
+            "default": 3
           }
         },
         "required": [
@@ -9299,7 +9576,9 @@
           "summenToleranz",
           "maxAlterJahre",
           "kleinbetragGrenze",
-          "konfidenzSchwelle"
+          "konfidenzSchwelle",
+          "ustIdOnlinePruefen",
+          "skontoVorlaufTage"
         ]
       },
       "PruefErgebnis": {
@@ -9322,7 +9601,8 @@
           "NeuerKorrespondent",
           "Konfidenz",
           "Kosit",
-          "Bankverbindung"
+          "Bankverbindung",
+          "UstIdNr"
         ]
       },
       "RegistrierenDto": {
@@ -9447,6 +9727,55 @@
           "seite",
           "seitengroesse"
         ]
+      },
+      "SkontoDto": {
+        "type": "object",
+        "properties": {
+          "prozent": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "bis": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "betrag": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "decimal"
+          },
+          "abgelaufen": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "prozent",
+          "abgelaufen"
+        ]
+      },
+      "SkontoSetzenDto": {
+        "type": "object",
+        "properties": {
+          "prozent": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "decimal"
+          },
+          "bis": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          }
+        }
       },
       "StammartikelAendernDto": {
         "type": "object",
@@ -9874,6 +10203,46 @@
         "required": [
           "status",
           "zeitraum"
+        ]
+      },
+      "UstIdPruefungDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/UstIdStatus"
+          },
+          "geprueftAm": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "amtlicherName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "amtlicheAnschrift": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "UstIdStatus": {
+        "type": "string",
+        "enum": [
+          "Ungeprueft",
+          "Gueltig",
+          "Ungueltig",
+          "NichtErreichbar",
+          "NichtPruefbar"
         ]
       },
       "UstStatus": {

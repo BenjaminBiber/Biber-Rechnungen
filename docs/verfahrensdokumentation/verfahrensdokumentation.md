@@ -82,7 +82,7 @@ Der Export für einen Zeitraum enthält eine Belegliste (Excel/CSV), Summen je K
 | `db-backup` | PostgreSQL-Werkzeuge | nächtliche Datenbanksicherung |
 
 - **Vorhandene Infrastruktur des Betreibers:** ein Samba-Container stellt die Freigaben `Rechnungen-Eingang` und `Rechnungen-Ablage` bereit; Nginx Proxy Manager stellt HTTPS bereit.
-- **Netzwerk:** Das System ist nur im lokalen Netz erreichbar (HTTPS, Zugriffsliste nur LAN). Ausgehende Verbindungen gehen nur zum Mailserver, zu Azure Document Intelligence (EU-Region), zu Google (Anmeldung) und zu Webseiten von Lieferanten (Logos).
+- **Netzwerk:** Das System ist nur im lokalen Netz erreichbar (HTTPS, Zugriffsliste nur LAN). Ausgehende Verbindungen gehen nur zum Mailserver, zu Azure Document Intelligence (EU-Region), zu Google (Anmeldung), zu Webseiten von Lieferanten (Logos) und zu VIES der EU-Kommission (Prüfung der USt-IdNr. von Lieferanten; abschaltbar, übermittelt wird nur die Nummer).
 
 ### 3.2 Verarbeitungsschritte
 
@@ -101,7 +101,7 @@ Ein Beleg kann seitenweise **aufgeteilt** werden: Die Teile entstehen als neue D
 
 ### 3.3 Prüfungen
 
-Folgende zehn Plausibilitätsprüfungen laufen für jeden Beleg; jede ist auf der Einstellungsseite ein- und ausschaltbar. Jedes Ergebnis wird als Prüfbefund mit Zeitpunkt gespeichert.
+Folgende elf Plausibilitätsprüfungen laufen für jeden Beleg; jede ist auf der Einstellungsseite ein- und ausschaltbar. Jedes Ergebnis wird als Prüfbefund mit Zeitpunkt gespeichert.
 
 | Nr. | Prüfung | Inhalt |
 | --- | --- | --- |
@@ -115,6 +115,7 @@ Folgende zehn Plausibilitätsprüfungen laufen für jeden Beleg; jede ist auf de
 | 8 | Erkennungssicherheit | Konfidenz von Document Intelligence unter Schwelle (Standard 0,8) |
 | 9 | KoSIT-Validierung | E-Rechnung verletzt die XRechnung-Regeln |
 | 10 | Bankverbindung bekannt | IBAN der Eingangsrechnung weicht von den beim Korrespondenten hinterlegten ab; sie wird erst mit dem Bestätigen des Belegs hinterlegt |
+| 11 | USt-IdNr. gültig | USt-IdNr. des Korrespondenten ist laut VIES (EU-Kommission) ungültig; geprüft wird im Hintergrund und halbjährlich erneut, eine ungültige Nummer meldet zusätzlich die Glocke |
 
 ### 3.4 Ablagepfad und Unveränderbarkeit
 
@@ -149,6 +150,7 @@ Jede Änderung an Beleg, Position, Steuerzeile, Tags, Korrespondent und Kategori
 | SMB-Freigabe `Rechnungen-Ablage` | ausgehend, nur lesen | Einsicht in die Originale |
 | IMAP | ausgehend | Abruf des Rechnungspostfachs |
 | Azure Document Intelligence | ausgehend | Auslesen von Belegen ohne E-Rechnung |
+| VIES (EU-Kommission) | ausgehend | Gültigkeit der USt-IdNr. von Lieferanten (abschaltbar) |
 | KoSIT (`kosit`) | intern | Validierung und Visualisierung von E-Rechnungen |
 | REST-API | eingehend (LAN) | Weboberfläche |
 | MCP unter `/mcp` | eingehend (LAN) | Zugriff für KI-Assistenten mit API-Token |

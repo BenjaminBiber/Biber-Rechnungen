@@ -14,5 +14,9 @@ public sealed class KategorieKonfiguration : IEntityTypeConfiguration<Kategorie>
         builder.Property(k => k.EuerZeile).HasMaxLength(50);
         builder.MitMatching();
         builder.HasIndex(k => k.Name).IsUnique();
+        builder.Ignore(k => k.VollerName);
+        builder.Ignore(k => k.WirksameEuerZeile);
+        builder.HasIndex(k => k.ElternId);
+        builder.HasOne(k => k.Eltern).WithMany().HasForeignKey(k => k.ElternId).OnDelete(DeleteBehavior.Restrict);
     }
 }

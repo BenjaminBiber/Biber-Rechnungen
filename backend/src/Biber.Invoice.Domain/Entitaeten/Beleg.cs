@@ -38,6 +38,18 @@ public class Beleg
     /// <summary>Bankverbindungen des Ausstellers, wie sie auf dem Beleg stehen (IBAN ohne Leerzeichen, groß).</summary>
     public List<Bankverbindung> Bankverbindungen { get; set; } = [];
 
+    /// <summary>Skonto in Prozent des Bruttobetrags, z. B. 2,00; <c>null</c> = kein Skonto bekannt.</summary>
+    public decimal? SkontoProzent { get; set; }
+
+    /// <summary>Letzter Tag, an dem mit Skonto gezahlt werden darf.</summary>
+    public DateOnly? SkontoBis { get; set; }
+
+    /// <summary>Abzug in Belegwährung, der sich mit Skonto sparen lässt.</summary>
+    public decimal? SkontoBetrag { get; set; }
+
+    /// <summary>Bei einer Gutschrift: die Rechnung, auf die sie sich bezieht.</summary>
+    public Guid? BezugBelegId { get; set; }
+
     public Guid? DuplikatVonId { get; set; }
     public Guid? AufgeteiltAusBelegId { get; set; }
     public DateTimeOffset? BestaetigtAm { get; set; }

@@ -130,6 +130,62 @@ public sealed class KategorieTests(ApiFabrik fabrik) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Unterkategorie_steht_in_der_Liste_unter_ihrer_Oberkategorie()
+    {
+        var kfz = await AnlegenAsync(Dto("Kfz"));
+        await AnlegenAsync(Dto("Büro"));
+        var versicherung = await AnlegenAsync(Dto("Versicherung", farbe: "#D64541") with { ElternId = kfz.Id });
+        await AnlegenAsync(Dto("Tanken") with { ElternId = kfz.Id });
+
+        versicherung.ElternId.ShouldBe(kfz.Id);
+        (await ListeAsync()).Select(k => (k.Name, k.ElternId)).ShouldBe(
+        [
+            ("Büro", null),
+            ("Kfz", null),
+            ("Tanken", kfz.Id),
+            ("Versicherung", kfz.Id),
+        ]);
+
+        var wiederHaupt = await Client.PutJsonAsync(Einzeln(versicherung.Id), Dto("Versicherung"));
+        (await wiederHaupt.Content.LesenAsync<KategorieDto>()).ShouldNotBeNull().ElternId.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task Unterkategorien_haben_nur_eine_Ebene()
+    {
+        var kfz = await AnlegenAsync(Dto("Kfz"));
+        var tanken = await AnlegenAsync(Dto("Tanken") with { ElternId = kfz.Id });
+
+        (await Client.PostJsonAsync(ApiRouten.Kategorien.Liste, Dto("Diesel") with { ElternId = tanken.Id }))
+            .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await Client.PostJsonAsync(ApiRouten.Kategorien.Liste, Dto("Waise") with { ElternId = Guid.NewGuid() }))
+            .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await Client.PutJsonAsync(Einzeln(kfz.Id), Dto("Kfz") with { ElternId = kfz.Id }))
+            .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        var andere = await AnlegenAsync(Dto("Reise"));
+        (await Client.PutJsonAsync(Einzeln(kfz.Id), Dto("Kfz") with { ElternId = andere.Id }))
+            .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Loeschen_einer_Oberkategorie_macht_Unterkategorien_zu_Hauptkategorien()
+    {
+        var kfz = await AnlegenAsync(Dto("Kfz"));
+        var tanken = await AnlegenAsync(Dto("Tanken") with { ElternId = kfz.Id });
+        var beleg = await fabrik.SpeichernAsync(Testdaten.Beleg(kategorieId: tanken.Id));
+
+        (await Client.DeleteAsync(Einzeln(kfz.Id))).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var rest = (await ListeAsync()).ShouldHaveSingleItem();
+        rest.Id.ShouldBe(tanken.Id);
+        rest.ElternId.ShouldBeNull();
+        using var scope = fabrik.ErzeugeScope();
+        var db = scope.ServiceProvider.GetRequiredService<BiberDbContext>();
+        (await db.Belege.SingleAsync(b => b.Id == beleg.Id)).KategorieId.ShouldBe(tanken.Id);
+    }
+
+    [Fact]
     public async Task Unbekannte_Kategorie_ergibt_404()
     {
         (await Client.PutJsonAsync(Einzeln(Guid.NewGuid()), Dto("X"))).StatusCode.ShouldBe(HttpStatusCode.NotFound);

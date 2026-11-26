@@ -46,6 +46,22 @@ function renderSeite(pfad = SEITE) {
 const titel = (name = 'Bürowelt Krämer KG') => screen.findByRole('heading', { level: 1, name }, { timeout: 5000 })
 
 describe('Korrespondent-Detail', { timeout: 20000 }, () => {
+  it('zeigt das VIES-Ergebnis der USt-IdNr. und prüft auf Knopfdruck neu', async () => {
+    db.korrespondenten = db.korrespondenten.map((k) =>
+      k.id === ID ? { ...k, ustIdNr: 'DE111222000', ustIdPruefung: { ...k.ustIdPruefung, status: 'Gueltig' } } : k,
+    )
+    const { anfragen, ende } = renderSeite()
+    await titel()
+    const stammdaten = screen.getByRole('region', { name: 'Stammdaten' })
+    expect(within(stammdaten).getByText('gültig laut VIES')).toBeInTheDocument()
+
+    await userEvent.click(within(stammdaten).getByRole('button', { name: 'Jetzt prüfen' }))
+
+    expect(await within(stammdaten).findByText('ungültig laut VIES')).toBeInTheDocument()
+    expect(anfragen.map((a) => a.pfad)).toContain(`/api/korrespondenten/${ID}/ustid-pruefen`)
+    ende()
+  })
+
   it('zeigt Kennzahlen und Stammdaten', async () => {
     const { ende } = renderSeite()
     await titel()

@@ -243,6 +243,10 @@ namespace Biber.Invoice.Infrastructure.Persistenz.Migrationen
                         .HasColumnType("uuid")
                         .HasColumnName("bestaetigt_von_id");
 
+                    b.Property<Guid?>("BezugBelegId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("bezug_beleg_id");
+
                     b.Property<decimal?>("Brutto")
                         .HasPrecision(14, 2)
                         .HasColumnType("numeric(14,2)")
@@ -361,6 +365,20 @@ namespace Biber.Invoice.Infrastructure.Persistenz.Migrationen
                         .HasColumnType("integer")
                         .HasColumnName("seitenanzahl");
 
+                    b.Property<decimal?>("SkontoBetrag")
+                        .HasPrecision(14, 2)
+                        .HasColumnType("numeric(14,2)")
+                        .HasColumnName("skonto_betrag");
+
+                    b.Property<DateOnly?>("SkontoBis")
+                        .HasColumnType("date")
+                        .HasColumnName("skonto_bis");
+
+                    b.Property<decimal?>("SkontoProzent")
+                        .HasPrecision(14, 2)
+                        .HasColumnType("numeric(14,2)")
+                        .HasColumnName("skonto_prozent");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -404,6 +422,9 @@ namespace Biber.Invoice.Infrastructure.Persistenz.Migrationen
                     b.HasIndex("BestaetigtVonId")
                         .HasDatabaseName("ix_beleg_bestaetigt_von_id");
 
+                    b.HasIndex("BezugBelegId")
+                        .HasDatabaseName("ix_beleg_bezug_beleg_id");
+
                     b.HasIndex("DuplikatVonId")
                         .HasDatabaseName("ix_beleg_duplikat_von_id");
 
@@ -433,6 +454,9 @@ namespace Biber.Invoice.Infrastructure.Persistenz.Migrationen
 
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Rechnungsnummer"), "gin");
                     NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Rechnungsnummer"), new[] { "gin_trgm_ops" });
+
+                    b.HasIndex("SkontoBis")
+                        .HasDatabaseName("ix_beleg_skonto_bis");
 
                     b.HasIndex("Status")
                         .HasDatabaseName("ix_beleg_status");
@@ -1019,6 +1043,10 @@ namespace Biber.Invoice.Infrastructure.Persistenz.Migrationen
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<Guid?>("ElternId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("eltern_id");
+
                     b.Property<string>("EuerZeile")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
@@ -1038,6 +1066,9 @@ namespace Biber.Invoice.Infrastructure.Persistenz.Migrationen
 
                     b.HasKey("Id")
                         .HasName("pk_kategorie");
+
+                    b.HasIndex("ElternId")
+                        .HasDatabaseName("ix_kategorie_eltern_id");
 
                     b.HasIndex("Name")
                         .IsUnique()
@@ -1115,10 +1146,35 @@ namespace Biber.Invoice.Infrastructure.Persistenz.Migrationen
                         .HasColumnType("character varying(30)")
                         .HasColumnName("steuernummer");
 
+                    b.Property<string>("UstIdAmtlicheAnschrift")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("ust_id_amtliche_anschrift");
+
+                    b.Property<string>("UstIdAmtlicherName")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("ust_id_amtlicher_name");
+
+                    b.Property<DateTimeOffset?>("UstIdGeprueftAm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ust_id_geprueft_am");
+
+                    b.Property<string>("UstIdGeprueftNummer")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("ust_id_geprueft_nummer");
+
                     b.Property<string>("UstIdNr")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")
                         .HasColumnName("ust_id_nr");
+
+                    b.Property<string>("UstIdStatus")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("ust_id_status");
 
                     b.Property<string>("Website")
                         .HasMaxLength(500)
@@ -1655,6 +1711,12 @@ namespace Biber.Invoice.Infrastructure.Persistenz.Migrationen
 
                     b.HasOne("Biber.Invoice.Domain.Entitaeten.Beleg", null)
                         .WithMany()
+                        .HasForeignKey("BezugBelegId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_beleg_beleg_bezug_beleg_id");
+
+                    b.HasOne("Biber.Invoice.Domain.Entitaeten.Beleg", null)
+                        .WithMany()
                         .HasForeignKey("DuplikatVonId")
                         .OnDelete(DeleteBehavior.SetNull)
                         .HasConstraintName("fk_beleg_beleg_duplikat_von_id");
@@ -1806,6 +1868,12 @@ namespace Biber.Invoice.Infrastructure.Persistenz.Migrationen
 
             modelBuilder.Entity("Biber.Invoice.Domain.Entitaeten.Kategorie", b =>
                 {
+                    b.HasOne("Biber.Invoice.Domain.Entitaeten.Kategorie", "Eltern")
+                        .WithMany()
+                        .HasForeignKey("ElternId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_kategorie_kategorie_eltern_id");
+
                     b.OwnsOne("Biber.Invoice.Domain.Entitaeten.Matching", "Matching", b1 =>
                         {
                             b1.Property<Guid>("KategorieId")
@@ -1835,6 +1903,8 @@ namespace Biber.Invoice.Infrastructure.Persistenz.Migrationen
                                 .HasForeignKey("KategorieId")
                                 .HasConstraintName("fk_kategorie_kategorie_kategorie_id");
                         });
+
+                    b.Navigation("Eltern");
 
                     b.Navigation("Matching")
                         .IsRequired();

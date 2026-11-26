@@ -61,6 +61,10 @@ public static class ApiRouten
         public const string Bestaetigen = "/api/belege/{id}/bestaetigen";
         public const string ErneutAuslesen = "/api/belege/{id}/erneut-auslesen";
         public const string Dublette = "/api/belege/{id}/dublette";
+        /// <summary>POST: Gutschrift mit einer Rechnung verknüpfen oder die Verknüpfung lösen</summary>
+        public const string Bezug = "/api/belege/{id}/bezug";
+        /// <summary>PUT: Skonto setzen oder entfernen</summary>
+        public const string Skonto = "/api/belege/{id}/skonto";
         public const string Massenaktion = "/api/belege/massenaktion";
         public const string Aufteilen = "/api/belege/{id}/aufteilen";
         public const string LogoUebernehmen = "/api/belege/{id}/logo-uebernehmen";
@@ -97,6 +101,8 @@ public static class ApiRouten
         /// <summary>GET, PUT (multipart), DELETE</summary>
         public const string Logo = "/api/korrespondenten/{id}/logo";
         public const string LogoFavicon = "/api/korrespondenten/{id}/logo/favicon";
+        /// <summary>POST: USt-IdNr. sofort über VIES prüfen</summary>
+        public const string UstIdPruefen = "/api/korrespondenten/{id}/ustid-pruefen";
     }
 
     public static class Tags

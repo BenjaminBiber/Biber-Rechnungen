@@ -60,7 +60,7 @@ public static class ExportTabellen
             List<object?> zeile =
             [
                 b.Rechnungsdatum, b.Korrespondent?.Name, b.Rechnungsnummer, b.Titel, b.Belegart.ToString(),
-                b.Kategorie?.Name, b.Kategorie?.EuerZeile, b.Waehrung,
+                b.Kategorie?.VollerName, b.Kategorie?.WirksameEuerZeile, b.Waehrung,
             ];
             foreach (var satz in saetze)
             {
@@ -100,8 +100,8 @@ public static class ExportTabellen
             {
                 var kategorie = g.First().Kategorie;
                 return new KategorieSumme(
-                    kategorie?.Name ?? OhneKategorie,
-                    string.IsNullOrWhiteSpace(kategorie?.EuerZeile) ? null : kategorie.EuerZeile,
+                    kategorie?.VollerName ?? OhneKategorie,
+                    kategorie?.WirksameEuerZeile,
                     g.Count(),
                     g.Sum(b => b.Netto ?? 0),
                     g.Sum(b => b.Steuer ?? 0),

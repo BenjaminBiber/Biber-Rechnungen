@@ -671,6 +671,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/belege/{id}/bezug": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Gutschrift mit einer Rechnung verknüpfen oder die Verknüpfung lösen */
+        post: operations["postBelegeBezug"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/belege/{id}/skonto": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Skonto setzen oder entfernen */
+        put: operations["putBelegeSkonto"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/belege/massenaktion": {
         parameters: {
             query?: never;
@@ -907,6 +941,23 @@ export interface paths {
         put?: never;
         /** Favicon der Website als Logo laden */
         post: operations["postKorrespondentenLogoFavicon"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/korrespondenten/{id}/ustid-pruefen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** USt-IdNr. sofort über VIES prüfen */
+        post: operations["postKorrespondentenUstIdPruefen"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1867,6 +1918,8 @@ export interface components {
             /** Format: uuid */
             aufgeteiltAusBelegId?: string | null;
             teilbelege: string[];
+            bezug: components["schemas"]["GutschriftBezugDto"];
+            skonto?: components["schemas"]["SkontoDto"] | null;
         };
         BelegFilterDto: {
             suche?: string | null;
@@ -1979,7 +2032,7 @@ export interface components {
         /** @enum {string} */
         Belegart: "Rechnung" | "Gutschrift" | "Quittung";
         /** @enum {string} */
-        BenachrichtigungArt: "DiLimitWarnung" | "DiLimitErreicht" | "ImportFehler" | "KositFehler" | "Integritaetsfehler" | "IntegritaetOk" | "KontoWartetAufFreigabe" | "Sonstiges";
+        BenachrichtigungArt: "DiLimitWarnung" | "DiLimitErreicht" | "ImportFehler" | "KositFehler" | "Integritaetsfehler" | "IntegritaetOk" | "KontoWartetAufFreigabe" | "Sonstiges" | "UstIdUngueltig" | "SkontoLaeuftAb";
         BenachrichtigungDto: {
             /** Format: uuid */
             id: string;
@@ -2026,6 +2079,20 @@ export interface components {
         };
         /** @enum {string} */
         BetragArt: "Brutto" | "Netto";
+        BezugSetzenDto: {
+            /** Format: uuid */
+            bezugBelegId?: string | null;
+        };
+        BezugVerweisDto: {
+            /** Format: uuid */
+            id: string;
+            rechnungsnummer?: string | null;
+            /** Format: date */
+            rechnungsdatum?: string | null;
+            /** Format: decimal */
+            brutto?: number | null;
+            waehrung: string;
+        };
         CodeDto: {
             code: string;
         };
@@ -2212,6 +2279,13 @@ export interface components {
             spalten: string[];
             darstellung: string;
         };
+        GutschriftBezugDto: {
+            rechnung?: components["schemas"]["BezugVerweisDto"] | null;
+            gutschriften: components["schemas"]["BezugVerweisDto"][];
+            /** Format: decimal */
+            restbetrag?: number | null;
+            kandidaten: components["schemas"]["BezugVerweisDto"][];
+        };
         /** @enum {string} */
         ImportQuelle: "Upload" | "Ordner" | "Mail" | "Mcp";
         ImportSchrittDto: {
@@ -2264,6 +2338,8 @@ export interface components {
             farbe: string;
             euerZeile?: string | null;
             matching: components["schemas"]["MatchingDto"];
+            /** Format: uuid */
+            elternId?: string | null;
         };
         KategorieAnteilDto: {
             kategorie?: components["schemas"]["VerweisDto"] | null;
@@ -2282,6 +2358,8 @@ export interface components {
             anzahlBelege: number;
             /** Format: decimal */
             summeBrutto: number;
+            /** Format: uuid */
+            elternId?: string | null;
         };
         KategorieGeloeschtDto: {
             /** Format: int32 */
@@ -2359,6 +2437,7 @@ export interface components {
             artikel: components["schemas"]["ArtikelListeneintragDto"][];
             /** Format: int32 */
             anzahlArtikel: number;
+            ustIdPruefung: components["schemas"]["UstIdPruefungDto"];
         };
         /** @enum {string} */
         KorrespondentErkennung: "Keine" | "UstIdNr" | "Iban" | "Name" | "Manuell" | "Auto";
@@ -2702,11 +2781,18 @@ export interface components {
              * @default 0.8
              */
             konfidenzSchwelle: number;
+            /** @default true */
+            ustIdOnlinePruefen: boolean;
+            /**
+             * Format: int32
+             * @default 3
+             */
+            skontoVorlaufTage: number;
         };
         /** @enum {string} */
         PruefErgebnis: "Ok" | "Fehlgeschlagen" | "NichtAnwendbar";
         /** @enum {string} */
-        PruefungArt: "Positionssumme" | "NettoSteuerBrutto" | "Pflichtfelder" | "Datum" | "Paragraph14" | "Dublette" | "NeuerKorrespondent" | "Konfidenz" | "Kosit" | "Bankverbindung";
+        PruefungArt: "Positionssumme" | "NettoSteuerBrutto" | "Pflichtfelder" | "Datum" | "Paragraph14" | "Dublette" | "NeuerKorrespondent" | "Konfidenz" | "Kosit" | "Bankverbindung" | "UstIdNr";
         RegistrierenDto: {
             name: string;
             email: string;
@@ -2742,6 +2828,21 @@ export interface components {
             seite: number;
             /** Format: int32 */
             seitengroesse: number;
+        };
+        SkontoDto: {
+            /** Format: decimal */
+            prozent: number;
+            /** Format: date */
+            bis?: string | null;
+            /** Format: decimal */
+            betrag?: number | null;
+            abgelaufen: boolean;
+        };
+        SkontoSetzenDto: {
+            /** Format: decimal */
+            prozent?: number | null;
+            /** Format: date */
+            bis?: string | null;
         };
         StammartikelAendernDto: {
             name: string;
@@ -2859,6 +2960,15 @@ export interface components {
             status: components["schemas"]["UstStatus"];
             zeitraum: components["schemas"]["UstvaZeitraum"];
         };
+        UstIdPruefungDto: {
+            status: components["schemas"]["UstIdStatus"];
+            /** Format: date-time */
+            geprueftAm?: string | null;
+            amtlicherName?: string | null;
+            amtlicheAnschrift?: string | null;
+        };
+        /** @enum {string} */
+        UstIdStatus: "Ungeprueft" | "Gueltig" | "Ungueltig" | "NichtErreichbar" | "NichtPruefbar";
         /** @enum {string} */
         UstStatus: "Unbekannt" | "Regelbesteuerung" | "Kleinunternehmer";
         /** @enum {string} */
@@ -4107,6 +4217,64 @@ export interface operations {
             404: components["responses"]["NichtGefunden"];
         };
     };
+    postBelegeBezug: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BezugSetzenDto"];
+            };
+        };
+        responses: {
+            /** @description Erledigt */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["Ungueltig"];
+            401: components["responses"]["NichtAngemeldet"];
+            403: components["responses"]["KeinRecht"];
+            404: components["responses"]["NichtGefunden"];
+        };
+    };
+    putBelegeSkonto: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SkontoSetzenDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BelegDetailDto"];
+                };
+            };
+            400: components["responses"]["Ungueltig"];
+            401: components["responses"]["NichtAngemeldet"];
+            403: components["responses"]["KeinRecht"];
+            404: components["responses"]["NichtGefunden"];
+        };
+    };
     postBelegeMassenaktion: {
         parameters: {
             query?: never;
@@ -4648,6 +4816,32 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LogoDto"];
+                };
+            };
+            400: components["responses"]["Ungueltig"];
+            401: components["responses"]["NichtAngemeldet"];
+            403: components["responses"]["KeinRecht"];
+            404: components["responses"]["NichtGefunden"];
+        };
+    };
+    postKorrespondentenUstIdPruefen: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KorrespondentDetailDto"];
                 };
             };
             400: components["responses"]["Ungueltig"];

@@ -21,6 +21,7 @@ public sealed class PruefungenModul : IDienstModul
         dienste.AddSingleton<IPruefung, KonfidenzPruefung>();
         dienste.AddSingleton<IPruefung, KositPruefung>();
         dienste.AddSingleton<IPruefung, BankverbindungPruefung>();
+        dienste.AddSingleton<IPruefung, UstIdNrPruefung>();
         dienste.AddScoped<IPruefDienst, PruefDienst>();
         dienste.AddScoped<IPipelineSchritt, PruefungenSchritt>();
     }

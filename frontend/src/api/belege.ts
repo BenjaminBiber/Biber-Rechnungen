@@ -7,11 +7,13 @@ import type {
   BelegeAbfrage,
   BelegStatus,
   Bestaetigen,
+  BezugSetzen,
   DubletteSetzen,
   GespeicherteAnsichtAnlegen,
   LogoAusschnitt,
   Massenaktion,
   PositionAendern,
+  SkontoSetzen,
 } from './typen'
 
 export const belegeKeys = {
@@ -209,6 +211,26 @@ export function useDubletteSetzen() {
   return useMutation({
     mutationFn: ({ id, ...eingabe }: DubletteSetzen & { id: string }) =>
       erledigt(api.POST('/api/belege/{id}/dublette', { params: { path: { id } }, body: eingabe })),
+    onSuccess: neuLaden,
+  })
+}
+
+/** POST /api/belege/{id}/bezug – Gutschrift mit einer Rechnung verknüpfen oder die Verknüpfung lösen. */
+export function useBezugSetzen() {
+  const neuLaden = useBelegeNeuLaden()
+  return useMutation({
+    mutationFn: ({ id, ...eingabe }: BezugSetzen & { id: string }) =>
+      erledigt(api.POST('/api/belege/{id}/bezug', { params: { path: { id } }, body: eingabe })),
+    onSuccess: neuLaden,
+  })
+}
+
+/** PUT /api/belege/{id}/skonto – Skonto setzen oder entfernen. */
+export function useSkontoSetzen() {
+  const neuLaden = useBelegeNeuLaden()
+  return useMutation({
+    mutationFn: ({ id, ...eingabe }: SkontoSetzen & { id: string }) =>
+      daten(api.PUT('/api/belege/{id}/skonto', { params: { path: { id } }, body: eingabe })),
     onSuccess: neuLaden,
   })
 }

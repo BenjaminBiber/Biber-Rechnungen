@@ -3,6 +3,7 @@ using System.Xml.Linq;
 using Biber.Invoice.Domain.Entitaeten;
 using Biber.Invoice.Domain.Enums;
 using Biber.Invoice.Domain.Pipeline;
+using Biber.Invoice.Domain.Regeln;
 using s2industries.ZUGFeRD;
 
 namespace Biber.Invoice.Infrastructure.Module.ERechnung;
@@ -168,6 +169,8 @@ public sealed class ERechnungParser : IERechnungParser
             Aussteller = aussteller,
             Empfaenger = empfaenger,
             Volltext = string.Join('\n', volltext),
+            Skonto = Skonto(r),
+            BezugRechnungsnummer = Leer(r.GetInvoiceReferencedDocuments().FirstOrDefault()?.ID),
             Konfidenz = null,
             Seiten = 1,
         };
@@ -207,6 +210,24 @@ public sealed class ERechnungParser : IERechnungParser
                 .ToList(),
             Email: email,
             Website: null);
+    }
+
+    /// <summary>
+    /// Skonto aus den strukturierten Zahlungsbedingungen (CII <c>ApplicableTradePaymentDiscountTerms</c>). Die
+    /// XRechnung-Syntax <c>#SKONTO#…#</c> im Beschreibungstext liest später der <see cref="SkontoErkenner"/>.
+    /// </summary>
+    private static SkontoAngabe? Skonto(InvoiceDescriptor r)
+    {
+        var bedingung = r.PaymentTerms.FirstOrDefault(z => z.PaymentTermsType == PaymentTermsType.Skonto && z.Percentage > 0);
+        if (bedingung?.Percentage is not { } prozent)
+        {
+            return null;
+        }
+
+        var angabe = new SkontoAngabe(prozent, bedingung.DueDays, Datum(bedingung.MaturityDate));
+        return SkontoErkenner.Plausibel(angabe.Prozent, angabe.Tage) && (angabe.Tage is not null || angabe.Bis is not null)
+            ? angabe
+            : null;
     }
 
     private static IEnumerable<string?> ParteiTexte(ExtrahiertePartei? p) =>

@@ -1,6 +1,7 @@
 import { useKorrespondenten } from '@/api/korrespondenten'
 import { useKategorien, useTags } from '@/api/tags'
 import { formatDatum, formatZahl } from '@/lib/format'
+import { vollerKategorieName } from '@/lib/kategorien'
 import { zeitraumVorgabe, zeitraumVorgaben, type ZeitraumVorgabeId } from '@/lib/zeitraum'
 import { quelleText, zahlstatusText, type BelegeSuche } from './suche'
 
@@ -27,7 +28,12 @@ export function useNamen(): Namen {
   const tags = useTags()
   const kategorien = useKategorien()
   const karte = (liste?: { id: string; name: string }[]) => new Map((liste ?? []).map((e) => [e.id, e.name]))
-  return { korrespondent: karte(korrespondenten.data), tags: karte(tags.data), kategorie: karte(kategorien.data) }
+  const alleKategorien = kategorien.data ?? []
+  return {
+    korrespondent: karte(korrespondenten.data),
+    tags: karte(tags.data),
+    kategorie: new Map(alleKategorien.map((k) => [k.id, vollerKategorieName(k, alleKategorien)])),
+  }
 }
 
 /** Kurztext eines aktiven Filters („Hostwerk Süd GmbH“, „2 gewählt“, „ab 200 €“ …), leer wenn inaktiv. */

@@ -136,7 +136,16 @@ public sealed class KorrespondentDienst(BiberDbContext db, TimeProvider zeit) : 
             verlauf,
             await LetzteBelegeAsync(k, heute, ct),
             artikel,
-            anzahlArtikel);
+            anzahlArtikel,
+            UstIdPruefung(k));
+    }
+
+    private static UstIdPruefungDto UstIdPruefung(Korrespondent k)
+    {
+        var status = k.AktuellerUstIdStatus();
+        return status == UstIdStatus.Ungeprueft
+            ? new UstIdPruefungDto(status, null, null, null)
+            : new UstIdPruefungDto(status, k.UstIdGeprueftAm, k.UstIdAmtlicherName, k.UstIdAmtlicheAnschrift);
     }
 
     public async Task<KorrespondentDetailDto> AnlegenAsync(KorrespondentAendernDto korrespondent, CancellationToken ct)

@@ -272,6 +272,10 @@ export const korrespondenten: KorrespondentDatensatz[] = zeilen.map(
       defaultKategorie: kategorie(kat),
       matching,
       autoTrainiertAm: matching.algorithmus === 'Auto' ? '2026-11-23T01:30:00Z' : null,
+      ustIdPruefung:
+        steuer === '—' || istSteuernummer
+          ? { status: 'Ungeprueft', geprueftAm: null, amtlicherName: null, amtlicheAnschrift: null }
+          : { status: 'Gueltig', geprueftAm: '2026-11-20T08:00:00Z', amtlicherName: null, amtlicheAnschrift: null },
       kennzahlen: {
         kostenJahr: kosten,
         aenderungVorjahr: null,

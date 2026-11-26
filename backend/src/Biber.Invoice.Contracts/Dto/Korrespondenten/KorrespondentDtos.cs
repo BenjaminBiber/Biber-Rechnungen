@@ -1,5 +1,6 @@
 using Biber.Invoice.Contracts.Dto.Artikel;
 using Biber.Invoice.Contracts.Dto.Belege;
+using Biber.Invoice.Domain.Enums;
 
 namespace Biber.Invoice.Contracts.Dto.Korrespondenten;
 
@@ -38,7 +39,18 @@ public sealed record KorrespondentDetailDto(
     decimal[] KostenverlaufMonate,
     BelegListeneintragDto[] LetzteBelege,
     ArtikelListeneintragDto[] Artikel,
-    int AnzahlArtikel);
+    int AnzahlArtikel,
+    UstIdPruefungDto UstIdPruefung);
+
+/// <summary>
+/// Ergebnis der VIES-Prüfung der USt-IdNr. <see cref="AmtlicherName"/> und <see cref="AmtlicheAnschrift"/> stehen nur da,
+/// wenn der Mitgliedstaat sie herausgibt (Deutschland tut es nicht).
+/// </summary>
+public sealed record UstIdPruefungDto(
+    UstIdStatus Status,
+    DateTimeOffset? GeprueftAm,
+    string? AmtlicherName,
+    string? AmtlicheAnschrift);
 
 /// <summary>IBAN ohne Leerzeichen in Großbuchstaben; der BIC ist optional.</summary>
 public sealed record BankverbindungDto(string Iban, string? Bic);

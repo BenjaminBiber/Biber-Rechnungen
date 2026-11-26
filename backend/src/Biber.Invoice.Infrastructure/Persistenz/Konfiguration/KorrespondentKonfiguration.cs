@@ -12,6 +12,10 @@ public sealed class KorrespondentKonfiguration : IEntityTypeConfiguration<Korres
         builder.Property(k => k.Name).HasMaxLength(300);
         builder.Property(k => k.Aliase).HasColumnType("text[]");
         builder.Property(k => k.UstIdNr).HasMaxLength(20);
+        builder.Property(k => k.UstIdStatus).HasMaxLength(20);
+        builder.Property(k => k.UstIdGeprueftNummer).HasMaxLength(20);
+        builder.Property(k => k.UstIdAmtlicherName).HasMaxLength(300);
+        builder.Property(k => k.UstIdAmtlicheAnschrift).HasMaxLength(500);
         builder.Property(k => k.Steuernummer).HasMaxLength(30);
         builder.Property(k => k.Bankverbindungen).AlsJsonb();
         builder.Property(k => k.Website).HasMaxLength(500);

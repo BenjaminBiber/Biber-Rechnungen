@@ -21,6 +21,8 @@ public sealed class BelegSchreibEndpunkte : IEndpunktModul
         app.MapPost(ApiRouten.Belege.Bestaetigen, BestaetigenAsync).RequireAuthorization(Richtlinien.Bearbeiten);
         app.MapPost(ApiRouten.Belege.ErneutAuslesen, ErneutAuslesenAsync).RequireAuthorization(Richtlinien.Bearbeiten);
         app.MapPost(ApiRouten.Belege.Dublette, DubletteAsync).RequireAuthorization(Richtlinien.Bearbeiten);
+        app.MapPost(ApiRouten.Belege.Bezug, BezugAsync).RequireAuthorization(Richtlinien.Bearbeiten);
+        app.MapPut(ApiRouten.Belege.Skonto, SkontoAsync).RequireAuthorization(Richtlinien.Bearbeiten);
         app.MapPost(ApiRouten.Belege.Massenaktion, MassenaktionAsync).RequireAuthorization(Richtlinien.Bearbeiten);
     }
 
@@ -45,6 +47,12 @@ public sealed class BelegSchreibEndpunkte : IEndpunktModul
 
     private static Task<IResult> DubletteAsync(Guid id, DubletteSetzenDto eingabe, IBelegBearbeitungsDienst dienst, CancellationToken ct) =>
         AusfuehrenAsync(async () => KeinInhalt(await dienst.DubletteSetzenAsync(id, eingabe.DuplikatVonId, ct)));
+
+    private static Task<IResult> BezugAsync(Guid id, BezugSetzenDto eingabe, IBelegBearbeitungsDienst dienst, CancellationToken ct) =>
+        AusfuehrenAsync(async () => KeinInhalt(await dienst.BezugSetzenAsync(id, eingabe.BezugBelegId, ct)));
+
+    private static Task<IResult> SkontoAsync(Guid id, SkontoSetzenDto eingabe, IBelegBearbeitungsDienst dienst, CancellationToken ct) =>
+        AusfuehrenAsync(async () => await dienst.SkontoSetzenAsync(id, eingabe, ct) is { } detail ? TypedResults.Ok(detail) : NichtGefunden());
 
     private static Task<IResult> MassenaktionAsync(MassenaktionDto aktion, IBelegBearbeitungsDienst dienst, CancellationToken ct) =>
         AusfuehrenAsync(async () => TypedResults.Ok(await dienst.MassenaktionAsync(aktion, ct)));

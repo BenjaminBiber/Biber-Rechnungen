@@ -97,7 +97,7 @@ public sealed class PruefungenSchrittTests(ApiFabrik fabrik)
         }
 
         var nachher = await BefundeAsync(beleg.Id);
-        nachher.Count.ShouldBe(10);
+        nachher.Count.ShouldBe(11);
         nachher.Single(b => b.Pruefung == PruefungArt.Pflichtfelder).Ergebnis.ShouldBe(PruefErgebnis.Ok);
         nachher.Single(b => b.Pruefung == PruefungArt.Kosit)
             .ShouldBeEquivalentTo(vorher.Single(b => b.Pruefung == PruefungArt.Kosit));
@@ -130,7 +130,7 @@ public sealed class PruefungenSchrittTests(ApiFabrik fabrik)
         await AusfuehrenAsync(beleg.Id, wiederholung: true);
 
         (await TagsAsync(beleg.Id)).ShouldNotContain(SystemIds.TagInbox);
-        (await BefundeAsync(beleg.Id)).Count.ShouldBe(10);
+        (await BefundeAsync(beleg.Id)).Count.ShouldBe(11);
     }
 
     [Fact]
@@ -142,7 +142,7 @@ public sealed class PruefungenSchrittTests(ApiFabrik fabrik)
         await AusfuehrenAsync(beleg.Id);
 
         (await TagsAsync(beleg.Id)).Count(t => t == SystemIds.TagZuPruefen).ShouldBe(1);
-        (await BefundeAsync(beleg.Id)).Count.ShouldBe(10);
+        (await BefundeAsync(beleg.Id)).Count.ShouldBe(11);
     }
 
     [Fact]
@@ -161,7 +161,7 @@ public sealed class PruefungenSchrittTests(ApiFabrik fabrik)
             () => AusfuehrenAsync(beleg.Id));
 
         var befunde = await BefundeAsync(beleg.Id);
-        befunde.Count.ShouldBe(9);
+        befunde.Count.ShouldBe(10);
         befunde.ShouldNotContain(b => b.Pruefung == PruefungArt.Pflichtfelder);
         befunde.Single(b => b.Pruefung == PruefungArt.Konfidenz).Ergebnis.ShouldBe(PruefErgebnis.Ok);
         befunde.Single(b => b.Pruefung == PruefungArt.Paragraph14).Ergebnis.ShouldBe(PruefErgebnis.NichtAnwendbar);

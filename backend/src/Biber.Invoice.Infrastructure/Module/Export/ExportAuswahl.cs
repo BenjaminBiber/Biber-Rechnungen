@@ -36,7 +36,10 @@ public static class ExportAuswahl
 
         if (anfrage.KategorieIds is { Length: > 0 } kategorien)
         {
-            abfrage = abfrage.Where(b => b.KategorieId != null && kategorien.Contains(b.KategorieId.Value));
+            // Eine Oberkategorie schließt ihre Unterkategorien ein.
+            abfrage = abfrage.Where(b => b.KategorieId != null
+                && (kategorien.Contains(b.KategorieId.Value)
+                    || (b.Kategorie!.ElternId != null && kategorien.Contains(b.Kategorie.ElternId.Value))));
         }
 
         if (anfrage.KorrespondentIds is { Length: > 0 } korrespondenten)
@@ -51,7 +54,7 @@ public static class ExportAuswahl
 
         var kandidaten = await abfrage
             .Include(b => b.Korrespondent)
-            .Include(b => b.Kategorie)
+            .Include(b => b.Kategorie).ThenInclude(k => k!.Eltern)
             .Include(b => b.Steuerzeilen)
             .Include(b => b.Dateien)
             .Include(b => b.Tags).ThenInclude(t => t.Tag)

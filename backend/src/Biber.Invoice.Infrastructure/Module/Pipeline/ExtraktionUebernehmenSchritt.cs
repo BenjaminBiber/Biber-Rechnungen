@@ -1,6 +1,7 @@
 using Biber.Invoice.Domain.Entitaeten;
 using Biber.Invoice.Domain.Enums;
 using Biber.Invoice.Domain.Pipeline;
+using Biber.Invoice.Domain.Regeln;
 using Biber.Invoice.Infrastructure.Module.KorrespondentZuordnung.Domain.Regeln;
 
 namespace Biber.Invoice.Infrastructure.Module.Pipeline;
@@ -38,6 +39,13 @@ public sealed class ExtraktionUebernehmenSchritt(TimeProvider zeit) : IPipelineS
         beleg.Steuer = e.Steuer;
         beleg.Brutto = e.Brutto;
         beleg.Volltext = e.Volltext;
+
+        // Skonto gibt es nur auf Rechnungen; ohne strukturierte Angabe wird es aus dem Volltext gelesen.
+        var skonto = e.Belegart == Belegart.Rechnung ? e.Skonto ?? SkontoErkenner.AusText(e.Volltext) : null;
+        beleg.SkontoProzent = skonto?.Prozent;
+        beleg.SkontoBis = skonto is null ? null : SkontoErkenner.Bis(skonto, e.Rechnungsdatum);
+        beleg.SkontoBetrag = SkontoErkenner.Betrag(e.Brutto, skonto?.Prozent);
+
         // Ohne Seitenzahl aus der Extraktion bleibt die der Formaterkennung (z. B. TIFF-Seiten) stehen.
         if (e.Seiten > 0)
         {

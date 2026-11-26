@@ -23,6 +23,12 @@ public sealed record ExtraktionsErgebnis
     public ExtrahiertePartei? Empfaenger { get; init; }
     public string? Volltext { get; init; }
 
+    /// <summary>Strukturiert angegebenes Skonto (E-Rechnung); sonst wird es später aus dem Volltext gelesen.</summary>
+    public SkontoAngabe? Skonto { get; init; }
+
+    /// <summary>Bei einer Gutschrift: Nummer der Rechnung, auf die sie sich bezieht (BT-25).</summary>
+    public string? BezugRechnungsnummer { get; init; }
+
     /// <summary>Konfidenz zwischen 0 und 1; nur bei Document Intelligence.</summary>
     public decimal? Konfidenz { get; init; }
 

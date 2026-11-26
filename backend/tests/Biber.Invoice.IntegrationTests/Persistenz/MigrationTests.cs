@@ -69,13 +69,20 @@ public sealed class MigrationTests(ApiFabrik fabrik)
         await using var db = datenbank.Kontext();
         var migrator = db.GetInfrastructure().GetRequiredService<IMigrator>();
         await migrator.MigrateAsync("BelegBankverbindungen");
+        // Per SQL: Das aktuelle Modell hat Spalten, die es in diesem Stand noch nicht gibt.
         var korrespondent = Testdaten.Korrespondent();
+        await db.Database.ExecuteSqlAsync(
+            $"""
+            INSERT INTO korrespondent (id, name, aliase, bankverbindungen, logo_quelle, ist_lieferant, ist_kunde,
+                matching_algorithmus, matching_gross_klein, erstellt_am, geprueft)
+            VALUES ({korrespondent.Id}, {korrespondent.Name}, ARRAY[]::text[], '[]'::jsonb, 'Keine', true, false, 'Keiner', false, now(), true)
+            """);
         var leer = new Stammartikel { Id = Guid.NewGuid(), Name = "Papier", Basiseinheit = "Blatt" };
         var gemischt = new Stammartikel { Id = Guid.NewGuid(), Name = "Toner", Basiseinheit = "Stk" };
         var gekauft = Artikel(korrespondent.Id, "toner", gemischt.Id);
         var verwaist = Artikel(korrespondent.Id, "papier", leer.Id);
         var verwaistImGemischten = Artikel(korrespondent.Id, "toner alt", gemischt.Id);
-        db.AddRange(korrespondent, leer, gemischt, gekauft, verwaist, verwaistImGemischten);
+        db.AddRange(leer, gemischt, gekauft, verwaist, verwaistImGemischten);
         await db.SaveChangesAsync();
         var beleg = await BelegEinfuegenAsync(db, korrespondentId: korrespondent.Id);
         await db.Database.ExecuteSqlAsync(

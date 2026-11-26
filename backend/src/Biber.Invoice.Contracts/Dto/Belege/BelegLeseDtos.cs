@@ -77,7 +77,27 @@ public sealed record BelegDetailDto(
     DateOnly LoeschsperreBis,
     bool IstERechnung,
     Guid? AufgeteiltAusBelegId,
-    Guid[] Teilbelege);
+    Guid[] Teilbelege,
+    GutschriftBezugDto Bezug,
+    SkontoDto? Skonto);
+
+/// <summary>Kurzverweis auf eine Rechnung oder Gutschrift, auf die sich ein Beleg bezieht.</summary>
+public sealed record BezugVerweisDto(Guid Id, string? Rechnungsnummer, DateOnly? Rechnungsdatum, decimal? Brutto, string Waehrung);
+
+/// <summary>
+/// Verknüpfung zwischen Gutschrift und Rechnung. <see cref="Rechnung"/>: bei einer Gutschrift die Rechnung, auf die sie
+/// sich bezieht. <see cref="Gutschriften"/>: bei einer Rechnung die verknüpften Gutschriften; <see cref="Restbetrag"/> ist
+/// dann Brutto abzüglich dieser Gutschriften (sonst <c>null</c>). <see cref="Kandidaten"/>: bei einer Gutschrift die
+/// Rechnungen desselben Korrespondenten zur Auswahl, neueste zuerst.
+/// </summary>
+public sealed record GutschriftBezugDto(
+    BezugVerweisDto? Rechnung,
+    BezugVerweisDto[] Gutschriften,
+    decimal? Restbetrag,
+    BezugVerweisDto[] Kandidaten);
+
+/// <summary>Skonto der Rechnung; <see cref="Abgelaufen"/>: die Frist liegt vor heute.</summary>
+public sealed record SkontoDto(decimal Prozent, DateOnly? Bis, decimal? Betrag, bool Abgelaufen);
 
 /// <summary>Steuerzeile; <see cref="Stimmt"/> sagt, ob Netto + Steuer zum Satz passen.</summary>
 public sealed record SteuerzeileDto(decimal Satz, decimal Netto, decimal Steuer, bool Stimmt);

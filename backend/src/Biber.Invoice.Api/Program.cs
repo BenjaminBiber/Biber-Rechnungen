@@ -1,8 +1,8 @@
 using Biber.Invoice.Api.Module;
 using Biber.Invoice.Infrastructure.Persistenz;
 using Microsoft.EntityFrameworkCore;
+using Biber.Invoice.Api.Hosting;
 using Serilog;
-using Serilog.Formatting.Compact;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,7 +10,7 @@ builder.Services.AddSerilog((dienste, logger) => logger
     .ReadFrom.Configuration(builder.Configuration)
     .ReadFrom.Services(dienste)
     .Enrich.FromLogContext()
-    .WriteTo.Console(new RenderedCompactJsonFormatter()));
+    .KonsoleEinrichten(builder.Configuration));
 
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
@@ -27,7 +27,11 @@ if (app.Configuration.GetValue("Datenbank:MigrationBeimStart", true))
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();
-app.UseSerilogRequestLogging();
+app.UseSerilogRequestLogging(o =>
+{
+    o.MessageTemplate = Protokollierung.AnfrageVorlage;
+    o.GetLevel = Protokollierung.AnfrageStufe;
+});
 
 app.UseDefaultFiles();
 app.UseStaticFiles();

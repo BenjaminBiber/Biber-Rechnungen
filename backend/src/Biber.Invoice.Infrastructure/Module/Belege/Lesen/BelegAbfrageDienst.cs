@@ -173,7 +173,58 @@ public sealed partial class BelegAbfrageDienst(BiberDbContext db, IEinstellungen
             beleg.LoeschsperreBis(jahre),
             IstERechnung(beleg.ExtraktionsQuelle),
             beleg.AufgeteiltAusBelegId,
-            teilbelege);
+            teilbelege,
+            await BezugAsync(beleg, ct),
+            beleg.SkontoProzent is { } prozent
+                ? new SkontoDto(prozent, beleg.SkontoBis, beleg.SkontoBetrag, beleg.SkontoBis < heute)
+                : null);
+    }
+
+    /// <summary>Höchstzahl der Rechnungen, die eine Gutschrift zur Auswahl anbietet.</summary>
+    public const int MaxBezugKandidaten = 50;
+
+    private async Task<GutschriftBezugDto> BezugAsync(Beleg beleg, CancellationToken ct)
+    {
+        var verweise = db.Belege.AsNoTracking()
+            .Select(b => new
+            {
+                b.Id,
+                b.Belegart,
+                b.KorrespondentId,
+                b.BezugBelegId,
+                b.DuplikatVonId,
+                b.ErstelltAm,
+                b.Rechnungsdatum,
+                Verweis = new BezugVerweisDto(b.Id, b.Rechnungsnummer, b.Rechnungsdatum, b.Brutto, b.Waehrung),
+            });
+
+        if (beleg.Belegart == Belegart.Gutschrift)
+        {
+            var rechnung = beleg.BezugBelegId is { } bezugId
+                ? await verweise.Where(b => b.Id == bezugId).Select(b => b.Verweis).FirstOrDefaultAsync(ct)
+                : null;
+            var kandidaten = beleg.KorrespondentId is { } korrespondentId
+                ? await verweise
+                    .Where(b => b.KorrespondentId == korrespondentId && b.Belegart == Belegart.Rechnung && b.DuplikatVonId == null)
+                    .OrderByDescending(b => b.Rechnungsdatum)
+                    .ThenByDescending(b => b.ErstelltAm)
+                    .Take(MaxBezugKandidaten)
+                    .Select(b => b.Verweis)
+                    .ToArrayAsync(ct)
+                : [];
+            return new GutschriftBezugDto(rechnung, [], null, kandidaten);
+        }
+
+        var gutschriften = await verweise
+            .Where(b => b.BezugBelegId == beleg.Id && b.Belegart == Belegart.Gutschrift)
+            .OrderBy(b => b.Rechnungsdatum)
+            .ThenBy(b => b.ErstelltAm)
+            .Select(b => b.Verweis)
+            .ToArrayAsync(ct);
+        decimal? rest = gutschriften.Length > 0 && beleg.Brutto is { } brutto
+            ? brutto - gutschriften.Sum(g => Math.Abs(g.Brutto ?? 0m))
+            : null;
+        return new GutschriftBezugDto(null, gutschriften, rest, []);
     }
 
     public async Task<BelegNachbarnDto> NachbarnAsync(Guid id, BelegFilterDto filter, CancellationToken ct)
@@ -253,6 +304,7 @@ public sealed partial class BelegAbfrageDienst(BiberDbContext db, IEinstellungen
         PruefungArt.Konfidenz => "Erkennungssicherheit",
         PruefungArt.Kosit => "KoSIT-Validierung",
         PruefungArt.Bankverbindung => "Bankverbindung bekannt",
+        PruefungArt.UstIdNr => "USt-IdNr. gültig (VIES)",
         _ => art.ToString(),
     };
 
@@ -375,7 +427,10 @@ public sealed partial class BelegAbfrageDienst(BiberDbContext db, IEinstellungen
         if (filter.KategorieIds.Length > 0)
         {
             var kategorieIds = filter.KategorieIds;
-            abfrage = abfrage.Where(b => b.KategorieId != null && kategorieIds.Contains(b.KategorieId.Value));
+            // Eine Oberkategorie schließt ihre Unterkategorien ein.
+            abfrage = abfrage.Where(b => b.KategorieId != null
+                && (kategorieIds.Contains(b.KategorieId.Value)
+                    || (b.Kategorie!.ElternId != null && kategorieIds.Contains(b.Kategorie.ElternId.Value))));
         }
 
         if (filter.Von is { } von)

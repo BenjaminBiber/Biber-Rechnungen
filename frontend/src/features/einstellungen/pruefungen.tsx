@@ -4,10 +4,10 @@ import { EinstellungsFormular, type Feldfehler } from './EinstellungsFormular'
 import { Schalter } from './Schalter'
 import { Zeile } from './Zeile'
 
-type Schwelle = 'summenToleranz' | 'maxAlterJahre' | 'kleinbetragGrenze' | 'konfidenzSchwelle'
+type Schwelle = 'summenToleranz' | 'maxAlterJahre' | 'kleinbetragGrenze' | 'konfidenzSchwelle' | 'skontoVorlaufTage'
 
 /** Formularzustand: Schwellen als Text im deutschen Zahlenformat. */
-type PruefFormular = { aktiv: Record<string, boolean> } & Record<Schwelle, string>
+type PruefFormular = { aktiv: Record<string, boolean>; ustIdOnlinePruefen: boolean } & Record<Schwelle, string>
 
 type Pruefung = {
   art: PruefungArt
@@ -17,7 +17,7 @@ type Pruefung = {
   einheit?: string
 }
 
-/** Die neun Prüfungen in der Reihenfolge des Designs. */
+/** Die Prüfungen in der Reihenfolge des Designs. */
 const pruefungen: Pruefung[] = [
   {
     art: 'Positionssumme',
@@ -58,6 +58,11 @@ const pruefungen: Pruefung[] = [
   },
   { art: 'Kosit', name: 'KoSIT-Validierung', detail: 'nur für XRechnung / ZUGFeRD' },
   { art: 'Bankverbindung', name: 'Bankverbindung bekannt', detail: 'IBAN weicht von den hinterlegten ab' },
+  {
+    art: 'UstIdNr',
+    name: 'USt-IdNr. gültig (VIES)',
+    detail: 'USt-IdNr. des Korrespondenten laut EU-Kommission ungültig',
+  },
 ]
 
 const zahlFormat = (wert: number, stellen: number) =>
@@ -79,6 +84,7 @@ const grenzen: Record<Schwelle, { min: number; max?: number; ganz?: boolean; mel
   maxAlterJahre: { min: 1, max: 30, ganz: true, meldung: 'Ganze Zahl zwischen 1 und 30 eingeben.' },
   kleinbetragGrenze: { min: 0, max: 100000, meldung: 'Betrag ab 0 € eingeben.' },
   konfidenzSchwelle: { min: 0, max: 1, meldung: 'Wert zwischen 0 und 1 eingeben.' },
+  skontoVorlaufTage: { min: 0, max: 60, ganz: true, meldung: 'Ganze Zahl zwischen 0 und 60 eingeben.' },
 }
 
 function validieren(f: PruefFormular): Feldfehler {
@@ -102,6 +108,8 @@ const zuFormular = (p: PruefEinstellungen): PruefFormular => ({
   maxAlterJahre: zahlFormat(p.maxAlterJahre, 0),
   kleinbetragGrenze: zahlFormat(p.kleinbetragGrenze, 0),
   konfidenzSchwelle: zahlFormat(p.konfidenzSchwelle, 2),
+  ustIdOnlinePruefen: p.ustIdOnlinePruefen,
+  skontoVorlaufTage: zahlFormat(p.skontoVorlaufTage, 0),
 })
 
 const zuWerten = (f: PruefFormular): PruefEinstellungen => ({
@@ -110,9 +118,11 @@ const zuWerten = (f: PruefFormular): PruefEinstellungen => ({
   maxAlterJahre: zahlLesen(f.maxAlterJahre)!,
   kleinbetragGrenze: zahlLesen(f.kleinbetragGrenze)!,
   konfidenzSchwelle: zahlLesen(f.konfidenzSchwelle)!,
+  ustIdOnlinePruefen: f.ustIdOnlinePruefen,
+  skontoVorlaufTage: zahlLesen(f.skontoVorlaufTage)!,
 })
 
-/** Bereich „Prüfungen“: neun Prüfungen mit Schalter und – wo vorhanden – Schwelle. */
+/** Bereich „Prüfungen“: alle Prüfungen mit Schalter und – wo vorhanden – Schwelle. */
 export function PruefungenBereich() {
   return (
     <Bereich titel="Prüfungen & Schwellen">
@@ -152,6 +162,36 @@ export function PruefungenBereich() {
                   />
                 </Zeile>
               ))}
+              <h3 className="m-0 mt-5 mb-1 text-sm font-semibold">Hinweise</h3>
+              <Zeile
+                titel="USt-IdNr. online prüfen"
+                beschreibung="Fragt die USt-IdNr. neuer Korrespondenten bei VIES (EU-Kommission) ab und wiederholt das halbjährlich. Dabei geht nur die Nummer nach außen."
+              >
+                <Schalter
+                  label="USt-IdNr. online prüfen"
+                  an={wert.ustIdOnlinePruefen}
+                  disabled={schreibgeschuetzt}
+                  onAendern={(an) => setze({ ustIdOnlinePruefen: an })}
+                />
+              </Zeile>
+              <Zeile
+                titel="Skonto-Hinweis"
+                beschreibung="Meldung in der Glocke, wenn die Skontofrist einer offenen Rechnung abläuft; 0 schaltet sie ab."
+                fehler={fehler.skontoVorlaufTage}
+              >
+                <span className="flex items-center gap-1.5 text-[13px]">
+                  <input
+                    className="eingabe num w-[90px]"
+                    inputMode="numeric"
+                    aria-label="Skonto-Hinweis Tage vorher"
+                    aria-invalid={!!fehler.skontoVorlaufTage}
+                    value={wert.skontoVorlaufTage}
+                    disabled={schreibgeschuetzt}
+                    onChange={(ev) => setze({ skontoVorlaufTage: ev.target.value })}
+                  />
+                  <span className="gedaempft">Tage vorher</span>
+                </span>
+              </Zeile>
             </div>
           )}
         </EinstellungsFormular>

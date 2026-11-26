@@ -51,6 +51,16 @@ export function useKorrespondentAendern() {
   })
 }
 
+/** POST /api/korrespondenten/{id}/ustid-pruefen – USt-IdNr. sofort über VIES prüfen. */
+export function useUstIdPruefen() {
+  const neuLaden = useNeuLaden()
+  return useMutation({
+    mutationFn: (id: string) =>
+      daten(api.POST('/api/korrespondenten/{id}/ustid-pruefen', { params: { path: { id } } })),
+    onSuccess: neuLaden,
+  })
+}
+
 /** POST /api/korrespondenten/zusammenfuehren – Quellen in den behaltenen Korrespondenten überführen. */
 export function useKorrespondentenZusammenfuehren() {
   const neuLaden = useNeuLaden()

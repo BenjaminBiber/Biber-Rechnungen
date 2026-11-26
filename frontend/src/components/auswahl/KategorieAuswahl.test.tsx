@@ -1,5 +1,6 @@
 import { screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
+import { db } from '@/mocks/db'
 import { kategorien } from '@/mocks/fixtures/tags'
 import { KategorieAuswahl } from './KategorieAuswahl'
 import { renderAuswahl } from './testHilfe'
@@ -39,5 +40,16 @@ describe('KategorieAuswahl', () => {
     expect(screen.getAllByRole('option')).toHaveLength(1)
     await nutzer.keyboard('{ArrowDown}{Enter}')
     expect(onAendern).toHaveBeenCalledWith(kategorien.find((k) => k.name === 'Fahrzeug')!.id)
+  })
+
+  it('zeigt Unterkategorien unter der Hauptkategorie und findet sie über deren Namen', async () => {
+    const fahrzeug = kategorien.find((k) => k.name === 'Fahrzeug')!
+    db.kategorien = db.kategorien.map((k) => (k.name === 'Hardware' ? { ...k, elternId: fahrzeug.id } : k))
+    const { nutzer } = oeffnen()
+    await nutzer.click(screen.getByRole('button', { name: 'Kategorie' }))
+    const namen = (await screen.findAllByRole('option')).map((o) => o.textContent)
+    expect(namen.indexOf('Hardware')).toBe(namen.indexOf('Fahrzeug') + 1)
+    await nutzer.type(screen.getByRole('combobox', { name: 'Kategorie suchen' }), 'fahr')
+    expect(screen.getAllByRole('option').map((o) => o.textContent)).toEqual(['Fahrzeug', 'Hardware'])
   })
 })

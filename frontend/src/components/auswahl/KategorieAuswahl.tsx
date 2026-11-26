@@ -3,9 +3,13 @@ import { useKategorien } from '@/api/tags'
 import { Icon } from '@/components/Icon'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { SkelettListe } from '@/components/ui/skelett'
+import { kategorieBaum } from '@/lib/kategorien'
 import { Option, Suchfeld, useListenNavigation } from './gemeinsam'
 
-/** „Kategorie setzen“ (Massenaktion, Beleg-Detail): Einfachauswahl; erneutes Wählen leert. */
+/**
+ * „Kategorie setzen“ (Massenaktion, Beleg-Detail): Einfachauswahl; erneutes Wählen leert.
+ * Unterkategorien stehen eingerückt unter ihrer Hauptkategorie; die Suche findet sie auch über deren Namen.
+ */
 export function KategorieAuswahl({
   wert,
   onAendern,
@@ -25,14 +29,17 @@ export function KategorieAuswahl({
   const laedt = data === undefined
 
   const begriff = suche.trim().toLocaleLowerCase('de')
-  const treffer = kategorien.filter((k) => k.name.toLocaleLowerCase('de').includes(begriff))
+  const passt = (name?: string) => name !== undefined && name.toLocaleLowerCase('de').includes(begriff)
+  const treffer = kategorieBaum(kategorien).filter(
+    ({ kategorie }) => passt(kategorie.name) || passt(kategorien.find((e) => e.id === kategorie.elternId)?.name),
+  )
 
   function waehlen(id: string) {
     onAendern(id === wert ? null : id)
     setOffen(false)
   }
 
-  const navigation = useListenNavigation(treffer.length, (i) => waehlen(treffer[i].id))
+  const navigation = useListenNavigation(treffer.length, (i) => waehlen(treffer[i].kategorie.id))
 
   return (
     <Popover open={offen} onOpenChange={setOffen}>
@@ -48,7 +55,7 @@ export function KategorieAuswahl({
         />
         {laedt && <SkelettListe zeilen={4} kompakt label="Kategorien werden geladen" />}
         <div id={listId} role="listbox" aria-label="Kategorien" aria-busy={laedt || undefined}>
-          {treffer.map((kategorie, i) => (
+          {treffer.map(({ kategorie, ebene }, i) => (
             <Option
               key={kategorie.id}
               id={`${listId}-${i}`}
@@ -56,6 +63,7 @@ export function KategorieAuswahl({
               aktiv={navigation.aktiv === i}
               onWaehlen={() => waehlen(kategorie.id)}
             >
+              {ebene > 0 && <span aria-hidden className="w-3 shrink-0" />}
               <span aria-hidden className="size-2.5 rounded-full" style={{ background: kategorie.farbe }} />
               {kategorie.name}
               {kategorie.id === wert && <Icon name="check" className="ml-auto text-akzent-text" label="gewählt" />}

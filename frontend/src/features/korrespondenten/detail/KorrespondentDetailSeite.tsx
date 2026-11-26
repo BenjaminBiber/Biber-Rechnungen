@@ -1,9 +1,9 @@
 import { Link } from '@tanstack/react-router'
 import { useState, type ReactNode } from 'react'
-import { useKorrespondentAendern } from '@/api/korrespondenten'
-import type { KorrespondentAendern, KorrespondentDetail, Matching } from '@/api/typen'
+import { useKorrespondentAendern, useUstIdPruefen } from '@/api/korrespondenten'
+import type { KorrespondentAendern, KorrespondentDetail, Matching, UstIdStatus } from '@/api/typen'
 import { MatchingEditor } from '@/components/auswahl/MatchingEditor'
-import { Chip } from '@/components/Chip'
+import { Chip, type ChipTon } from '@/components/Chip'
 import { Icon } from '@/components/Icon'
 import { useRolle } from '@/components/shell/useRolle'
 import { useToast } from '@/components/toast'
@@ -153,7 +153,55 @@ function IbanKopieren({ iban }: { iban: string }) {
   )
 }
 
-function Stammdaten({ detail }: { detail: KorrespondentDetail }) {
+const ustIdStatus: Record<UstIdStatus, { text: string; ton: ChipTon }> = {
+  Ungeprueft: { text: 'noch nicht geprüft', ton: 'grau' },
+  Gueltig: { text: 'gültig laut VIES', ton: 'gruen' },
+  Ungueltig: { text: 'ungültig laut VIES', ton: 'rot' },
+  NichtErreichbar: { text: 'VIES nicht erreichbar', ton: 'orange' },
+  NichtPruefbar: { text: 'kein EU-Staat', ton: 'grau' },
+}
+
+/** USt-IdNr. mit Ergebnis der VIES-Prüfung und – für Bearbeiter – „Jetzt prüfen“. */
+function UstIdNr({ detail, darfBearbeiten }: { detail: KorrespondentDetail; darfBearbeiten: boolean }) {
+  const toast = useToast()
+  const pruefen = useUstIdPruefen()
+  if (!detail.ustIdNr) return leer
+  const p = detail.ustIdPruefung
+  const status = ustIdStatus[p.status]
+  const jetztPruefen = () =>
+    pruefen.mutate(detail.id, {
+      onSuccess: (neu) => toast.erfolg(`USt-IdNr.: ${ustIdStatus[neu.ustIdPruefung.status].text}`),
+      onError: (f) => toast.fehler(f.message),
+    })
+  return (
+    <div>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="mono">{detail.ustIdNr}</span>
+        <Chip ton={status.ton}>{status.text}</Chip>
+        {darfBearbeiten && (
+          <Button variant="geist" size="klein" onClick={jetztPruefen} disabled={pruefen.isPending}>
+            <Icon name="verified" />
+            {pruefen.isPending ? 'Prüft …' : 'Jetzt prüfen'}
+          </Button>
+        )}
+      </div>
+      {(p.geprueftAm || p.amtlicherName) && (
+        <div className="gedaempft text-xs">
+          {p.geprueftAm && <>Geprüft {formatDatumZeit(p.geprueftAm)}</>}
+          {p.amtlicherName && (
+            <>
+              {p.geprueftAm && ' · '}
+              {p.amtlicherName}
+              {p.amtlicheAnschrift && `, ${p.amtlicheAnschrift}`}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function Stammdaten({ detail, darfBearbeiten }: { detail: KorrespondentDetail; darfBearbeiten: boolean }) {
   return (
     <section className="karte p-5" aria-labelledby="stammdaten-titel">
       <h2 id="stammdaten-titel" className="m-0 mb-4 text-base font-semibold">
@@ -163,7 +211,9 @@ function Stammdaten({ detail }: { detail: KorrespondentDetail }) {
         <Eintrag titel="Anschrift">
           {detail.anschrift ? <span className="whitespace-pre-line">{detail.anschrift}</span> : leer}
         </Eintrag>
-        <Eintrag titel="USt-IdNr.">{detail.ustIdNr ? <span className="mono">{detail.ustIdNr}</span> : leer}</Eintrag>
+        <Eintrag titel="USt-IdNr.">
+          <UstIdNr detail={detail} darfBearbeiten={darfBearbeiten} />
+        </Eintrag>
         <Eintrag titel="Steuernummer">
           {detail.steuernummer ? <span className="mono">{detail.steuernummer}</span> : leer}
         </Eintrag>
@@ -348,7 +398,7 @@ export function KorrespondentDetailSeite({
       <Kennzahlen detail={detail} jahr={jahr} />
       <div className="flex flex-col gap-4">
         <div className="grid gap-4 lg:grid-cols-2">
-          <Stammdaten detail={detail} />
+          <Stammdaten detail={detail} darfBearbeiten={darfBearbeiten} />
           <Zuordnung detail={detail} darfBearbeiten={darfBearbeiten} />
         </div>
         <Kostenverlauf detail={detail} jahr={jahr} onJahr={onJahr} />

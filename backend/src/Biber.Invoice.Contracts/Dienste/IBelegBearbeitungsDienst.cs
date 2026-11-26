@@ -24,6 +24,14 @@ public interface IBelegBearbeitungsDienst
     /// <param name="duplikatVonId"><c>null</c> hebt die Dubletten-Markierung auf.</param>
     Task<bool> DubletteSetzenAsync(Guid id, Guid? duplikatVonId, CancellationToken ct);
 
+    /// <summary>Verknüpft eine Gutschrift mit einer Rechnung desselben Korrespondenten.</summary>
+    /// <param name="bezugBelegId"><c>null</c> löst die Verknüpfung.</param>
+    Task<bool> BezugSetzenAsync(Guid id, Guid? bezugBelegId, CancellationToken ct);
+
+    /// <summary>Setzt oder entfernt das Skonto einer Rechnung.</summary>
+    /// <returns>Der geänderte Beleg; <c>null</c>, wenn es ihn nicht gibt.</returns>
+    Task<BelegDetailDto?> SkontoSetzenAsync(Guid id, SkontoSetzenDto skonto, CancellationToken ct);
+
     /// <summary>Stößt die Extraktion für den Beleg erneut an.</summary>
     Task<bool> ErneutAuslesenAsync(Guid id, CancellationToken ct);
 }
