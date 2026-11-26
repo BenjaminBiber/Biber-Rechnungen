@@ -1,4 +1,5 @@
 using Biber.Invoice.Domain.Entitaeten;
+using Biber.Invoice.Domain.Regeln;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -11,10 +12,14 @@ public sealed class ArtikelKonfiguration : IEntityTypeConfiguration<Artikel>
         builder.HasKey(a => a.Id);
         builder.Property(a => a.Name).HasMaxLength(500);
         builder.Property(a => a.NameNormalisiert).HasMaxLength(500);
+        builder.Property(a => a.Artikelnummer).HasMaxLength(ArtikelnummerNormalisierer.MaxLaenge);
         builder.Property(a => a.Einheit).HasMaxLength(50);
         builder.Property(a => a.UmrechnungFaktor).HasPrecision(14, 4);
 
-        builder.HasIndex(a => new { a.KorrespondentId, a.NameNormalisiert }).IsUnique();
+        // Eindeutig je Korrespondent: mit Nummer über die Nummer, sonst über den Namen (gleichnamige Artikel mit
+        // verschiedenen Nummern sind verschiedene Artikel).
+        builder.HasIndex(a => new { a.KorrespondentId, a.Artikelnummer }).IsUnique().HasFilter("artikelnummer IS NOT NULL");
+        builder.HasIndex(a => new { a.KorrespondentId, a.NameNormalisiert }).IsUnique().HasFilter("artikelnummer IS NULL");
         builder.HasIndex(a => a.NameNormalisiert)
             .HasMethod("gin")
             .HasOperators("gin_trgm_ops")

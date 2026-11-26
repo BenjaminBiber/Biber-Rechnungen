@@ -130,6 +130,93 @@ public sealed class PositionenSchrittTests(ApiFabrik fabrik)
         (await ArtikelAsync(k.Id)).Count.ShouldBe(2);
     }
 
+    [Fact]
+    public async Task Groessen_derselben_Artikelnummer_ergeben_einen_Artikel()
+    {
+        // Strauss R187502621: Sicherheitsschuhe 93435 in Größe 47 und 42; die Beschreibung der zweiten enthält
+        // zusätzlich den folgenden Set-Kopf.
+        var k = await fabrik.SpeichernAsync(Testdaten.Korrespondent());
+
+        var positionen = await AusfuehrenAsync(
+            k.Id,
+            Pos("S3 Sicherheitshalbschuhe Willingen grau/marine/schwarz", 56.90m, nummer: "93435", variante: "47"),
+            Pos("S3 Sicherheitshalbschuhe Willingen grau/marine/schwarz HERREN-SET: 2x Microfleece", 56.90m, nummer: "93435", variante: "42"));
+
+        positionen.Select(p => p.ArtikelId).Distinct().ShouldHaveSingleItem().ShouldNotBeNull();
+        positionen.Select(p => p.Variante).ShouldBe(["47", "42"]);
+        var artikel = (await ArtikelAsync(k.Id)).ShouldHaveSingleItem();
+        artikel.Artikelnummer.ShouldBe("93435");
+        artikel.Name.ShouldBe("S3 Sicherheitshalbschuhe Willingen grau/marine/schwarz");
+    }
+
+    [Fact]
+    public async Task Gleicher_Text_mit_verschiedenen_Artikelnummern_ergibt_verschiedene_Artikel()
+    {
+        // Hefele R26-1285: „Pressnippel Megacr.“ mit drei Artikelnummern, eine davon zweimal.
+        var k = await fabrik.SpeichernAsync(Testdaten.Korrespondent());
+
+        var positionen = await AusfuehrenAsync(
+            k.Id,
+            Pos("Pressnippel Megacr.", 23.27m, nummer: "5G12FDLORX45"),
+            Pos("Pressnippel Megacr.", 10.70m, nummer: "5G8FDLORX"),
+            Pos("Pressnippel Megacr.", 12.20m, nummer: "4G12FDLORX"),
+            Pos("Pressnippel Megacr.", 12.20m, nummer: "4g12fdlorx "));
+
+        positionen.Select(p => p.ArtikelId).Distinct().Count().ShouldBe(3);
+        positionen[3].ArtikelId.ShouldBe(positionen[2].ArtikelId);
+        (await ArtikelAsync(k.Id)).Select(a => a.Artikelnummer).Order().ShouldBe(["4G12FDLORX", "5G12FDLORX45", "5G8FDLORX"]);
+    }
+
+    [Fact]
+    public async Task Ohne_Nummer_wird_der_einzige_gleichnamige_Artikel_mit_Nummer_genommen()
+    {
+        var k = await fabrik.SpeichernAsync(Testdaten.Korrespondent());
+        var mitNummer = await AusfuehrenAsync(
+            k.Id,
+            Pos("Hanftalg 8mm", 10.85m, nummer: "37/8"),
+            Pos("Pressnippel Megacr.", 23.27m, nummer: "5G12FDLORX45"),
+            Pos("Pressnippel Megacr.", 10.70m, nummer: "5G8FDLORX"));
+
+        var ohneNummer = await AusfuehrenAsync(k.Id, Pos("Hanftalg 8mm", 10.85m), Pos("Pressnippel Megacr.", 10.70m));
+
+        ohneNummer[0].ArtikelId.ShouldBe(mitNummer[0].ArtikelId);
+        ohneNummer[1].ArtikelId.ShouldNotBeNull();
+        mitNummer.Select(p => p.ArtikelId).ShouldNotContain(ohneNummer[1].ArtikelId);
+        (await ArtikelAsync(k.Id)).Count(a => a.Artikelnummer is null).ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task Neuer_Artikel_mit_Nummer_uebernimmt_den_Stammartikel_des_gleichnamigen_ohne_Nummer()
+    {
+        var k = await fabrik.SpeichernAsync(Testdaten.Korrespondent());
+        var stamm = await fabrik.SpeichernAsync(new Stammartikel
+        {
+            Id = Guid.NewGuid(),
+            Name = $"HD-Schlauch {Guid.NewGuid():N}",
+            Basiseinheit = "m",
+        });
+        await fabrik.SpeichernAsync(new Artikel
+        {
+            Id = Guid.NewGuid(),
+            KorrespondentId = k.Id,
+            Name = "HD-Schlauch lose",
+            NameNormalisiert = "hd-schlauch lose",
+            Einheit = "m",
+            StammartikelId = stamm.Id,
+            UmrechnungFaktor = 1,
+        });
+
+        var positionen = await AusfuehrenAsync(
+            k.Id,
+            Pos("HD-Schlauch lose", 16.33m, "m", nummer: "5M2T"),
+            Pos("HD-Schlauch lose", 16.58m, "m", nummer: "4M2T"));
+
+        var artikel = await ArtikelAsync(k.Id);
+        artikel.Count.ShouldBe(3);
+        artikel.Where(a => a.Artikelnummer is not null).ShouldAllBe(a => a.StammartikelId == stamm.Id && a.UmrechnungFaktor == 1);
+        positionen.Select(p => p.GrundpreisEinheit).ShouldBe(["m", "m"]);
+    }
+
     private async Task<List<Position>> AusfuehrenAsync(Guid? korrespondentId, params Position[] positionen)
     {
         var beleg = Testdaten.Beleg(korrespondentId: korrespondentId);
@@ -171,11 +258,13 @@ public sealed class PositionenSchrittTests(ApiFabrik fabrik)
 
     private static int naechsteNr;
 
-    private static Position Pos(string text, decimal einzelpreis, string? einheit = null) => new()
+    private static Position Pos(string text, decimal einzelpreis, string? einheit = null, string? nummer = null, string? variante = null) => new()
     {
         Id = Guid.NewGuid(),
         Nr = Interlocked.Increment(ref naechsteNr),
         Text = text,
+        Artikelnummer = nummer,
+        Variante = variante,
         Menge = 1,
         Einheit = einheit,
         Einzelpreis = einzelpreis,

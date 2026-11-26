@@ -15,6 +15,7 @@ import {
 import { SkelettFormular } from '@/components/ui/skelett'
 import { formatEuro, formatZahl } from '@/lib/format'
 import { grundpreis } from './grundpreis'
+import { mitArtikelnummer } from './nummer'
 import { kurzname } from './suche'
 
 export const BASISEINHEITEN = ['Blatt', 'Stück', 'kg', 'l', 'm', 'Seiten', 'Monat']
@@ -199,13 +200,13 @@ function Inhalt({ artikel, onSchliessen, stamm }: InhaltProps & { stamm?: PreisD
         {neue.map((a) => (
           <div key={a.id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
             <span className="min-w-0">
-              {a.name} <span className="gedaempft">· {kurzname(a.korrespondent.name)}</span>
+              {mitArtikelnummer(a)} <span className="gedaempft">· {kurzname(a.korrespondent.name)}</span>
             </span>
             <span className="flex items-center gap-1.5 whitespace-nowrap">
               <label htmlFor={`${id}-${a.id}`}>1 {a.einheit ?? 'Einheit'} =</label>
               <input
                 id={`${id}-${a.id}`}
-                aria-label={`Faktor ${a.name}`}
+                aria-label={`Faktor ${mitArtikelnummer(a)}`}
                 className={`${feld} w-24 text-right`}
                 inputMode="decimal"
                 value={faktoren[a.id] ?? ''}

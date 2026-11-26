@@ -4,6 +4,7 @@ using Azure;
 using Biber.Invoice.Domain.Entitaeten;
 using Biber.Invoice.Domain.Enums;
 using Biber.Invoice.Domain.Pipeline;
+using Biber.Invoice.Domain.Regeln;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using AzureDi = Azure.AI.DocumentIntelligence;
@@ -115,7 +116,7 @@ public sealed partial class DocumentIntelligenceClient : IDocumentIntelligenceCl
             Steuer = Betrag(Feld(felder, "TotalTax")),
             Brutto = Betrag(Feld(felder, "InvoiceTotal")),
             Steuerzeilen = Steuerzeilen(Feld(felder, "TaxDetails")),
-            Positionen = Positionen(Feld(felder, "Items"), ergebnis.Content ?? ""),
+            Positionen = Positionen(Feld(felder, "Items"), ergebnis.Content ?? "", PositionsSpalten.Aus(ergebnis.Tables)),
             Aussteller = Partei(
                 Text(Feld(felder, "VendorName")),
                 Feld(felder, "VendorAddress"),
@@ -185,49 +186,134 @@ public sealed partial class DocumentIntelligenceClient : IDocumentIntelligenceCl
                 Betrag(Feld(z, "NetAmount")) ?? 0m,
                 Betrag(Feld(z, "Amount")) ?? 0m))];
 
-    private static List<ExtrahiertePosition> Positionen(AzureDi.DocumentField? feld, string volltext)
+    private static List<ExtrahiertePosition> Positionen(AzureDi.DocumentField? feld, string volltext, PositionsSpalten spalten)
     {
         var positionen = new List<ExtrahiertePosition>();
         var vorigesEnde = 0;
         foreach (var item in feld?.ValueList ?? [])
         {
             var beginn = item.Spans?.Count > 0 ? Math.Min(item.Spans[0].Offset, volltext.Length) : -1;
-            var bezeichnung = Text(Feld(item.ValueDictionary, "Description"))
-                ?? (beginn > vorigesEnde ? BezeichnungVorItem(volltext[vorigesEnde..beginn]) : null);
-            positionen.AddRange(Aufteilen(item) ?? [Position(item, bezeichnung)]);
+            var kopf = Text(Feld(item.ValueDictionary, "Description")) is { } beschreibung
+                ? new Positionskopf(beschreibung, null)
+                : beginn > vorigesEnde ? KopfVorItem(volltext[vorigesEnde..beginn]) : null;
+            positionen.AddRange(Aufteilen(item) ?? [Position(item, kopf, spalten)]);
             if (item.Spans?.Count > 0)
             {
                 vorigesEnde = Math.Min(item.Spans[^1].Offset + item.Spans[^1].Length, volltext.Length);
             }
         }
 
-        return [.. positionen.Select(MengeAusText).Select((p, i) => p with { Nr = i + 1 })];
+        return [.. positionen
+            .Select(OhneFuellzeilen)
+            .OfType<ExtrahiertePosition>()
+            .Select(MengeAusText)
+            .Select((p, i) => p with { Nr = i + 1 })];
     }
 
     /// <summary>
-    /// Erstreckt sich eine Position über einen Seitenumbruch, erkennt DI oft nur die Betragszeile auf der Folgeseite
-    /// als Item – ohne <c>Description</c>; der Inhalt ist dann nur „7 ST 37,00 1 ST 259,00 19“. Die Bezeichnung
-    /// steht davor im Volltext im Positionskopf „Pos.-Nr. / Artikelnummer / Bezeichnung“ (z. B. „0010 / 0011977388 /
-    /// AXION 870 …“); gesucht wird der letzte solche Kopf zwischen vorigem Item und diesem.
+    /// VetStar setzt vor jede Datumszeile einen winzigen, unsichtbaren Strich (1 pt); DI liest ihn als eigene
+    /// Tabellenzeile und liefert dann mitunter ein Item „-“ ohne Betrag, manchmal mit dem Datum darunter. Strich- und
+    /// Datumszeilen fallen aus dem Text; bleibt nichts übrig und hat die Position keinen Preis, entfällt sie.
     /// </summary>
-    private static string? BezeichnungVorItem(string abschnitt)
+    private static ExtrahiertePosition? OhneFuellzeilen(ExtrahiertePosition p)
     {
-        var treffer = PositionskopfMuster().Matches(abschnitt);
-        return treffer.Count == 0 ? null : treffer[^1].Groups["bezeichnung"].Value.Trim();
+        var zeilen = p.Text.Split('\n', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        var rest = zeilen.Where(z => !IstFuellzeile(z)).ToList();
+        if (rest.Count == 0)
+        {
+            return p.Gesamt is null && p.Einzelpreis is null ? null : p;
+        }
+
+        return rest.Count == zeilen.Length ? p : p with { Text = string.Join('\n', rest) };
     }
 
-    private static ExtrahiertePosition Position(AzureDi.DocumentField p, string? bezeichnung)
+    private static bool IstFuellzeile(string zeile) => DatumszeileMuster().IsMatch(zeile) || StrichzeileMuster().IsMatch(zeile);
+
+    /// <summary>
+    /// Erstreckt sich eine Position über einen Seitenumbruch, erkennt DI oft nur die Betragszeile auf der Folgeseite
+    /// als Item – ohne <c>Description</c>; der Inhalt ist dann nur „7 ST 37,00 1 ST 259,00 19“. Bezeichnung und
+    /// Artikelnummer stehen davor im Volltext im Positionskopf „Pos.-Nr. / Artikelnummer / Bezeichnung“ (z. B. „0010 /
+    /// 0011977388 / AXION 870 …“); gesucht wird der letzte solche Kopf zwischen vorigem Item und diesem.
+    /// </summary>
+    private static Positionskopf? KopfVorItem(string abschnitt)
+    {
+        var treffer = PositionskopfMuster().Matches(abschnitt);
+        return treffer.Count == 0
+            ? null
+            : new Positionskopf(treffer[^1].Groups["bezeichnung"].Value.Trim(), treffer[^1].Groups["nummer"].Value);
+    }
+
+    /// <summary>
+    /// Artikelnummer aus der Tabellenspalte „Artikel-Nr.“, sonst aus <c>ProductCode</c> (außer er ist die
+    /// Positionsnummer) bzw. dem Positionskopf; die Variante (Größe, Farbe) aus der Tabelle. Hat DI Nummer oder Variante
+    /// mit in die Bezeichnung gezogen („47 S3 Sicherheitshalbschuhe“), fallen sie dort vorn weg.
+    /// </summary>
+    private static ExtrahiertePosition Position(AzureDi.DocumentField p, Positionskopf? kopf, PositionsSpalten spalten)
     {
         var felder = p.ValueDictionary;
+        var tabelle = spalten.Fuer(p);
+        var produktcode = Text(Feld(felder, "ProductCode"));
+        if (produktcode is not null && string.Equals(produktcode, tabelle.Positionsnummer?.Trim(), StringComparison.OrdinalIgnoreCase))
+        {
+            produktcode = null;
+        }
+
+        var variante = ArtikelnummerNormalisierer.Variante(tabelle.Variante);
+        var nummer = OhneVariante(
+            ArtikelnummerNormalisierer.Bereinigen(tabelle.Artikelnummer)
+                ?? ArtikelnummerNormalisierer.Bereinigen(produktcode)
+                ?? ArtikelnummerNormalisierer.Bereinigen(kopf?.Nummer),
+            variante);
         return new ExtrahiertePosition(
             0,
-            bezeichnung ?? p.Content?.Trim() ?? "",
+            OhneVorspann(kopf?.Bezeichnung ?? p.Content?.Trim() ?? "", nummer, variante),
             Zahl(Feld(felder, "Quantity")),
             Text(Feld(felder, "Unit")),
             Betrag(Feld(felder, "UnitPrice")),
             Betrag(Feld(felder, "Amount")),
-            Satz(Feld(felder, "TaxRate")));
+            Satz(Feld(felder, "TaxRate")),
+            nummer,
+            variante);
     }
+
+    /// <summary>„93435 47“ → „93435“, wenn „47“ die Variante ist.</summary>
+    private static string? OhneVariante(string? nummer, string? variante)
+    {
+        if (nummer is null || variante is null || !nummer.EndsWith(variante, StringComparison.OrdinalIgnoreCase))
+        {
+            return nummer;
+        }
+
+        var rest = nummer[..^variante.Length];
+        return rest.Length > 0 && char.IsWhiteSpace(rest[^1]) ? ArtikelnummerNormalisierer.Bereinigen(rest) : nummer;
+    }
+
+    /// <summary>Entfernt Artikelnummer und Variante vorn aus der Bezeichnung, solange danach Text übrig bleibt.</summary>
+    private static string OhneVorspann(string text, string? nummer, string? variante)
+    {
+        var ergebnis = text.TrimStart();
+        var geaendert = true;
+        while (geaendert)
+        {
+            geaendert = false;
+            foreach (var vorspann in new[] { nummer, variante })
+            {
+                if (vorspann is not null
+                    && ergebnis.Length > vorspann.Length
+                    && ergebnis.StartsWith(vorspann, StringComparison.OrdinalIgnoreCase)
+                    && char.IsWhiteSpace(ergebnis[vorspann.Length])
+                    && ergebnis[vorspann.Length..].Trim().Length > 0)
+                {
+                    ergebnis = ergebnis[vorspann.Length..].TrimStart();
+                    geaendert = true;
+                }
+            }
+        }
+
+        return ergebnis;
+    }
+
+    private sealed record Positionskopf(string Bezeichnung, string? Nummer);
 
     /// <summary>
     /// Document Intelligence fasst manchmal mehrere Tabellenzeilen zu einem Item zusammen (gesehen bei
@@ -257,7 +343,7 @@ public sealed partial class DocumentIntelligenceClient : IDocumentIntelligenceCl
                 teile.Add(new ExtrahiertePosition(0, string.Join(' ', text), null, null, null, BetragAusText(zeile), null));
                 text.Clear();
             }
-            else if (!DatumszeileMuster().IsMatch(zeile) && zeile != "-")
+            else if (!IstFuellzeile(zeile))
             {
                 text.Add(zeile);
             }
@@ -305,11 +391,14 @@ public sealed partial class DocumentIntelligenceClient : IDocumentIntelligenceCl
     private static partial Regex BetragszeileMuster();
 
     /// <summary>Positionsnummer, Artikelnummer (mit Ziffer) und eine Bezeichnung mit Buchstaben – je eine Zeile.</summary>
-    [GeneratedRegex(@"^\d{1,6}\n(?=[^\n]*\d)[0-9A-Z][0-9A-Z./-]{3,}\n(?<bezeichnung>[^\n]*\p{L}{3}[^\n]*)$", RegexOptions.Multiline)]
+    [GeneratedRegex(@"^\d{1,6}\n(?=[^\n]*\d)(?<nummer>[0-9A-Z][0-9A-Z./-]{3,})\n(?<bezeichnung>[^\n]*\p{L}{3}[^\n]*)$", RegexOptions.Multiline)]
     private static partial Regex PositionskopfMuster();
 
     [GeneratedRegex(@"^\d{1,2}\.\d{1,2}\.\d{2,4}$")]
     private static partial Regex DatumszeileMuster();
+
+    [GeneratedRegex(@"^[-–—]+$")]
+    private static partial Regex StrichzeileMuster();
 
     [GeneratedRegex(@"^(?<menge>\d{1,4})\s*[x×X]\s+(?<text>\S.*)$", RegexOptions.Singleline)]
     private static partial Regex MengeImTextMuster();

@@ -121,6 +121,8 @@ public sealed class BelegTools(
             {
                 p.Nr,
                 p.Text,
+                p.Artikelnummer,
+                p.Variante,
                 p.Menge,
                 p.Einheit,
                 p.Einzelpreis,

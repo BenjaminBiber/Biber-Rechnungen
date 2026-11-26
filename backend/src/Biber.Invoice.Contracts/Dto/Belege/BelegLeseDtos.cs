@@ -102,9 +102,13 @@ public sealed record SkontoDto(decimal Prozent, DateOnly? Bis, decimal? Betrag, 
 /// <summary>Steuerzeile; <see cref="Stimmt"/> sagt, ob Netto + Steuer zum Satz passen.</summary>
 public sealed record SteuerzeileDto(decimal Satz, decimal Netto, decimal Steuer, bool Stimmt);
 
+/// <param name="Artikelnummer">Artikelnummer des Lieferanten, wie auf dem Beleg.</param>
+/// <param name="Variante">Größe, Farbe o. Ä.; gehört zur Position, nicht zum Artikel.</param>
 public sealed record PositionDto(
     int Nr,
     string Text,
+    string? Artikelnummer,
+    string? Variante,
     decimal? Menge,
     string? Einheit,
     decimal? Einzelpreis,

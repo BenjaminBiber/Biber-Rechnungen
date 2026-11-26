@@ -236,7 +236,7 @@ describe('Artikelseite', () => {
     const dialog = await screen.findByRole('dialog', { name: 'Stammartikel zuordnen' })
     expect(within(dialog).queryByRole('textbox', { name: 'Name' })).not.toBeInTheDocument()
     expect(within(dialog).queryByRole('textbox', { name: 'Faktor Kopierpapier A4 80 g' })).not.toBeInTheDocument()
-    await nutzer.type(within(dialog).getByRole('textbox', { name: 'Faktor Ordner breit 8 cm, blau' }), '1')
+    await nutzer.type(within(dialog).getByRole('textbox', { name: 'Faktor Ordner breit 8 cm, blau (7710-08)' }), '1')
     await nutzer.click(within(dialog).getByRole('button', { name: 'Zuordnen' }))
 
     await waitFor(() => expect(gesendet).toHaveLength(1))

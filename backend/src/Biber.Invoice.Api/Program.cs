@@ -1,7 +1,7 @@
+using Biber.Invoice.Api.Hosting;
 using Biber.Invoice.Api.Module;
 using Biber.Invoice.Infrastructure.Persistenz;
 using Microsoft.EntityFrameworkCore;
-using Biber.Invoice.Api.Hosting;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);

@@ -99,6 +99,8 @@ public sealed class ExtraktionUebernehmenSchritt(TimeProvider zeit) : IPipelineS
             Einzelpreis = p.Einzelpreis,
             Gesamt = p.Gesamt,
             Steuersatz = p.Steuersatz,
+            Artikelnummer = ArtikelnummerNormalisierer.Bereinigen(p.Artikelnummer),
+            Variante = ArtikelnummerNormalisierer.Variante(p.Variante),
         }));
 
         if (beleg.Positionen.Count > 0)

@@ -171,6 +171,8 @@ public sealed class BelegBearbeitungsDienst(
             Einzelpreis = p.Einzelpreis,
             Gesamt = p.Gesamt,
             Steuersatz = p.Steuersatz,
+            Artikelnummer = ArtikelnummerNormalisierer.Bereinigen(p.Artikelnummer),
+            Variante = ArtikelnummerNormalisierer.Variante(p.Variante),
         })];
         db.Positionen.AddRange(beleg.Positionen);
 
@@ -646,6 +648,16 @@ public sealed class BelegBearbeitungsDienst(
             if (p.Steuersatz is < 0 or > 100)
             {
                 fehler[$"[{i}].steuersatz"] = ["Der Steuersatz liegt zwischen 0 und 100 %."];
+            }
+
+            if (p.Artikelnummer?.Trim().Length > ArtikelnummerNormalisierer.MaxLaenge)
+            {
+                fehler[$"[{i}].artikelnummer"] = [$"Die Artikelnummer darf höchstens {ArtikelnummerNormalisierer.MaxLaenge} Zeichen lang sein."];
+            }
+
+            if (p.Variante?.Trim().Length > ArtikelnummerNormalisierer.MaxLaenge)
+            {
+                fehler[$"[{i}].variante"] = [$"Die Variante darf höchstens {ArtikelnummerNormalisierer.MaxLaenge} Zeichen lang sein."];
             }
         }
 

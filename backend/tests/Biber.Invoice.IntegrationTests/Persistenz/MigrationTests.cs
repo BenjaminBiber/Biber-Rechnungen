@@ -79,18 +79,18 @@ public sealed class MigrationTests(ApiFabrik fabrik)
             """);
         var leer = new Stammartikel { Id = Guid.NewGuid(), Name = "Papier", Basiseinheit = "Blatt" };
         var gemischt = new Stammartikel { Id = Guid.NewGuid(), Name = "Toner", Basiseinheit = "Stk" };
-        var gekauft = Artikel(korrespondent.Id, "toner", gemischt.Id);
-        var verwaist = Artikel(korrespondent.Id, "papier", leer.Id);
-        var verwaistImGemischten = Artikel(korrespondent.Id, "toner alt", gemischt.Id);
-        db.AddRange(leer, gemischt, gekauft, verwaist, verwaistImGemischten);
+        db.AddRange(leer, gemischt);
         await db.SaveChangesAsync();
+        var gekauft = await ArtikelEinfuegenAsync(db, korrespondent.Id, "toner", gemischt.Id);
+        await ArtikelEinfuegenAsync(db, korrespondent.Id, "papier", leer.Id);
+        await ArtikelEinfuegenAsync(db, korrespondent.Id, "toner alt", gemischt.Id);
         var beleg = await BelegEinfuegenAsync(db, korrespondentId: korrespondent.Id);
         await db.Database.ExecuteSqlAsync(
-            $"INSERT INTO position (id, beleg_id, nr, text, artikel_id) VALUES ({Guid.NewGuid()}, {beleg}, 1, 'Toner', {gekauft.Id})");
+            $"INSERT INTO position (id, beleg_id, nr, text, artikel_id) VALUES ({Guid.NewGuid()}, {beleg}, 1, 'Toner', {gekauft})");
 
         await migrator.MigrateAsync();
 
-        (await db.Artikel.AsNoTracking().Select(a => a.Id).ToListAsync()).ShouldBe([gekauft.Id]);
+        (await db.Artikel.AsNoTracking().Select(a => a.Id).ToListAsync()).ShouldBe([gekauft]);
         (await db.Stammartikel.AsNoTracking().Select(s => s.Id).ToListAsync()).ShouldBe([gemischt.Id]);
     }
 
@@ -163,12 +163,15 @@ public sealed class MigrationTests(ApiFabrik fabrik)
         return id;
     }
 
-    private static Artikel Artikel(Guid korrespondentId, string name, Guid? stammartikelId) => new()
+    /// <summary>Per SQL: Das aktuelle Modell hat Spalten (z. B. <c>artikelnummer</c>), die es im alten Stand noch nicht gibt.</summary>
+    private static async Task<Guid> ArtikelEinfuegenAsync(BiberDbContext db, Guid korrespondentId, string name, Guid? stammartikelId)
     {
-        Id = Guid.NewGuid(),
-        KorrespondentId = korrespondentId,
-        Name = name,
-        NameNormalisiert = name,
-        StammartikelId = stammartikelId,
-    };
+        var id = Guid.NewGuid();
+        await db.Database.ExecuteSqlAsync(
+            $"""
+            INSERT INTO artikel (id, korrespondent_id, name, name_normalisiert, stammartikel_id)
+            VALUES ({id}, {korrespondentId}, {name}, {name}, {stammartikelId})
+            """);
+        return id;
+    }
 }

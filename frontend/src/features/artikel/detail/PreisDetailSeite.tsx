@@ -23,6 +23,7 @@ import { einheitKurz, grundpreisBezug, hatGrundpreis, type Preisart } from './ge
 import { Kaeufe } from './Kaeufe'
 import { Preisverlauf } from './Preisverlauf'
 import { StammartikelKarte } from './StammartikelKarte'
+import { mitArtikelnummer } from '../nummer'
 
 function Kennzahl({ titel, wert, zusatz }: { titel: string; wert: ReactNode; zusatz?: ReactNode }) {
   return (
@@ -88,7 +89,7 @@ function Herausloesen({ detail }: { detail: PreisDetail }) {
           <select className="eingabe" value={artikelId} onChange={(e) => setArtikelId(e.target.value)}>
             {detail.artikel.map((a) => (
               <option key={a.id} value={a.id}>
-                {a.name} · {a.korrespondent.name}
+                {mitArtikelnummer(a)} · {a.korrespondent.name}
               </option>
             ))}
           </select>
@@ -169,6 +170,7 @@ export function PreisDetailSeite({
       : detail.serien.map((s) => s.korrespondent.id),
   ).size
   const kopfzeile = [
+    detail.artikelnummer && `Art.-Nr. ${detail.artikelnummer}`,
     detail.basiseinheit && `Basiseinheit ${detail.basiseinheit}`,
     mitGrundpreis &&
       detail.basiseinheit &&

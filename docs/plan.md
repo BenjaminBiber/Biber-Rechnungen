@@ -105,8 +105,9 @@ Beleg
 BelegDatei      Id, BelegId, Rolle (Original|EingebettetesXml|Visualisierung|Vorschau), Pfad, Sha256, Groesse, MimeType,
                 AbgelegtAm, LetztePruefungAm, PruefErgebnis
 Steuerzeile     BelegId, Satz, Netto, Steuer
-Position        BelegId, Nr, Text, TextNormalisiert, Menge, Einheit, Einzelpreis, Gesamt, Steuersatz, ArtikelId?, Grundpreis?, GrundpreisEinheit?
-Artikel         Id, KorrespondentId, NameNormalisiert, StammartikelId?
+Position        BelegId, Nr, Text, TextNormalisiert, Artikelnummer?, Variante?, Menge, Einheit, Einzelpreis, Gesamt, Steuersatz,
+                ArtikelId?, Grundpreis?, GrundpreisEinheit?
+Artikel         Id, KorrespondentId, Artikelnummer?, NameNormalisiert, StammartikelId?
 Stammartikel    Id, Name, Basiseinheit
 Korrespondent   Id, Name, Aliase[], UstIdNr, Steuernummer, Ibans[], Anschrift, Website/Domain, Email,
                 LogoDateiId?, LogoQuelle (Upload|Pdf|Favicon), DefaultKategorieId?, IstLieferant, IstKunde, Matching
@@ -136,7 +137,7 @@ Mail  ──┘                                            │
                                                      ├─ 3a. E-Rechnung: XML parsen (maßgeblich, Q14), KoSIT validieren + visualisieren
                                                      ├─ 3b. sonst: Document Intelligence prebuilt-invoice (Seitenlimit, R2-13)
                                                      ├─ 4. Korrespondent zuordnen (USt-IdNr > IBAN > Name/Alias), sonst neu anlegen
-                                                     ├─ 5. Positionen normalisieren → Artikel; Grundpreis, falls Menge/Einheit erkannt
+                                                     ├─ 5. Positionen → Artikel (über Artikelnummer, sonst normalisierten Text); Grundpreis, falls Menge/Einheit erkannt
                                                      ├─ 6. Fachliche Dublette (Korrespondent + Rechnungsnr. + Betrag)
                                                      ├─ 7. Zuordnung: Default-Kategorie, Matching-Regeln, Auto (ML.NET)
                                                      ├─ 8. Inbox-Tags setzen; Plausibilitätsprüfungen → bei Fehlern Tag „zu prüfen“ + PruefBefund

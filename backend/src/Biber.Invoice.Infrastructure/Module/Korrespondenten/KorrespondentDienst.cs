@@ -240,11 +240,16 @@ public sealed class KorrespondentDienst(BiberDbContext db, TimeProvider zeit) : 
 
     private int AktuellesJahr => zeit.GetUtcNow().UtcDateTime.Year;
 
-    /// <summary>Hängt die Artikel der Quellen um; gleichnamige werden in den Artikel des behaltenen verschmolzen.</summary>
+    /// <summary>
+    /// Hängt die Artikel der Quellen um; Artikel mit gleicher Nummer bzw. – ohne Nummer – gleichem Namen werden in den
+    /// Artikel des behaltenen verschmolzen.
+    /// </summary>
     /// <returns>Die verschmolzenen Artikel der Quellen, die gelöscht werden.</returns>
     private async Task<List<Artikel>> ArtikelUmhaengenAsync(Korrespondent behalten, List<Guid> quellIds, CancellationToken ct)
     {
-        var eigene = await db.Artikel.Where(a => a.KorrespondentId == behalten.Id).ToDictionaryAsync(a => a.NameNormalisiert, ct);
+        static (string? Nummer, string Name) Schluessel(Artikel a) => (a.Artikelnummer, a.Artikelnummer is null ? a.NameNormalisiert : "");
+
+        var eigene = await db.Artikel.Where(a => a.KorrespondentId == behalten.Id).ToDictionaryAsync(Schluessel, ct);
         var fremde = await db.Artikel.Where(a => quellIds.Contains(a.KorrespondentId)).OrderBy(a => a.Name).ToListAsync(ct);
         var fremdIds = fremde.Select(a => a.Id).ToList();
         var positionen = await db.Positionen.Where(p => p.ArtikelId != null && fremdIds.Contains(p.ArtikelId.Value)).ToListAsync(ct);
@@ -253,7 +258,7 @@ public sealed class KorrespondentDienst(BiberDbContext db, TimeProvider zeit) : 
         var zuLoeschen = new List<Artikel>();
         foreach (var artikel in fremde)
         {
-            if (eigene.TryGetValue(artikel.NameNormalisiert, out var ziel))
+            if (eigene.TryGetValue(Schluessel(artikel), out var ziel))
             {
                 foreach (var position in positionenJeArtikel[artikel.Id])
                 {
@@ -276,7 +281,7 @@ public sealed class KorrespondentDienst(BiberDbContext db, TimeProvider zeit) : 
             else
             {
                 artikel.KorrespondentId = behalten.Id;
-                eigene[artikel.NameNormalisiert] = artikel;
+                eigene[Schluessel(artikel)] = artikel;
             }
         }
 
@@ -462,7 +467,7 @@ public sealed class KorrespondentDienst(BiberDbContext db, TimeProvider zeit) : 
     {
         var artikel = await db.Artikel.AsNoTracking()
             .Where(a => a.KorrespondentId == k.Id)
-            .Select(a => new { a.Id, a.Name, a.Einheit, Stammartikel = a.Stammartikel == null ? null : new VerweisDto(a.Stammartikel.Id, a.Stammartikel.Name) })
+            .Select(a => new { a.Id, a.Name, a.Artikelnummer, a.Einheit, Stammartikel = a.Stammartikel == null ? null : new VerweisDto(a.Stammartikel.Id, a.Stammartikel.Name) })
             .ToListAsync(ct);
         var ids = artikel.Select(a => a.Id).ToList();
         var kaeufe = await db.Positionen.AsNoTracking()
@@ -492,6 +497,7 @@ public sealed class KorrespondentDienst(BiberDbContext db, TimeProvider zeit) : 
                 return new ArtikelListeneintragDto(
                     a.Id,
                     a.Name,
+                    a.Artikelnummer,
                     verweis,
                     a.Stammartikel,
                     geordnet.Count,

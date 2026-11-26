@@ -5733,6 +5733,12 @@
           "name": {
             "type": "string"
           },
+          "artikelnummer": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "korrespondent": {
             "$ref": "#/components/schemas/VerweisDto"
           },
@@ -8144,6 +8150,12 @@
               "null"
             ],
             "format": "decimal"
+          },
+          "variante": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -9191,6 +9203,18 @@
               "null"
             ],
             "format": "decimal"
+          },
+          "artikelnummer": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "variante": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -9208,6 +9232,18 @@
           },
           "text": {
             "type": "string"
+          },
+          "artikelnummer": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "variante": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "menge": {
             "type": [
@@ -9286,6 +9322,12 @@
           },
           "name": {
             "type": "string"
+          },
+          "artikelnummer": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "istStammartikel": {
             "type": "boolean"
@@ -10407,6 +10449,12 @@
           },
           "name": {
             "type": "string"
+          },
+          "artikelnummer": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "korrespondent": {
             "$ref": "#/components/schemas/VerweisDto"

@@ -6,6 +6,7 @@ import { useToast } from '@/components/toast'
 import { Button } from '@/components/ui/button'
 import { formatZahl } from '@/lib/format'
 import { einheitKurz } from './gemeinsam'
+import { mitArtikelnummer } from '../nummer'
 
 type Zeile = Pick<ZugeordneterArtikel, 'id' | 'name' | 'einheit'> & { korrespondent: string; faktor: string }
 
@@ -34,7 +35,7 @@ function ArtikelZuordnen({ basiseinheit, onZuordnen }: { basiseinheit: string; o
               aria-pressed={a.id === gewaehlt}
               onClick={() => setGewaehlt(a.id)}
             >
-              {a.name} · {a.korrespondent.name}
+              {mitArtikelnummer(a)} · {a.korrespondent.name}
             </button>
           </li>
         ))}
@@ -56,7 +57,7 @@ function ArtikelZuordnen({ basiseinheit, onZuordnen }: { basiseinheit: string; o
             onClick={() =>
               onZuordnen({
                 id: artikel.id,
-                name: artikel.name,
+                name: mitArtikelnummer(artikel),
                 einheit: artikel.einheit,
                 korrespondent: artikel.korrespondent.name,
                 faktor,
@@ -81,7 +82,7 @@ export function StammartikelKarte({ detail, darfBearbeiten }: { detail: PreisDet
   const [zeilen, setZeilen] = useState<Zeile[]>(() =>
     detail.artikel.map((a) => ({
       id: a.id,
-      name: a.name,
+      name: mitArtikelnummer(a),
       einheit: a.einheit,
       korrespondent: a.korrespondent.name,
       faktor: a.umrechnungFaktor != null ? formatZahl(a.umrechnungFaktor) : '',

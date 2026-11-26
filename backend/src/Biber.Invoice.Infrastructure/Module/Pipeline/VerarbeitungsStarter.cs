@@ -1,6 +1,7 @@
 using Biber.Invoice.Domain.Entitaeten;
 using Biber.Invoice.Domain.Enums;
 using Biber.Invoice.Domain.Pipeline;
+using Biber.Invoice.Infrastructure.Module.Positionen;
 using Biber.Invoice.Infrastructure.Persistenz;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -9,7 +10,8 @@ namespace Biber.Invoice.Infrastructure.Module.Pipeline;
 
 /// <summary>
 /// „Erneut auslesen“: führt für einen abgelegten Beleg die Schritte ab <see cref="SchrittReihenfolge.Formaterkennung"/>
-/// mit dem Original aus der Ablage aus, direkt im Aufruf (nicht über Hangfire).
+/// mit dem Original aus der Ablage aus, direkt im Aufruf (nicht über Hangfire). Die Positionen werden dabei neu
+/// angelegt und zugeordnet; Artikel, die dadurch keine Position mehr haben, werden danach entfernt.
 /// </summary>
 public sealed class VerarbeitungsStarter(
     BiberDbContext db,
@@ -46,6 +48,7 @@ public sealed class VerarbeitungsStarter(
             ErstelltAm = zeit.GetUtcNow(),
         };
 
+        var bisherigeArtikel = VerwaisteArtikel.Kandidaten(beleg.Positionen);
         var kontext = new VerarbeitungsKontext
         {
             Vorgang = vorgang,
@@ -64,6 +67,7 @@ public sealed class VerarbeitungsStarter(
                 case SchrittAusgang.Weiter:
                     continue;
                 case SchrittAusgang.Beendet:
+                    await VerwaisteArtikel.EntfernenAsync(db, bisherigeArtikel, ct);
                     return;
                 default:
                     throw new InvalidOperationException(
@@ -73,5 +77,6 @@ public sealed class VerarbeitungsStarter(
 
         beleg.Status = BelegStatus.Fertig;
         await db.SaveChangesAsync(ct);
+        await VerwaisteArtikel.EntfernenAsync(db, bisherigeArtikel, ct);
     }
 }

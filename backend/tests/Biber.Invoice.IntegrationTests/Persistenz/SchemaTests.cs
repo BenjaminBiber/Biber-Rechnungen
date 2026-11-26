@@ -344,6 +344,21 @@ public sealed class SchemaTests(ApiFabrik fabrik)
     }
 
     [Fact]
+    public async Task Artikel_mit_Nummer_ist_je_Korrespondent_ueber_die_Nummer_eindeutig()
+    {
+        var korrespondent = await fabrik.SpeichernAsync(Testdaten.Korrespondent());
+        Artikel Neu(string nummer, string name = "Pressnippel") =>
+            new() { Id = Guid.NewGuid(), KorrespondentId = korrespondent.Id, Artikelnummer = nummer, Name = name, NameNormalisiert = name.ToLowerInvariant() };
+
+        // Gleicher Name mit verschiedenen Nummern und daneben ein gleichnamiger Artikel ohne Nummer sind erlaubt.
+        await fabrik.SpeichernAsync(Neu("5G8FDLORX"));
+        await fabrik.SpeichernAsync(Neu("4G12FDLORX"));
+        await fabrik.SpeichernAsync(new Artikel { Id = Guid.NewGuid(), KorrespondentId = korrespondent.Id, Name = "Pressnippel", NameNormalisiert = "pressnippel" });
+
+        await VerletztEindeutigkeitAsync(Neu("5G8FDLORX", "Anderer Name"));
+    }
+
+    [Fact]
     public async Task ApiToken_Hash_ist_eindeutig()
     {
         var benutzer = await fabrik.SpeichernAsync(Testdaten.Benutzer());

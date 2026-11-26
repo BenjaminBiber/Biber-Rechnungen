@@ -22,9 +22,11 @@ public sealed record ArtikelFilterDto
     public int Seitengroesse { get; init; } = 50;
 }
 
+/// <param name="Artikelnummer">Normalisierte Artikelnummer; <c>null</c> bei Artikeln ohne Nummer.</param>
 public sealed record ArtikelListeneintragDto(
     Guid Id,
     string Name,
+    string? Artikelnummer,
     VerweisDto Korrespondent,
     VerweisDto? Stammartikel,
     int Kaeufe,
@@ -49,9 +51,11 @@ public sealed record StammartikelListeneintragDto(
     decimal? Aenderung);
 
 /// <summary>Preisdetail eines Artikels oder Stammartikels für das gewählte Jahr.</summary>
+/// <param name="Artikelnummer">Nur bei einem Artikel mit Nummer.</param>
 public sealed record PreisDetailDto(
     Guid Id,
     string Name,
+    string? Artikelnummer,
     bool IstStammartikel,
     string? Basiseinheit,
     decimal? GrundpreisMenge,
@@ -75,6 +79,7 @@ public sealed record PreisSerieDto(VerweisDto Korrespondent, string? Einheit, de
 
 public sealed record PreisPunktDto(DateOnly Datum, decimal? Einzelpreis, decimal? Grundpreis);
 
+/// <param name="Variante">Größe, Farbe o. Ä. der gekauften Position.</param>
 public sealed record KaufDto(
     DateOnly Datum,
     VerweisDto Korrespondent,
@@ -83,9 +88,16 @@ public sealed record KaufDto(
     decimal? Menge,
     string? Einheit,
     decimal? Einzelpreis,
-    decimal? Grundpreis);
+    decimal? Grundpreis,
+    string? Variante);
 
-public sealed record ZugeordneterArtikelDto(Guid Id, string Name, VerweisDto Korrespondent, string? Einheit, decimal? UmrechnungFaktor);
+public sealed record ZugeordneterArtikelDto(
+    Guid Id,
+    string Name,
+    string? Artikelnummer,
+    VerweisDto Korrespondent,
+    string? Einheit,
+    decimal? UmrechnungFaktor);
 
 public sealed record StammartikelAendernDto(string Name, string Basiseinheit, decimal GrundpreisMenge, ArtikelZuordnungDto[] Artikel);
 

@@ -10,13 +10,33 @@ import { formatEuro, formatZahl } from '@/lib/format'
 import { betragEingabe, parseBetrag, parseSatz, satzEingabe, STEUER_TOLERANZ } from '../gemeinsam'
 
 /** Eingabefelder einer Zeile im Bearbeiten-Modus (deutsche Schreibweise). */
-type Entwurf = { text: string; menge: string; einheit: string; einzelpreis: string; gesamt: string; steuersatz: string }
+type Entwurf = {
+  text: string
+  artikelnummer: string
+  variante: string
+  menge: string
+  einheit: string
+  einzelpreis: string
+  gesamt: string
+  steuersatz: string
+}
 
-const leererEntwurf: Entwurf = { text: '', menge: '1', einheit: '', einzelpreis: '', gesamt: '', steuersatz: '19' }
+const leererEntwurf: Entwurf = {
+  text: '',
+  artikelnummer: '',
+  variante: '',
+  menge: '1',
+  einheit: '',
+  einzelpreis: '',
+  gesamt: '',
+  steuersatz: '19',
+}
 
 function entwurfAus(p: Position): Entwurf {
   return {
     text: p.text,
+    artikelnummer: p.artikelnummer ?? '',
+    variante: p.variante ?? '',
     menge: p.menge === null || p.menge === undefined ? '' : formatZahl(p.menge),
     einheit: p.einheit ?? '',
     einzelpreis: betragEingabe(p.einzelpreis),
@@ -40,12 +60,21 @@ function alsAenderung(p: Position): PositionAendern {
   return {
     nr: p.nr,
     text: p.text,
+    artikelnummer: p.artikelnummer ?? null,
+    variante: p.variante ?? null,
     menge: p.menge ?? null,
     einheit: p.einheit ?? null,
     einzelpreis: p.einzelpreis ?? null,
     gesamt: p.gesamt,
     steuersatz: p.steuersatz ?? null,
   }
+}
+
+/** „Art.-Nr. 93435 · Variante 47“; leer ohne beides. */
+export function kennungText(p: Pick<Position, 'artikelnummer' | 'variante'>): string {
+  return [p.artikelnummer && `Art.-Nr. ${p.artikelnummer}`, p.variante && `Variante ${p.variante}`]
+    .filter(Boolean)
+    .join(' · ')
 }
 
 function mengeText(p: Position): string {
@@ -101,6 +130,8 @@ export function PositionenTab({ beleg, darfBearbeiten }: { beleg: BelegDetail; d
       ...(alt ?? { artikel: null, stammartikelId: null, grundpreis: null, grundpreisEinheit: null }),
       nr: alt?.nr ?? index + 1,
       text: entwurf.text.trim(),
+      artikelnummer: entwurf.artikelnummer.trim() || null,
+      variante: entwurf.variante.trim() || null,
       menge,
       einheit: entwurf.einheit.trim() || null,
       einzelpreis,
@@ -167,7 +198,10 @@ export function PositionenTab({ beleg, darfBearbeiten }: { beleg: BelegDetail; d
             {zeilen.map((p, index) => (
               <tr key={index}>
                 <td className="gedaempft">{index + 1}</td>
-                <td>{p.text}</td>
+                <td>
+                  {p.text}
+                  {kennungText(p) && <div className="gedaempft text-xs">{kennungText(p)}</div>}
+                </td>
                 <td className="num">{mengeText(p)}</td>
                 <td className="num">
                   {p.einzelpreis === null || p.einzelpreis === undefined ? '—' : formatZahl(p.einzelpreis, 2)}
@@ -278,8 +312,9 @@ export function PositionenTab({ beleg, darfBearbeiten }: { beleg: BelegDetail; d
       )}
 
       <p className="gedaempft m-0 text-xs">
-        Positionstexte werden pro Korrespondent normalisiert und Artikeln zugeordnet. Grundpreis nur, wenn Menge und
-        Einheit erkannt wurden.
+        Positionen werden pro Korrespondent über die Artikelnummer Artikeln zugeordnet, ohne Nummer über den
+        normalisierten Text. Varianten derselben Nummer (z. B. Größen) gehören zu einem Artikel. Grundpreis nur, wenn
+        Menge und Einheit erkannt wurden.
       </p>
     </div>
   )
@@ -322,6 +357,8 @@ function PositionDialog({
         >
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {feld('text', 'Text', 'col-span-2 sm:col-span-3')}
+            {feld('artikelnummer', 'Artikelnummer')}
+            {feld('variante', 'Variante')}
             {feld('menge', 'Menge')}
             {feld('einheit', 'Einheit')}
             {feld('steuersatz', 'Steuersatz')}
