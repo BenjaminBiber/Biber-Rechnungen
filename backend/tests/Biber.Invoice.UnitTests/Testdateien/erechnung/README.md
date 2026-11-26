@@ -13,6 +13,7 @@ Verkäufer ist jeweils „Muster Bürobedarf GmbH“ (Berlin), Käufer „Biber 
 | `textzeilen.xml` | CII, ZUGFeRD 2 Profil EN 16931 | wie `zugferd-en16931.xml`, dazu Textzeilen mit Menge 0/Betrag 0 (Muster einer echten Händlerrechnung, von Hand ergänzt) und eine Gratis-Position mit Menge 1 |
 | `zwei-steuersaetze.xml` | CII, XRechnung 3.0 | 19 % und 7 % |
 | `leistungszeitraum.xml` | CII, XRechnung 3.0 | Leistungszeitraum 01.06.–30.06.2026 (MON) |
+| `artikelmerkmale.xml` | CII, ZUGFeRD 2 Profil EN 16931 | wie `zugferd-en16931.xml`, dazu Artikelnummern (Verkäufer, Käufer, GTIN) und Artikelmerkmale (von Hand ergänzt) |
 | `factur-x-basic.xml` | CII, Factur-X Basic | Profilkennung nennt `factur-x`, Einheit DAY ohne Klartext, E-Mail nur als elektronische Adresse |
 
 Neu erzeugen: kleines Konsolenprogramm mit Paketverweis `ZUGFeRD-csharp` 18.0.1, das die Werte aus der

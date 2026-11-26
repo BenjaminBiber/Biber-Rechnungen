@@ -367,6 +367,83 @@ public sealed class PipelineTests(ApiFabrik fabrik)
     }
 
     [Fact]
+    public async Task Erneut_auslesen_ordnet_die_Positionen_ueber_die_Artikelnummer_neu_zu()
+    {
+        // Vor dem Auslesen der Nummern landeten drei Pressnippel mit verschiedenen Nummern in einem Artikel.
+        var k = await fabrik.SpeichernAsync(Testdaten.Korrespondent());
+        var stamm = await fabrik.SpeichernAsync(new Stammartikel { Id = Guid.NewGuid(), Name = $"Pressnippel {Guid.NewGuid():N}", Basiseinheit = "Stück" });
+        var alt = await fabrik.SpeichernAsync(new Artikel
+        {
+            Id = Guid.NewGuid(),
+            KorrespondentId = k.Id,
+            Name = "Pressnippel Megacr.",
+            NameNormalisiert = "pressnippel megacr",
+            StammartikelId = stamm.Id,
+            UmrechnungFaktor = 1,
+        });
+        var beleg = Testdaten.Beleg(korrespondentId: k.Id);
+        beleg.Positionen =
+        [
+            .. new[] { 23.27m, 10.70m, 12.20m }.Select((preis, i) => new Position
+            {
+                Id = Guid.NewGuid(),
+                Nr = i + 1,
+                Text = "Pressnippel Megacr.",
+                Menge = 1,
+                Einzelpreis = preis,
+                Gesamt = preis,
+                ArtikelId = alt.Id,
+            }),
+        ];
+        beleg.Dateien =
+        [
+            new BelegDatei
+            {
+                Id = Guid.NewGuid(),
+                Rolle = DateiRolle.Original,
+                Pfad = Path.Combine("2026", "Hefele", $"{Guid.NewGuid():N}.pdf"),
+                Sha256 = new string('a', 64),
+                Groesse = 1,
+                MimeType = "application/pdf",
+                AbgelegtAm = fabrik.Zeit.GetUtcNow(),
+            },
+        ];
+        await fabrik.SpeichernAsync(beleg);
+
+        var extraktion = Extraktion() with
+        {
+            Positionen =
+            [
+                new ExtrahiertePosition(1, "Pressnippel Megacr.", 1m, null, 23.27m, 23.27m, 19m, "5G12FDLORX45"),
+                new ExtrahiertePosition(2, "Pressnippel Megacr.", 1m, null, 10.70m, 10.70m, 19m, "5G8FDLORX"),
+                new ExtrahiertePosition(3, "Pressnippel Megacr.", 2m, null, 12.20m, 24.40m, 19m, "4G12FDLORX", "M12"),
+            ],
+        };
+        var f = NurOrchestrator().MitDiensten(d => d.AddSingleton<IPipelineSchritt>(
+            new TestSchritt(SchrittReihenfolge.Formaterkennung, "Format", new ConcurrentQueue<string>(), kontext =>
+            {
+                kontext.Extraktion = extraktion;
+                return SchrittErgebnis.Weiter;
+            })));
+
+        using (var scope = f.ErzeugeScope())
+        {
+            await scope.ServiceProvider.GetRequiredService<IVerarbeitungsStarter>().ErneutVerarbeitenAsync(beleg.Id, CancellationToken.None);
+        }
+
+        var positionen = (await BelegAsync(f, beleg.Id)).Positionen.OrderBy(p => p.Nr).ToList();
+        positionen.Select(p => (p.Artikelnummer, p.Variante)).ShouldBe([("5G12FDLORX45", null), ("5G8FDLORX", null), ("4G12FDLORX", "M12")]);
+        positionen.Select(p => p.ArtikelId).Distinct().Count().ShouldBe(3);
+
+        using var lesen = f.ErzeugeScope();
+        var db = lesen.ServiceProvider.GetRequiredService<BiberDbContext>();
+        var artikel = await db.Artikel.AsNoTracking().Where(a => a.KorrespondentId == k.Id).ToListAsync();
+        artikel.ShouldNotContain(a => a.Id == alt.Id);
+        artikel.Select(a => a.Artikelnummer).Order().ShouldBe(["4G12FDLORX", "5G12FDLORX45", "5G8FDLORX"]);
+        artikel.ShouldAllBe(a => a.StammartikelId == stamm.Id);
+    }
+
+    [Fact]
     public async Task Vorgang_zeigt_Herkunft_je_Quelle()
     {
         var f = NurOrchestrator();

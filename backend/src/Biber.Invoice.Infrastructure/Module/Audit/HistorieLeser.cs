@@ -54,6 +54,8 @@ public sealed class HistorieLeser(BiberDbContext db, IEinstellungen einstellunge
         [nameof(Beleg.Richtung)] = "Richtung",
         [nameof(Beleg.BestaetigtAm)] = "Bestätigung",
         [nameof(Position.Text)] = "Text",
+        [nameof(Position.Artikelnummer)] = "Artikelnummer",
+        [nameof(Position.Variante)] = "Variante",
         [nameof(Position.Menge)] = "Menge",
         [nameof(Position.Einzelpreis)] = "Einzelpreis",
         [nameof(Position.Gesamt)] = "Gesamt",

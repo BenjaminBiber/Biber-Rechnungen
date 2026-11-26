@@ -4,6 +4,7 @@ import { formatDatum, formatEuro, formatZahl } from '@/lib/format'
 
 /** Karte „Käufe“ mit Link auf den Beleg je Kauf. */
 export function Kaeufe({ kaeufe }: { kaeufe: Kauf[] }) {
+  const mitVariante = kaeufe.some((k) => k.variante)
   return (
     <section className="karte overflow-x-auto" aria-labelledby="kaeufe-titel">
       <h2 id="kaeufe-titel" className="m-0 px-5 pt-4 pb-3 text-base font-semibold">
@@ -15,6 +16,7 @@ export function Kaeufe({ kaeufe }: { kaeufe: Kauf[] }) {
             <th scope="col">Datum</th>
             <th scope="col">Korrespondent</th>
             <th scope="col">Beleg</th>
+            {mitVariante && <th scope="col">Variante</th>}
             <th scope="col" className="text-right">
               Menge
             </th>
@@ -27,8 +29,9 @@ export function Kaeufe({ kaeufe }: { kaeufe: Kauf[] }) {
           </tr>
         </thead>
         <tbody>
-          {kaeufe.map((k) => (
-            <tr key={`${k.belegId}-${k.datum}-${k.korrespondent.id}`}>
+          {kaeufe.map((k, i) => (
+            // Ein Beleg kann denselben Artikel mehrfach enthalten (z. B. zwei Größen).
+            <tr key={`${k.belegId}-${i}`}>
               <td className="num">{formatDatum(k.datum)}</td>
               <td>{k.korrespondent.name}</td>
               <td>
@@ -36,6 +39,7 @@ export function Kaeufe({ kaeufe }: { kaeufe: Kauf[] }) {
                   {k.rechnungsnummer ?? 'Beleg'}
                 </Link>
               </td>
+              {mitVariante && <td>{k.variante ?? '–'}</td>}
               <td className="num text-right">{k.menge != null ? `${formatZahl(k.menge)} ${k.einheit ?? ''}` : '–'}</td>
               <td className="num text-right">{k.einzelpreis != null ? formatEuro(k.einzelpreis) : '–'}</td>
               <td className="num text-right">{k.grundpreis != null ? formatEuro(k.grundpreis) : '–'}</td>

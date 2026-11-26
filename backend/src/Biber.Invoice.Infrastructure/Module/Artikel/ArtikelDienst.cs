@@ -28,7 +28,8 @@ public sealed class ArtikelDienst(BiberDbContext db, TimeProvider zeit) : IArtik
             var normalisiert = suche.ToLowerInvariant();
             var muster = $"%{LikeMaskieren(normalisiert)}%";
             abfrage = abfrage.Where(a => EF.Functions.ILike(a.NameNormalisiert, muster)
-                || EF.Functions.TrigramsAreSimilar(a.NameNormalisiert, normalisiert));
+                || EF.Functions.TrigramsAreSimilar(a.NameNormalisiert, normalisiert)
+                || (a.Artikelnummer != null && EF.Functions.ILike(a.Artikelnummer, muster)));
         }
 
         if (filter.KorrespondentId is { } korrespondentId)
@@ -92,6 +93,7 @@ public sealed class ArtikelDienst(BiberDbContext db, TimeProvider zeit) : IArtik
         return new PreisDetailDto(
             info.Id,
             info.Name,
+            info.Artikelnummer,
             IstStammartikel: false,
             info.Basiseinheit,
             info.GrundpreisMenge,
@@ -142,6 +144,7 @@ public sealed class ArtikelDienst(BiberDbContext db, TimeProvider zeit) : IArtik
         return new PreisDetailDto(
             stamm.Id,
             stamm.Name,
+            Artikelnummer: null,
             IstStammartikel: true,
             stamm.Basiseinheit,
             stamm.GrundpreisMenge,
@@ -275,6 +278,7 @@ public sealed class ArtikelDienst(BiberDbContext db, TimeProvider zeit) : IArtik
         return new ArtikelListeneintragDto(
             a.Id,
             a.Name,
+            a.Artikelnummer,
             new VerweisDto(a.KorrespondentId, a.KorrespondentName),
             a.StammartikelId is null ? null : new VerweisDto(a.StammartikelId.Value, a.StammartikelName!),
             kaeufe.Count,
@@ -301,10 +305,11 @@ public sealed class ArtikelDienst(BiberDbContext db, TimeProvider zeit) : IArtik
             k.Menge,
             k.Einheit,
             k.Einzelpreis,
-            k.Grundpreis))];
+            k.Grundpreis,
+            k.Variante))];
 
     private static ZugeordneterArtikelDto Zugeordnet(ArtikelInfo a) =>
-        new(a.Id, a.Name, new VerweisDto(a.KorrespondentId, a.KorrespondentName), a.Einheit, a.UmrechnungFaktor);
+        new(a.Id, a.Name, a.Artikelnummer, new VerweisDto(a.KorrespondentId, a.KorrespondentName), a.Einheit, a.UmrechnungFaktor);
 
     private static async Task<Dictionary<Guid, ArtikelInfo>> ArtikelInfosAsync(
         IQueryable<ArtikelEntitaet> abfrage,
@@ -313,6 +318,7 @@ public sealed class ArtikelDienst(BiberDbContext db, TimeProvider zeit) : IArtik
             .Select(a => new ArtikelInfo(
                 a.Id,
                 a.Name,
+                a.Artikelnummer,
                 a.KorrespondentId,
                 a.Korrespondent!.Name,
                 a.Einheit,
@@ -356,6 +362,7 @@ public sealed class ArtikelDienst(BiberDbContext db, TimeProvider zeit) : IArtik
                     p.Gesamt,
                     p.Grundpreis,
                     p.GrundpreisEinheit,
+                    p.Variante,
                 })
             .ToListAsync(ct);
 
@@ -380,7 +387,8 @@ public sealed class ArtikelDienst(BiberDbContext db, TimeProvider zeit) : IArtik
                         : z.Grundpreis,
                     umgerechnet
                         ? StammartikelRechner.GrundpreisEinheit(a.GrundpreisMenge!.Value, a.Basiseinheit!)
-                        : z.GrundpreisEinheit);
+                        : z.GrundpreisEinheit,
+                    z.Variante);
             })
             .GroupBy(k => k.Artikel.Id)
             .ToDictionary(g => g.Key, g => (IReadOnlyList<Kauf>)[.. g.Order()]);
@@ -394,6 +402,7 @@ public sealed class ArtikelDienst(BiberDbContext db, TimeProvider zeit) : IArtik
     private sealed record ArtikelInfo(
         Guid Id,
         string Name,
+        string? Artikelnummer,
         Guid KorrespondentId,
         string KorrespondentName,
         string? Einheit,
@@ -416,7 +425,8 @@ public sealed class ArtikelDienst(BiberDbContext db, TimeProvider zeit) : IArtik
         decimal? Einzelpreis,
         decimal Netto,
         decimal? Grundpreis,
-        string? GrundpreisEinheit) : IComparable<Kauf>
+        string? GrundpreisEinheit,
+        string? Variante) : IComparable<Kauf>
     {
         public int CompareTo(Kauf? other)
         {

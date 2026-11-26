@@ -135,10 +135,11 @@ describe('Artikel-Detail', { timeout: 20000 }, () => {
     await titel('Kopierpapier A4 80 g')
     await user.click(screen.getByRole('button', { name: '+ Artikel zuordnen' }))
     await user.type(screen.getByRole('searchbox', { name: 'Artikel suchen' }), 'Ordner')
-    await user.click(await screen.findByRole('button', { name: /Ordner breit 8 cm, blau/ }))
+    // Gleichnamige Artikel eines Lieferanten unterscheiden sich über die Artikelnummer.
+    await user.click(await screen.findByRole('button', { name: /Ordner breit 8 cm, blau \(7710-08\)/ }))
     await user.type(screen.getByRole('textbox', { name: /1 Stück =/ }), '1')
     await user.click(screen.getByRole('button', { name: 'Zuordnen' }))
-    expect(screen.getByRole('textbox', { name: 'Umrechnung Ordner breit 8 cm, blau' })).toHaveValue('1')
+    expect(screen.getByRole('textbox', { name: 'Umrechnung Ordner breit 8 cm, blau (7710-08)' })).toHaveValue('1')
     await user.click(screen.getByRole('button', { name: 'Speichern' }))
     await waitFor(() => expect(anfragen[0]?.koerper).toBeDefined())
     expect((anfragen[0].koerper as { artikel: unknown[] }).artikel).toContainEqual({

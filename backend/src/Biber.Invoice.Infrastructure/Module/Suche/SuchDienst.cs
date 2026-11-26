@@ -176,7 +176,8 @@ public sealed partial class SuchDienst(BiberDbContext db, TimeProvider zeit) : I
         var zeilen = await db.Artikel
             .AsNoTracking()
             .Where(a => EF.Functions.ILike(a.NameNormalisiert, muster)
-                || EF.Functions.TrigramsAreSimilar(a.NameNormalisiert, normalisiert))
+                || EF.Functions.TrigramsAreSimilar(a.NameNormalisiert, normalisiert)
+                || (a.Artikelnummer != null && EF.Functions.ILike(a.Artikelnummer, muster)))
             .OrderByDescending(a => EF.Functions.TrigramsSimilarity(a.NameNormalisiert, normalisiert))
             .ThenBy(a => a.Name)
             .ThenBy(a => a.Id)
@@ -185,6 +186,7 @@ public sealed partial class SuchDienst(BiberDbContext db, TimeProvider zeit) : I
             {
                 a.Id,
                 a.Name,
+                a.Artikelnummer,
                 Korrespondent = new VerweisDto(a.Korrespondent!.Id, a.Korrespondent.Name),
                 Stammartikel = a.Stammartikel == null ? null : new VerweisDto(a.Stammartikel.Id, a.Stammartikel.Name),
                 a.Einheit,
@@ -192,7 +194,7 @@ public sealed partial class SuchDienst(BiberDbContext db, TimeProvider zeit) : I
             .ToListAsync(ct);
 
         return zeilen.Select(a => new ArtikelListeneintragDto(
-            a.Id, a.Name, a.Korrespondent, a.Stammartikel, 0, null, a.Einheit, null, null, null, null)).ToArray();
+            a.Id, a.Name, a.Artikelnummer, a.Korrespondent, a.Stammartikel, 0, null, a.Einheit, null, null, null, null)).ToArray();
     }
 
     private async Task<StammartikelListeneintragDto[]> StammartikelAsync(string muster, CancellationToken ct)

@@ -134,7 +134,10 @@ public sealed class ERechnungParser : IERechnungParser
                 Einheit: EinheitKlartext(p.UnitCode?.ToString().TrimStart('_')),
                 Einzelpreis: p.NetUnitPrice,
                 Gesamt: p.LineTotalAmount,
-                Steuersatz: p.TaxPercent));
+                Steuersatz: p.TaxPercent,
+                Artikelnummer: ArtikelnummerNormalisierer.Bereinigen(
+                    Leer(p.SellerAssignedID) ?? Leer(p.GlobalID?.ID) ?? Leer(p.BuyerAssignedID)),
+                Variante: Variante(p.ApplicableProductCharacteristics)));
         }
 
         var steuerzeilen = r.Taxes
@@ -239,6 +242,13 @@ public sealed class ERechnungParser : IERechnungParser
         var b = Leer(beschreibung);
         return n is null ? b ?? "" : b is null || b == n ? n : $"{n} – {b}";
     }
+
+    /// <summary>Artikelmerkmale (BT-160/BT-161) wie „Größe: XL, Farbe: schwarz“.</summary>
+    private static string? Variante(IEnumerable<ApplicableProductCharacteristic>? merkmale) =>
+        ArtikelnummerNormalisierer.Variante(string.Join(", ", (merkmale ?? [])
+            .Select(m => (Name: Leer(m.Description), Wert: Leer(m.Value)))
+            .Where(m => m.Wert is not null)
+            .Select(m => m.Name is null ? m.Wert : $"{m.Name}: {m.Wert}")));
 
     private static bool IstNull(decimal? wert) => wert is null or 0m;
 

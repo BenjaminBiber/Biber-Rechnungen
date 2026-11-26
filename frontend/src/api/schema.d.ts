@@ -1743,6 +1743,7 @@ export interface components {
             /** Format: uuid */
             id: string;
             name: string;
+            artikelnummer?: string | null;
             korrespondent: components["schemas"]["VerweisDto"];
             stammartikel?: components["schemas"]["VerweisDto"] | null;
             /** Format: int32 */
@@ -2381,6 +2382,7 @@ export interface components {
             einzelpreis?: number | null;
             /** Format: decimal */
             grundpreis?: number | null;
+            variante?: string | null;
         };
         KontoAendernDto: {
             name: string;
@@ -2669,11 +2671,15 @@ export interface components {
             gesamt: number;
             /** Format: decimal */
             steuersatz?: number | null;
+            artikelnummer?: string | null;
+            variante?: string | null;
         };
         PositionDto: {
             /** Format: int32 */
             nr: number;
             text: string;
+            artikelnummer?: string | null;
+            variante?: string | null;
             /** Format: decimal */
             menge?: number | null;
             einheit?: string | null;
@@ -2694,6 +2700,7 @@ export interface components {
             /** Format: uuid */
             id: string;
             name: string;
+            artikelnummer?: string | null;
             istStammartikel: boolean;
             basiseinheit?: string | null;
             /** Format: decimal */
@@ -3015,6 +3022,7 @@ export interface components {
             /** Format: uuid */
             id: string;
             name: string;
+            artikelnummer?: string | null;
             korrespondent: components["schemas"]["VerweisDto"];
             einheit?: string | null;
             /** Format: decimal */

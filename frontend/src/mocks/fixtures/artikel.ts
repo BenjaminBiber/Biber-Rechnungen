@@ -42,6 +42,7 @@ export const artikelListe: ArtikelListeneintrag[] = [
   {
     id: artikelIds.a2,
     name: 'Ordner breit 8 cm, blau',
+    artikelnummer: '7710-08',
     korrespondent: bueroweltKraemer,
     stammartikel: null,
     kaeufe: 4,
@@ -581,6 +582,7 @@ export const preisDetails: Record<string, PreisDetail> = {
   [artikelIds.a2]: {
     id: artikelIds.a2,
     name: 'Ordner breit 8 cm, blau',
+    artikelnummer: '7710-08',
     istStammartikel: false,
     basiseinheit: 'Stück',
     grundpreisMenge: 1,

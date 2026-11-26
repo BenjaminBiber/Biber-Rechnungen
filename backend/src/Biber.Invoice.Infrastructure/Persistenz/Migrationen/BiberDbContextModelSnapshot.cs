@@ -91,6 +91,11 @@ namespace Biber.Invoice.Infrastructure.Persistenz.Migrationen
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("Artikelnummer")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("artikelnummer");
+
                     b.Property<string>("Einheit")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
@@ -133,9 +138,15 @@ namespace Biber.Invoice.Infrastructure.Persistenz.Migrationen
                     b.HasIndex("StammartikelId")
                         .HasDatabaseName("ix_artikel_stammartikel_id");
 
+                    b.HasIndex("KorrespondentId", "Artikelnummer")
+                        .IsUnique()
+                        .HasDatabaseName("ix_artikel_korrespondent_id_artikelnummer")
+                        .HasFilter("artikelnummer IS NOT NULL");
+
                     b.HasIndex("KorrespondentId", "NameNormalisiert")
                         .IsUnique()
-                        .HasDatabaseName("ix_artikel_korrespondent_id_name_normalisiert");
+                        .HasDatabaseName("ix_artikel_korrespondent_id_name_normalisiert")
+                        .HasFilter("artikelnummer IS NULL");
 
                     b.ToTable("artikel");
                 });
@@ -1249,6 +1260,11 @@ namespace Biber.Invoice.Infrastructure.Persistenz.Migrationen
                         .HasColumnType("uuid")
                         .HasColumnName("artikel_id");
 
+                    b.Property<string>("Artikelnummer")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("artikelnummer");
+
                     b.Property<Guid>("BelegId")
                         .HasColumnType("uuid")
                         .HasColumnName("beleg_id");
@@ -1300,6 +1316,11 @@ namespace Biber.Invoice.Infrastructure.Persistenz.Migrationen
                     b.Property<string>("TextNormalisiert")
                         .HasColumnType("text")
                         .HasColumnName("text_normalisiert");
+
+                    b.Property<string>("Variante")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("variante");
 
                     b.HasKey("Id")
                         .HasName("pk_position");

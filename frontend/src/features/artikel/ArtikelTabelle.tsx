@@ -62,6 +62,7 @@ export function ArtikelTabelle({
                 >
                   {a.name}
                 </Link>
+                {a.artikelnummer && <div className="gedaempft text-xs font-normal">Art.-Nr. {a.artikelnummer}</div>}
               </td>
               <td className={zelle}>{a.korrespondent.name}</td>
               <td className={zelle}>

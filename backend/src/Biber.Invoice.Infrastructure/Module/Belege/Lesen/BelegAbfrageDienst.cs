@@ -136,6 +136,8 @@ public sealed partial class BelegAbfrageDienst(BiberDbContext db, IEinstellungen
                 .Select(p => new PositionDto(
                     p.Nr,
                     p.Text,
+                    p.Artikelnummer,
+                    p.Variante,
                     p.Menge,
                     p.Einheit,
                     p.Einzelpreis,

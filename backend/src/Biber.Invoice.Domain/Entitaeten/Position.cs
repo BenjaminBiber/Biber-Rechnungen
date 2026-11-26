@@ -8,6 +8,12 @@ public class Position
     public int Nr { get; set; }
     public string Text { get; set; } = "";
     public string? TextNormalisiert { get; set; }
+
+    /// <summary>Artikelnummer des Lieferanten, wie auf dem Beleg; bestimmt den <see cref="Artikel"/>.</summary>
+    public string? Artikelnummer { get; set; }
+
+    /// <summary>Variante wie Größe oder Farbe; gehört zur Position, nicht zum Artikel.</summary>
+    public string? Variante { get; set; }
     public decimal? Menge { get; set; }
     public string? Einheit { get; set; }
     public decimal? Einzelpreis { get; set; }

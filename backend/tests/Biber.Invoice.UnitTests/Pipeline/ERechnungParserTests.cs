@@ -154,6 +154,18 @@ public sealed class ERechnungParserTests
     }
 
     [Fact]
+    public void Artikelnummer_des_Verkaeufers_vor_GTIN_und_Merkmale_als_Variante()
+    {
+        var e = Lesen("artikelmerkmale.xml");
+
+        e.Positionen.ShouldBe(
+        [
+            new ExtrahiertePosition(1, "Kabel – NYM-J 3x1,5", 50m, "m", 1.20m, 60.00m, 19m, "KAB-3x1,5", "Farbe: grau, Länge: 50 m"),
+            new ExtrahiertePosition(2, "Schrauben", 2.5m, "kg", 8.00m, 20.00m, 19m, "4000000000017"),
+        ]);
+    }
+
+    [Fact]
     public void Zwei_Steuersaetze_ergeben_zwei_Steuerzeilen()
     {
         var e = Lesen("zwei-steuersaetze.xml");

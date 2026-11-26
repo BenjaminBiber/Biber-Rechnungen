@@ -49,6 +49,7 @@ public sealed class ArtikelTools(IArtikelDienst artikel, TimeProvider zeit)
             {
                 a.Id,
                 a.Name,
+                a.Artikelnummer,
                 Korrespondent = a.Korrespondent.Name,
                 Stammartikel = a.Stammartikel?.Name,
                 LetzterPreis = a.LetzterEinzelpreis,
