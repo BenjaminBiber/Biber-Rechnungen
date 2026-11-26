@@ -33,7 +33,9 @@ public sealed class ExtraktionUebernehmenSchritt(TimeProvider zeit) : IPipelineS
         beleg.Leistungsdatum = e.Leistungsdatum;
         beleg.LeistungVon = e.LeistungVon;
         beleg.LeistungBis = e.LeistungBis;
-        beleg.Faelligkeitsdatum = e.Faelligkeitsdatum;
+        // Ohne ausgelesenes Datum gilt die Frist aus den Zahlungsbedingungen („zahlbar innerhalb von 14 Tagen“).
+        beleg.Faelligkeitsdatum = e.Faelligkeitsdatum
+            ?? (e.Belegart == Belegart.Rechnung ? ZahlungszielErkenner.Faelligkeit(e.Volltext, e.Rechnungsdatum) : null);
         beleg.Waehrung = e.Waehrung;
         beleg.Netto = e.Netto;
         beleg.Steuer = e.Steuer;

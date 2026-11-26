@@ -89,7 +89,7 @@ Der Export für einen Zeitraum enthält eine Belegliste (Excel/CSV), Summen je K
 1. **Import:** Upload, Eingangsordner oder E-Mail erzeugen einen Importvorgang. Die Datei wird in die Zwischenablage (Staging) kopiert und ihre SHA-256-Prüfsumme berechnet. Dateien im Eingangsordner werden erst übernommen, wenn ihre Größe 10 Sekunden stabil ist, und danach aus dem Eingang gelöscht.
 2. **Dublettenprüfung** über die Prüfsumme: identische Dateien werden als Dublette verknüpft und nicht erneut abgelegt.
 3. **Format erkennen:** XRechnung-XML, PDF mit ZUGFeRD, sonstiges PDF oder Bild.
-4. **Auslesen:** E-Rechnungen aus dem XML (maßgeblich), Validierung und Visualisierung über `kosit`; sonstige Belege über Azure Document Intelligence (Modell `prebuilt-invoice`, EU-Region). Fehlschläge werden fünfmal über etwa eine Stunde wiederholt, danach erhält der Beleg den Status „Fehler“ und „zu prüfen“.
+4. **Auslesen:** E-Rechnungen aus dem XML (maßgeblich), Validierung und Visualisierung über `kosit`; sonstige Belege über Azure Document Intelligence (Modell `prebuilt-invoice`, EU-Region). Fehlschläge werden fünfmal über etwa eine Stunde wiederholt, danach erhält der Beleg den Status „Fehler“ und „zu prüfen“. Steht auf einer Rechnung kein Fälligkeitsdatum, wird es aus den Zahlungsbedingungen im Text abgeleitet (z. B. „zahlbar innerhalb von 14 Tagen“ ab Rechnungsdatum; Skonto-Fristen zählen nicht).
 5. **Korrespondent zuordnen** (USt-IdNr., IBAN, Name/Alias), sonst neu anlegen.
 6. **Positionen** normalisieren und Artikeln zuordnen.
 7. **Fachliche Dublette** prüfen (Korrespondent, Rechnungsnummer, Betrag).
