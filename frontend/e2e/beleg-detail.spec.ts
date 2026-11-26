@@ -15,12 +15,11 @@ test.describe('Beleg-Detail', () => {
 
   test('Korrektur speichern', async ({ page }) => {
     const daten = page.getByRole('form', { name: 'Daten' })
-    await daten.getByLabel('Kategorie').click()
+    await daten.getByLabel('Kategorie', { exact: true }).click()
     await page.getByRole('option', { name: /Hardware/ }).click()
-    await expect(daten.getByLabel('Kategorie')).toHaveText(/Hardware/)
-    await page.getByRole('button', { name: 'Änderungen speichern' }).click()
-    await expect(page.getByText('Gespeichert')).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Änderungen speichern' })).toBeDisabled()
+    await expect(daten.getByLabel('Kategorie', { exact: true })).toHaveText(/Hardware/)
+    // Auswahlfelder speichern sofort, ohne Knopf.
+    await expect(page.getByText('Gespeichert', { exact: true })).toBeVisible()
   })
 
   test('Bestätigen trotz Befund', async ({ page }) => {

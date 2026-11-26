@@ -58,9 +58,9 @@ test.describe('Grundgerüst', () => {
     await expect(page.getByRole('heading', { level: 2, name: 'Prüfungen & Schwellen', exact: true })).toBeVisible()
   })
 
-  test('unbekannte Pfade zeigen „Seite nicht gefunden“', async ({ page }) => {
+  test('unbekannte Pfade zeigen „Diese Seite gibt es nicht“', async ({ page }) => {
     await page.goto('/gibt-es-nicht')
-    await expect(page.getByRole('heading', { level: 1, name: 'Seite nicht gefunden' })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1, name: 'Diese Seite gibt es nicht' })).toBeVisible()
   })
 
   test('Schrift und Icons sind lokal eingebunden', async ({ page, baseURL }) => {

@@ -9,7 +9,7 @@ test.describe('Einstellungen Desktop', () => {
     await expect(page.getByRole('heading', { level: 2, name: 'Prüfungen & Schwellen' })).toBeVisible()
     const nav = page.getByRole('navigation', { name: 'Einstellungsbereiche' })
     await expect(nav.getByRole('link', { name: 'Prüfungen' })).toHaveAttribute('aria-current', 'page')
-    await expect(page.getByRole('switch')).toHaveCount(9)
+    await expect(page.getByRole('switch')).toHaveCount(10)
   })
 
   test('USt-Status speichern: der Chip in der Navigation zeigt den neuen Status', async ({ page }) => {

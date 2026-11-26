@@ -9,7 +9,8 @@ test('Beleg aufteilen führt über den Dialog zu „Hochladen & Import“', asyn
     await page.goto(`${beleg}/aufteilen`)
   } else {
     await page.goto(beleg)
-    await page.getByRole('link', { name: 'Aufteilen' }).click()
+    await page.getByRole('button', { name: 'Weitere Aktionen' }).click()
+    await page.getByRole('menuitem', { name: 'Aufteilen …' }).click()
   }
   const dialog = page.getByRole('dialog', { name: 'Beleg aufteilen' })
   await expect(dialog).toBeVisible()
