@@ -4,7 +4,7 @@ import { clientsClaim } from 'workbox-core'
 import { ExpirationPlugin } from 'workbox-expiration'
 import { cleanupOutdatedCaches, createHandlerBoundToURL, precacheAndRoute } from 'workbox-precaching'
 import { NavigationRoute, registerRoute } from 'workbox-routing'
-import { CacheFirst, NetworkFirst, StaleWhileRevalidate } from 'workbox-strategies'
+import { CacheFirst, NetworkFirst } from 'workbox-strategies'
 import { ablehnungsgrund } from './features/hochladen/pruefung'
 import { ablegen, alleWartendenSenden, syncTag } from './pwa/warteschlange'
 import { apiCaches, cacheNamen, istAnmeldestatus, istListe, istVorschau, istEinzelbeleg } from './pwa/cacheRegeln'
@@ -32,11 +32,14 @@ registerRoute(
 
 const nurOk = new CacheableResponsePlugin({ statuses: [200] })
 
-// Listen: sofort aus dem Cache, im Hintergrund aktualisieren.
+// Listen: Netz zuerst, nach 3 s (oder offline) der zuletzt geladene Stand. Nicht StaleWhileRevalidate:
+// sonst beantwortete der Cache das Neuladen nach einer Änderung mit dem alten Stand, und die Seite zeigte
+// die Änderung erst nach dem nächsten Laden.
 registerRoute(
   ({ url, request }) => request.method === 'GET' && url.origin === self.location.origin && istListe(url.pathname),
-  new StaleWhileRevalidate({
+  new NetworkFirst({
     cacheName: cacheNamen.listen,
+    networkTimeoutSeconds: 3,
     plugins: [nurOk, new ExpirationPlugin({ maxEntries: 60, maxAgeSeconds: 7 * 24 * 60 * 60 })],
   }),
   'GET',

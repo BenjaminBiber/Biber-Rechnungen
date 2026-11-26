@@ -8,7 +8,9 @@ export type RouterKontext = { queryClient: QueryClient }
 export function erzeugeQueryClient(): QueryClient {
   return new QueryClient({
     defaultOptions: {
-      queries: { staleTime: 30_000, refetchOnWindowFocus: false },
+      // Zurück im Tab bzw. wieder online: veraltete Daten neu laden (Hintergrund-Jobs ändern Belege auch ohne
+      // Zutun dieser Seite). Offene Formulare bleiben unberührt – sie halten Änderungen in einem eigenen Entwurf.
+      queries: { staleTime: 30_000, refetchOnWindowFocus: true, refetchOnReconnect: true },
     },
   })
 }

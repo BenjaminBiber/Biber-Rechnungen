@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { belegeNeuLaden } from './belege'
+import { belegeNeuLaden, useNachAbschlussNeuLaden, verarbeitungsPollIntervall } from './belege'
 import { ApiFehler, api, beiNichtAngemeldet, daten, zuApiFehler } from './client'
 import type { ImportStatus, ImportVorgang, ImportVorgaengeAbfrage } from './typen'
 
@@ -17,15 +17,20 @@ export function laeuftNoch(vorgang: ImportVorgang): boolean {
   return laufendeImportStatus.includes(vorgang.status)
 }
 
-const pollIntervall = 3000
+const pollIntervall = verarbeitungsPollIntervall
 
-/** GET /api/import/vorgaenge – pollt alle 3 s, solange ein Vorgang läuft. */
+/**
+ * GET /api/import/vorgaenge – pollt alle 3 s, solange ein Vorgang läuft. Wird einer fertig, lädt die App
+ * Belegliste, Zähler und Dashboard neu – der neue Beleg erscheint ohne Neuladen der Seite.
+ */
 export function useImportVorgaenge(filter: ImportVorgaengeAbfrage = {}) {
-  return useQuery({
+  const query = useQuery({
     queryKey: importKeys.vorgaenge(filter),
     queryFn: ({ signal }) => daten(api.GET('/api/import/vorgaenge', { params: { query: filter }, signal })),
     refetchInterval: (query) => (query.state.data?.eintraege.some(laeuftNoch) ? pollIntervall : false),
   })
+  useNachAbschlussNeuLaden(query.data?.eintraege.filter(laeuftNoch).length)
+  return query
 }
 
 /** `true`, wenn der Server den Vorgang nicht (mehr) kennt. */
@@ -38,7 +43,7 @@ export function vorgangFehlt(fehler: unknown): boolean {
  * (z. B. Backend kurz weg), wird weiter versucht – nur ein unbekannter Vorgang (404) beendet das Polling.
  */
 export function useImportVorgang(id: string) {
-  return useQuery({
+  const query = useQuery({
     queryKey: importKeys.vorgang(id),
     queryFn: ({ signal }) => daten(api.GET('/api/import/vorgaenge/{id}', { params: { path: { id } }, signal })),
     retry: (versuche, fehler) => !vorgangFehlt(fehler) && versuche < 3,
@@ -48,6 +53,8 @@ export function useImportVorgang(id: string) {
       return vorgangFehlt(query.state.error) ? false : pollIntervall
     },
   })
+  useNachAbschlussNeuLaden(query.data ? Number(laeuftNoch(query.data)) : undefined)
+  return query
 }
 
 /**

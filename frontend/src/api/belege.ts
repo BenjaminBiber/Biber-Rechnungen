@@ -1,9 +1,11 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
+import { useEffect, useRef } from 'react'
 import { api, apiUrl, daten, erledigt } from './client'
 import type {
   Aufteilen,
   BelegAendern,
   BelegeAbfrage,
+  BelegStatus,
   Bestaetigen,
   DubletteSetzen,
   GespeicherteAnsichtAnlegen,
@@ -54,6 +56,26 @@ function useBelegeNeuLaden() {
   return () => belegeNeuLaden(queryClient)
 }
 
+/** Takt, in dem gepollt wird, solange der Server noch an etwas arbeitet. */
+export const verarbeitungsPollIntervall = 3000
+
+/**
+ * Lädt alles Belegabhängige neu, sobald die Zahl laufender Vorgänge sinkt – also wenn die Pipeline im
+ * Hintergrund etwas fertig hat. `laufend` ist `undefined`, solange noch keine Daten da sind.
+ */
+export function useNachAbschlussNeuLaden(laufend: number | undefined) {
+  const queryClient = useQueryClient()
+  const vorher = useRef(laufend)
+  useEffect(() => {
+    const alt = vorher.current
+    vorher.current = laufend
+    if (alt !== undefined && laufend !== undefined && laufend < alt) void belegeNeuLaden(queryClient)
+  }, [laufend, queryClient])
+}
+
+/** Status, in denen die Pipeline noch am Beleg arbeitet – solange wird das Detail gepollt. */
+const laufendeBelegStatus: readonly BelegStatus[] = ['Importiert', 'InVerarbeitung']
+
 /** GET /api/belege – gefilterte, sortierte und geblätterte Belegliste. */
 export function useBelege(filter: BelegeAbfrage = {}) {
   return useQuery({
@@ -71,12 +93,19 @@ export function useBelegZaehler() {
   })
 }
 
-/** GET /api/belege/{id} – Beleg-Detail. */
+/**
+ * GET /api/belege/{id} – Beleg-Detail. Pollt alle 3 s, solange die Pipeline noch daran arbeitet; ist sie
+ * fertig, wird alles Belegabhängige neu geladen.
+ */
 export function useBeleg(id: string) {
-  return useQuery({
+  const query = useQuery({
     queryKey: belegeKeys.detail(id),
     queryFn: ({ signal }) => daten(api.GET('/api/belege/{id}', { params: { path: { id } }, signal })),
+    refetchInterval: (query) =>
+      query.state.data && laufendeBelegStatus.includes(query.state.data.status) ? verarbeitungsPollIntervall : false,
   })
+  useNachAbschlussNeuLaden(query.data ? Number(laufendeBelegStatus.includes(query.data.status)) : undefined)
+  return query
 }
 
 /** GET /api/belege/{id}/nachbarn – vorheriger/nächster Beleg in der aktuellen Liste. */

@@ -22,7 +22,10 @@ const listen = new Set([
   '/api/kategorien',
 ])
 
-/** Listen → StaleWhileRevalidate. */
+/**
+ * Listen → NetworkFirst. Nicht StaleWhileRevalidate: das Neuladen nach einer Änderung bekam sonst den alten
+ * Stand aus dem Cache, und die Änderung erschien erst nach einem weiteren Laden der Seite.
+ */
 export function istListe(pfad: string): boolean {
   return listen.has(pfad)
 }
