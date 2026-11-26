@@ -605,6 +605,7 @@ function baueBeleg(zeile: Zeile): BelegDetail {
     belegart: 'Rechnung',
     status: 'Fertig',
     korrespondentErkennung: zeile.schluessel === autoBeleg ? 'Auto' : korrespondent.ustIdNr ? 'UstIdNr' : 'Name',
+    bankverbindungen: [{ iban: 'DE12680501010012345678', bic: 'FRSPDE66XXX' }],
     kategorieManuell: zeile.schluessel === 'b2',
     defaultKategorie: korrespondent.defaultKategorie ?? null,
     leistungVon: null,

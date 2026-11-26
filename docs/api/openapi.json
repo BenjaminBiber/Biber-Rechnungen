@@ -5942,6 +5942,12 @@
           "korrespondentErkennung": {
             "$ref": "#/components/schemas/KorrespondentErkennung"
           },
+          "bankverbindungen": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BankverbindungDto"
+            }
+          },
           "kategorieManuell": {
             "type": "boolean"
           },
@@ -6043,6 +6049,7 @@
           "belegart",
           "status",
           "korrespondentErkennung",
+          "bankverbindungen",
           "kategorieManuell",
           "steuerzeilen",
           "positionen",

@@ -1778,6 +1778,7 @@ export interface components {
             belegart: components["schemas"]["Belegart"];
             status: components["schemas"]["BelegStatus"];
             korrespondentErkennung: components["schemas"]["KorrespondentErkennung"];
+            bankverbindungen: components["schemas"]["BankverbindungDto"][];
             kategorieManuell: boolean;
             defaultKategorie?: components["schemas"]["VerweisDto"] | null;
             /** Format: date */

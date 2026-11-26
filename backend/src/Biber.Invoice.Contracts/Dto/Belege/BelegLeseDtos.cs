@@ -1,3 +1,4 @@
+using Biber.Invoice.Contracts.Dto.Korrespondenten;
 using Biber.Invoice.Domain.Enums;
 
 namespace Biber.Invoice.Contracts.Dto.Belege;
@@ -61,6 +62,7 @@ public sealed record BelegDetailDto(
     Belegart Belegart,
     BelegStatus Status,
     KorrespondentErkennung KorrespondentErkennung,
+    BankverbindungDto[] Bankverbindungen,
     bool KategorieManuell,
     VerweisDto? DefaultKategorie,
     DateOnly? LeistungVon,

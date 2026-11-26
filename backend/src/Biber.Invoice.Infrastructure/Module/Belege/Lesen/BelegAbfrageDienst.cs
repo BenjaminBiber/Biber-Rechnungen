@@ -5,6 +5,7 @@ using Biber.Invoice.Contracts.Dienste;
 using Biber.Invoice.Contracts.Dto;
 using Biber.Invoice.Contracts.Dto.Belege;
 using Biber.Invoice.Contracts.Dto.Einstellungen;
+using Biber.Invoice.Contracts.Dto.Korrespondenten;
 using Biber.Invoice.Domain.Entitaeten;
 using Biber.Invoice.Domain.Enums;
 using Biber.Invoice.Infrastructure.Module.FachlicheDublette.Domain.Regeln;
@@ -121,6 +122,7 @@ public sealed partial class BelegAbfrageDienst(BiberDbContext db, IEinstellungen
             beleg.Belegart,
             beleg.Status,
             beleg.KorrespondentErkennung,
+            [.. beleg.Bankverbindungen.Select(b => new BankverbindungDto(b.Iban, b.Bic))],
             beleg.KategorieManuell,
             beleg.Korrespondent?.DefaultKategorie is { } standard ? new VerweisDto(standard.Id, standard.Name) : null,
             beleg.LeistungVon,

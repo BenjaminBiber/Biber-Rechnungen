@@ -22,7 +22,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { formatDatumZeit, formatZahl } from '@/lib/format'
-import { parseBetrag, parseSatz, seitenText, steuerStimmt } from './gemeinsam'
+import { ibanFormatieren } from '@/lib/iban'
+import { istZuPruefen, parseBetrag, parseSatz, seitenText, steuerStimmt } from './gemeinsam'
 import { ausBeleg, gleich, MAX_TITEL, pruefen, serverFehler, zuDto, type FeldFehler, type Formular } from './formular'
 
 const belegarten: Belegart[] = ['Rechnung', 'Gutschrift', 'Quittung']
@@ -187,6 +188,22 @@ export function DatenFormular({
       ? `manuell geändert${defaultName ? ` · Default: ${defaultName}` : ''}`
       : undefined
   const waehrungen = Array.from(new Set(['EUR', werte.waehrung]))
+  const bics = beleg.bankverbindungen.flatMap((b) => (b.bic ? [b.bic] : []))
+  const bankBefund = beleg.befunde.find((b) => b.pruefung === 'Bankverbindung')?.ergebnis
+  const ibanAbgleich =
+    bankBefund === 'Fehlgeschlagen' ? (
+      <span className="text-orange-text">weicht vom Korrespondenten ab</span>
+    ) : bankBefund === 'Ok' ? (
+      'beim Korrespondenten hinterlegt'
+    ) : null
+  const ibanHinweis =
+    bics.length > 0 || ibanAbgleich ? (
+      <>
+        {bics.length > 0 && `BIC ${bics.join(', ')}`}
+        {bics.length > 0 && ibanAbgleich && ' · '}
+        {ibanAbgleich}
+      </>
+    ) : undefined
 
   const eingabe = (
     feld: 'titel' | 'rechnungsnummer' | 'rechnungsdatum' | 'leistung' | 'faelligkeitsdatum',
@@ -255,6 +272,23 @@ export function DatenFormular({
             }
           />
         </Feld>
+        {istZuPruefen(beleg) && beleg.bankverbindungen.length > 0 && (
+          <Feld id={`${id}-iban`} label="IBAN laut Beleg" hinweis={ibanHinweis}>
+            <div className="flex flex-col gap-1.5">
+              {beleg.bankverbindungen.map((b, i) => (
+                <input
+                  key={b.iban}
+                  id={i === 0 ? `${id}-iban` : undefined}
+                  aria-label={i === 0 ? undefined : `IBAN laut Beleg ${i + 1}`}
+                  className="eingabe mono"
+                  value={ibanFormatieren(b.iban)}
+                  title={b.bic ? `BIC ${b.bic}` : undefined}
+                  readOnly
+                />
+              ))}
+            </div>
+          </Feld>
+        )}
         <Feld id={`${id}-belegart`} label="Belegart">
           <select
             id={`${id}-belegart`}

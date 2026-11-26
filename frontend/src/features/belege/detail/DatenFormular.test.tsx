@@ -50,10 +50,18 @@ describe('Tab „Daten“', () => {
     expect(speichern()).toBeDisabled()
   })
 
+  it('zeigt bei einem Beleg „zu prüfen“ die ausgelesene IBAN mit BIC und Abgleich', async () => {
+    await oeffneDaten()
+    expect(feld('IBAN laut Beleg')).toHaveValue('DE12 6805 0101 0012 3456 78')
+    expect(feld('IBAN laut Beleg')).toHaveAttribute('readonly')
+    expect(within(formular()).getByText('BIC FRSPDE66XXX · beim Korrespondenten hinterlegt')).toBeInTheDocument()
+  })
+
   it('zeigt für einen per Auto-Matching zugeordneten Korrespondenten „automatisch zugeordnet“', async () => {
     await oeffneDaten(`/belege/${belegIds.b12}`)
     expect(within(formular()).getByText('automatisch zugeordnet')).toBeInTheDocument()
     expect(within(formular()).queryByText(/erkannt über/)).not.toBeInTheDocument()
+    expect(within(formular()).queryByLabelText('IBAN laut Beleg')).not.toBeInTheDocument()
   })
 
   it('sendet beim Speichern das erwartete BelegAendernDto und meldet „Gespeichert“', async () => {
