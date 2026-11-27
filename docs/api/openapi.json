@@ -2685,6 +2685,86 @@
         }
       }
     },
+    "/api/import/vorgaenge/{id}/als-beleg": {
+      "post": {
+        "tags": [
+          "Import"
+        ],
+        "summary": "Aussortierte Datei doch als Beleg übernehmen",
+        "operationId": "postImportAlsBeleg",
+        "x-richtlinie": "Bearbeiten",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportVorgangDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Ungueltig"
+          },
+          "401": {
+            "$ref": "#/components/responses/NichtAngemeldet"
+          },
+          "403": {
+            "$ref": "#/components/responses/KeinRecht"
+          },
+          "404": {
+            "$ref": "#/components/responses/NichtGefunden"
+          },
+          "409": {
+            "description": "Vorgang ist nicht aussortiert oder die Datei fehlt",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object",
+                  "description": "ProblemDetails nach RFC 9457",
+                  "properties": {
+                    "type": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/korrespondenten": {
       "get": {
         "tags": [
@@ -8183,7 +8263,8 @@
           "Dublette",
           "OhneBeleg",
           "Abgelehnt",
-          "Fehler"
+          "Fehler",
+          "Aussortiert"
         ]
       },
       "ImportVorgangDto": {

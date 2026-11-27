@@ -1,14 +1,14 @@
 import { act, waitFor } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { importVorgangId } from '@/mocks/fixtures/ids'
-import { laeuftNoch, useImportVorgaenge, useImportVorgang, useUpload } from './import'
+import { laeuftNoch, useAlsBelegUebernehmen, useImportVorgaenge, useImportVorgang, useUpload } from './import'
 import { erwarteDaten, renderMitQuery } from './testHilfe'
 
 describe('Import-Hooks', () => {
-  it('useImportVorgaenge liefert die sieben Vorgänge des Designs, neueste zuerst', async () => {
+  it('useImportVorgaenge liefert die sieben Vorgänge des Designs und einen aussortierten, neueste zuerst', async () => {
     const { result } = renderMitQuery(() => useImportVorgaenge())
     const seite = await erwarteDaten(() => result.current)
-    expect(seite.gesamt).toBe(7)
+    expect(seite.gesamt).toBe(8)
     expect(seite.eintraege[0].dateiname).toBe('Rechnung_Okt_Hosting.pdf')
     expect(seite.eintraege.some(laeuftNoch)).toBe(true)
   })
@@ -35,6 +35,21 @@ describe('Import-Hooks', () => {
     expect(vorgaenge).toHaveLength(1)
     expect(vorgaenge[0]).toMatchObject({ dateiname: 'Rechnung_Test.pdf', quelle: 'Upload', status: 'Angenommen' })
     expect(result.current.upload.fortschritt).toEqual([100])
-    await waitFor(() => expect(result.current.liste.data?.gesamt).toBe(8))
+    await waitFor(() => expect(result.current.liste.data?.gesamt).toBe(9))
+  })
+
+  it('useAlsBelegUebernehmen schickt einen aussortierten Vorgang erneut in die Verarbeitung', async () => {
+    const { result } = renderMitQuery(() => useAlsBelegUebernehmen())
+
+    const vorgang = await act(() => result.current.mutateAsync(importVorgangId(8)))
+
+    expect(vorgang).toMatchObject({ dateiname: 'AGB_Stadtwerke.pdf', status: 'Angenommen' })
+    expect(laeuftNoch(vorgang)).toBe(true)
+  })
+
+  it('useAlsBelegUebernehmen lehnt nicht aussortierte Vorgänge ab', async () => {
+    const { result } = renderMitQuery(() => useAlsBelegUebernehmen())
+
+    await expect(act(() => result.current.mutateAsync(importVorgangId(3)))).rejects.toMatchObject({ status: 409 })
   })
 })

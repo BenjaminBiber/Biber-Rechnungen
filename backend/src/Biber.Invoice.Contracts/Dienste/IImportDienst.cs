@@ -20,7 +20,18 @@ public interface IImportDienst
     /// <summary>Setzt wegen des DI-Limits pausierte Vorgänge fort.</summary>
     /// <returns>Anzahl der fortgesetzten Vorgänge.</returns>
     Task<int> PausierteFortsetzenAsync(CancellationToken ct);
+
+    /// <summary>
+    /// Übernimmt eine aussortierte Datei doch als Beleg: Die Pipeline läuft ohne Belegprüfung erneut;
+    /// der neue Beleg gilt als von <paramref name="benutzerId"/> angelegt.
+    /// </summary>
+    /// <returns><c>null</c>, wenn es den Vorgang nicht gibt.</returns>
+    /// <exception cref="ImportKonfliktAusnahme">Der Vorgang ist nicht aussortiert oder seine Datei fehlt.</exception>
+    Task<ImportVorgangDto?> AlsBelegUebernehmenAsync(Guid id, Guid? benutzerId, CancellationToken ct);
 }
+
+/// <summary>Der Import-Vorgang erlaubt die Aktion in seinem Zustand nicht (HTTP 409); die Meldung ist für Benutzer lesbar.</summary>
+public sealed class ImportKonfliktAusnahme(string meldung) : Exception(meldung);
 
 /// <summary>Woher eine Datei kam; gesetzt sind nur die Angaben der jeweiligen Quelle.</summary>
 public sealed record ImportHerkunft(

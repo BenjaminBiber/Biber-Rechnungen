@@ -2,7 +2,8 @@ namespace Biber.Invoice.Infrastructure.Module.Aufbewahrung;
 
 /// <summary>
 /// Meldet Belege zur Löschung an. Nur was hier freigegeben ist, lässt <see cref="AufbewahrungsSchutz"/> löschen.
-/// Gilt je Scope und wird ausschließlich von <see cref="AufbewahrungsDienst"/> benutzt.
+/// Gilt je Scope und wird nur von <see cref="AufbewahrungsDienst"/> benutzt – und vom Verarbeitungs-Job für den
+/// vorläufigen Beleg einer aussortierten Datei, der nie abgelegt wurde.
 /// </summary>
 public interface IAufbewahrungsFreigabe
 {

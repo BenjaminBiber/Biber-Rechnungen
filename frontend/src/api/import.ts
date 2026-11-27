@@ -58,6 +58,18 @@ export function useImportVorgang(id: string) {
 }
 
 /**
+ * POST /api/import/vorgaenge/{id}/als-beleg – übernimmt eine aussortierte Datei doch als Beleg; die Verarbeitung
+ * läuft danach ohne Belegprüfung erneut, die Liste pollt wieder.
+ */
+export function useAlsBelegUebernehmen() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => daten(api.POST('/api/import/vorgaenge/{id}/als-beleg', { params: { path: { id } } })),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: importKeys.alle }),
+  })
+}
+
+/**
  * Serialisiert das Multipart-Formular vorab (`Request` erzeugt Grenze und Content-Type). XHR sendet dann
  * nur Bytes – das verhält sich im Browser gleich und übersteht die XHR-Nachbildung von MSW unter Node,
  * die einen `FormData`-Körper sonst als Text „[object FormData]“ weiterreicht.

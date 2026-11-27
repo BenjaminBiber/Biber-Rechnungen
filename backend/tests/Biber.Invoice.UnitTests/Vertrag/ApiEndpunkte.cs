@@ -138,6 +138,7 @@ internal static class ApiEndpunkte
         Post(Import.Upload, R.Bearbeiten, "Dateien hochladen") with { Multipart = "dateien", MultipartMehrere = true, Antwort = typeof(ImportVorgangDto[]), Status = 202 },
         Get(Import.Vorgaenge, R.Lesen, "Import-Vorgänge") with { Query = [new("quelle", typeof(ImportQuelle?)), new("tage", typeof(int), 7), Seite], Antwort = typeof(SeiteDto<ImportVorgangDto>) },
         Get(Import.Vorgang, R.Lesen, "Ein Import-Vorgang") with { Antwort = typeof(ImportVorgangDto) },
+        Post(Import.AlsBeleg, R.Bearbeiten, "Aussortierte Datei doch als Beleg übernehmen") with { Antwort = typeof(ImportVorgangDto), Fehler = [new(409, "Vorgang ist nicht aussortiert oder die Datei fehlt")] },
 
         // Korrespondenten
         Get(Korrespondenten.Liste, R.Lesen, "Korrespondenten") with

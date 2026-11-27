@@ -25,6 +25,9 @@ public sealed class FakeDiClient : IDocumentIntelligenceClient
 
     public Exception? Fehler { get; set; }
 
+    /// <summary>Statt der festen Rechnung zurückgeben.</summary>
+    public ExtraktionsErgebnis? Ergebnis { get; set; }
+
     public int Aufrufe => _aufrufe;
 
     public Task<ExtraktionsErgebnis> AnalysierenAsync(Stream datei, CancellationToken ct)
@@ -35,7 +38,7 @@ public sealed class FakeDiClient : IDocumentIntelligenceClient
             throw Fehler;
         }
 
-        return Task.FromResult(new ExtraktionsErgebnis
+        return Task.FromResult(Ergebnis ?? new ExtraktionsErgebnis
         {
             Quelle = ExtraktionsQuelle.DocumentIntelligence,
             Belegart = Belegart.Rechnung,

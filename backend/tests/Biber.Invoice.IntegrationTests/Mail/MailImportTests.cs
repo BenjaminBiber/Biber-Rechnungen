@@ -101,14 +101,25 @@ public sealed class MailImportTests(ApiFabrik fabrik, GreenMail greenMail) : ICl
     [Fact]
     public async Task Signaturbild_unter_10_KB_zaehlt_nicht_als_Anhang()
     {
-        await greenMail.SendenAsync(Nachricht("<logo@lieferant.test>", "Rechnung", ("rechnung.pdf", Pdf), ("logo.png", new byte[2 * 1024]), ("scan.jpg", new byte[20 * 1024])));
         await greenMail.SendenAsync(Nachricht("<nur-logo@lieferant.test>", "Gruß", ("logo.png", new byte[3 * 1024])));
+        await greenMail.SendenAsync(Nachricht("<foto@lieferant.test>", "Beleg", ("logo.png", new byte[2 * 1024]), ("foto.jpg", new byte[20 * 1024])));
 
-        (await Abruf.AbrufenAsync(default)).ShouldBe(new MailAbrufErgebnis(2, 2, 1));
+        (await Abruf.AbrufenAsync(default)).ShouldBe(new MailAbrufErgebnis(2, 1, 1));
 
-        _protokoll.Aufrufe.Select(a => a.Dateiname).Order().ShouldBe(["rechnung.pdf", "scan.jpg"]);
+        _protokoll.Aufrufe.ShouldHaveSingleItem().Dateiname.ShouldBe("foto.jpg");
         (await greenMail.AnzahlAsync(Verarbeitet)).ShouldBe(1);
         (await greenMail.AnzahlAsync(OhneBeleg)).ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task Neben_einem_PDF_oder_XML_zaehlen_Bilder_nicht()
+    {
+        await greenMail.SendenAsync(Nachricht("<pdf@lieferant.test>", "Rechnung", ("rechnung.pdf", Pdf), ("banner.jpg", new byte[40 * 1024])));
+        await greenMail.SendenAsync(Nachricht("<xml@lieferant.test>", "XRechnung", ("rechnung.xml", "<Invoice/>"u8.ToArray()), ("werbung.png", new byte[40 * 1024])));
+
+        (await Abruf.AbrufenAsync(default)).ShouldBe(new MailAbrufErgebnis(2, 2, 0));
+
+        _protokoll.Aufrufe.Select(a => a.Dateiname).Order().ShouldBe(["rechnung.pdf", "rechnung.xml"]);
     }
 
     [Fact]
@@ -567,5 +578,8 @@ public sealed class MailImportTests(ApiFabrik fabrik, GreenMail greenMail) : ICl
         public Task<ImportVorgangDto?> VorgangAsync(Guid id, CancellationToken ct) => throw new NotSupportedException();
 
         public Task<int> PausierteFortsetzenAsync(CancellationToken ct) => throw new NotSupportedException();
+
+        public Task<ImportVorgangDto?> AlsBelegUebernehmenAsync(Guid id, Guid? benutzerId, CancellationToken ct) =>
+            throw new NotSupportedException();
     }
 }

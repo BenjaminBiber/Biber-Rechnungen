@@ -31,6 +31,8 @@ public sealed class ImportEndpunkte : IEndpunktModul
             .RequireAuthorization(Richtlinien.Lesen);
         app.MapGet(ApiRouten.Import.Vorgang, VorgangAsync)
             .RequireAuthorization(Richtlinien.Lesen);
+        app.MapPost(ApiRouten.Import.AlsBeleg, AlsBelegAsync)
+            .RequireAuthorization(Richtlinien.Bearbeiten);
     }
 
     /// <summary>
@@ -117,6 +119,20 @@ public sealed class ImportEndpunkte : IEndpunktModul
         await dienst.VorgangAsync(id, ct) is { } vorgang
             ? TypedResults.Ok(vorgang)
             : TypedResults.Problem(statusCode: StatusCodes.Status404NotFound);
+
+    private static async Task<IResult> AlsBelegAsync(Guid id, IImportDienst dienst, IAktuellerBenutzer benutzer, CancellationToken ct)
+    {
+        try
+        {
+            return await dienst.AlsBelegUebernehmenAsync(id, benutzer.Id, ct) is { } vorgang
+                ? TypedResults.Ok(vorgang)
+                : TypedResults.Problem(statusCode: StatusCodes.Status404NotFound);
+        }
+        catch (ImportKonfliktAusnahme ex)
+        {
+            return TypedResults.Problem(statusCode: StatusCodes.Status409Conflict, title: "Konflikt", detail: ex.Message);
+        }
+    }
 
     private static IResult Ungueltig(string feld, string meldung) =>
         TypedResults.ValidationProblem(new Dictionary<string, string[]> { [feld] = [meldung] });

@@ -89,6 +89,8 @@ public static class ApiRouten
         public const string Upload = "/api/import/upload";
         public const string Vorgaenge = "/api/import/vorgaenge";
         public const string Vorgang = "/api/import/vorgaenge/{id}";
+        /// <summary>POST: aussortierte Datei doch als Beleg übernehmen</summary>
+        public const string AlsBeleg = "/api/import/vorgaenge/{id}/als-beleg";
     }
 
     public static class Korrespondenten

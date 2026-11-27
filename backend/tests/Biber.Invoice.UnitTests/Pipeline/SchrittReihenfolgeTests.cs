@@ -17,7 +17,7 @@ public sealed class SchrittReihenfolgeTests
     {
         var werte = Werte();
 
-        werte.Length.ShouldBe(15);
+        werte.Length.ShouldBe(17);
         werte.Distinct().Count().ShouldBe(werte.Length);
     }
 

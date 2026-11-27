@@ -3,7 +3,7 @@ import type { ImportQuelle, ImportVorgang } from '@/api/typen'
 import { db, neueId } from '../db'
 import { mockHeute } from '../fixtures/belege'
 import { belegIds } from '../fixtures/ids'
-import { abfrage, nichtGefunden, route, seite, ungueltig, zahl, type Route } from './gemeinsam'
+import { abfrage, nichtGefunden, problem, route, seite, ungueltig, zahl, type Route } from './gemeinsam'
 
 const schritte = [
   'Dubletten-Check',
@@ -89,5 +89,22 @@ export const importRouten: Route[] = [
     weiterlaufen()
     const vorgang = db.importVorgaenge.find((v) => v.id === params.id)
     return vorgang ? HttpResponse.json(vorgang) : nichtGefunden('Import-Vorgang')
+  }),
+
+  route('post', '/api/import/vorgaenge/{id}/als-beleg', 'Bearbeiten', ({ params }) => {
+    const vorgang = db.importVorgaenge.find((v) => v.id === params.id)
+    if (!vorgang) return nichtGefunden('Import-Vorgang')
+    if (vorgang.status !== 'Aussortiert')
+      return problem(409, 'Nur aussortierte Dateien lassen sich als Beleg übernehmen.')
+    const neu: ImportVorgang = {
+      ...vorgang,
+      status: 'Angenommen',
+      versuche: 0,
+      ergebnis: null,
+      schritte: schritte.map((name) => ({ name, status: 'offen' })),
+    }
+    db.importVorgaenge = db.importVorgaenge.map((v) => (v.id === neu.id ? neu : v))
+    db.simulierteVorgaenge.push(neu.id)
+    return HttpResponse.json(neu)
   }),
 ]

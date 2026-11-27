@@ -2,6 +2,7 @@ using Biber.Invoice.Contracts.Dienste;
 using Biber.Invoice.Domain.Entitaeten;
 using Biber.Invoice.Domain.Enums;
 using Biber.Invoice.Domain.Pipeline;
+using Biber.Invoice.Infrastructure.Module.Aufbewahrung;
 using Biber.Invoice.Infrastructure.Module.Positionen;
 using Biber.Invoice.Infrastructure.Persistenz;
 using Hangfire;
@@ -19,6 +20,7 @@ public sealed class VerarbeitungsJob(
     IEnumerable<IPipelineSchritt> schritte,
     IVerarbeitungsPlaner planer,
     IEnumerable<IBenachrichtigungsDienst> benachrichtigungen,
+    IAufbewahrungsFreigabe freigabe,
     TimeProvider zeit,
     ILogger<VerarbeitungsJob> log)
 {
@@ -117,6 +119,11 @@ public sealed class VerarbeitungsJob(
                         beleg.Status = BelegStatus.Fertig;
                     }
 
+                    if (vorgang.Status == ImportStatus.Aussortiert)
+                    {
+                        await VorlaeufigenBelegVerwerfenAsync(vorgang, beleg, ct);
+                    }
+
                     await db.SaveChangesAsync(ct);
                     await VerwaisteArtikel.EntfernenAsync(db, bisherigeArtikel, ct);
                     return;
@@ -178,6 +185,23 @@ public sealed class VerarbeitungsJob(
         db.Belege.Add(beleg);
         vorgang.BelegId = beleg.Id;
         return beleg;
+    }
+
+    /// <summary>
+    /// Kein Beleg: Der vorläufige Beleg verschwindet, die Datei bleibt zum Übernehmen im Staging. Die Löschsperre gilt
+    /// ihm nicht, weil nie etwas abgelegt wurde – liegt doch schon ein Original in der Ablage, bleibt er unangetastet.
+    /// </summary>
+    private async Task VorlaeufigenBelegVerwerfenAsync(ImportVorgang vorgang, Beleg beleg, CancellationToken ct)
+    {
+        if (await db.BelegDateien.AnyAsync(d => d.BelegId == beleg.Id && d.Rolle == DateiRolle.Original, ct))
+        {
+            log.LogWarning("Beleg {Beleg} ist schon abgelegt und bleibt trotz Aussortieren von Import {Vorgang} erhalten", beleg.Id, vorgang.Id);
+            return;
+        }
+
+        freigabe.Freigeben([beleg.Id]);
+        db.Belege.Remove(beleg);
+        vorgang.BelegId = null;
     }
 
     /// <summary>

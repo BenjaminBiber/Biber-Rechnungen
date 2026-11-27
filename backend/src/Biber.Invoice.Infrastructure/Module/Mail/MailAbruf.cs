@@ -260,25 +260,27 @@ public sealed class MailAbruf(
 
     /// <summary>
     /// Verwertbar sind Anhänge – und als <c>inline</c> markierte PDF/XML – mit erlaubter Endung;
-    /// Bilder unter <see cref="MindestgroesseBild"/> sind Signatur-Logos und zählen nicht.
+    /// Bilder unter <see cref="MindestgroesseBild"/> sind Signatur-Logos und zählen nicht. Hat die Mail ein PDF
+    /// oder XML, zählen Bilder gar nicht: Neben einer Rechnung sind sie Logos, Banner oder Werbung.
     /// Gleichnamige Anhänge einer Mail werden durchnummeriert, damit jeder für sich idempotent ist.
     /// </summary>
     private static async Task<List<(string Name, MemoryStream Inhalt)>> AnhaengeAsync(MimeMessage nachricht, CancellationToken ct)
     {
+        var teile = nachricht.BodyParts.OfType<MimePart>().ToList();
+        var mitDokument = teile.Any(t => Verwertbar(t, out var endung) && !BildEndungen.Contains(endung));
+
         var liste = new List<(string Name, MemoryStream Inhalt)>();
         var namen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var teil in nachricht.BodyParts.OfType<MimePart>())
+        foreach (var teil in teile)
         {
-            var name = Path.GetFileName(teil.FileName ?? "").Trim();
-            var endung = Path.GetExtension(name);
-            if (name.Length == 0 || teil.Content is null || !ErlaubteEndungen.Contains(endung)
-                || (!teil.IsAttachment && !InlineEndungen.Contains(endung)))
+            if (!Verwertbar(teil, out var endung) || (mitDokument && BildEndungen.Contains(endung)) || teil.Content is not { } inhaltTeil)
             {
                 continue;
             }
 
+            var name = Name(teil);
             var inhalt = new MemoryStream();
-            await teil.Content.DecodeToAsync(inhalt, ct);
+            await inhaltTeil.DecodeToAsync(inhalt, ct);
             if (BildEndungen.Contains(endung) && inhalt.Length < MindestgroesseBild)
             {
                 await inhalt.DisposeAsync();
@@ -289,6 +291,17 @@ public sealed class MailAbruf(
         }
 
         return liste;
+    }
+
+    private static string Name(MimePart teil) => Path.GetFileName(teil.FileName ?? "").Trim();
+
+    /// <summary>Anhang (oder <c>inline</c>-PDF/XML) mit Namen, Inhalt und erlaubter Endung.</summary>
+    private static bool Verwertbar(MimePart teil, out string endung)
+    {
+        var name = Name(teil);
+        endung = Path.GetExtension(name);
+        return name.Length > 0 && teil.Content is not null && ErlaubteEndungen.Contains(endung)
+            && (teil.IsAttachment || InlineEndungen.Contains(endung));
     }
 
     private static string Eindeutig(string name, HashSet<string> namen)

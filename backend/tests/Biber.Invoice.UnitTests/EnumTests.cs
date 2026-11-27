@@ -14,7 +14,7 @@ public sealed class EnumTests
         { "Belegart", ["Rechnung", "Gutschrift", "Quittung"] },
         { "BelegStatus", ["Importiert", "InVerarbeitung", "Fertig", "Fehler"] },
         { "ImportQuelle", ["Upload", "Ordner", "Mail", "Mcp"] },
-        { "ImportStatus", ["Angenommen", "InVerarbeitung", "Wartet", "Pausiert", "Fertig", "Dublette", "OhneBeleg", "Abgelehnt", "Fehler"] },
+        { "ImportStatus", ["Angenommen", "InVerarbeitung", "Wartet", "Pausiert", "Fertig", "Dublette", "OhneBeleg", "Abgelehnt", "Fehler", "Aussortiert"] },
         { "ExtraktionsQuelle", ["XRechnung", "ZUGFeRD", "DocumentIntelligence", "Manuell"] },
         { "ErkanntesFormat", ["Unbekannt", "XRechnungXml", "ZugferdPdf", "Pdf", "Bild"] },
         { "DateiRolle", ["Original", "EingebettetesXml", "Visualisierung", "Vorschau"] },

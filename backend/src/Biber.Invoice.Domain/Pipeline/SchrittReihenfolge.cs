@@ -7,7 +7,9 @@ public static class SchrittReihenfolge
     public const int Formaterkennung = 200;
     public const int ERechnung = 300;
     public const int Kosit = 310;
+    public const int Belegpruefung = 315;
     public const int DocumentIntelligence = 320;
+    public const int BelegpruefungNachAuslesen = 325;
     public const int ExtraktionUebernehmen = 330;
     public const int Vorschau = 350;
     public const int Korrespondent = 400;

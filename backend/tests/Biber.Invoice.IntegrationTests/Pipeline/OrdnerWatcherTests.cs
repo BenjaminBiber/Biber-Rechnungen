@@ -210,6 +210,9 @@ public sealed class OrdnerWatcherTests : IDisposable
         public Task<ImportVorgangDto?> VorgangAsync(Guid id, CancellationToken ct) => throw new NotSupportedException();
 
         public Task<int> PausierteFortsetzenAsync(CancellationToken ct) => throw new NotSupportedException();
+
+        public Task<ImportVorgangDto?> AlsBelegUebernehmenAsync(Guid id, Guid? benutzerId, CancellationToken ct) =>
+            throw new NotSupportedException();
     }
 
     private sealed class FesteEinstellungen : IEinstellungen

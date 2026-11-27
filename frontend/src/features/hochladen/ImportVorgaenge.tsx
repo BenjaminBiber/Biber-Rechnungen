@@ -1,9 +1,11 @@
 import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
-import { useImportVorgaenge } from '@/api/import'
+import { useAlsBelegUebernehmen, useImportVorgaenge } from '@/api/import'
 import type { ImportQuelle, ImportStatus, ImportVorgang } from '@/api/typen'
 import { Chip, type ChipTon } from '@/components/Chip'
 import { Icon } from '@/components/Icon'
+import { useRolle } from '@/components/shell/useRolle'
+import { useToast } from '@/components/toast'
 import { formatDatumZeit } from '@/lib/format'
 import { SkelettTabelle } from '@/components/ui/skelett'
 
@@ -28,6 +30,7 @@ const statusChip: Record<ImportStatus, { ton: ChipTon; text: string }> = {
   Wartet: { ton: 'orange', text: 'wartet' },
   Pausiert: { ton: 'orange', text: 'pausiert' },
   OhneBeleg: { ton: 'grau', text: 'ohne Beleg' },
+  Aussortiert: { ton: 'grau', text: 'aussortiert' },
   Dublette: { ton: 'orange', text: 'Dublette' },
   Fehler: { ton: 'rot', text: 'Fehler' },
   Abgelehnt: { ton: 'rot', text: 'abgelehnt' },
@@ -145,9 +148,12 @@ export function ImportVorgaenge() {
 function Zeile({ vorgang: v }: { vorgang: ImportVorgang }) {
   const q = quellen.find((x) => x.wert === v.quelle) ?? quellen[1]
   const s = statusChip[v.status]
+  // Mail: `herkunft` ist der Betreff in „…“, `herkunftDetail` „von Absender“; ein Anhang steht mit Namen darüber.
   const istMail = v.quelle === 'Mail'
-  const herkunft1 = istMail ? `„${v.herkunftDetail ?? v.dateiname}“` : v.dateiname || v.herkunft
-  const herkunft2 = istMail ? `von ${v.herkunft}` : [v.herkunft, v.herkunftDetail].filter(Boolean).join(' · ')
+  const herkunft1 = v.dateiname || v.herkunft
+  const herkunft2 = [istMail && !v.dateiname ? null : v.herkunft, v.herkunftDetail]
+    .filter((teil) => teil && teil !== herkunft1)
+    .join(' · ')
   return (
     <tr>
       <td className="whitespace-nowrap">{formatDatumZeit(v.zeitpunkt)}</td>
@@ -167,8 +173,33 @@ function Zeile({ vorgang: v }: { vorgang: ImportVorgang }) {
       <td>{v.versuche > 1 ? `${v.versuche} / ${v.maxVersuche}` : v.versuche}</td>
       <td className="text-[13px]">
         <Ergebnis vorgang={v} />
+        {v.status === 'Aussortiert' && <AlsBelegKnopf vorgang={v} />}
       </td>
     </tr>
+  )
+}
+
+/** Aussortierte Datei doch als Beleg übernehmen (nur mit Bearbeiten-Recht). */
+function AlsBelegKnopf({ vorgang: v }: { vorgang: ImportVorgang }) {
+  const { darfBearbeiten } = useRolle()
+  const toast = useToast()
+  const uebernehmen = useAlsBelegUebernehmen()
+  if (!darfBearbeiten) return null
+  return (
+    <button
+      type="button"
+      className="btn btn-klein mt-1.5 block"
+      disabled={uebernehmen.isPending}
+      // `mutateAsync`: Nach dem Neuladen ist der Vorgang nicht mehr aussortiert und der Knopf weg; die Meldung kommt trotzdem.
+      onClick={() =>
+        uebernehmen.mutateAsync(v.id).then(
+          () => toast.erfolg(`${v.dateiname} wird als Beleg verarbeitet`),
+          (f: Error) => toast.fehler(f.message),
+        )
+      }
+    >
+      Doch als Beleg übernehmen
+    </button>
   )
 }
 

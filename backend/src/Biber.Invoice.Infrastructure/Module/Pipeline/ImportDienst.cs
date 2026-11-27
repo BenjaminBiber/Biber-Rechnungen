@@ -132,6 +132,38 @@ public sealed class ImportDienst(
         return pausiert.Count;
     }
 
+    public async Task<ImportVorgangDto?> AlsBelegUebernehmenAsync(Guid id, Guid? benutzerId, CancellationToken ct)
+    {
+        var vorgang = await db.ImportVorgaenge.FirstOrDefaultAsync(v => v.Id == id, ct);
+        if (vorgang is null)
+        {
+            return null;
+        }
+
+        if (vorgang.Status != ImportStatus.Aussortiert)
+        {
+            throw new ImportKonfliktAusnahme("Nur aussortierte Dateien lassen sich als Beleg übernehmen.");
+        }
+
+        if (vorgang.StagingPfad is not { } pfad || !File.Exists(pfad))
+        {
+            throw new ImportKonfliktAusnahme("Die Datei ist nicht mehr vorhanden.");
+        }
+
+        vorgang.AlsBelegBestaetigt = true;
+        vorgang.BenutzerId ??= benutzerId;
+        vorgang.Status = ImportStatus.Angenommen;
+        vorgang.Ergebnis = null;
+        vorgang.Fehler = null;
+        vorgang.Versuche = 0;
+        vorgang.BeendetAm = null;
+        vorgang.Schritte = [];
+        await db.SaveChangesAsync(ct);
+        log.LogInformation("Aussortierter Import {Vorgang} wird doch als Beleg übernommen", vorgang.Id);
+        planer.Einplanen(vorgang.Id);
+        return await AbbildenAsync(vorgang, ct);
+    }
+
     private async Task<ImportVorgangDto> AbbildenAsync(ImportVorgang vorgang, CancellationToken ct) =>
         (await AbbildenAsync([vorgang], ct))[0];
 

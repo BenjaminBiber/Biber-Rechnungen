@@ -955,6 +955,10 @@ namespace Biber.Invoice.Infrastructure.Persistenz.Migrationen
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<bool>("AlsBelegBestaetigt")
+                        .HasColumnType("boolean")
+                        .HasColumnName("als_beleg_bestaetigt");
+
                     b.Property<Guid?>("ApiTokenId")
                         .HasColumnType("uuid")
                         .HasColumnName("api_token_id");

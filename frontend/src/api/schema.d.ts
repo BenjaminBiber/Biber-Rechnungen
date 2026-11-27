@@ -858,6 +858,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/import/vorgaenge/{id}/als-beleg": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Aussortierte Datei doch als Beleg übernehmen */
+        post: operations["postImportAlsBeleg"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/korrespondenten": {
         parameters: {
             query?: never;
@@ -2396,7 +2413,7 @@ export interface components {
             status: string;
         };
         /** @enum {string} */
-        ImportStatus: "Angenommen" | "InVerarbeitung" | "Wartet" | "Pausiert" | "Fertig" | "Dublette" | "OhneBeleg" | "Abgelehnt" | "Fehler";
+        ImportStatus: "Angenommen" | "InVerarbeitung" | "Wartet" | "Pausiert" | "Fertig" | "Dublette" | "OhneBeleg" | "Abgelehnt" | "Fehler" | "Aussortiert";
         ImportVorgangDto: {
             /** Format: uuid */
             id: string;
@@ -4699,6 +4716,50 @@ export interface operations {
             401: components["responses"]["NichtAngemeldet"];
             403: components["responses"]["KeinRecht"];
             404: components["responses"]["NichtGefunden"];
+        };
+    };
+    postImportAlsBeleg: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportVorgangDto"];
+                };
+            };
+            400: components["responses"]["Ungueltig"];
+            401: components["responses"]["NichtAngemeldet"];
+            403: components["responses"]["KeinRecht"];
+            404: components["responses"]["NichtGefunden"];
+            /** @description Vorgang ist nicht aussortiert oder die Datei fehlt */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": {
+                        type?: string;
+                        title?: string;
+                        /** Format: int32 */
+                        status?: number;
+                        detail?: string;
+                        errors?: {
+                            [key: string]: string[];
+                        };
+                    };
+                };
+            };
         };
     };
     getKorrespondentenListe: {

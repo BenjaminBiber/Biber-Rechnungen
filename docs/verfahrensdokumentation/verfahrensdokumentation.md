@@ -44,7 +44,7 @@ Stichtag des Verfahrens: **[ERGÄNZEN: Stichtag, z. B. 01.01.2027]**. Belege vor
 
 | Weg | Beschreibung |
 | --- | --- |
-| E-Mail | Rechnungen gehen an das Postfach **[ERGÄNZEN: Rechnungsadresse]**. Das System ruft das Postfach alle 5 Minuten per IMAP ab und übernimmt Anhänge (PDF, XML, Bilder). Verarbeitete Mails werden in den IMAP-Ordner `Verarbeitet`, Mails ohne verwertbaren Anhang nach `Ohne Beleg` verschoben, nicht gelöscht. |
+| E-Mail | Rechnungen gehen an das Postfach **[ERGÄNZEN: Rechnungsadresse]**. Das System ruft das Postfach alle 5 Minuten per IMAP ab und übernimmt Anhänge (PDF, XML, Bilder; Bilder nur, wenn die Mail kein PDF oder XML enthält – daneben sind es Logos oder Werbung). Anhänge, die keine Rechnung sind, sortiert die Belegprüfung aus (Abschnitt 3.2). Verarbeitete Mails werden in den IMAP-Ordner `Verarbeitet`, Mails ohne verwertbaren Anhang nach `Ohne Beleg` verschoben, nicht gelöscht. |
 | Papier | Papierrechnungen werden mit dem Scanner **[ERGÄNZEN: Scanner-Gerät]** in die Netzwerkfreigabe `Rechnungen-Eingang` gescannt. **Das Papieroriginal wird zusätzlich aufbewahrt** (kein ersetzendes Scannen). Ablageort: **[ERGÄNZEN: Ablageort Papier]**. |
 | Upload | Dateien werden über die Weboberfläche (auch als installierte App) hochgeladen. |
 | Programmzugriff | Über die MCP-Schnittstelle (Abschnitt 3.7) mit dem Werkzeug `beleg_hochladen`. |
@@ -89,13 +89,14 @@ Der Export für einen Zeitraum enthält eine Belegliste (Excel/CSV), Summen je K
 1. **Import:** Upload, Eingangsordner oder E-Mail erzeugen einen Importvorgang. Die Datei wird in die Zwischenablage (Staging) kopiert und ihre SHA-256-Prüfsumme berechnet. Dateien im Eingangsordner werden erst übernommen, wenn ihre Größe 10 Sekunden stabil ist, und danach aus dem Eingang gelöscht.
 2. **Dublettenprüfung** über die Prüfsumme: identische Dateien werden als Dublette verknüpft und nicht erneut abgelegt.
 3. **Format erkennen:** XRechnung-XML, PDF mit ZUGFeRD, sonstiges PDF oder Bild.
-4. **Auslesen:** E-Rechnungen aus dem XML (maßgeblich), Validierung und Visualisierung über `kosit`; sonstige Belege über Azure Document Intelligence (Modell `prebuilt-invoice`, EU-Region). Fehlschläge werden fünfmal über etwa eine Stunde wiederholt, danach erhält der Beleg den Status „Fehler“ und „zu prüfen“. Steht auf einer Rechnung kein Fälligkeitsdatum, wird es aus den Zahlungsbedingungen im Text abgeleitet (z. B. „zahlbar innerhalb von 14 Tagen“ ab Rechnungsdatum; Skonto-Fristen zählen nicht).
-5. **Korrespondent zuordnen** (USt-IdNr., IBAN, Name/Alias), sonst neu anlegen.
-6. **Positionen** normalisieren und Artikeln zuordnen.
-7. **Fachliche Dublette** prüfen (Korrespondent, Rechnungsnummer, Betrag).
-8. **Zuordnung** von Kategorie und Tags (Standardkategorie, Regeln, automatische Zuordnung).
-9. **Prüfungen** (Abschnitt 3.3), Inbox-Tag und bei Befunden „zu prüfen“.
-10. **Ablage** (Abschnitt 3.4), danach wird die Datei aus dem Staging gelöscht.
+4. **Belegprüfung** (nur E-Mail und Eingangsordner, nicht Upload und MCP): Dateien, die nach Dateiname oder Inhalt eindeutig keine Rechnung sind – z. B. AGB, Widerrufsbelehrung, Datenschutzhinweise, Lieferschein, Auftragsbestätigung, Angebot oder Werbung –, werden aussortiert. Geprüft wird vor dem Auslesen anhand des Dateinamens und der Textebene des PDFs, bei Scans und Bildern nach dem Auslesen anhand des erkannten Textes; dort gilt eine Datei auch dann nicht als Beleg, wenn weder Betrag noch Rechnungsnummer noch Aussteller erkannt wurden. Im Zweifel bleibt die Datei ein Beleg. Aussortierte Dateien werden nicht abgelegt; der vorläufig angelegte Belegdatensatz wird verworfen (Anlage und Verwerfen stehen im Änderungsprotokoll). Die Datei bleibt in der Zwischenablage und erscheint in der Liste der Importvorgänge mit Status „aussortiert“ und Grund. Mit „Doch als Beleg übernehmen“ gibt ein Benutzer mit Bearbeiten-Recht sie ohne Belegprüfung erneut in die Verarbeitung; er gilt dann als Ersteller des Belegs. Die Mail bleibt unverändert im Postfach.
+5. **Auslesen:** E-Rechnungen aus dem XML (maßgeblich), Validierung und Visualisierung über `kosit`; sonstige Belege über Azure Document Intelligence (Modell `prebuilt-invoice`, EU-Region). Fehlschläge werden fünfmal über etwa eine Stunde wiederholt, danach erhält der Beleg den Status „Fehler“ und „zu prüfen“. Steht auf einer Rechnung kein Fälligkeitsdatum, wird es aus den Zahlungsbedingungen im Text abgeleitet (z. B. „zahlbar innerhalb von 14 Tagen“ ab Rechnungsdatum; Skonto-Fristen zählen nicht).
+6. **Korrespondent zuordnen** (USt-IdNr., IBAN, Name/Alias), sonst neu anlegen.
+7. **Positionen** normalisieren und Artikeln zuordnen.
+8. **Fachliche Dublette** prüfen (Korrespondent, Rechnungsnummer, Betrag).
+9. **Zuordnung** von Kategorie und Tags (Standardkategorie, Regeln, automatische Zuordnung).
+10. **Prüfungen** (Abschnitt 3.3), Inbox-Tag und bei Befunden „zu prüfen“.
+11. **Ablage** (Abschnitt 3.4), danach wird die Datei aus dem Staging gelöscht.
 
 Ein Beleg kann seitenweise **aufgeteilt** werden: Die Teile entstehen als neue Dateien und durchlaufen die Verarbeitung; das ungeteilte Original bleibt unverändert und verknüpft.
 

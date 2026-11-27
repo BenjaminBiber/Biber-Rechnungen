@@ -1,6 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it } from 'vitest'
+import { ToastBereich } from '@/components/toast'
 import { importVorgaenge } from '@/mocks/fixtures/import'
 import { server } from '@/mocks/server'
 import { szenario } from '@/mocks/szenarien'
@@ -154,13 +155,13 @@ describe('Upload-Liste', () => {
 })
 
 describe('Import-Vorgänge', () => {
-  it('zeigt die sieben Vorgänge mit Chips und Quellen-Icons', async () => {
+  it('zeigt die acht Vorgänge mit Chips und Quellen-Icons', async () => {
     renderMitApp(<HochladenSeite />)
     await userEvent.click(await screen.findByRole('button', { name: 'Letzte 30 Tage' }))
     const tabelle = await screen.findByRole('table')
-    await waitFor(() => expect(within(tabelle).getAllByRole('row')).toHaveLength(8))
+    await waitFor(() => expect(within(tabelle).getAllByRole('row')).toHaveLength(9))
     const text = tabelle.textContent ?? ''
-    for (const chip of ['läuft', 'fertig', 'ohne Beleg', 'wartet', 'abgelehnt'])
+    for (const chip of ['läuft', 'fertig', 'ohne Beleg', 'wartet', 'abgelehnt', 'aussortiert'])
       expect(within(tabelle).getAllByText(chip, { exact: true }).length).toBeGreaterThan(0)
     for (const icon of ['upload', 'mail', 'folder_open', 'smart_toy'])
       expect(tabelle.querySelector(`[data-icon="${icon}"]`)).toBeInTheDocument()
@@ -170,6 +171,42 @@ describe('Import-Vorgänge', () => {
       'href',
       `/belege/${importVorgaenge[6].belegId}`,
     )
+  })
+
+  it('zeigt bei Mails Anhang, Betreff und Absender', async () => {
+    renderMitApp(<HochladenSeite />)
+    const zeile = (await screen.findByText('AGB_Stadtwerke.pdf')).closest('tr')!
+    expect(
+      within(zeile).getByText('„Ihre Rechnung 2026-1194“ · von rechnung@stadtwerke-lindenau.de'),
+    ).toBeInTheDocument()
+    const ohneAnhang = (await screen.findByText('„Newsletter November“')).closest('tr')!
+    expect(within(ohneAnhang).getByText('von info@hostwerk-sued.de')).toBeInTheDocument()
+  })
+
+  it('übernimmt eine aussortierte Datei doch als Beleg', async () => {
+    renderMitApp(
+      <>
+        <HochladenSeite />
+        <ToastBereich />
+      </>,
+    )
+    const zeile = (await screen.findByText('AGB_Stadtwerke.pdf')).closest('tr')!
+    expect(within(zeile).getByText('aussortiert')).toBeInTheDocument()
+    expect(within(zeile).getByText('Kein Beleg: Dateiname deutet auf AGB')).toBeInTheDocument()
+
+    await userEvent.click(within(zeile).getByRole('button', { name: 'Doch als Beleg übernehmen' }))
+
+    expect(await screen.findByText('AGB_Stadtwerke.pdf wird als Beleg verarbeitet')).toBeInTheDocument()
+    await waitFor(() => expect(within(zeile).queryByText('aussortiert')).not.toBeInTheDocument())
+    expect(within(zeile).queryByRole('button', { name: 'Doch als Beleg übernehmen' })).not.toBeInTheDocument()
+  })
+
+  it('zeigt „Doch als Beleg übernehmen“ nicht ohne Bearbeiten-Recht', async () => {
+    szenario.rolle('NurLesen')
+    renderMitApp(<HochladenSeite />)
+    const zeile = (await screen.findByText('AGB_Stadtwerke.pdf')).closest('tr')!
+    expect(within(zeile).getByText('aussortiert')).toBeInTheDocument()
+    expect(within(zeile).queryByRole('button')).not.toBeInTheDocument()
   })
 
   it('setzt Quelle und Zeitraum als Query-Parameter', async () => {

@@ -24,6 +24,9 @@ public class ImportVorgang
     public int Versuche { get; set; }
     public DateTimeOffset? NaechsterVersuchAm { get; set; }
 
+    /// <summary>Ein Benutzer hat die aussortierte Datei als Beleg übernommen; die Belegprüfung entfällt.</summary>
+    public bool AlsBelegBestaetigt { get; set; }
+
     /// <summary>Fortschritt der Pipeline, als <c>jsonb</c> gespeichert.</summary>
     public List<ImportSchritt> Schritte { get; set; } = [];
 

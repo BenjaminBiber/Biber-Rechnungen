@@ -100,6 +100,7 @@ const zuordnung: Record<string, `${keyof typeof module}.${string}` | null> = {
   postImportUpload: 'import.useUpload',
   getImportVorgaenge: 'import.useImportVorgaenge',
   getImportVorgang: 'import.useImportVorgang',
+  postImportAlsBeleg: 'import.useAlsBelegUebernehmen',
   getKorrespondentenListe: 'korrespondenten.useKorrespondenten',
   postKorrespondentenListe: 'korrespondenten.useKorrespondentAnlegen',
   getKorrespondentenEinzeln: 'korrespondenten.useKorrespondent',

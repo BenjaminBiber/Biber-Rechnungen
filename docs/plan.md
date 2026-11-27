@@ -145,7 +145,7 @@ Mail  ──┘                                            │
 ```
 
 - **Ordner-Watcher:** `FileSystemWatcher` plus Polling alle 30 s als Absicherung. Übernommen wird eine Datei erst, wenn ihre Größe 10 s lang stabil ist (Scanner schreiben schrittweise). Akzeptiert: PDF, XML, PNG/JPG/TIFF.
-- **Mail (Q7/Q8):** IMAP-Polling alle 5 min; verarbeitet werden nur Anhänge (PDF/XML/Bild). Danach wird die Mail in den IMAP-Ordner `Verarbeitet` verschoben, Mails ohne verwertbaren Anhang nach `Ohne Beleg`. Die Absender-Domain wird für das Favicon gemerkt.
+- **Mail (Q7/Q8):** IMAP-Polling alle 5 min; verarbeitet werden nur Anhänge (PDF/XML/Bild; Bilder nur, wenn die Mail kein PDF/XML hat). Anhänge, die keine Rechnung sind (AGB, Lieferschein, Werbung …), sortiert die Belegprüfung vor bzw. nach DI aus: Status `Aussortiert`, nichts abgelegt, „Doch als Beleg übernehmen“ in der Import-Liste. Danach wird die Mail in den IMAP-Ordner `Verarbeitet` verschoben, Mails ohne verwertbaren Anhang nach `Ohne Beleg`. Die Absender-Domain wird für das Favicon gemerkt.
 - **DI-Fehler (R2-12):** 5 Versuche mit exponentiellem Backoff über ca. 1 h, danach Status `Fehler`, Tag „zu prüfen“, manuelle Erfassung, Button „Erneut auslesen“.
 - **DI-Limit (R2-13):** Seitenzähler pro Monat; Benachrichtigung bei 80 %, bei 100 % warten Jobs in einer pausierten Queue.
 - **Ablagepfad:** Dateinamen werden bereinigt; bei Kollision kommt `_2`, `_3` dazu. Ist der Korrespondent unbekannt, heißt der Ordner `_Unbekannt`. Der Pfad bleibt fix (R2-6): Spätere Korrekturen ändern nur die DB, die Datei bleibt, wo sie ist.

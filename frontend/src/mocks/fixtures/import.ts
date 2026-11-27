@@ -3,8 +3,8 @@ import { belegIds, importVorgangId } from './ids'
 
 /**
  * Die sieben Import-Vorgänge aus `Upload.dc.html` (`renderVals().runs`), ergänzt um Dateigröße, Pipeline-Schritte und
- * Meldungen aus den Upload-Karten (`renderVals().items`). Zeitpunkte MEZ → UTC; `herkunft` = Benutzer, Ordner, Absender
- * oder Token, `herkunftDetail` = Mail-Betreff bzw. Zusatz.
+ * Meldungen aus den Upload-Karten (`renderVals().items`). Zeitpunkte MEZ → UTC; `herkunft` = Benutzer, Ordner, Token
+ * bzw. bei Mails der Betreff in „…“ wie vom Backend, `herkunftDetail` = Zusatz bzw. „von Absender“.
  */
 export const importVorgaenge: ImportVorgang[] = [
   {
@@ -40,8 +40,8 @@ export const importVorgaenge: ImportVorgang[] = [
     quelle: 'Mail',
     dateiname: 'xrechnung_2026_1194.xml',
     groesse: 41 * 1024,
-    herkunft: 'rechnung@stadtwerke-lindenau.de',
-    herkunftDetail: 'Ihre Rechnung 2026-1194',
+    herkunft: '„Ihre Rechnung 2026-1194“',
+    herkunftDetail: 'von rechnung@stadtwerke-lindenau.de',
     status: 'InVerarbeitung',
     versuche: 1,
     maxVersuche: 5,
@@ -94,8 +94,8 @@ export const importVorgaenge: ImportVorgang[] = [
     quelle: 'Mail',
     dateiname: '',
     groesse: 0,
-    herkunft: 'info@hostwerk-sued.de',
-    herkunftDetail: 'Newsletter November',
+    herkunft: '„Newsletter November“',
+    herkunftDetail: 'von info@hostwerk-sued.de',
     status: 'OhneBeleg',
     versuche: 1,
     maxVersuche: 5,
@@ -179,6 +179,31 @@ export const importVorgaenge: ImportVorgang[] = [
       { name: 'Zuordnung', status: 'ok' },
       { name: 'Prüfungen', status: 'ok' },
       { name: 'Ablage', status: 'ok' },
+    ],
+  },
+  {
+    id: importVorgangId(8),
+    zeitpunkt: '2026-11-23T08:46:00Z',
+    quelle: 'Mail',
+    dateiname: 'AGB_Stadtwerke.pdf',
+    groesse: 96 * 1024,
+    herkunft: '„Ihre Rechnung 2026-1194“',
+    herkunftDetail: 'von rechnung@stadtwerke-lindenau.de',
+    status: 'Aussortiert',
+    versuche: 0,
+    maxVersuche: 5,
+    ergebnis: 'Kein Beleg: Dateiname deutet auf AGB',
+    fehler: null,
+    belegId: null,
+    duplikatVonBelegId: null,
+    naechsterVersuchAm: null,
+    schritte: [
+      { name: 'Dubletten-Check', status: 'ok' },
+      { name: 'Format', status: 'ok' },
+      { name: 'Belegprüfung', status: 'ok' },
+      { name: 'Document Intelligence', status: 'offen' },
+      { name: 'Inhalt prüfen', status: 'offen' },
+      { name: 'Ablage', status: 'offen' },
     ],
   },
 ]
