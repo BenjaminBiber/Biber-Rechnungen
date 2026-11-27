@@ -6,6 +6,7 @@ using Biber.Invoice.Domain.Regeln;
 using Biber.Invoice.Infrastructure.Persistenz;
 using Microsoft.EntityFrameworkCore;
 using ArtikelEntitaet = Biber.Invoice.Domain.Entitaeten.Artikel;
+using Merkmal = Biber.Invoice.Domain.Entitaeten.Merkmal;
 using StammartikelEntitaet = Biber.Invoice.Domain.Entitaeten.Stammartikel;
 
 // Namespace bewusst nicht „Module.Artikel“: er würde in allen Nachbarmodulen den Entitätstyp Artikel verdecken.
@@ -306,7 +307,7 @@ public sealed class ArtikelDienst(BiberDbContext db, TimeProvider zeit) : IArtik
             k.Einheit,
             k.Einzelpreis,
             k.Grundpreis,
-            k.Variante))];
+            [.. k.Merkmale.Select(m => new MerkmalDto(m.Name, m.Wert))]))];
 
     private static ZugeordneterArtikelDto Zugeordnet(ArtikelInfo a) =>
         new(a.Id, a.Name, a.Artikelnummer, new VerweisDto(a.KorrespondentId, a.KorrespondentName), a.Einheit, a.UmrechnungFaktor);
@@ -362,7 +363,7 @@ public sealed class ArtikelDienst(BiberDbContext db, TimeProvider zeit) : IArtik
                     p.Gesamt,
                     p.Grundpreis,
                     p.GrundpreisEinheit,
-                    p.Variante,
+                    p.Merkmale,
                 })
             .ToListAsync(ct);
 
@@ -388,7 +389,7 @@ public sealed class ArtikelDienst(BiberDbContext db, TimeProvider zeit) : IArtik
                     umgerechnet
                         ? StammartikelRechner.GrundpreisEinheit(a.GrundpreisMenge!.Value, a.Basiseinheit!)
                         : z.GrundpreisEinheit,
-                    z.Variante);
+                    z.Merkmale);
             })
             .GroupBy(k => k.Artikel.Id)
             .ToDictionary(g => g.Key, g => (IReadOnlyList<Kauf>)[.. g.Order()]);
@@ -426,7 +427,7 @@ public sealed class ArtikelDienst(BiberDbContext db, TimeProvider zeit) : IArtik
         decimal Netto,
         decimal? Grundpreis,
         string? GrundpreisEinheit,
-        string? Variante) : IComparable<Kauf>
+        IReadOnlyList<Merkmal> Merkmale) : IComparable<Kauf>
     {
         public int CompareTo(Kauf? other)
         {

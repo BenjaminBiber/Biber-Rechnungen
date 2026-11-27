@@ -201,6 +201,14 @@ public static class ApiRouten
         public const string Abbrechen = "/api/neu-auslesen/abbrechen";
     }
 
+    /// <summary>Bankleitzahlen der Bundesbank für die Banknamen zu IBANs (Admin).</summary>
+    public static class Bankleitzahlen
+    {
+        /// <summary>GET: Stand; PUT (multipart „datei“): Bankleitzahlendatei hochladen.</summary>
+        public const string Stand = "/api/bankleitzahlen";
+        public const string Abrufen = "/api/bankleitzahlen/abrufen";
+    }
+
     public static class SystemInfo
     {
         public const string Status = "/api/system/status";

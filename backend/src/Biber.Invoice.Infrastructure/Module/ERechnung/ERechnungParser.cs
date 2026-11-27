@@ -137,7 +137,7 @@ public sealed class ERechnungParser : IERechnungParser
                 Steuersatz: p.TaxPercent,
                 Artikelnummer: ArtikelnummerNormalisierer.Bereinigen(
                     Leer(p.SellerAssignedID) ?? Leer(p.GlobalID?.ID) ?? Leer(p.BuyerAssignedID)),
-                Variante: Variante(p.ApplicableProductCharacteristics)));
+                Merkmale: Merkmale(p.ApplicableProductCharacteristics)));
         }
 
         var steuerzeilen = r.Taxes
@@ -243,12 +243,11 @@ public sealed class ERechnungParser : IERechnungParser
         return n is null ? b ?? "" : b is null || b == n ? n : $"{n} – {b}";
     }
 
-    /// <summary>Artikelmerkmale (BT-160/BT-161) wie „Größe: XL, Farbe: schwarz“.</summary>
-    private static string? Variante(IEnumerable<ApplicableProductCharacteristic>? merkmale) =>
-        ArtikelnummerNormalisierer.Variante(string.Join(", ", (merkmale ?? [])
-            .Select(m => (Name: Leer(m.Description), Wert: Leer(m.Value)))
-            .Where(m => m.Wert is not null)
-            .Select(m => m.Name is null ? m.Wert : $"{m.Name}: {m.Wert}")));
+    /// <summary>Artikelmerkmale (BT-160 Name, BT-161 Wert) wie Größe und Farbe; <c>null</c> ohne.</summary>
+    private static List<Merkmal>? Merkmale(IEnumerable<ApplicableProductCharacteristic>? merkmale) =>
+        MerkmalNormalisierer.Bereinigen((merkmale ?? []).Select(m => ((string?)m.Description, (string?)m.Value))) is { Count: > 0 } liste
+            ? liste
+            : null;
 
     private static bool IstNull(decimal? wert) => wert is null or 0m;
 

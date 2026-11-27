@@ -267,6 +267,7 @@ const position = (
   einzelpreis,
   gesamt,
   steuersatz: 19,
+  merkmale: [],
   artikel: artikel ?? null,
   stammartikelId: null,
   grundpreis: grundpreis?.[0] ?? null,
@@ -302,7 +303,10 @@ const positionen: Partial<Record<keyof typeof belegIds, Position[]>> = {
         [2.49, 'St.'],
       ),
       artikelnummer: '7710-08',
-      variante: 'blau',
+      merkmale: [
+        { name: 'Farbe', wert: 'blau' },
+        { name: 'Rückenbreite', wert: '8 cm' },
+      ],
     },
     position(4, 'Haftnotizen 76×76, 12 Blöcke', 2, 'Pack', 8.95, 17.9, undefined, [0.75, 'Block']),
     position(5, 'Kugelschreiber blau', 20, 'Stück', 0.89, 17.8, { id: artikelIds.a9, name: 'Kugelschreiber blau' }, [
@@ -629,7 +633,10 @@ function baueBeleg(zeile: Zeile): BelegDetail {
     belegart: 'Rechnung',
     status: 'Fertig',
     korrespondentErkennung: zeile.schluessel === autoBeleg ? 'Auto' : korrespondent.ustIdNr ? 'UstIdNr' : 'Name',
-    bankverbindungen: [{ iban: 'DE12680501010012345678', bic: 'FRSPDE66XXX' }],
+    bankverbindungen: [
+      { iban: 'DE12680501010012345678', bic: 'FRSPDE66XXX', bank: 'Sparkasse Freiburg-Nördlicher Breisgau' },
+      { iban: 'DE89370400440532013000', bic: null, bank: 'Commerzbank' },
+    ],
     kategorieManuell: zeile.schluessel === 'b2',
     defaultKategorie: korrespondent.defaultKategorie ?? null,
     leistungVon: null,

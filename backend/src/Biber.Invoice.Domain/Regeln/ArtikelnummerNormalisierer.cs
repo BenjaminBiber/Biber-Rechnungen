@@ -3,10 +3,10 @@ using System.Text.RegularExpressions;
 
 namespace Biber.Invoice.Domain.Regeln;
 
-/// <summary>Bereinigt Artikelnummern und Varianten (Größe, Farbe …) aus Belegen.</summary>
+/// <summary>Bereinigt Artikelnummern aus Belegen.</summary>
 public static partial class ArtikelnummerNormalisierer
 {
-    /// <summary>Höchstlänge von Artikelnummer und Variante.</summary>
+    /// <summary>Höchstlänge einer Artikelnummer.</summary>
     public const int MaxLaenge = 100;
 
     /// <summary>
@@ -28,9 +28,6 @@ public static partial class ArtikelnummerNormalisierer
         var text = Text(nummer);
         return text is null ? null : MitInhalt(Praefix().Replace(text, "").Trim());
     }
-
-    /// <summary>Variante: Unicode-NFKC, Leerraum zusammengefasst, höchstens <see cref="MaxLaenge"/> Zeichen.</summary>
-    public static string? Variante(string? variante) => MitInhalt(Text(variante));
 
     private static string? Text(string? text) =>
         string.IsNullOrWhiteSpace(text) ? null : Leerraum().Replace(text.Normalize(NormalizationForm.FormKC), " ").Trim();

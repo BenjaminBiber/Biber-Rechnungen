@@ -475,6 +475,7 @@ public sealed class BelegLeseTests(ApiFabrik fabrik) : IAsyncLifetime
     public async Task Detail_ist_vollstaendig()
     {
         var kategorie = await fabrik.SpeichernAsync(Testdaten.Kategorie("Bürobedarf"));
+        await fabrik.SpeichernAsync(new Bank { Blz = "73369264", Name = "Raiffeisenbank im Allgäuer Land" });
         var korrespondent = Testdaten.Korrespondent("Bürowelt Krämer KG");
         korrespondent.DefaultKategorieId = kategorie.Id;
         await fabrik.SpeichernAsync(korrespondent);
@@ -498,6 +499,7 @@ public sealed class BelegLeseTests(ApiFabrik fabrik) : IAsyncLifetime
             b.ExtrahiertAm = Jetzt;
             b.DiKonfidenz = 0.9m;
             b.Seitenanzahl = 2;
+            b.Bankverbindungen = [new Bankverbindung("DE55733692640000043591", "GENODEF1DTA"), new Bankverbindung("GB82WEST12345698765432")];
             b.Steuerzeilen =
             [
                 new Steuerzeile { Id = Guid.NewGuid(), Satz = 19m, Netto = 100m, Steuer = 19.01m },
@@ -533,6 +535,11 @@ public sealed class BelegLeseTests(ApiFabrik fabrik) : IAsyncLifetime
         detail.IstERechnung.ShouldBeTrue();
         detail.Extraktion.ShouldBe(new ExtraktionDto(ExtraktionsQuelle.XRechnung, 0.9m, Jetzt, 2));
         detail.LoeschsperreBis.ShouldBe(new DateOnly(2034, 12, 31));
+        detail.Bankverbindungen.ShouldBe(
+        [
+            new Contracts.Dto.Korrespondenten.BankverbindungDto("DE55733692640000043591", "GENODEF1DTA", "Raiffeisenbank im Allgäuer Land"),
+            new Contracts.Dto.Korrespondenten.BankverbindungDto("GB82WEST12345698765432", null),
+        ]);
 
         detail.Steuerzeilen.ShouldBe(
         [

@@ -222,8 +222,8 @@ const details: Partial<Record<keyof typeof korrespondentIds, Partial<Korresponde
     ustIdNr: 'DE 284117560',
     steuernummer: '06/471/10442',
     bankverbindungen: [
-      { iban: 'DE12680501010012345678', bic: 'FRSPDE66XXX' },
-      { iban: 'DE89370400440532013000', bic: null },
+      { iban: 'DE12680501010012345678', bic: 'FRSPDE66XXX', bank: 'Sparkasse Freiburg-Nördlicher Breisgau' },
+      { iban: 'DE89370400440532013000', bic: null, bank: 'Commerzbank' },
     ],
     website: 'buerowelt-kraemer.de',
     email: 'rechnung@buerowelt-kraemer.de',

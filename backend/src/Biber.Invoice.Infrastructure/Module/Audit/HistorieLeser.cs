@@ -55,7 +55,10 @@ public sealed class HistorieLeser(BiberDbContext db, IEinstellungen einstellunge
         [nameof(Beleg.BestaetigtAm)] = "Bestätigung",
         [nameof(Position.Text)] = "Text",
         [nameof(Position.Artikelnummer)] = "Artikelnummer",
-        [nameof(Position.Variante)] = "Variante",
+        [nameof(Position.Merkmale)] = "Merkmale",
+
+        // Vor den Merkmalen hatte die Position ein Textfeld „Variante“; ältere Einträge nennen es noch.
+        ["Variante"] = "Variante",
         [nameof(Position.Menge)] = "Menge",
         [nameof(Position.Einzelpreis)] = "Einzelpreis",
         [nameof(Position.Gesamt)] = "Gesamt",

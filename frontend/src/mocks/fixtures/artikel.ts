@@ -258,6 +258,7 @@ export const preisDetails: Record<string, PreisDetail> = {
         einheit: 'Karton',
         einzelpreis: 24.9,
         grundpreis: 1.0,
+        merkmale: [],
       },
       {
         datum: '2026-11-12',
@@ -268,6 +269,7 @@ export const preisDetails: Record<string, PreisDetail> = {
         einheit: 'Pack',
         einzelpreis: 5.49,
         grundpreis: 1.1,
+        merkmale: [],
       },
       {
         datum: '2026-09-14',
@@ -278,6 +280,7 @@ export const preisDetails: Record<string, PreisDetail> = {
         einheit: 'Karton',
         einzelpreis: 24.9,
         grundpreis: 1.0,
+        merkmale: [],
       },
       {
         datum: '2026-06-11',
@@ -288,6 +291,7 @@ export const preisDetails: Record<string, PreisDetail> = {
         einheit: 'Karton',
         einzelpreis: 23.99,
         grundpreis: 0.96,
+        merkmale: [],
       },
       {
         datum: '2026-04-22',
@@ -298,6 +302,7 @@ export const preisDetails: Record<string, PreisDetail> = {
         einheit: 'Pack',
         einzelpreis: 5.24,
         grundpreis: 1.05,
+        merkmale: [],
       },
       {
         datum: '2026-03-18',
@@ -308,6 +313,7 @@ export const preisDetails: Record<string, PreisDetail> = {
         einheit: 'Karton',
         einzelpreis: 22.99,
         grundpreis: 0.92,
+        merkmale: [],
       },
     ],
     artikel: [
@@ -374,6 +380,7 @@ export const preisDetails: Record<string, PreisDetail> = {
         einheit: 'Stück',
         einzelpreis: 64.9,
         grundpreis: 2.16,
+        merkmale: [],
       },
       {
         datum: '2026-10-21',
@@ -384,6 +391,7 @@ export const preisDetails: Record<string, PreisDetail> = {
         einheit: 'Stück',
         einzelpreis: 39.9,
         grundpreis: 1.33,
+        merkmale: [],
       },
     ],
     artikel: [
@@ -441,6 +449,7 @@ export const preisDetails: Record<string, PreisDetail> = {
         einheit: 'Monat',
         einzelpreis: 309.0,
         grundpreis: 309.0,
+        merkmale: [],
       },
     ],
     artikel: [
@@ -491,6 +500,7 @@ export const preisDetails: Record<string, PreisDetail> = {
         einheit: 'Monat',
         einzelpreis: 39.95,
         grundpreis: 39.95,
+        merkmale: [],
       },
     ],
     artikel: [
@@ -544,6 +554,7 @@ export const preisDetails: Record<string, PreisDetail> = {
         einheit: 'Karton',
         einzelpreis: 24.9,
         grundpreis: 1.0,
+        merkmale: [],
       },
       {
         datum: '2026-09-14',
@@ -554,6 +565,7 @@ export const preisDetails: Record<string, PreisDetail> = {
         einheit: 'Karton',
         einzelpreis: 24.9,
         grundpreis: 1.0,
+        merkmale: [],
       },
       {
         datum: '2026-06-11',
@@ -564,6 +576,7 @@ export const preisDetails: Record<string, PreisDetail> = {
         einheit: 'Karton',
         einzelpreis: 23.99,
         grundpreis: 0.96,
+        merkmale: [],
       },
       {
         datum: '2026-03-18',
@@ -574,6 +587,7 @@ export const preisDetails: Record<string, PreisDetail> = {
         einheit: 'Karton',
         einzelpreis: 22.99,
         grundpreis: 0.92,
+        merkmale: [],
       },
     ],
     artikel: [],
@@ -617,6 +631,24 @@ export const preisDetails: Record<string, PreisDetail> = {
         einheit: 'Stück',
         einzelpreis: 2.49,
         grundpreis: 2.49,
+        merkmale: [
+          { name: 'Farbe', wert: 'blau' },
+          { name: 'Rückenbreite', wert: '8 cm' },
+        ],
+      },
+      {
+        datum: '2026-03-18',
+        korrespondent: bueroweltKraemer,
+        belegId: fruehereBelege.bw38820,
+        rechnungsnummer: '2026-38820',
+        menge: 5,
+        einheit: 'Stück',
+        einzelpreis: 2.24,
+        grundpreis: 2.24,
+        merkmale: [
+          { name: 'Farbe', wert: 'schwarz' },
+          { name: 'Rückenbreite', wert: '8 cm' },
+        ],
       },
     ],
     artikel: [],
@@ -659,6 +691,7 @@ export const preisDetails: Record<string, PreisDetail> = {
         einheit: 'Monat',
         einzelpreis: 309.0,
         grundpreis: null,
+        merkmale: [],
       },
     ],
     artikel: [],
@@ -701,6 +734,7 @@ export const preisDetails: Record<string, PreisDetail> = {
         einheit: 'Monat',
         einzelpreis: 39.95,
         grundpreis: null,
+        merkmale: [],
       },
     ],
     artikel: [],
@@ -743,6 +777,7 @@ export const preisDetails: Record<string, PreisDetail> = {
         einheit: 'Stück',
         einzelpreis: 64.9,
         grundpreis: 2.16,
+        merkmale: [],
       },
     ],
     artikel: [],
@@ -785,6 +820,7 @@ export const preisDetails: Record<string, PreisDetail> = {
         einheit: 'Monat',
         einzelpreis: 412.0,
         grundpreis: null,
+        merkmale: [],
       },
     ],
     artikel: [],
@@ -827,6 +863,7 @@ export const preisDetails: Record<string, PreisDetail> = {
         einheit: 'Pack',
         einzelpreis: 5.49,
         grundpreis: 1.1,
+        merkmale: [],
       },
       {
         datum: '2026-04-22',
@@ -837,6 +874,7 @@ export const preisDetails: Record<string, PreisDetail> = {
         einheit: 'Pack',
         einzelpreis: 5.24,
         grundpreis: 1.05,
+        merkmale: [],
       },
     ],
     artikel: [],
@@ -879,6 +917,7 @@ export const preisDetails: Record<string, PreisDetail> = {
         einheit: 'Stück',
         einzelpreis: 39.9,
         grundpreis: 1.33,
+        merkmale: [],
       },
     ],
     artikel: [],
@@ -921,6 +960,7 @@ export const preisDetails: Record<string, PreisDetail> = {
         einheit: 'Stück',
         einzelpreis: 0.89,
         grundpreis: 0.89,
+        merkmale: [],
       },
     ],
     artikel: [],

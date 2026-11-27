@@ -245,7 +245,7 @@ public sealed partial class DocumentIntelligenceClient : IDocumentIntelligenceCl
 
     /// <summary>
     /// Artikelnummer aus der Tabellenspalte „Artikel-Nr.“, sonst aus <c>ProductCode</c> (außer er ist die
-    /// Positionsnummer) bzw. dem Positionskopf; die Variante (Größe, Farbe) aus der Tabelle. Hat DI Nummer oder Variante
+    /// Positionsnummer) bzw. dem Positionskopf; die Merkmale (Größe, Farbe) aus der Tabelle. Hat DI Nummer oder Merkmal
     /// mit in die Bezeichnung gezogen („47 S3 Sicherheitshalbschuhe“), fallen sie dort vorn weg.
     /// </summary>
     private static ExtrahiertePosition Position(AzureDi.DocumentField p, Positionskopf? kopf, PositionsSpalten spalten)
@@ -258,45 +258,54 @@ public sealed partial class DocumentIntelligenceClient : IDocumentIntelligenceCl
             produktcode = null;
         }
 
-        var variante = ArtikelnummerNormalisierer.Variante(tabelle.Variante);
-        var nummer = OhneVariante(
+        var merkmale = MerkmalNormalisierer.Bereinigen(tabelle.Merkmale);
+        var werte = merkmale.Select(m => m.Wert).ToList();
+        var nummer = OhneMerkmal(
             ArtikelnummerNormalisierer.Bereinigen(tabelle.Artikelnummer)
                 ?? ArtikelnummerNormalisierer.Bereinigen(produktcode)
                 ?? ArtikelnummerNormalisierer.Bereinigen(kopf?.Nummer),
-            variante);
+            werte);
         return new ExtrahiertePosition(
             0,
-            OhneVorspann(kopf?.Bezeichnung ?? p.Content?.Trim() ?? "", nummer, variante),
+            OhneVorspann(kopf?.Bezeichnung ?? p.Content?.Trim() ?? "", [nummer, .. werte]),
             Zahl(Feld(felder, "Quantity")),
             Text(Feld(felder, "Unit")),
             Betrag(Feld(felder, "UnitPrice")),
             Betrag(Feld(felder, "Amount")),
             Satz(Feld(felder, "TaxRate")),
             nummer,
-            variante);
+            merkmale.Count > 0 ? merkmale : null);
     }
 
-    /// <summary>„93435 47“ → „93435“, wenn „47“ die Variante ist.</summary>
-    private static string? OhneVariante(string? nummer, string? variante)
+    /// <summary>„93435 47“ → „93435“, wenn „47“ der Wert eines Merkmals ist.</summary>
+    private static string? OhneMerkmal(string? nummer, IReadOnlyList<string> werte)
     {
-        if (nummer is null || variante is null || !nummer.EndsWith(variante, StringComparison.OrdinalIgnoreCase))
+        foreach (var wert in werte)
         {
-            return nummer;
+            if (nummer is null || !nummer.EndsWith(wert, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var rest = nummer[..^wert.Length];
+            if (rest.Length > 0 && char.IsWhiteSpace(rest[^1]))
+            {
+                return ArtikelnummerNormalisierer.Bereinigen(rest);
+            }
         }
 
-        var rest = nummer[..^variante.Length];
-        return rest.Length > 0 && char.IsWhiteSpace(rest[^1]) ? ArtikelnummerNormalisierer.Bereinigen(rest) : nummer;
+        return nummer;
     }
 
-    /// <summary>Entfernt Artikelnummer und Variante vorn aus der Bezeichnung, solange danach Text übrig bleibt.</summary>
-    private static string OhneVorspann(string text, string? nummer, string? variante)
+    /// <summary>Entfernt Artikelnummer und Merkmalwerte vorn aus der Bezeichnung, solange danach Text übrig bleibt.</summary>
+    private static string OhneVorspann(string text, IReadOnlyList<string?> vorspaenne)
     {
         var ergebnis = text.TrimStart();
         var geaendert = true;
         while (geaendert)
         {
             geaendert = false;
-            foreach (var vorspann in new[] { nummer, variante })
+            foreach (var vorspann in vorspaenne)
             {
                 if (vorspann is not null
                     && ergebnis.Length > vorspann.Length

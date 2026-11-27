@@ -31,6 +31,7 @@ public sealed class EnumTests
         { "Schweregrad", ["Info", "Ok", "Warnung", "Fehler"] },
         { "BenachrichtigungArt", ["DiLimitWarnung", "DiLimitErreicht", "ImportFehler", "KositFehler", "Integritaetsfehler", "IntegritaetOk", "KontoWartetAufFreigabe", "Sonstiges", "UstIdUngueltig", "SkontoLaeuftAb"] },
         { "UstIdStatus", ["Ungeprueft", "Gueltig", "Ungueltig", "NichtErreichbar", "NichtPruefbar"] },
+        { "BankleitzahlenQuelle", ["Bundesbank", "Upload"] },
     };
 
     [Theory]

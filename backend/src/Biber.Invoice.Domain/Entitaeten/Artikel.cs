@@ -2,7 +2,7 @@ namespace Biber.Invoice.Domain.Entitaeten;
 
 /// <summary>
 /// Ein Artikel eines Lieferanten, eindeutig über die <see cref="Artikelnummer"/>; ohne Nummer über den normalisierten
-/// Namen. Varianten wie Größen derselben Nummer sind ein Artikel (die Variante steht an der Position).
+/// Namen. Varianten wie Größen derselben Nummer sind ein Artikel (die Merkmale stehen an der Position).
 /// </summary>
 public class Artikel
 {

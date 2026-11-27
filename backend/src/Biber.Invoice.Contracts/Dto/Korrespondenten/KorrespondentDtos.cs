@@ -52,8 +52,11 @@ public sealed record UstIdPruefungDto(
     string? AmtlicherName,
     string? AmtlicheAnschrift);
 
-/// <summary>IBAN ohne Leerzeichen in Großbuchstaben; der BIC ist optional.</summary>
-public sealed record BankverbindungDto(string Iban, string? Bic);
+/// <summary>
+/// IBAN ohne Leerzeichen in Großbuchstaben; der BIC ist optional. <see cref="Bank"/> ist nur in Antworten gesetzt
+/// (Name laut Bankleitzahl, nur bei deutschen IBANs) und wird bei Eingaben ignoriert.
+/// </summary>
+public sealed record BankverbindungDto(string Iban, string? Bic, string? Bank = null);
 
 public sealed record KorrespondentKennzahlenDto(
     decimal KostenJahr,

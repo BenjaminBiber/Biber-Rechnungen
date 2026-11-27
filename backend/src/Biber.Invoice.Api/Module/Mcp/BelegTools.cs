@@ -122,7 +122,7 @@ public sealed class BelegTools(
                 p.Nr,
                 p.Text,
                 p.Artikelnummer,
-                p.Variante,
+                Merkmale = p.Merkmale.Select(m => new { m.Name, m.Wert }),
                 p.Menge,
                 p.Einheit,
                 p.Einzelpreis,

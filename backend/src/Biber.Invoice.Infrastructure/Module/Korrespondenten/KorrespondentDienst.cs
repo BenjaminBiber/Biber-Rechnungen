@@ -6,6 +6,7 @@ using Biber.Invoice.Contracts.Dto.Belege;
 using Biber.Invoice.Contracts.Dto.Korrespondenten;
 using Biber.Invoice.Domain.Entitaeten;
 using Biber.Invoice.Domain.Enums;
+using Biber.Invoice.Infrastructure.Module.Banken;
 using Biber.Invoice.Infrastructure.Module.Skonto;
 using Biber.Invoice.Infrastructure.Persistenz;
 using Microsoft.EntityFrameworkCore;
@@ -116,6 +117,7 @@ public sealed class KorrespondentDienst(BiberDbContext db, TimeProvider zeit) : 
             .MaxAsync(m => (DateTimeOffset?)m.TrainiertAm, ct);
 
         var (artikel, anzahlArtikel) = await ArtikelAsync(k, ct);
+        var bankverbindungen = await BankVerzeichnis.DtosAsync(db, k.Bankverbindungen, ct);
 
         return new KorrespondentDetailDto(
             k.Id,
@@ -124,7 +126,7 @@ public sealed class KorrespondentDienst(BiberDbContext db, TimeProvider zeit) : 
             AnschriftText(k.Anschrift),
             k.UstIdNr,
             k.Steuernummer,
-            [.. k.Bankverbindungen.Select(b => new BankverbindungDto(b.Iban, b.Bic))],
+            bankverbindungen,
             k.Website,
             k.Email,
             k.IstLieferant,

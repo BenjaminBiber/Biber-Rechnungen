@@ -102,6 +102,32 @@ describe('Artikel-Detail', { timeout: 20000 }, () => {
     ende()
   })
 
+  it('zeigt unterschiedliche Merkmale als Spalte und gleiche über den Käufen', async () => {
+    const { ende } = renderSeite(`/artikel/${artikelIds.a2}?jahr=2026`)
+    await titel('Ordner breit 8 cm, blau')
+    const tabelle = screen.getByRole('table', { name: 'Käufe' })
+    expect(within(tabelle).getByRole('columnheader', { name: 'Farbe' })).toBeInTheDocument()
+    expect(within(tabelle).queryByRole('columnheader', { name: 'Rückenbreite' })).not.toBeInTheDocument()
+    const zeilen = within(tabelle).getAllByRole('row').slice(1)
+    expect(zeilen.map((z) => within(z).getAllByRole('cell')[3]?.textContent)).toEqual(['blau', 'schwarz'])
+    const gemeinsam = screen.getByRole('list', { name: 'Bei allen Käufen' })
+    expect(within(gemeinsam).getByRole('listitem')).toHaveTextContent('Rückenbreite 8 cm')
+    ende()
+  })
+
+  it('zeigt ohne Merkmale keine Merkmalspalte', async () => {
+    const { ende } = renderSeite()
+    await titel('Kopierpapier A4 80 g')
+    const tabelle = screen.getByRole('table', { name: 'Käufe' })
+    expect(
+      within(tabelle)
+        .getAllByRole('columnheader')
+        .map((k) => k.textContent),
+    ).toEqual(['Datum', 'Korrespondent', 'Beleg', 'Menge', 'Einzelpreis', 'Grundpreis'])
+    expect(screen.queryByRole('list', { name: 'Bei allen Käufen' })).not.toBeInTheDocument()
+    ende()
+  })
+
   it('speichert einen geänderten Umrechnungsfaktor', async () => {
     const user = userEvent.setup()
     const { anfragen, ende } = renderSeite()

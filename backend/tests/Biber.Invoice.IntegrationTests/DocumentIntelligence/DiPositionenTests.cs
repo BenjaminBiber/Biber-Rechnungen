@@ -1,6 +1,7 @@
 using System.ClientModel.Primitives;
 using System.Text.Json.Nodes;
 using Azure.AI.DocumentIntelligence;
+using Biber.Invoice.Domain.Entitaeten;
 using Biber.Invoice.Domain.Pipeline;
 using DiClient = Biber.Invoice.Infrastructure.Module.DocumentIntelligence.DocumentIntelligenceClient;
 
@@ -147,7 +148,7 @@ public sealed class DiPositionenTests
     }
 
     [Fact]
-    public void ProductCode_wird_die_Artikelnummer_und_die_Spalte_Groesse_die_Variante()
+    public void ProductCode_wird_die_Artikelnummer_und_die_Spalte_Groesse_ein_Merkmal()
     {
         // Nachgebildet der Strauss-Rechnung R187502621: dieselbe Artikelnummer in zwei Größen, DI zieht die Größe
         // teils mit in die Beschreibung.
@@ -160,7 +161,7 @@ public sealed class DiPositionenTests
 
         var e = AbbildenMitTabelle(t.Volltext, t.Json, erste, zweite);
 
-        e.Positionen.Select(p => (p.Artikelnummer, p.Variante)).ShouldBe([("93435", "47"), ("93435", "42")]);
+        e.Positionen.Select(p => (p.Artikelnummer, MerkmalText(p))).ShouldBe([("93435", "Größe: 47"), ("93435", "Größe: 42")]);
         e.Positionen.Select(p => p.Text).ShouldAllBe(text => text == "S3 Sicherheitshalbschuhe Willingen\ngrau/marine/schwarz");
     }
 
@@ -168,7 +169,7 @@ public sealed class DiPositionenTests
     public void Ohne_ProductCode_kommt_die_Artikelnummer_aus_der_Tabellenspalte()
     {
         // Nachgebildet der Hefele-Rechnung R26-1285: gleiche Bezeichnung, verschiedene Artikelnummern. „Art“ (E/W/S)
-        // ist weder Nummer noch Variante.
+        // ist weder Nummer noch Merkmal.
         var t = new Tabelle(
             ["Pos.", "Artikel #", "Art", "Bezeichnung", "Menge", "EP/Netto", "GesamtEUR"],
             ["26", "5G12FDLORX45", "E", "Pressnippel Megacr.", "1,00", "23,27", "23,27"],
@@ -178,7 +179,7 @@ public sealed class DiPositionenTests
         var e = AbbildenMitTabelle(
             t.Volltext, t.Json, t.Item(0, "Pressnippel Megacr.", 23.27, produktcode: "26"), t.Item(1, "Pressnippel Megacr.", 10.70));
 
-        e.Positionen.Select(p => (p.Text, p.Artikelnummer, p.Variante)).ShouldBe(
+        e.Positionen.Select(p => (p.Text, p.Artikelnummer, MerkmalText(p))).ShouldBe(
             [("Pressnippel Megacr.", "5G12FDLORX45", null), ("Pressnippel Megacr.", "5G8FDLORX", null)]);
     }
 
@@ -189,8 +190,9 @@ public sealed class DiPositionenTests
 
         var e = AbbildenMitTabelle(t.Volltext, t.Json, t.Item(0, "89583 3XL Microfleece Troyer", 19.70, produktcode: "89583 3XL"));
 
-        e.Positionen.ShouldHaveSingleItem().ShouldBe(
-            new ExtrahiertePosition(1, "Microfleece Troyer", null, null, null, 19.70m, null, "89583", "3XL"));
+        var p = e.Positionen.ShouldHaveSingleItem();
+        (p with { Merkmale = null }).ShouldBe(new ExtrahiertePosition(1, "Microfleece Troyer", null, null, null, 19.70m, null, "89583"));
+        MerkmalText(p).ShouldBe("Größe: 3XL");
     }
 
     [Fact]
@@ -214,25 +216,29 @@ public sealed class DiPositionenTests
     }
 
     [Fact]
-    public void Mehrere_Variantenspalten_werden_verbunden()
+    public void Jede_Merkmalspalte_ergibt_ein_Merkmal_mit_dem_Spaltenkopf_als_Namen()
     {
         var t = new Tabelle(["Artikelnummer", "Farbe", "Größe", "Bezeichnung", "Betrag"], ["A-100", "schwarz", "XL", "Fleecejacke", "39,90"]);
 
         var p = AbbildenMitTabelle(t.Volltext, t.Json, t.Item(0, "Fleecejacke", 39.90)).Positionen.ShouldHaveSingleItem();
 
         p.Artikelnummer.ShouldBe("A-100");
-        p.Variante.ShouldBe("schwarz / XL");
+        p.Merkmale.ShouldNotBeNull().ShouldBe([new Merkmal("Farbe", "schwarz"), new Merkmal("Größe", "XL")]);
     }
 
     [Fact]
-    public void Ohne_passende_Spaltenkoepfe_bleiben_Artikelnummer_und_Variante_leer()
+    public void Ohne_passende_Spaltenkoepfe_bleiben_Artikelnummer_und_Merkmale_leer()
     {
         var t = new Tabelle(["Beschreibung", "Menge", "Betrag"], ["Wartung", "1", "50,00"]);
 
         var p = AbbildenMitTabelle(t.Volltext, t.Json, t.Item(0, "Wartung", 50.00)).Positionen.ShouldHaveSingleItem();
 
-        (p.Artikelnummer, p.Variante).ShouldBe((null, null));
+        p.Artikelnummer.ShouldBeNull();
+        p.Merkmale.ShouldBeNull();
     }
+
+    /// <summary>„Größe: 47, Farbe: grau“; <c>null</c> ohne Merkmale.</summary>
+    private static string? MerkmalText(ExtrahiertePosition p) => p.Merkmale is null ? null : string.Join(", ", p.Merkmale);
 
     private static JsonObject Item(string inhalt, string beschreibung, double betrag) => new()
     {

@@ -4,7 +4,7 @@ using AzureDi = Azure.AI.DocumentIntelligence;
 namespace Biber.Invoice.Infrastructure.Module.DocumentIntelligence;
 
 /// <summary>
-/// Artikelnummer und Variante einer Position aus den Tabellen der DI-Antwort. <c>prebuilt-invoice</c> kennt je Item
+/// Artikelnummer und Merkmale einer Position aus den Tabellen der DI-Antwort. <c>prebuilt-invoice</c> kennt je Item
 /// nur <c>ProductCode</c>; eine Größe oder Farbe steht nur in der Tabelle. Gesucht werden Spalten, deren Kopf wie
 /// „Artikel-Nr.“ bzw. „Größe“, „Variante“ oder „Farbe“ lautet; zu einem Item gehören die Zellen, deren Text innerhalb
 /// seiner Spans liegt (beides sind Offsets in <see cref="AzureDi.AnalyzeResult.Content"/>). Die Spalte „Pos.“ dient nur
@@ -30,7 +30,8 @@ internal sealed partial class PositionsSpalten
 
             zellen.AddRange(tabelle.Cells
                 .Where(c => !kopfzeilen.Contains(c.RowIndex) && c.Spans?.Count > 0 && rollen.ContainsKey(c.ColumnIndex))
-                .Select(c => new Zelle(t, c.RowIndex, c.ColumnIndex, rollen[c.ColumnIndex], c.Spans[0].Offset, (c.Content ?? "").Trim()))
+                .Select(c => new Zelle(
+                    t, c.RowIndex, c.ColumnIndex, rollen[c.ColumnIndex].Rolle, rollen[c.ColumnIndex].Kopf, c.Spans[0].Offset, (c.Content ?? "").Trim()))
                 .Where(z => z.Inhalt.Length > 0));
         }
 
@@ -38,14 +39,14 @@ internal sealed partial class PositionsSpalten
     }
 
     /// <summary>
-    /// Artikelnummer, Variante und Positionsnummer der ersten Tabellenzeile im Bereich des Items; Varianten mehrerer
-    /// Spalten mit „/“ verbunden.
+    /// Artikelnummer, Merkmale und Positionsnummer der ersten Tabellenzeile im Bereich des Items; ein Merkmal je
+    /// Merkmalspalte, benannt nach dem Spaltenkopf.
     /// </summary>
     public Werte Fuer(AzureDi.DocumentField item)
     {
         if (_zellen.Count == 0 || item.Spans is not { Count: > 0 } spans)
         {
-            return new Werte(null, null, null);
+            return new Werte(null, [], null);
         }
 
         var treffer = _zellen
@@ -54,16 +55,17 @@ internal sealed partial class PositionsSpalten
             .ToList();
         var nummer = treffer.FirstOrDefault(z => z.Rolle == Rolle.Artikelnummer)?.Inhalt;
         var positionsnummer = treffer.FirstOrDefault(z => z.Rolle == Rolle.Positionsnummer)?.Inhalt;
-        var erste = treffer.FirstOrDefault(z => z.Rolle == Rolle.Variante);
-        var variante = erste is null
-            ? null
-            : string.Join(" / ", treffer
-                .Where(z => z.Rolle == Rolle.Variante && z.Tabelle == erste.Tabelle && z.Zeile == erste.Zeile)
-                .Select(z => z.Inhalt.ReplaceLineEndings(" ")));
-        return new Werte(nummer, variante, positionsnummer);
+        var erste = treffer.FirstOrDefault(z => z.Rolle == Rolle.Merkmal);
+        List<(string? Name, string? Wert)> merkmale = erste is null
+            ? []
+            : [.. treffer
+                .Where(z => z.Rolle == Rolle.Merkmal && z.Tabelle == erste.Tabelle && z.Zeile == erste.Zeile)
+                .Select(z => ((string?)z.Kopf, (string?)z.Inhalt.ReplaceLineEndings(" ")))];
+        return new Werte(nummer, merkmale, positionsnummer);
     }
 
-    public sealed record Werte(string? Artikelnummer, string? Variante, string? Positionsnummer);
+    /// <param name="Merkmale">Spaltenkopf und Zellinhalt, noch nicht bereinigt.</param>
+    public sealed record Werte(string? Artikelnummer, IReadOnlyList<(string? Name, string? Wert)> Merkmale, string? Positionsnummer);
 
     /// <summary>Zeilen mit Spaltenköpfen; ohne ausgezeichnete Köpfe die erste Zeile, wenn sie keine Ziffer enthält.</summary>
     private static HashSet<int> Kopfzeilen(AzureDi.DocumentTable tabelle)
@@ -78,7 +80,7 @@ internal sealed partial class PositionsSpalten
         return erste.Count > 0 && !erste.Any(c => (c.Content ?? "").Any(char.IsDigit)) ? [0] : [];
     }
 
-    private static Dictionary<int, Rolle> Rollen(AzureDi.DocumentTable tabelle, HashSet<int> kopfzeilen)
+    private static Dictionary<int, (Rolle Rolle, string Kopf)> Rollen(AzureDi.DocumentTable tabelle, HashSet<int> kopfzeilen)
     {
         var koepfe = new Dictionary<int, List<string>>();
         foreach (var zelle in tabelle.Cells.Where(c => kopfzeilen.Contains(c.RowIndex)).OrderBy(c => c.RowIndex))
@@ -94,26 +96,27 @@ internal sealed partial class PositionsSpalten
             }
         }
 
-        var rollen = new Dictionary<int, Rolle>();
+        var rollen = new Dictionary<int, (Rolle Rolle, string Kopf)>();
         foreach (var (spalte, teile) in koepfe)
         {
-            var kopf = Kopf(string.Join(' ', teile));
+            var text = Leerraum().Replace(string.Join(' ', teile), " ").Trim();
+            var kopf = Kopf(text);
             if (ArtikelnummerKopf().IsMatch(kopf))
             {
-                rollen[spalte] = Rolle.Artikelnummer;
+                rollen[spalte] = (Rolle.Artikelnummer, text);
             }
-            else if (VarianteKopf().IsMatch(kopf))
+            else if (MerkmalKopf().IsMatch(kopf))
             {
-                rollen[spalte] = Rolle.Variante;
+                rollen[spalte] = (Rolle.Merkmal, text);
             }
             else if (PositionsnummerKopf().IsMatch(kopf))
             {
-                rollen[spalte] = Rolle.Positionsnummer;
+                rollen[spalte] = (Rolle.Positionsnummer, text);
             }
         }
 
         // Mehrere Nummernspalten (z. B. „Art.-Nr.“ und „Bestell-Nr.“): nur die erste zählt.
-        foreach (var spalte in rollen.Where(r => r.Value == Rolle.Artikelnummer).Select(r => r.Key).Order().Skip(1).ToList())
+        foreach (var spalte in rollen.Where(r => r.Value.Rolle == Rolle.Artikelnummer).Select(r => r.Key).Order().Skip(1).ToList())
         {
             rollen.Remove(spalte);
         }
@@ -126,11 +129,11 @@ internal sealed partial class PositionsSpalten
     private enum Rolle
     {
         Artikelnummer,
-        Variante,
+        Merkmal,
         Positionsnummer,
     }
 
-    private sealed record Zelle(int Tabelle, int Zeile, int Spalte, Rolle Rolle, int Offset, string Inhalt);
+    private sealed record Zelle(int Tabelle, int Zeile, int Spalte, Rolle Rolle, string Kopf, int Offset, string Inhalt);
 
     [GeneratedRegex(@"\s+")]
     private static partial Regex Leerraum();
@@ -145,5 +148,5 @@ internal sealed partial class PositionsSpalten
 
     /// <summary>„Größe“, „Gr.“, „Variante“, „Ausführung“, „Farbe“, „Größe/Farbe“, „Size“ …</summary>
     [GeneratedRegex(@"^(?:größe|grösse|groesse|gr\.?|variante|ausführung|ausfuehrung|farbe|size|colou?r)(?:\s*/\s*(?:größe|grösse|groesse|gr\.?|farbe|size|colou?r))?$")]
-    private static partial Regex VarianteKopf();
+    private static partial Regex MerkmalKopf();
 }

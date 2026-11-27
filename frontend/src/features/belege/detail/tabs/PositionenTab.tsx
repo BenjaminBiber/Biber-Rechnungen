@@ -4,16 +4,20 @@ import { usePositionenErsetzen } from '@/api/belege'
 import { useEinstellungen } from '@/api/einstellungen'
 import type { BelegDetail, Position, PositionAendern } from '@/api/typen'
 import { Icon } from '@/components/Icon'
+import { MerkmalChips } from '@/components/MerkmalChips'
 import { useToast } from '@/components/toast'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { formatEuro, formatZahl } from '@/lib/format'
+import { MERKMAL_NAMEN } from '@/lib/merkmale'
 import { betragEingabe, parseBetrag, parseSatz, satzEingabe, STEUER_TOLERANZ } from '../gemeinsam'
+
+type MerkmalEntwurf = { name: string; wert: string }
 
 /** Eingabefelder einer Zeile im Bearbeiten-Modus (deutsche Schreibweise). */
 type Entwurf = {
   text: string
   artikelnummer: string
-  variante: string
+  merkmale: MerkmalEntwurf[]
   menge: string
   einheit: string
   einzelpreis: string
@@ -21,10 +25,12 @@ type Entwurf = {
   steuersatz: string
 }
 
+type Textfeld = Exclude<keyof Entwurf, 'merkmale'>
+
 const leererEntwurf: Entwurf = {
   text: '',
   artikelnummer: '',
-  variante: '',
+  merkmale: [],
   menge: '1',
   einheit: '',
   einzelpreis: '',
@@ -36,7 +42,7 @@ function entwurfAus(p: Position): Entwurf {
   return {
     text: p.text,
     artikelnummer: p.artikelnummer ?? '',
-    variante: p.variante ?? '',
+    merkmale: p.merkmale.map((m) => ({ name: m.name ?? '', wert: m.wert })),
     menge: p.menge === null || p.menge === undefined ? '' : formatZahl(p.menge),
     einheit: p.einheit ?? '',
     einzelpreis: betragEingabe(p.einzelpreis),
@@ -61,7 +67,7 @@ function alsAenderung(p: Position): PositionAendern {
     nr: p.nr,
     text: p.text,
     artikelnummer: p.artikelnummer ?? null,
-    variante: p.variante ?? null,
+    merkmale: p.merkmale,
     menge: p.menge ?? null,
     einheit: p.einheit ?? null,
     einzelpreis: p.einzelpreis ?? null,
@@ -70,11 +76,15 @@ function alsAenderung(p: Position): PositionAendern {
   }
 }
 
-/** „Art.-Nr. 93435 · Variante 47“; leer ohne beides. */
-export function kennungText(p: Pick<Position, 'artikelnummer' | 'variante'>): string {
-  return [p.artikelnummer && `Art.-Nr. ${p.artikelnummer}`, p.variante && `Variante ${p.variante}`]
-    .filter(Boolean)
-    .join(' · ')
+/** Artikelnummer und Merkmale unter dem Text der Position; nichts ohne beides. */
+function Kennung({ p }: { p: Position }) {
+  if (!p.artikelnummer && p.merkmale.length === 0) return null
+  return (
+    <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs">
+      {p.artikelnummer && <span className="gedaempft">Art.-Nr. {p.artikelnummer}</span>}
+      <MerkmalChips merkmale={p.merkmale} />
+    </div>
+  )
 }
 
 function mengeText(p: Position): string {
@@ -102,7 +112,7 @@ export function PositionenTab({ beleg, darfBearbeiten }: { beleg: BelegDetail; d
   const differenz = netto === null ? null : runden(Math.abs(netto - summe))
   const abweichung = differenz !== null && differenz > toleranz + 1e-9
 
-  function feldAendern(feld: keyof Entwurf, wert: string) {
+  function feldAendern(feld: Textfeld, wert: string) {
     if (!bearbeitet) return
     const entwurf = { ...bearbeitet.entwurf, [feld]: wert }
     if (feld === 'menge' || feld === 'einzelpreis') {
@@ -110,6 +120,11 @@ export function PositionenTab({ beleg, darfBearbeiten }: { beleg: BelegDetail; d
       if (vorschlag !== null) entwurf.gesamt = vorschlag
     }
     setBearbeitet({ ...bearbeitet, entwurf, fehler: undefined })
+  }
+
+  function merkmaleAendern(merkmale: MerkmalEntwurf[]) {
+    if (!bearbeitet) return
+    setBearbeitet({ ...bearbeitet, entwurf: { ...bearbeitet.entwurf, merkmale }, fehler: undefined })
   }
 
   function uebernehmen() {
@@ -125,13 +140,18 @@ export function PositionenTab({ beleg, darfBearbeiten }: { beleg: BelegDetail; d
       return setBearbeitet({ ...bearbeitet, fehler: 'Menge oder Einzelpreis ist ungültig.' })
     if (entwurf.steuersatz.trim() && steuersatz === null)
       return setBearbeitet({ ...bearbeitet, fehler: 'Der Steuersatz ist ungültig.' })
+    const merkmale = entwurf.merkmale
+      .map((m) => ({ name: m.name.trim() || null, wert: m.wert.trim() }))
+      .filter((m) => m.name || m.wert)
+    if (merkmale.some((m) => !m.wert))
+      return setBearbeitet({ ...bearbeitet, fehler: 'Jedes Merkmal braucht einen Wert.' })
     const alt = zeilen[index] as Position | undefined
     const neu: Position = {
       ...(alt ?? { artikel: null, stammartikelId: null, grundpreis: null, grundpreisEinheit: null }),
       nr: alt?.nr ?? index + 1,
       text: entwurf.text.trim(),
       artikelnummer: entwurf.artikelnummer.trim() || null,
-      variante: entwurf.variante.trim() || null,
+      merkmale,
       menge,
       einheit: entwurf.einheit.trim() || null,
       einzelpreis,
@@ -200,7 +220,7 @@ export function PositionenTab({ beleg, darfBearbeiten }: { beleg: BelegDetail; d
                 <td className="gedaempft">{index + 1}</td>
                 <td>
                   {p.text}
-                  {kennungText(p) && <div className="gedaempft text-xs">{kennungText(p)}</div>}
+                  <Kennung p={p} />
                 </td>
                 <td className="num">{mengeText(p)}</td>
                 <td className="num">
@@ -305,7 +325,9 @@ export function PositionenTab({ beleg, darfBearbeiten }: { beleg: BelegDetail; d
           }
           entwurf={bearbeitet.entwurf}
           fehler={bearbeitet.fehler}
+          merkmalNamen={merkmalNamen(zeilen)}
           onAendern={feldAendern}
+          onMerkmaleAendern={merkmaleAendern}
           onUebernehmen={uebernehmen}
           onAbbrechen={() => setBearbeitet(null)}
         />
@@ -313,11 +335,16 @@ export function PositionenTab({ beleg, darfBearbeiten }: { beleg: BelegDetail; d
 
       <p className="gedaempft m-0 text-xs">
         Positionen werden pro Korrespondent über die Artikelnummer Artikeln zugeordnet, ohne Nummer über den
-        normalisierten Text. Varianten derselben Nummer (z. B. Größen) gehören zu einem Artikel. Grundpreis nur, wenn
-        Menge und Einheit erkannt wurden.
+        normalisierten Text. Merkmale wie die Größe gehören zur Position, Positionen derselben Nummer zu einem Artikel.
+        Grundpreis nur, wenn Menge und Einheit erkannt wurden.
       </p>
     </div>
   )
+}
+
+/** Vorschläge für Merkmalnamen: die üblichen und die schon im Beleg verwendeten. */
+function merkmalNamen(zeilen: Position[]): string[] {
+  return [...new Set([...MERKMAL_NAMEN, ...zeilen.flatMap((z) => z.merkmale.map((m) => m.name ?? ''))])].filter(Boolean)
 }
 
 /** Dialog zum Bearbeiten bzw. Hinzufügen einer Position; „Übernehmen“ ändert nur den lokalen Stand. */
@@ -325,18 +352,22 @@ function PositionDialog({
   titel,
   entwurf,
   fehler,
+  merkmalNamen,
   onAendern,
+  onMerkmaleAendern,
   onUebernehmen,
   onAbbrechen,
 }: {
   titel: string
   entwurf: Entwurf
   fehler?: string
-  onAendern: (feld: keyof Entwurf, wert: string) => void
+  merkmalNamen: string[]
+  onAendern: (feld: Textfeld, wert: string) => void
+  onMerkmaleAendern: (merkmale: MerkmalEntwurf[]) => void
   onUebernehmen: () => void
   onAbbrechen: () => void
 }) {
-  const feld = (name: keyof Entwurf, label: string, klasse = '') => (
+  const feld = (name: Textfeld, label: string, klasse = '') => (
     <label className={`flex flex-col ${klasse}`}>
       <span className="label">{label}</span>
       <input className="eingabe" value={entwurf[name]} onChange={(e) => onAendern(name, e.target.value)} />
@@ -358,13 +389,13 @@ function PositionDialog({
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {feld('text', 'Text', 'col-span-2 sm:col-span-3')}
             {feld('artikelnummer', 'Artikelnummer')}
-            {feld('variante', 'Variante')}
             {feld('menge', 'Menge')}
             {feld('einheit', 'Einheit')}
             {feld('steuersatz', 'Steuersatz')}
             {feld('einzelpreis', 'Einzelpreis')}
             {feld('gesamt', 'Gesamt')}
           </div>
+          <MerkmalEditor merkmale={entwurf.merkmale} namen={merkmalNamen} onAendern={onMerkmaleAendern} />
           {fehler && (
             <p role="alert" className="m-0 text-[13px] text-rot-text">
               {fehler}
@@ -381,5 +412,64 @@ function PositionDialog({
         </form>
       </DialogContent>
     </Dialog>
+  )
+}
+
+/** Merkmale als Zeilen aus Name (mit Vorschlägen) und Wert; der Name darf fehlen, der Wert nicht. */
+function MerkmalEditor({
+  merkmale,
+  namen,
+  onAendern,
+}: {
+  merkmale: MerkmalEntwurf[]
+  namen: string[]
+  onAendern: (merkmale: MerkmalEntwurf[]) => void
+}) {
+  const aendern = (index: number, teil: Partial<MerkmalEntwurf>) =>
+    onAendern(merkmale.map((m, i) => (i === index ? { ...m, ...teil } : m)))
+  return (
+    <fieldset className="m-0 flex min-w-0 flex-col gap-2 border-0 p-0">
+      <legend className="label mb-1.5 p-0">Merkmale</legend>
+      {merkmale.length === 0 && <p className="gedaempft m-0 text-[13px]">Keine – z. B. Größe oder Farbe.</p>}
+      {merkmale.map((m, i) => (
+        <div key={i} className="flex items-center gap-2">
+          <input
+            className="eingabe w-2/5 min-w-0"
+            aria-label={`Merkmal ${i + 1}: Name`}
+            placeholder="Name, z. B. Größe"
+            list="merkmal-namen"
+            value={m.name}
+            onChange={(e) => aendern(i, { name: e.target.value })}
+          />
+          <input
+            className="eingabe min-w-0 flex-1"
+            aria-label={`Merkmal ${i + 1}: Wert`}
+            placeholder="Wert, z. B. 42"
+            value={m.wert}
+            onChange={(e) => aendern(i, { wert: e.target.value })}
+          />
+          <button
+            type="button"
+            className="btn btn-klein w-[30px] shrink-0 border-transparent px-0"
+            aria-label={`Merkmal ${i + 1} entfernen`}
+            onClick={() => onAendern(merkmale.filter((_, j) => j !== i))}
+          >
+            <Icon name="close" />
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        className="btn btn-klein self-start"
+        onClick={() => onAendern([...merkmale, { name: '', wert: '' }])}
+      >
+        + Merkmal
+      </button>
+      <datalist id="merkmal-namen">
+        {namen.map((n) => (
+          <option key={n} value={n} />
+        ))}
+      </datalist>
+    </fieldset>
   )
 }

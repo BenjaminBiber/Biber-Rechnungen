@@ -136,6 +136,40 @@ describe('Einstellungen', { timeout: 20000 }, () => {
     ende()
   })
 
+  it('Prüfungen: Admins sehen den Stand der Bankleitzahlen, rufen sie ab und laden eine Datei hoch', async () => {
+    const { user, ende } = renderSeite('/einstellungen/pruefungen')
+    const karte = await screen.findByRole('region', { name: 'Bankleitzahlen' }, { timeout: 5000 })
+    expect(
+      await within(karte).findByText('3.507 Banken · von der Bundesbank geholt am 24.11.2026, 04:23'),
+    ).toBeInTheDocument()
+    expect(within(karte).getByRole('link', { name: 'Downloadseite der Bundesbank' })).toHaveAttribute(
+      'href',
+      expect.stringContaining('bundesbank.de'),
+    )
+
+    await user.click(within(karte).getByRole('button', { name: 'Jetzt abrufen' }))
+    expect(await screen.findByText('Bankleitzahlen der Bundesbank geladen: 3.507 Banken')).toBeInTheDocument()
+
+    const datei = within(karte).getByLabelText('Bankleitzahlendatei')
+    await user.upload(datei, new File(['100000001Bundesbank'], 'blz-neu-txt-data.txt', { type: 'text/plain' }))
+    expect(
+      await within(karte).findByText(/^3\.507 Banken · aus „blz-neu-txt-data\.txt“ hochgeladen am/),
+    ).toBeInTheDocument()
+    expect(db.bankleitzahlen.quelle).toBe('Upload')
+
+    await user.upload(datei, new File(['a;b'], 'blz.csv', { type: 'text/plain' }))
+    expect(await screen.findByText(/keine Bankleitzahlendatei der Bundesbank im TXT-Format/)).toBeInTheDocument()
+    ende()
+  })
+
+  it('Prüfungen: ohne Admin-Rolle keine Bankleitzahlen', async () => {
+    szenario.rolle('Benutzer')
+    const { ende } = renderSeite('/einstellungen/pruefungen')
+    await formular('Prüfungen & Schwellen')
+    expect(screen.queryByRole('region', { name: 'Bankleitzahlen' })).not.toBeInTheDocument()
+    ende()
+  })
+
   it('Prüfungen: „1,5“ als Konfidenz wird im Browser abgelehnt', async () => {
     const { user, anfragen, ende } = renderSeite('/einstellungen/pruefungen')
     await formular('Prüfungen & Schwellen')

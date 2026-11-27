@@ -34,19 +34,7 @@ public sealed class ArtikelnummerNormalisiererTests
         ArtikelnummerNormalisierer.Bereinigen("Art. Nr: SI-NW4").ShouldBe("SI-NW4");
     }
 
-    [Theory]
-    [InlineData(" XL ", "XL")]
-    [InlineData("9/10", "9/10")]
-    [InlineData("schwarz \n XL", "schwarz XL")]
-    [InlineData("-", null)]
-    [InlineData(null, null)]
-    public void Variante_wird_getrimmt(string? variante, string? erwartet) =>
-        ArtikelnummerNormalisierer.Variante(variante).ShouldBe(erwartet);
-
     [Fact]
-    public void Lange_Angaben_werden_gekuerzt()
-    {
+    public void Lange_Angaben_werden_gekuerzt() =>
         ArtikelnummerNormalisierer.Normalisieren(new string('A', 150))!.Length.ShouldBe(ArtikelnummerNormalisierer.MaxLaenge);
-        ArtikelnummerNormalisierer.Variante(new string('x', 150))!.Length.ShouldBe(ArtikelnummerNormalisierer.MaxLaenge);
-    }
 }

@@ -36,6 +36,8 @@ public class BiberDbContext(DbContextOptions<BiberDbContext> options)
     public DbSet<IntegritaetsLauf> IntegritaetsLaeufe => Set<IntegritaetsLauf>();
     public DbSet<NeuAuslesenLauf> NeuAuslesenLaeufe => Set<NeuAuslesenLauf>();
     public DbSet<GespeicherteAnsicht> GespeicherteAnsichten => Set<GespeicherteAnsicht>();
+    public DbSet<Bank> Banken => Set<Bank>();
+    public DbSet<BankleitzahlenStand> BankleitzahlenStaende => Set<BankleitzahlenStand>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {

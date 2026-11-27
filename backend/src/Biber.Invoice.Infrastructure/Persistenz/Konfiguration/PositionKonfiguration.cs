@@ -12,7 +12,7 @@ public sealed class PositionKonfiguration : IEntityTypeConfiguration<Position>
         builder.HasKey(p => p.Id);
         builder.Property(p => p.Einheit).HasMaxLength(50);
         builder.Property(p => p.Artikelnummer).HasMaxLength(ArtikelnummerNormalisierer.MaxLaenge);
-        builder.Property(p => p.Variante).HasMaxLength(ArtikelnummerNormalisierer.MaxLaenge);
+        builder.Property(p => p.Merkmale).AlsJsonb();
         builder.Property(p => p.GrundpreisEinheit).HasMaxLength(50);
 
         // Mengen und Stückpreise brauchen mehr als zwei Nachkommastellen (z. B. 0,0125 € je Blatt).

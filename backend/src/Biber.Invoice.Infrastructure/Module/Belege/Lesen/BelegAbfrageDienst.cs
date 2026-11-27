@@ -8,6 +8,7 @@ using Biber.Invoice.Contracts.Dto.Einstellungen;
 using Biber.Invoice.Contracts.Dto.Korrespondenten;
 using Biber.Invoice.Domain.Entitaeten;
 using Biber.Invoice.Domain.Enums;
+using Biber.Invoice.Infrastructure.Module.Banken;
 using Biber.Invoice.Infrastructure.Module.FachlicheDublette.Domain.Regeln;
 using Biber.Invoice.Infrastructure.Module.Skonto;
 using Biber.Invoice.Infrastructure.Persistenz;
@@ -90,6 +91,7 @@ public sealed partial class BelegAbfrageDienst(BiberDbContext db, IEinstellungen
         var kopf = Eintrag(await db.Belege.AsNoTracking().Where(b => b.Id == id).Select(Projektion).FirstAsync(ct), heute);
         var toleranz = (await einstellungen.LesenAsync<PruefEinstellungen>(ct)).SummenToleranz;
         var jahre = (await einstellungen.LesenAsync<AufbewahrungEinstellungen>(ct)).Jahre;
+        var bankverbindungen = await BankVerzeichnis.DtosAsync(db, beleg.Bankverbindungen, ct);
         var teilbelege = await db.Belege
             .AsNoTracking()
             .Where(b => b.AufgeteiltAusBelegId == id)
@@ -123,7 +125,7 @@ public sealed partial class BelegAbfrageDienst(BiberDbContext db, IEinstellungen
             beleg.Belegart,
             beleg.Status,
             beleg.KorrespondentErkennung,
-            [.. beleg.Bankverbindungen.Select(b => new BankverbindungDto(b.Iban, b.Bic))],
+            bankverbindungen,
             beleg.KategorieManuell,
             beleg.Korrespondent?.DefaultKategorie is { } standard ? new VerweisDto(standard.Id, standard.Name) : null,
             beleg.LeistungVon,
@@ -138,7 +140,7 @@ public sealed partial class BelegAbfrageDienst(BiberDbContext db, IEinstellungen
                     p.Nr,
                     p.Text,
                     p.Artikelnummer,
-                    p.Variante,
+                    [.. p.Merkmale.Select(m => new MerkmalDto(m.Name, m.Wert))],
                     p.Menge,
                     p.Einheit,
                     p.Einzelpreis,

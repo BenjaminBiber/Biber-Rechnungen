@@ -84,3 +84,16 @@ public sealed record ApiTokenAnlegenDto(string Name, string[] Scopes);
 public sealed record ApiTokenErstelltDto(ApiTokenDto Token, string Klartext);
 
 public sealed record VerfahrensdokuDto(string Version, DateOnly Stand, int OffeneStellen, string SoftwareVersion);
+
+/// <summary>
+/// Stand der Bankleitzahlen (Bundesbank), aus denen IBANs ihren Banknamen bekommen. <see cref="Datei"/> ist die
+/// Adresse der abgerufenen bzw. der Name der hochgeladenen Datei; <see cref="LetzterFehler"/> ist der Fehler des
+/// letzten automatischen Abrufs.
+/// </summary>
+public sealed record BankleitzahlenStandDto(
+    int Anzahl,
+    DateTimeOffset? GeladenAm,
+    BankleitzahlenQuelle? Quelle,
+    string? Datei,
+    DateTimeOffset? LetzterAbrufAm,
+    string? LetzterFehler);

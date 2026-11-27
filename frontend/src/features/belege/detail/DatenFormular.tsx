@@ -348,21 +348,20 @@ export function DatenFormular({
       ? `manuell geändert${defaultName ? ` · Default: ${defaultName}` : ''}`
       : undefined
   const waehrungen = Array.from(new Set(['EUR', werte.waehrung]))
-  const bics = beleg.bankverbindungen.flatMap((b) => (b.bic ? [b.bic] : []))
   const bankBefund = beleg.befunde.find((b) => b.pruefung === 'Bankverbindung')?.ergebnis
+  // Bei mehreren IBANs gilt der Abgleich für alle – sonst läse er sich wie die Zeile unter der letzten IBAN.
+  const mehrereIbans = beleg.bankverbindungen.length > 1
   const ibanAbgleich =
     bankBefund === 'Fehlgeschlagen' ? (
-      <span className="text-orange-text">weicht vom Korrespondenten ab</span>
+      <span className="text-orange-text">
+        {mehrereIbans ? 'nicht alle beim Korrespondenten hinterlegt' : 'weicht vom Korrespondenten ab'}
+      </span>
     ) : bankBefund === 'Ok' ? (
-      'beim Korrespondenten hinterlegt'
-    ) : null
-  const ibanHinweis =
-    bics.length > 0 || ibanAbgleich ? (
-      <>
-        {bics.length > 0 && `BIC ${bics.join(', ')}`}
-        {bics.length > 0 && ibanAbgleich && ' · '}
-        {ibanAbgleich}
-      </>
+      mehrereIbans ? (
+        'alle beim Korrespondenten hinterlegt'
+      ) : (
+        'beim Korrespondenten hinterlegt'
+      )
     ) : undefined
 
   const eingabe = (
@@ -466,19 +465,31 @@ export function DatenFormular({
           />
         </Feld>
         {istZuPruefen(beleg) && beleg.bankverbindungen.length > 0 && (
-          <Feld id={`${id}-iban`} label="IBAN laut Beleg" hinweis={ibanHinweis}>
-            <div className="flex flex-col gap-1.5">
-              {beleg.bankverbindungen.map((b, i) => (
-                <input
-                  key={b.iban}
-                  id={i === 0 ? `${id}-iban` : undefined}
-                  aria-label={i === 0 ? undefined : `IBAN laut Beleg ${i + 1}`}
-                  className="eingabe mono"
-                  value={ibanFormatieren(b.iban)}
-                  title={b.bic ? `BIC ${b.bic}` : undefined}
-                  readOnly
-                />
-              ))}
+          <Feld id={`${id}-iban`} label="IBAN laut Beleg" hinweis={ibanAbgleich}>
+            <div className="flex flex-col gap-2">
+              {beleg.bankverbindungen.map((b, i) => {
+                // Bankname (aus der Bankleitzahl, nur deutsche IBANs) und BIC je IBAN, z. B. „Commerzbank · BIC COBADEFFXXX“
+                const bankId = b.bank || b.bic ? `${id}-iban-${i}-bank` : undefined
+                return (
+                  <div key={b.iban}>
+                    <input
+                      id={i === 0 ? `${id}-iban` : undefined}
+                      aria-label={i === 0 ? undefined : `IBAN laut Beleg ${i + 1}`}
+                      aria-describedby={bankId}
+                      className="eingabe mono"
+                      value={ibanFormatieren(b.iban)}
+                      readOnly
+                    />
+                    {bankId && (
+                      <span id={bankId} className="hinweis">
+                        {b.bank}
+                        {b.bank && b.bic && ' · '}
+                        {b.bic && <span className="whitespace-nowrap">BIC {b.bic}</span>}
+                      </span>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           </Feld>
         )}

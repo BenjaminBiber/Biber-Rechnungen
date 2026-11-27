@@ -1,4 +1,6 @@
 import type { PruefEinstellungen, PruefungArt } from '@/api/typen'
+import { useRolle } from '@/components/shell/useRolle'
+import { BankleitzahlenKarte } from './bankleitzahlen'
 import { Bereich } from './Bereich'
 import { EinstellungsFormular, type Feldfehler } from './EinstellungsFormular'
 import { Schalter } from './Schalter'
@@ -124,77 +126,81 @@ const zuWerten = (f: PruefFormular): PruefEinstellungen => ({
 
 /** Bereich „Prüfungen“: alle Prüfungen mit Schalter und – wo vorhanden – Schwelle. */
 export function PruefungenBereich() {
+  const { istAdmin } = useRolle()
   return (
     <Bereich titel="Prüfungen & Schwellen">
       {(e) => (
-        <EinstellungsFormular
-          gruppe="pruefungen"
-          titel="Prüfungen & Schwellen"
-          wert={zuFormular(e.pruefungen)}
-          validieren={validieren}
-          zuWerten={zuWerten}
-        >
-          {({ wert, setze, fehler, schreibgeschuetzt }) => (
-            <div className="flex flex-col">
-              <p className="gedaempft m-0 mb-2.5 text-sm">
-                Schlägt eine aktive Prüfung fehl, bekommt der Beleg „zu prüfen“ mit Begründung.
-              </p>
-              {pruefungen.map((p) => (
-                <Zeile key={p.art} titel={p.name} beschreibung={p.detail} fehler={p.schwelle && fehler[p.schwelle]}>
-                  {p.schwelle && (
-                    <span className="flex items-center gap-1.5 text-[13px]">
-                      <input
-                        className="eingabe num w-[90px]"
-                        inputMode="decimal"
-                        aria-label={`${p.name} Schwelle`}
-                        aria-invalid={!!fehler[p.schwelle]}
-                        value={wert[p.schwelle]}
-                        onChange={(ev) => setze({ [p.schwelle!]: ev.target.value })}
-                      />
-                      {p.einheit && <span className="gedaempft">{p.einheit}</span>}
-                    </span>
-                  )}
+        <>
+          <EinstellungsFormular
+            gruppe="pruefungen"
+            titel="Prüfungen & Schwellen"
+            wert={zuFormular(e.pruefungen)}
+            validieren={validieren}
+            zuWerten={zuWerten}
+          >
+            {({ wert, setze, fehler, schreibgeschuetzt }) => (
+              <div className="flex flex-col">
+                <p className="gedaempft m-0 mb-2.5 text-sm">
+                  Schlägt eine aktive Prüfung fehl, bekommt der Beleg „zu prüfen“ mit Begründung.
+                </p>
+                {pruefungen.map((p) => (
+                  <Zeile key={p.art} titel={p.name} beschreibung={p.detail} fehler={p.schwelle && fehler[p.schwelle]}>
+                    {p.schwelle && (
+                      <span className="flex items-center gap-1.5 text-[13px]">
+                        <input
+                          className="eingabe num w-[90px]"
+                          inputMode="decimal"
+                          aria-label={`${p.name} Schwelle`}
+                          aria-invalid={!!fehler[p.schwelle]}
+                          value={wert[p.schwelle]}
+                          onChange={(ev) => setze({ [p.schwelle!]: ev.target.value })}
+                        />
+                        {p.einheit && <span className="gedaempft">{p.einheit}</span>}
+                      </span>
+                    )}
+                    <Schalter
+                      label={p.name}
+                      an={wert.aktiv[p.art]}
+                      disabled={schreibgeschuetzt}
+                      onAendern={(an) => setze({ aktiv: { ...wert.aktiv, [p.art]: an } })}
+                    />
+                  </Zeile>
+                ))}
+                <h3 className="m-0 mt-5 mb-1 text-sm font-semibold">Hinweise</h3>
+                <Zeile
+                  titel="USt-IdNr. online prüfen"
+                  beschreibung="Fragt die USt-IdNr. neuer Korrespondenten bei VIES (EU-Kommission) ab und wiederholt das halbjährlich. Dabei geht nur die Nummer nach außen."
+                >
                   <Schalter
-                    label={p.name}
-                    an={wert.aktiv[p.art]}
+                    label="USt-IdNr. online prüfen"
+                    an={wert.ustIdOnlinePruefen}
                     disabled={schreibgeschuetzt}
-                    onAendern={(an) => setze({ aktiv: { ...wert.aktiv, [p.art]: an } })}
+                    onAendern={(an) => setze({ ustIdOnlinePruefen: an })}
                   />
                 </Zeile>
-              ))}
-              <h3 className="m-0 mt-5 mb-1 text-sm font-semibold">Hinweise</h3>
-              <Zeile
-                titel="USt-IdNr. online prüfen"
-                beschreibung="Fragt die USt-IdNr. neuer Korrespondenten bei VIES (EU-Kommission) ab und wiederholt das halbjährlich. Dabei geht nur die Nummer nach außen."
-              >
-                <Schalter
-                  label="USt-IdNr. online prüfen"
-                  an={wert.ustIdOnlinePruefen}
-                  disabled={schreibgeschuetzt}
-                  onAendern={(an) => setze({ ustIdOnlinePruefen: an })}
-                />
-              </Zeile>
-              <Zeile
-                titel="Skonto-Hinweis"
-                beschreibung="Meldung in der Glocke, wenn die Skontofrist einer offenen Rechnung abläuft; 0 schaltet sie ab."
-                fehler={fehler.skontoVorlaufTage}
-              >
-                <span className="flex items-center gap-1.5 text-[13px]">
-                  <input
-                    className="eingabe num w-[90px]"
-                    inputMode="numeric"
-                    aria-label="Skonto-Hinweis Tage vorher"
-                    aria-invalid={!!fehler.skontoVorlaufTage}
-                    value={wert.skontoVorlaufTage}
-                    disabled={schreibgeschuetzt}
-                    onChange={(ev) => setze({ skontoVorlaufTage: ev.target.value })}
-                  />
-                  <span className="gedaempft">Tage vorher</span>
-                </span>
-              </Zeile>
-            </div>
-          )}
-        </EinstellungsFormular>
+                <Zeile
+                  titel="Skonto-Hinweis"
+                  beschreibung="Meldung in der Glocke, wenn die Skontofrist einer offenen Rechnung abläuft; 0 schaltet sie ab."
+                  fehler={fehler.skontoVorlaufTage}
+                >
+                  <span className="flex items-center gap-1.5 text-[13px]">
+                    <input
+                      className="eingabe num w-[90px]"
+                      inputMode="numeric"
+                      aria-label="Skonto-Hinweis Tage vorher"
+                      aria-invalid={!!fehler.skontoVorlaufTage}
+                      value={wert.skontoVorlaufTage}
+                      disabled={schreibgeschuetzt}
+                      onChange={(ev) => setze({ skontoVorlaufTage: ev.target.value })}
+                    />
+                    <span className="gedaempft">Tage vorher</span>
+                  </span>
+                </Zeile>
+              </div>
+            )}
+          </EinstellungsFormular>
+          {istAdmin && <BankleitzahlenKarte />}
+        </>
       )}
     </Bereich>
   )

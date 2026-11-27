@@ -105,7 +105,7 @@ Beleg
 BelegDatei      Id, BelegId, Rolle (Original|EingebettetesXml|Visualisierung|Vorschau), Pfad, Sha256, Groesse, MimeType,
                 AbgelegtAm, LetztePruefungAm, PruefErgebnis
 Steuerzeile     BelegId, Satz, Netto, Steuer
-Position        BelegId, Nr, Text, TextNormalisiert, Artikelnummer?, Variante?, Menge, Einheit, Einzelpreis, Gesamt, Steuersatz,
+Position        BelegId, Nr, Text, TextNormalisiert, Artikelnummer?, Merkmale (jsonb), Menge, Einheit, Einzelpreis, Gesamt, Steuersatz,
                 ArtikelId?, Grundpreis?, GrundpreisEinheit?
 Artikel         Id, KorrespondentId, Artikelnummer?, NameNormalisiert, StammartikelId?
 Stammartikel    Id, Name, Basiseinheit

@@ -81,6 +81,9 @@
       "name": "NeuAuslesen"
     },
     {
+      "name": "Bankleitzahlen"
+    },
+    {
       "name": "Suche"
     },
     {
@@ -5297,6 +5300,110 @@
         }
       }
     },
+    "/api/bankleitzahlen": {
+      "get": {
+        "tags": [
+          "Bankleitzahlen"
+        ],
+        "summary": "Stand der Bankleitzahlen der Bundesbank",
+        "operationId": "getBankleitzahlenStand",
+        "x-richtlinie": "Admin",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankleitzahlenStandDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/NichtAngemeldet"
+          },
+          "403": {
+            "$ref": "#/components/responses/KeinRecht"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Bankleitzahlen"
+        ],
+        "summary": "Bankleitzahlendatei (TXT) hochladen",
+        "operationId": "putBankleitzahlenStand",
+        "x-richtlinie": "Admin",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "datei": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": [
+                  "datei"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankleitzahlenStandDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Ungueltig"
+          },
+          "401": {
+            "$ref": "#/components/responses/NichtAngemeldet"
+          },
+          "403": {
+            "$ref": "#/components/responses/KeinRecht"
+          }
+        }
+      }
+    },
+    "/api/bankleitzahlen/abrufen": {
+      "post": {
+        "tags": [
+          "Bankleitzahlen"
+        ],
+        "summary": "Bankleitzahlendatei sofort von der Bundesbank holen",
+        "operationId": "postBankleitzahlenAbrufen",
+        "x-richtlinie": "Admin",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankleitzahlenStandDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/NichtAngemeldet"
+          },
+          "403": {
+            "$ref": "#/components/responses/KeinRecht"
+          }
+        }
+      }
+    },
     "/api/suche": {
       "get": {
         "tags": [
@@ -6166,6 +6273,61 @@
           "anzahlDumps"
         ]
       },
+      "BankleitzahlenQuelle": {
+        "type": "string",
+        "enum": [
+          "Bundesbank",
+          "Upload"
+        ]
+      },
+      "BankleitzahlenStandDto": {
+        "type": "object",
+        "properties": {
+          "anzahl": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "geladenAm": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "quelle": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BankleitzahlenQuelle"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "datei": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "letzterAbrufAm": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "letzterFehler": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "anzahl"
+        ]
+      },
       "BankverbindungDto": {
         "type": "object",
         "properties": {
@@ -6173,6 +6335,12 @@
             "type": "string"
           },
           "bic": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bank": {
             "type": [
               "string",
               "null"
@@ -8322,17 +8490,18 @@
             ],
             "format": "decimal"
           },
-          "variante": {
-            "type": [
-              "string",
-              "null"
-            ]
+          "merkmale": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MerkmalDto"
+            }
           }
         },
         "required": [
           "datum",
           "korrespondent",
-          "belegId"
+          "belegId",
+          "merkmale"
         ]
       },
       "KontoAendernDto": {
@@ -9219,6 +9388,23 @@
           "ohneZuweisung"
         ]
       },
+      "MerkmalDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "wert": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "wert"
+        ]
+      },
       "MonatsKostenDto": {
         "type": "object",
         "properties": {
@@ -9487,11 +9673,14 @@
               "null"
             ]
           },
-          "variante": {
+          "merkmale": {
             "type": [
-              "string",
+              "array",
               "null"
-            ]
+            ],
+            "items": {
+              "$ref": "#/components/schemas/MerkmalDto"
+            }
           }
         },
         "required": [
@@ -9516,11 +9705,11 @@
               "null"
             ]
           },
-          "variante": {
-            "type": [
-              "string",
-              "null"
-            ]
+          "merkmale": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MerkmalDto"
+            }
           },
           "menge": {
             "type": [
@@ -9587,6 +9776,7 @@
         "required": [
           "nr",
           "text",
+          "merkmale",
           "gesamt"
         ]
       },

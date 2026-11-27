@@ -2,7 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { szenario } from '@/mocks/szenarien'
 import { anfragenMitschneiden, b2, kopfGeladen, renderBelegDetail } from '../testHilfe'
-import { gesamtVorschlag, kennungText } from './PositionenTab'
+import { gesamtVorschlag } from './PositionenTab'
 
 vi.mock('react-pdf', () => import('../testHilfe').then((m) => m.reactPdfMock))
 
@@ -88,26 +88,57 @@ describe('Tab Positionen', () => {
     expect(screen.getByRole('button', { name: 'Änderungen speichern' })).toBeInTheDocument()
   })
 
-  it('zeigt Artikelnummer und Variante und sendet sie beim Speichern mit', async () => {
-    expect(kennungText({ artikelnummer: '93435', variante: '47' })).toBe('Art.-Nr. 93435 · Variante 47')
-    expect(kennungText({ artikelnummer: null, variante: null })).toBe('')
+  it('zeigt Artikelnummer und Merkmale und sendet sie beim Speichern mit', async () => {
     const { nutzer } = await oeffnen()
-    expect(zeilen()[2]).toHaveTextContent('Art.-Nr. 7710-08 · Variante blau')
+    expect(zeilen()[2]).toHaveTextContent('Art.-Nr. 7710-08')
+    const merkmale = within(zeilen()[2]).getByRole('list', { name: 'Merkmale' })
+    expect(
+      within(merkmale)
+        .getAllByRole('listitem')
+        .map((m) => m.textContent),
+    ).toEqual(['Farbe blau', 'Rückenbreite 8 cm'])
+    expect(within(zeilen()[0]).queryByRole('list', { name: 'Merkmale' })).not.toBeInTheDocument()
 
     await nutzer.click(screen.getByRole('button', { name: 'Position 1 bearbeiten' }))
     await nutzer.type(screen.getByLabelText('Artikelnummer'), '100245')
-    await nutzer.type(screen.getByLabelText('Variante'), 'weiß')
+    await nutzer.click(screen.getByRole('button', { name: '+ Merkmal' }))
+    await nutzer.type(screen.getByLabelText('Merkmal 1: Name'), 'Farbe')
+    await nutzer.type(screen.getByLabelText('Merkmal 1: Wert'), 'weiß')
     await nutzer.click(screen.getByRole('button', { name: 'Übernehmen' }))
-    expect(zeilen()[0]).toHaveTextContent('Art.-Nr. 100245 · Variante weiß')
+    expect(zeilen()[0]).toHaveTextContent('Art.-Nr. 100245')
+    expect(within(zeilen()[0]).getByRole('listitem')).toHaveTextContent('Farbe weiß')
 
     const mitschnitt = anfragenMitschneiden()
     await nutzer.click(screen.getByRole('button', { name: 'Änderungen speichern' }))
     expect(await screen.findByText('Positionen gespeichert')).toBeInTheDocument()
     const [anfrage] = await mitschnitt.anfragen()
-    const positionen = anfrage.body as { artikelnummer: string | null; variante: string | null }[]
-    expect(positionen[0]).toMatchObject({ artikelnummer: '100245', variante: 'weiß' })
-    expect(positionen[1]).toMatchObject({ artikelnummer: null, variante: null })
-    expect(positionen[2]).toMatchObject({ artikelnummer: '7710-08', variante: 'blau' })
+    const positionen = anfrage.body as { artikelnummer: string | null; merkmale: unknown[] }[]
+    expect(positionen[0]).toMatchObject({ artikelnummer: '100245', merkmale: [{ name: 'Farbe', wert: 'weiß' }] })
+    expect(positionen[1]).toMatchObject({ artikelnummer: null, merkmale: [] })
+    expect(positionen[2]).toMatchObject({
+      artikelnummer: '7710-08',
+      merkmale: [
+        { name: 'Farbe', wert: 'blau' },
+        { name: 'Rückenbreite', wert: '8 cm' },
+      ],
+    })
+  })
+
+  it('entfernt Merkmale und verlangt zu jedem Namen einen Wert', async () => {
+    const { nutzer } = await oeffnen()
+    await nutzer.click(screen.getByRole('button', { name: 'Position 3 bearbeiten' }))
+    expect(screen.getByLabelText('Merkmal 1: Name')).toHaveValue('Farbe')
+    await nutzer.click(screen.getByRole('button', { name: 'Merkmal 1 entfernen' }))
+    expect(screen.getByLabelText('Merkmal 1: Name')).toHaveValue('Rückenbreite')
+    await nutzer.clear(screen.getByLabelText('Merkmal 1: Wert'))
+    await nutzer.click(screen.getByRole('button', { name: 'Übernehmen' }))
+    expect(screen.getByRole('alert')).toHaveTextContent('Jedes Merkmal braucht einen Wert.')
+
+    // Eine ganz leere Zeile fällt weg.
+    await nutzer.clear(screen.getByLabelText('Merkmal 1: Name'))
+    await nutzer.click(screen.getByRole('button', { name: 'Übernehmen' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(within(zeilen()[2]).queryByRole('list', { name: 'Merkmale' })).not.toBeInTheDocument()
   })
 
   it('löschen und verwerfen setzt zurück', async () => {

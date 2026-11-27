@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest'
 import * as artikel from './artikel'
 import * as aufbewahrung from './aufbewahrung'
 import * as auth from './auth'
+import * as bankleitzahlen from './bankleitzahlen'
 import * as belege from './belege'
 import * as benachrichtigungen from './benachrichtigungen'
 import * as benutzer from './benutzer'
@@ -25,6 +26,7 @@ const module = {
   artikel,
   aufbewahrung,
   auth,
+  bankleitzahlen,
   belege,
   benachrichtigungen,
   benutzer,
@@ -156,6 +158,9 @@ const zuordnung: Record<string, `${keyof typeof module}.${string}` | null> = {
   getNeuAuslesenStatus: 'neuAuslesen.useNeuAuslesenStatus',
   postNeuAuslesenStarten: 'neuAuslesen.useNeuAuslesenStarten',
   postNeuAuslesenAbbrechen: 'neuAuslesen.useNeuAuslesenAbbrechen',
+  getBankleitzahlenStand: 'bankleitzahlen.useBankleitzahlen',
+  putBankleitzahlenStand: 'bankleitzahlen.useBankleitzahlenHochladen',
+  postBankleitzahlenAbrufen: 'bankleitzahlen.useBankleitzahlenAbrufen',
   getSucheGlobal: 'suche.useSuche',
   getTokensListe: 'tokens.useTokens',
   postTokensListe: 'tokens.useTokenAnlegen',

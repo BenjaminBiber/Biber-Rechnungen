@@ -74,6 +74,10 @@ describe('Korrespondent-Detail', { timeout: 20000 }, () => {
     expect(kennzahlen.getByText(/^202,09\s€$/)).toBeInTheDocument()
     expect(screen.getByText('DE12 6805 0101 0012 3456 78')).toBeInTheDocument()
     expect(screen.getByText('DE89 3704 0044 0532 0130 00')).toBeInTheDocument()
+    expect(screen.getByText('Sparkasse Freiburg-Nördlicher Breisgau', { exact: false })).toHaveTextContent(
+      'Sparkasse Freiburg-Nördlicher Breisgau · BIC FRSPDE66XXX',
+    )
+    expect(screen.getByText('Commerzbank')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'buerowelt-kraemer.de' })).toHaveAttribute(
       'href',
       'https://buerowelt-kraemer.de',

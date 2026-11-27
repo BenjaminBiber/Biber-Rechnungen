@@ -34,6 +34,10 @@
           <ram:Description>Länge</ram:Description>
           <ram:Value>50 m</ram:Value>
         </ram:ApplicableProductCharacteristic>
+        <ram:ApplicableProductCharacteristic>
+          <ram:Description>Paketgröße:</ram:Description>
+          <ram:Value>1</ram:Value>
+        </ram:ApplicableProductCharacteristic>
       </ram:SpecifiedTradeProduct>
       <ram:SpecifiedLineTradeAgreement>
         <ram:NetPriceProductTradePrice>

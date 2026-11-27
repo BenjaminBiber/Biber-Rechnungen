@@ -30,7 +30,7 @@ public sealed record BelegAendernDto(
 public sealed record SteuerzeileAendernDto(decimal Satz, decimal Netto, decimal Steuer);
 
 /// <param name="Artikelnummer">Bestimmt den Artikel; Positionen mit gleicher Nummer teilen sich einen.</param>
-/// <param name="Variante">Größe, Farbe o. Ä.</param>
+/// <param name="Merkmale">Größe, Farbe o. Ä.; ohne Angabe keine.</param>
 public sealed record PositionAendernDto(
     int Nr,
     string Text,
@@ -40,7 +40,7 @@ public sealed record PositionAendernDto(
     decimal Gesamt,
     decimal? Steuersatz,
     string? Artikelnummer = null,
-    string? Variante = null);
+    MerkmalDto[]? Merkmale = null);
 
 public sealed record TagZuordnenDto(Guid TagId);
 

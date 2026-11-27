@@ -139,11 +139,11 @@ public sealed class PositionenSchrittTests(ApiFabrik fabrik)
 
         var positionen = await AusfuehrenAsync(
             k.Id,
-            Pos("S3 Sicherheitshalbschuhe Willingen grau/marine/schwarz", 56.90m, nummer: "93435", variante: "47"),
-            Pos("S3 Sicherheitshalbschuhe Willingen grau/marine/schwarz HERREN-SET: 2x Microfleece", 56.90m, nummer: "93435", variante: "42"));
+            Pos("S3 Sicherheitshalbschuhe Willingen grau/marine/schwarz", 56.90m, nummer: "93435", groesse: "47"),
+            Pos("S3 Sicherheitshalbschuhe Willingen grau/marine/schwarz HERREN-SET: 2x Microfleece", 56.90m, nummer: "93435", groesse: "42"));
 
         positionen.Select(p => p.ArtikelId).Distinct().ShouldHaveSingleItem().ShouldNotBeNull();
-        positionen.Select(p => p.Variante).ShouldBe(["47", "42"]);
+        positionen.Select(p => string.Join(", ", p.Merkmale)).ShouldBe(["Größe: 47", "Größe: 42"]);
         var artikel = (await ArtikelAsync(k.Id)).ShouldHaveSingleItem();
         artikel.Artikelnummer.ShouldBe("93435");
         artikel.Name.ShouldBe("S3 Sicherheitshalbschuhe Willingen grau/marine/schwarz");
@@ -258,13 +258,13 @@ public sealed class PositionenSchrittTests(ApiFabrik fabrik)
 
     private static int naechsteNr;
 
-    private static Position Pos(string text, decimal einzelpreis, string? einheit = null, string? nummer = null, string? variante = null) => new()
+    private static Position Pos(string text, decimal einzelpreis, string? einheit = null, string? nummer = null, string? groesse = null) => new()
     {
         Id = Guid.NewGuid(),
         Nr = Interlocked.Increment(ref naechsteNr),
         Text = text,
         Artikelnummer = nummer,
-        Variante = variante,
+        Merkmale = groesse is null ? [] : [new Merkmal("Größe", groesse)],
         Menge = 1,
         Einheit = einheit,
         Einzelpreis = einzelpreis,

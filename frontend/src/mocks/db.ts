@@ -1,4 +1,5 @@
 import type {
+  BankleitzahlenStand,
   ApiToken,
   AuditEintrag,
   AutoMatchingStatus,
@@ -85,6 +86,8 @@ export type MockZustand = {
   integritaetsLaeufe: IntegritaetsLauf[]
   /** Jüngster Lauf „Alle Belege erneut auslesen“; jeder Abruf des Stands rückt ihn ein Stück vor. */
   neuAuslesenLauf: NeuAuslesenLauf | null
+  /** Stand der Bankleitzahlen (Einstellungen → Prüfungen). */
+  bankleitzahlen: BankleitzahlenStand
   tokens: ApiToken[]
   verfahrensdoku: Verfahrensdoku
   fehler: ErzwungenerFehler[]
@@ -127,6 +130,15 @@ function erzeuge(): MockZustand {
     geloeschteBelege: [],
     integritaetsLaeufe,
     neuAuslesenLauf: null,
+    bankleitzahlen: {
+      anzahl: 3507,
+      geladenAm: '2026-11-24T03:23:05Z',
+      quelle: 'Bundesbank',
+      datei:
+        'https://www.bundesbank.de/resource/blob/602632/3a97fff9893732591adbbfcb70c1c4e8/472B63F073F071307366337C94F8C870/blz-aktuell-txt-data.txt',
+      letzterAbrufAm: '2026-11-24T03:23:05Z',
+      letzterFehler: null,
+    },
     tokens: apiTokens,
     verfahrensdoku,
     fehler: [],

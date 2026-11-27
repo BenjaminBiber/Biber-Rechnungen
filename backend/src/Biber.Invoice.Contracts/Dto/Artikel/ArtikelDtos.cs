@@ -79,7 +79,7 @@ public sealed record PreisSerieDto(VerweisDto Korrespondent, string? Einheit, de
 
 public sealed record PreisPunktDto(DateOnly Datum, decimal? Einzelpreis, decimal? Grundpreis);
 
-/// <param name="Variante">Größe, Farbe o. Ä. der gekauften Position.</param>
+/// <param name="Merkmale">Größe, Farbe o. Ä. der gekauften Position.</param>
 public sealed record KaufDto(
     DateOnly Datum,
     VerweisDto Korrespondent,
@@ -89,7 +89,7 @@ public sealed record KaufDto(
     string? Einheit,
     decimal? Einzelpreis,
     decimal? Grundpreis,
-    string? Variante);
+    MerkmalDto[] Merkmale);
 
 public sealed record ZugeordneterArtikelDto(
     Guid Id,

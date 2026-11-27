@@ -249,6 +249,11 @@ internal static class ApiEndpunkte
             Antwort = typeof(NeuAuslesenStatusDto),
             Fehler = [new(409, "Es läuft kein Lauf")],
         },
+
+        // Bankleitzahlen (Banknamen zu IBANs)
+        Get(Bankleitzahlen.Stand, R.Admin, "Stand der Bankleitzahlen der Bundesbank") with { Antwort = typeof(BankleitzahlenStandDto) },
+        Put(Bankleitzahlen.Stand, R.Admin, "Bankleitzahlendatei (TXT) hochladen") with { Multipart = "datei", Antwort = typeof(BankleitzahlenStandDto) },
+        Post(Bankleitzahlen.Abrufen, R.Admin, "Bankleitzahlendatei sofort von der Bundesbank holen") with { Antwort = typeof(BankleitzahlenStandDto) },
         Get(Suche.Global, R.Lesen, "Globale Suche (Befehlspalette)") with { Query = [new("q", typeof(string), Pflicht: true)], Antwort = typeof(SuchergebnisDto) },
         Get(Tokens.Liste, R.Lesen, "Eigene API-Tokens") with { Antwort = typeof(ApiTokenDto[]) },
         Post(Tokens.Liste, R.Bearbeiten, "API-Token erzeugen") with { Body = typeof(ApiTokenAnlegenDto), Antwort = typeof(ApiTokenErstelltDto), Status = 201 },

@@ -252,6 +252,22 @@ public sealed class ArtikelTests(ApiFabrik fabrik)
         (await client.DeleteAsync(ArtikelRoute(s.Stamm.Id, s.Karton.Id))).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
+    [Fact]
+    public async Task Kaeufe_nennen_die_Merkmale_der_Position()
+    {
+        var korrespondent = await fabrik.SpeichernAsync(Testdaten.Korrespondent());
+        var schuh = await fabrik.SpeichernAsync(NeuerArtikel(korrespondent, "S3 Sicherheitshalbschuhe", "Paar"));
+        var beleg = Beleg(korrespondent, new DateOnly(2026, 11, 25), (schuh, 1m, 56.90m), (schuh, 1m, 56.90m));
+        beleg.Positionen[0].Merkmale = [new Merkmal("Größe", "47"), new Merkmal("Farbe", "grau")];
+        beleg.Positionen[1].Merkmale = [new Merkmal("Größe", "42"), new Merkmal("Farbe", "grau")];
+        await fabrik.SpeichernAsync(beleg);
+
+        var detail = await DetailAsync(ApiRouten.Artikel.Einzeln, schuh.Id, 2026);
+
+        detail.Kaeufe.Select(k => string.Join(", ", k.Merkmale.Select(m => $"{m.Name}: {m.Wert}")))
+            .Order().ShouldBe(["Größe: 42, Farbe: grau", "Größe: 47, Farbe: grau"]);
+    }
+
     private HttpClient Client(Rolle rolle = Rolle.Benutzer) => fabrik.ErzeugeClient(rolle);
 
     private static string ArtikelRoute(Guid stammId, Guid artikelId) =>

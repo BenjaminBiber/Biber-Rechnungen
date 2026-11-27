@@ -154,15 +154,20 @@ public sealed class ERechnungParserTests
     }
 
     [Fact]
-    public void Artikelnummer_des_Verkaeufers_vor_GTIN_und_Merkmale_als_Variante()
+    public void Artikelnummer_des_Verkaeufers_vor_GTIN_und_Artikelmerkmale_mit_Namen()
     {
         var e = Lesen("artikelmerkmale.xml");
 
-        e.Positionen.ShouldBe(
+        e.Positionen.Select(p => p with { Merkmale = null }).ShouldBe(
         [
-            new ExtrahiertePosition(1, "Kabel – NYM-J 3x1,5", 50m, "m", 1.20m, 60.00m, 19m, "KAB-3x1,5", "Farbe: grau, Länge: 50 m"),
+            new ExtrahiertePosition(1, "Kabel – NYM-J 3x1,5", 50m, "m", 1.20m, 60.00m, 19m, "KAB-3x1,5"),
             new ExtrahiertePosition(2, "Schrauben", 2.5m, "kg", 8.00m, 20.00m, 19m, "4000000000017"),
         ]);
+
+        // „Paketgröße:“ steht in der Datei mit Doppelpunkt; der Name hat keinen.
+        e.Positionen[0].Merkmale.ShouldNotBeNull().ShouldBe(
+            [new Merkmal("Farbe", "grau"), new Merkmal("Länge", "50 m"), new Merkmal("Paketgröße", "1")]);
+        e.Positionen[1].Merkmale.ShouldBeNull();
     }
 
     [Fact]

@@ -12,8 +12,8 @@ public class Position
     /// <summary>Artikelnummer des Lieferanten, wie auf dem Beleg; bestimmt den <see cref="Artikel"/>.</summary>
     public string? Artikelnummer { get; set; }
 
-    /// <summary>Variante wie Größe oder Farbe; gehört zur Position, nicht zum Artikel.</summary>
-    public string? Variante { get; set; }
+    /// <summary>Merkmale wie Größe oder Farbe; gehören zur Position, nicht zum Artikel.</summary>
+    public List<Merkmal> Merkmale { get; set; } = [];
     public decimal? Menge { get; set; }
     public string? Einheit { get; set; }
     public decimal? Einzelpreis { get; set; }

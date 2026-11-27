@@ -59,11 +59,16 @@ describe('Tab „Daten“', () => {
     expect(status()).toHaveTextContent('Änderungen werden automatisch gespeichert')
   })
 
-  it('zeigt bei einem Beleg „zu prüfen“ die ausgelesene IBAN mit BIC und Abgleich', async () => {
+  it('zeigt bei einem Beleg „zu prüfen“ die ausgelesene IBAN mit Bank, BIC und Abgleich', async () => {
     await oeffneDaten()
     expect(feld('IBAN laut Beleg')).toHaveValue('DE12 6805 0101 0012 3456 78')
     expect(feld('IBAN laut Beleg')).toHaveAttribute('readonly')
-    expect(within(formular()).getByText('BIC FRSPDE66XXX · beim Korrespondenten hinterlegt')).toBeInTheDocument()
+    expect(feld('IBAN laut Beleg')).toHaveAccessibleDescription(
+      'Sparkasse Freiburg-Nördlicher Breisgau · BIC FRSPDE66XXX',
+    )
+    expect(feld('IBAN laut Beleg 2')).toHaveValue('DE89 3704 0044 0532 0130 00')
+    expect(feld('IBAN laut Beleg 2')).toHaveAccessibleDescription('Commerzbank')
+    expect(within(formular()).getByText('alle beim Korrespondenten hinterlegt')).toBeInTheDocument()
   })
 
   it('zeigt für einen per Auto-Matching zugeordneten Korrespondenten „automatisch zugeordnet“', async () => {

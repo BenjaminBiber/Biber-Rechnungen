@@ -224,6 +224,63 @@ namespace Biber.Invoice.Infrastructure.Persistenz.Migrationen
                     b.ToTable("audit_eintrag");
                 });
 
+            modelBuilder.Entity("Biber.Invoice.Domain.Entitaeten.Bank", b =>
+                {
+                    b.Property<string>("Blz")
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)")
+                        .HasColumnName("blz");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.HasKey("Blz")
+                        .HasName("pk_bank");
+
+                    b.ToTable("bank");
+                });
+
+            modelBuilder.Entity("Biber.Invoice.Domain.Entitaeten.BankleitzahlenStand", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    b.Property<int>("Anzahl")
+                        .HasColumnType("integer")
+                        .HasColumnName("anzahl");
+
+                    b.Property<string>("Datei")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("datei");
+
+                    b.Property<DateTimeOffset?>("GeladenAm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("geladen_am");
+
+                    b.Property<DateTimeOffset?>("LetzterAbrufAm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("letzter_abruf_am");
+
+                    b.Property<string>("LetzterFehler")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("letzter_fehler");
+
+                    b.Property<string>("Quelle")
+                        .HasColumnType("text")
+                        .HasColumnName("quelle");
+
+                    b.HasKey("Id")
+                        .HasName("pk_bankleitzahlen_stand");
+
+                    b.ToTable("bankleitzahlen_stand");
+                });
+
             modelBuilder.Entity("Biber.Invoice.Domain.Entitaeten.Beleg", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1362,6 +1419,11 @@ namespace Biber.Invoice.Infrastructure.Persistenz.Migrationen
                         .HasColumnType("numeric(14,4)")
                         .HasColumnName("menge");
 
+                    b.Property<string>("Merkmale")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("merkmale");
+
                     b.Property<int>("Nr")
                         .HasColumnType("integer")
                         .HasColumnName("nr");
@@ -1379,11 +1441,6 @@ namespace Biber.Invoice.Infrastructure.Persistenz.Migrationen
                     b.Property<string>("TextNormalisiert")
                         .HasColumnType("text")
                         .HasColumnName("text_normalisiert");
-
-                    b.Property<string>("Variante")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("variante");
 
                     b.HasKey("Id")
                         .HasName("pk_position");

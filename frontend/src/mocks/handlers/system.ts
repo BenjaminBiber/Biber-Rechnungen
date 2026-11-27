@@ -189,6 +189,32 @@ export const systemRouten: Route[] = [
     return HttpResponse.json(neuAuslesenStand())
   }),
 
+  route('get', '/api/bankleitzahlen', 'Admin', () => HttpResponse.json(db.bankleitzahlen)),
+
+  route('post', '/api/bankleitzahlen/abrufen', 'Admin', () => {
+    const jetzt = new Date().toISOString()
+    db.bankleitzahlen = { ...db.bankleitzahlen, letzterAbrufAm: jetzt, letzterFehler: null }
+    return HttpResponse.json(db.bankleitzahlen)
+  }),
+
+  route('put', '/api/bankleitzahlen', 'Admin', async ({ request }) => {
+    const datei = (await request.formData()).get('datei')
+    if (!(datei instanceof File)) return ungueltig('datei', 'Es wurde keine Datei hochgeladen.')
+    if (!datei.name.toLowerCase().endsWith('.txt'))
+      return ungueltig(
+        'datei',
+        'Das ist keine Bankleitzahlendatei der Bundesbank im TXT-Format (z. B. „blz-aktuell-txt-data.txt“).',
+      )
+    db.bankleitzahlen = {
+      ...db.bankleitzahlen,
+      anzahl: 3507,
+      geladenAm: new Date().toISOString(),
+      quelle: 'Upload',
+      datei: datei.name,
+    }
+    return HttpResponse.json(db.bankleitzahlen)
+  }),
+
   route('get', '/api/suche', 'Lesen', ({ request }) => {
     const q = abfrage(request).get('q')?.trim().toLocaleLowerCase('de') ?? ''
     const passt = (...texte: (string | null | undefined)[]) =>

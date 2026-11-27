@@ -220,12 +220,18 @@ function Stammdaten({ detail, darfBearbeiten }: { detail: KorrespondentDetail; d
         <Eintrag titel="Bankverbindungen">
           {detail.bankverbindungen.length
             ? detail.bankverbindungen.map((b) => (
-                <div key={b.iban} className="group mono">
-                  <div className="flex items-center gap-1">
+                <div key={b.iban} className="group">
+                  <div className="mono flex items-center gap-1">
                     <span>{ibanFormatiert(b.iban)}</span>
                     <IbanKopieren iban={b.iban} />
                   </div>
-                  {b.bic && <div className="gedaempft text-xs">BIC {b.bic}</div>}
+                  {(b.bank || b.bic) && (
+                    <div className="gedaempft text-xs">
+                      {b.bank}
+                      {b.bank && b.bic && ' · '}
+                      {b.bic && <span className="mono whitespace-nowrap">BIC {b.bic}</span>}
+                    </div>
+                  )}
                 </div>
               ))
             : leer}

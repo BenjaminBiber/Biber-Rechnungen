@@ -462,6 +462,7 @@ export const belegeRouten: Route[] = [
       const alt = beleg.positionen.find((q) => q.text === p.text)
       return {
         ...p,
+        merkmale: p.merkmale ?? [],
         artikel: alt?.artikel ?? null,
         stammartikelId: alt?.stammartikelId ?? null,
         grundpreis: alt?.grundpreis ?? null,

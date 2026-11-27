@@ -1633,6 +1633,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/bankleitzahlen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Stand der Bankleitzahlen der Bundesbank */
+        get: operations["getBankleitzahlenStand"];
+        /** Bankleitzahlendatei (TXT) hochladen */
+        put: operations["putBankleitzahlenStand"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bankleitzahlen/abrufen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Bankleitzahlendatei sofort von der Bundesbank holen */
+        post: operations["postBankleitzahlenAbrufen"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/suche": {
         parameters: {
             query?: never;
@@ -1867,9 +1902,23 @@ export interface components {
             /** Format: int32 */
             anzahlDumps: number;
         };
+        /** @enum {string} */
+        BankleitzahlenQuelle: "Bundesbank" | "Upload";
+        BankleitzahlenStandDto: {
+            /** Format: int32 */
+            anzahl: number;
+            /** Format: date-time */
+            geladenAm?: string | null;
+            quelle?: components["schemas"]["BankleitzahlenQuelle"] | null;
+            datei?: string | null;
+            /** Format: date-time */
+            letzterAbrufAm?: string | null;
+            letzterFehler?: string | null;
+        };
         BankverbindungDto: {
             iban: string;
             bic?: string | null;
+            bank?: string | null;
         };
         BelegAendernDto: {
             /** Format: uuid */
@@ -2435,7 +2484,7 @@ export interface components {
             einzelpreis?: number | null;
             /** Format: decimal */
             grundpreis?: number | null;
-            variante?: string | null;
+            merkmale: components["schemas"]["MerkmalDto"][];
         };
         KontoAendernDto: {
             name: string;
@@ -2673,6 +2722,10 @@ export interface components {
             trefferLaenge?: number | null;
             letzterTreffer?: string | null;
         };
+        MerkmalDto: {
+            name?: string | null;
+            wert: string;
+        };
         MonatsKostenDto: {
             monat: string;
             /** Format: decimal */
@@ -2755,14 +2808,14 @@ export interface components {
             /** Format: decimal */
             steuersatz?: number | null;
             artikelnummer?: string | null;
-            variante?: string | null;
+            merkmale?: components["schemas"]["MerkmalDto"][] | null;
         };
         PositionDto: {
             /** Format: int32 */
             nr: number;
             text: string;
             artikelnummer?: string | null;
-            variante?: string | null;
+            merkmale: components["schemas"]["MerkmalDto"][];
             /** Format: decimal */
             menge?: number | null;
             einheit?: string | null;
@@ -6210,6 +6263,80 @@ export interface operations {
                     };
                 };
             };
+        };
+    };
+    getBankleitzahlenStand: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankleitzahlenStandDto"];
+                };
+            };
+            401: components["responses"]["NichtAngemeldet"];
+            403: components["responses"]["KeinRecht"];
+        };
+    };
+    putBankleitzahlenStand: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    datei: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankleitzahlenStandDto"];
+                };
+            };
+            400: components["responses"]["Ungueltig"];
+            401: components["responses"]["NichtAngemeldet"];
+            403: components["responses"]["KeinRecht"];
+        };
+    };
+    postBankleitzahlenAbrufen: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankleitzahlenStandDto"];
+                };
+            };
+            401: components["responses"]["NichtAngemeldet"];
+            403: components["responses"]["KeinRecht"];
         };
     };
     getSucheGlobal: {

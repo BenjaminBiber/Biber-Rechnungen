@@ -175,7 +175,7 @@ public sealed class BelegBearbeitungsDienst(
             Gesamt = p.Gesamt,
             Steuersatz = p.Steuersatz,
             Artikelnummer = ArtikelnummerNormalisierer.Bereinigen(p.Artikelnummer),
-            Variante = ArtikelnummerNormalisierer.Variante(p.Variante),
+            Merkmale = MerkmalNormalisierer.Bereinigen(p.Merkmale?.Select(m => (m.Name, (string?)m.Wert))),
         })];
         db.Positionen.AddRange(beleg.Positionen);
 
@@ -658,15 +658,39 @@ public sealed class BelegBearbeitungsDienst(
                 fehler[$"[{i}].artikelnummer"] = [$"Die Artikelnummer darf höchstens {ArtikelnummerNormalisierer.MaxLaenge} Zeichen lang sein."];
             }
 
-            if (p.Variante?.Trim().Length > ArtikelnummerNormalisierer.MaxLaenge)
-            {
-                fehler[$"[{i}].variante"] = [$"Die Variante darf höchstens {ArtikelnummerNormalisierer.MaxLaenge} Zeichen lang sein."];
-            }
+            PruefeMerkmale(p.Merkmale ?? [], $"[{i}].merkmale", fehler);
         }
 
         if (fehler.Count > 0)
         {
             throw new BelegValidierungsAusnahme(fehler);
+        }
+    }
+
+    /// <summary>Ein Name ohne Wert ginge beim Bereinigen still verloren, deshalb ist er ein Fehler.</summary>
+    private static void PruefeMerkmale(MerkmalDto[] merkmale, string pfad, Dictionary<string, string[]> fehler)
+    {
+        if (merkmale.Length > MerkmalNormalisierer.MaxAnzahl)
+        {
+            fehler[pfad] = [$"Eine Position hat höchstens {MerkmalNormalisierer.MaxAnzahl} Merkmale."];
+        }
+
+        for (var j = 0; j < merkmale.Length; j++)
+        {
+            var m = merkmale[j];
+            if (m?.Name?.Trim().Length > MerkmalNormalisierer.MaxName)
+            {
+                fehler[$"{pfad}[{j}].name"] = [$"Der Name eines Merkmals darf höchstens {MerkmalNormalisierer.MaxName} Zeichen lang sein."];
+            }
+
+            if (m?.Wert?.Trim().Length > MerkmalNormalisierer.MaxWert)
+            {
+                fehler[$"{pfad}[{j}].wert"] = [$"Der Wert eines Merkmals darf höchstens {MerkmalNormalisierer.MaxWert} Zeichen lang sein."];
+            }
+            else if (MerkmalNormalisierer.Wert(m?.Wert) is null)
+            {
+                fehler[$"{pfad}[{j}].wert"] = ["Das Merkmal braucht einen Wert."];
+            }
         }
     }
 

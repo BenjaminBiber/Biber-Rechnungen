@@ -13,6 +13,9 @@ public sealed record TagKurzDto(Guid Id, string Name, string Farbe, bool IstInbo
 /// <summary>Verweis auf eine andere Entität mit ihrem Anzeigenamen.</summary>
 public sealed record VerweisDto(Guid Id, string Name);
 
+/// <summary>Merkmal einer Position wie Größe oder Farbe; <see cref="Name"/> fehlt, wenn der Beleg nur den Wert nennt.</summary>
+public sealed record MerkmalDto(string? Name, string Wert);
+
 /// <summary>Logo eines Korrespondenten; ohne <see cref="Url"/> zeigt die UI die Initialen.</summary>
 public sealed record LogoDto(string? Url, string Initialen, LogoQuelle Quelle);
 

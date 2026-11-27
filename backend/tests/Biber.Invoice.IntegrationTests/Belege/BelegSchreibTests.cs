@@ -271,6 +271,36 @@ public sealed class BelegSchreibTests(ApiFabrik fabrik) : IAsyncLifetime
         antwort.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
+    [Fact]
+    public async Task Merkmale_werden_bereinigt_gespeichert()
+    {
+        var beleg = await BelegAsync();
+
+        var antwort = await Client().PutJsonAsync(Route(ApiRouten.Belege.Positionen, beleg.Id), new PositionAendernDto[]
+        {
+            new(1, "Sicherheitsschuh", 1m, null, 56.90m, 56.90m, 19m, "93435", [new(" gr. ", " 42 "), new(null, "grau"), new("Gr.", "42")]),
+        });
+
+        antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var detail = (await antwort.Content.LesenAsync<BelegDetailDto>()).ShouldNotBeNull();
+        detail.Positionen.ShouldHaveSingleItem().Merkmale.ShouldBe([new MerkmalDto("Größe", "42"), new MerkmalDto(null, "grau")]);
+        (await LadenAsync(beleg.Id)).Positionen.ShouldHaveSingleItem().Merkmale
+            .ShouldBe([new Merkmal("Größe", "42"), new Merkmal(null, "grau")]);
+    }
+
+    [Fact]
+    public async Task Merkmal_ohne_Wert_ergibt_400()
+    {
+        var beleg = await BelegAsync();
+
+        var antwort = await Client().PutJsonAsync(Route(ApiRouten.Belege.Positionen, beleg.Id), new PositionAendernDto[]
+        {
+            new(1, "Sicherheitsschuh", 1m, null, 56.90m, 56.90m, 19m, null, [new("Größe", " ")]),
+        });
+
+        antwort.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
     // ---------- Bestätigen ----------
 
     [Fact]

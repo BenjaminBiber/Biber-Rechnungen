@@ -416,7 +416,7 @@ public sealed class PipelineTests(ApiFabrik fabrik)
             [
                 new ExtrahiertePosition(1, "Pressnippel Megacr.", 1m, null, 23.27m, 23.27m, 19m, "5G12FDLORX45"),
                 new ExtrahiertePosition(2, "Pressnippel Megacr.", 1m, null, 10.70m, 10.70m, 19m, "5G8FDLORX"),
-                new ExtrahiertePosition(3, "Pressnippel Megacr.", 2m, null, 12.20m, 24.40m, 19m, "4G12FDLORX", "M12"),
+                new ExtrahiertePosition(3, "Pressnippel Megacr.", 2m, null, 12.20m, 24.40m, 19m, "4G12FDLORX", [new Merkmal("Größe", "M12")]),
             ],
         };
         var f = NurOrchestrator().MitDiensten(d => d.AddSingleton<IPipelineSchritt>(
@@ -432,7 +432,8 @@ public sealed class PipelineTests(ApiFabrik fabrik)
         }
 
         var positionen = (await BelegAsync(f, beleg.Id)).Positionen.OrderBy(p => p.Nr).ToList();
-        positionen.Select(p => (p.Artikelnummer, p.Variante)).ShouldBe([("5G12FDLORX45", null), ("5G8FDLORX", null), ("4G12FDLORX", "M12")]);
+        positionen.Select(p => (p.Artikelnummer, string.Join(", ", p.Merkmale)))
+            .ShouldBe([("5G12FDLORX45", ""), ("5G8FDLORX", ""), ("4G12FDLORX", "Größe: M12")]);
         positionen.Select(p => p.ArtikelId).Distinct().Count().ShouldBe(3);
 
         using var lesen = f.ErzeugeScope();

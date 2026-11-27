@@ -183,6 +183,7 @@ public sealed class KorrespondentTests(ApiFabrik fabrik) : IAsyncLifetime
     public async Task Anlegen_normalisiert_und_leitet_Domain_ab()
     {
         var kategorie = await fabrik.SpeichernAsync(Testdaten.Kategorie("Büro"));
+        await fabrik.SpeichernAsync(new Bank { Blz = "37040044", Name = "Commerzbank" });
         var client = fabrik.ErzeugeClient(Rolle.Benutzer);
 
         var antwort = await client.PostJsonAsync(ApiRouten.Korrespondenten.Liste, Eingabe("Neuer Lieferant") with
@@ -198,7 +199,7 @@ public sealed class KorrespondentTests(ApiFabrik fabrik) : IAsyncLifetime
         antwort.StatusCode.ShouldBe(HttpStatusCode.Created);
         var detail = (await antwort.Content.LesenAsync<KorrespondentDetailDto>()).ShouldNotBeNull();
         detail.UstIdNr.ShouldBe("DE123456789");
-        detail.Bankverbindungen.ShouldBe([new BankverbindungDto(GueltigeIban, "COBADEFFXXX")]);
+        detail.Bankverbindungen.ShouldBe([new BankverbindungDto(GueltigeIban, "COBADEFFXXX", "Commerzbank")]);
         detail.Aliase.ShouldBe(["NL"]);
         detail.Anschrift.ShouldBe("Hauptstraße 1\n12345 Berlin");
         detail.DefaultKategorie.ShouldNotBeNull().Name.ShouldBe("Büro");
@@ -303,6 +304,7 @@ public sealed class KorrespondentTests(ApiFabrik fabrik) : IAsyncLifetime
             MimeType = "application/pdf",
             AbgelegtAm = fabrik.Zeit.GetUtcNow(),
         });
+        await fabrik.SpeichernAsync(new Bank { Blz = "37040044", Name = "Commerzbank" });
         var client = fabrik.ErzeugeClient(Rolle.Benutzer);
 
         var antwort = await client.PostJsonAsync(
@@ -311,7 +313,7 @@ public sealed class KorrespondentTests(ApiFabrik fabrik) : IAsyncLifetime
         antwort.StatusCode.ShouldBe(HttpStatusCode.OK);
         var detail = (await antwort.Content.LesenAsync<KorrespondentDetailDto>()).ShouldNotBeNull();
         detail.Aliase.ShouldBe(["Buerowelt Kraemer", "BWK"]);
-        detail.Bankverbindungen.ShouldBe([new BankverbindungDto(GueltigeIban, "COBADEFFXXX"), new BankverbindungDto(ZweiteIban, "WESTGB2L")]);
+        detail.Bankverbindungen.ShouldBe([new BankverbindungDto(GueltigeIban, "COBADEFFXXX", "Commerzbank"), new BankverbindungDto(ZweiteIban, "WESTGB2L")]);
         detail.UstIdNr.ShouldBe("DE999999999");
         detail.Email.ShouldBe("info@bwk.de");
         detail.Kennzahlen.AnzahlBelege.ShouldBe(2);
