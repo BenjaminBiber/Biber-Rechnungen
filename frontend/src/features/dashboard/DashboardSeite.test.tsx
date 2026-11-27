@@ -98,6 +98,20 @@ describe('Dashboard', () => {
     expect(screen.getByText('-12,5 %')).toBeInTheDocument()
   })
 
+  it('zeigt die Skonto-Kachel mit laufenden Fristen und möglicher Ersparnis', async () => {
+    renderDashboard()
+    const kachel = (await screen.findByRole('heading', { level: 2, name: 'Skonto' })).closest('section')!
+    expect(within(kachel).getByText('2 Rechnungen')).toBeInTheDocument()
+    expect(within(kachel).getByText('16,71 €')).toBeInTheDocument()
+    // Nächste Frist zuerst: Druckerei Weller (25.11.), dann Hostwerk Süd (27.11.); abgelaufene und bezahlte fehlen.
+    const links = within(kachel).getAllByRole('link')
+    expect(links.map((l) => l.textContent)).toEqual([
+      expect.stringMatching(/^Druckerei Weller3 %.*−6,93\s€/),
+      expect.stringMatching(/^Hostwerk Süd GmbH2 %.*−9,78\s€/),
+    ])
+    expect(links[0]).toHaveAttribute('href', expect.stringMatching(/^\/belege\/.+/))
+  })
+
   it('enthält eine Screenreader-Tabelle mit 12 Monaten', async () => {
     renderDashboard()
     const tabelle = await screen.findByRole('table', { name: 'Gesamtkosten pro Monat 2026' })

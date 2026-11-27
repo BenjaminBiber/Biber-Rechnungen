@@ -1,12 +1,13 @@
 import { Link } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
-import type { BelegListeneintrag, BelegSortierung } from '@/api/typen'
+import type { BelegListeneintrag, BelegSortierung, Skonto } from '@/api/typen'
 import { Chip } from '@/components/Chip'
 import { Icon } from '@/components/Icon'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { formatDatum, formatEuro, formatProzent } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { useBelegAuswahl } from './auswahl'
-import { auswahlLabel, faelligText, TagChips } from './bausteine'
+import { auswahlLabel, faelligText, laufendesSkonto, skontoHinweis, TagChips } from './bausteine'
 import { spaltenDefinitionen, type SpaltenDefinition, type SpaltenSchluessel } from './spaltenDefinitionen'
 import { quelleIcon, quelleText, type ListenZustand } from './suche'
 import { useListenKuerzel } from './useListenKuerzel'
@@ -14,6 +15,30 @@ import { Zeilenmenue } from './Zeilenmenue'
 
 function betrag(wert: number | null | undefined, waehrung: string): string {
   return wert === null || wert === undefined ? '–' : formatEuro(wert, waehrung)
+}
+
+/** Skontofrist als nächste Fälligkeit; das ⓘ nennt Prozentsatz, Ersparnis und das Zahlungsziel ohne Skonto. */
+function SkontoFaelligkeit({ beleg, skonto }: { beleg: BelegListeneintrag; skonto: Skonto & { bis: string } }) {
+  const hinweis = skontoHinweis(beleg, skonto)
+  return (
+    <span className="inline-flex items-center gap-1">
+      <span className="font-medium text-text">{formatDatum(skonto.bis)}</span>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              aria-label={`Skonto: ${hinweis}`}
+              className="inline-flex cursor-help border-0 bg-transparent p-0.5 text-akzent-text hover:text-akzent-hover"
+            >
+              <Icon name="info" className="text-[16px] [vertical-align:0]" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent className="max-w-[260px] whitespace-normal">{hinweis}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </span>
+  )
 }
 
 /** Inhalt einer Zelle je Spalte. */
@@ -51,7 +76,9 @@ function zelle(schluessel: SpaltenSchluessel, beleg: BelegListeneintrag): { inha
         inhalt: beleg.rechnungsdatum ? formatDatum(beleg.rechnungsdatum) : '–',
         className: 'num !text-left',
       }
-    case 'faelligkeit':
+    case 'faelligkeit': {
+      const skonto = laufendesSkonto(beleg)
+      if (skonto) return { inhalt: <SkontoFaelligkeit beleg={beleg} skonto={skonto} />, className: 'num !text-left' }
       return {
         inhalt: faelligText(beleg),
         className: cn(
@@ -59,6 +86,7 @@ function zelle(schluessel: SpaltenSchluessel, beleg: BelegListeneintrag): { inha
           beleg.ueberfaellig ? 'font-semibold text-rot-text' : 'text-gedaempft-stark',
         ),
       }
+    }
     case 'brutto':
       return { inhalt: betrag(beleg.brutto, beleg.waehrung), className: 'num font-semibold' }
     case 'netto':

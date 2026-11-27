@@ -7,6 +7,7 @@ import type {
   Position,
   PruefBefund,
   PruefungArt,
+  Skonto,
 } from '@/api/typen'
 import { artikelIds, belegIds, dateiId, kategorieIds, korrespondentIds, tagIds } from './ids'
 import { korrespondenten } from './korrespondenten'
@@ -573,6 +574,23 @@ function historie(
   return eintraege
 }
 
+/**
+ * Skonto je Beleg (Prozentsatz, letzter Tag mit Abzug): b1 und b6 laufen noch (b6 endet morgen), b7 ist abgelaufen,
+ * b4 ist per Lastschrift bezahlt.
+ */
+const skontoAngaben: Partial<Record<Zeile['schluessel'], { prozent: number; bis: string }>> = {
+  b1: { prozent: 2, bis: '2026-11-27' },
+  b4: { prozent: 2, bis: '2026-11-30' },
+  b6: { prozent: 3, bis: '2026-11-25' },
+  b7: { prozent: 2, bis: '2026-11-17' },
+}
+
+function skontoVon(zeile: Zeile): Skonto | null {
+  const angabe = skontoAngaben[zeile.schluessel]
+  if (!angabe) return null
+  return { ...angabe, betrag: runden((zeile.brutto * angabe.prozent) / 100), abgelaufen: angabe.bis < mockHeute }
+}
+
 function baueBeleg(zeile: Zeile): BelegDetail {
   const nr = Number(zeile.schluessel.slice(1))
   const id = belegIds[zeile.schluessel]
@@ -633,15 +651,7 @@ function baueBeleg(zeile: Zeile): BelegDetail {
     aufgeteiltAusBelegId: null,
     teilbelege: [],
     bezug: { rechnung: null, gutschriften: [], restbetrag: null, kandidaten: [] },
-    skonto:
-      zeile.schluessel === 'b4'
-        ? {
-            prozent: 2,
-            bis: zeile.faellig,
-            betrag: runden(zeile.brutto * 0.02),
-            abgelaufen: zeile.faellig < mockHeute,
-          }
-        : null,
+    skonto: skontoVon(zeile),
   }
 }
 

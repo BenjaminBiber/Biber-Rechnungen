@@ -2048,6 +2048,7 @@ export interface components {
             konfidenz?: number | null;
             /** Format: date */
             leistungsdatum?: string | null;
+            skonto?: components["schemas"]["SkontoDto"] | null;
         };
         BelegLoeschenDto: {
             grund?: components["schemas"]["LoeschGrund"] | null;
@@ -2159,6 +2160,7 @@ export interface components {
             topKorrespondenten: components["schemas"]["TopKorrespondentDto"][];
             zuPruefenListe: components["schemas"]["ZuPruefenEintragDto"][];
             offeneBelege: components["schemas"]["OffenEintragDto"][];
+            skonto: components["schemas"]["SkontoUebersichtDto"];
             preisaenderungen: components["schemas"]["PreisaenderungDto"][];
             vorsteuer?: components["schemas"]["VorsteuerDto"] | null;
             diVerbrauch: components["schemas"]["DiVerbrauchDto"];
@@ -2926,11 +2928,32 @@ export interface components {
             betrag?: number | null;
             abgelaufen: boolean;
         };
+        SkontoEintragDto: {
+            /** Format: uuid */
+            belegId: string;
+            korrespondent?: string | null;
+            rechnungsnummer?: string | null;
+            /** Format: decimal */
+            brutto?: number | null;
+            /** Format: decimal */
+            prozent: number;
+            /** Format: date */
+            bis: string;
+            /** Format: decimal */
+            betrag?: number | null;
+        };
         SkontoSetzenDto: {
             /** Format: decimal */
             prozent?: number | null;
             /** Format: date */
             bis?: string | null;
+        };
+        SkontoUebersichtDto: {
+            /** Format: int32 */
+            anzahl: number;
+            /** Format: decimal */
+            ersparnis: number;
+            eintraege: components["schemas"]["SkontoEintragDto"][];
         };
         StammartikelAendernDto: {
             name: string;

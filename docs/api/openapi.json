@@ -6876,6 +6876,16 @@
               "null"
             ],
             "format": "date"
+          },
+          "skonto": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SkontoDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -7308,6 +7318,9 @@
               "$ref": "#/components/schemas/OffenEintragDto"
             }
           },
+          "skonto": {
+            "$ref": "#/components/schemas/SkontoUebersichtDto"
+          },
           "preisaenderungen": {
             "type": "array",
             "items": {
@@ -7339,6 +7352,7 @@
           "topKorrespondenten",
           "zuPruefenListe",
           "offeneBelege",
+          "skonto",
           "preisaenderungen",
           "diVerbrauch"
         ]
@@ -10063,6 +10077,54 @@
           "abgelaufen"
         ]
       },
+      "SkontoEintragDto": {
+        "type": "object",
+        "properties": {
+          "belegId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "korrespondent": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rechnungsnummer": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "brutto": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "decimal"
+          },
+          "prozent": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "bis": {
+            "type": "string",
+            "format": "date"
+          },
+          "betrag": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "decimal"
+          }
+        },
+        "required": [
+          "belegId",
+          "prozent",
+          "bis"
+        ]
+      },
       "SkontoSetzenDto": {
         "type": "object",
         "properties": {
@@ -10081,6 +10143,30 @@
             "format": "date"
           }
         }
+      },
+      "SkontoUebersichtDto": {
+        "type": "object",
+        "properties": {
+          "anzahl": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "ersparnis": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "eintraege": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SkontoEintragDto"
+            }
+          }
+        },
+        "required": [
+          "anzahl",
+          "ersparnis",
+          "eintraege"
+        ]
       },
       "StammartikelAendernDto": {
         "type": "object",

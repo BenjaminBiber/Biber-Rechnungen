@@ -89,6 +89,7 @@ export function listeneintrag(beleg: BelegDetail): BelegListeneintrag {
     istDublette: beleg.istDublette,
     konfidenz: beleg.konfidenz,
     leistungsdatum: beleg.leistungsdatum,
+    skonto: beleg.skonto ?? null,
   }
 }
 

@@ -9,6 +9,7 @@ using Biber.Invoice.Contracts.Dto.Korrespondenten;
 using Biber.Invoice.Domain.Entitaeten;
 using Biber.Invoice.Domain.Enums;
 using Biber.Invoice.Infrastructure.Module.FachlicheDublette.Domain.Regeln;
+using Biber.Invoice.Infrastructure.Module.Skonto;
 using Biber.Invoice.Infrastructure.Persistenz;
 using Biber.Invoice.Infrastructure.Persistenz.Konfiguration;
 using Microsoft.EntityFrameworkCore;
@@ -177,9 +178,7 @@ public sealed partial class BelegAbfrageDienst(BiberDbContext db, IEinstellungen
             beleg.AufgeteiltAusBelegId,
             teilbelege,
             await BezugAsync(beleg, ct),
-            beleg.SkontoProzent is { } prozent
-                ? new SkontoDto(prozent, beleg.SkontoBis, beleg.SkontoBetrag, beleg.SkontoBis < heute)
-                : null);
+            SkontoAnzeige.Erzeugen(beleg.SkontoProzent, beleg.SkontoBis, beleg.SkontoBetrag, heute));
     }
 
     /// <summary>Höchstzahl der Rechnungen, die eine Gutschrift zur Auswahl anbietet.</summary>
@@ -551,6 +550,9 @@ public sealed partial class BelegAbfrageDienst(BiberDbContext db, IEinstellungen
         DuplikatVonId = b.DuplikatVonId,
         Konfidenz = b.DiKonfidenz,
         Leistungsdatum = b.Leistungsdatum,
+        SkontoProzent = b.SkontoProzent,
+        SkontoBis = b.SkontoBis,
+        SkontoBetrag = b.SkontoBetrag,
     };
 
     private static BelegListeneintragDto Eintrag(ListenZeile z, DateOnly heute)
@@ -584,7 +586,8 @@ public sealed partial class BelegAbfrageDienst(BiberDbContext db, IEinstellungen
             z.HatVorschau ? ApiRouten.Belege.Vorschau.Replace("{id}", z.Id.ToString(), StringComparison.Ordinal) : null,
             z.DuplikatVonId is not null,
             z.Konfidenz,
-            z.Leistungsdatum);
+            z.Leistungsdatum,
+            SkontoAnzeige.Erzeugen(z.SkontoProzent, z.SkontoBis, z.SkontoBetrag, heute));
     }
 
     /// <summary>Trimmt und entfernt Steuerzeichen (Postgres verträgt kein NUL in Text).</summary>
@@ -625,6 +628,9 @@ public sealed partial class BelegAbfrageDienst(BiberDbContext db, IEinstellungen
         public Guid? DuplikatVonId { get; init; }
         public decimal? Konfidenz { get; init; }
         public DateOnly? Leistungsdatum { get; init; }
+        public decimal? SkontoProzent { get; init; }
+        public DateOnly? SkontoBis { get; init; }
+        public decimal? SkontoBetrag { get; init; }
     }
 }
 

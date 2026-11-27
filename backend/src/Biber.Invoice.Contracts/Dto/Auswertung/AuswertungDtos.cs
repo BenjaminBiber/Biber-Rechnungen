@@ -22,6 +22,7 @@ public sealed record DashboardDto(
     TopKorrespondentDto[] TopKorrespondenten,
     ZuPruefenEintragDto[] ZuPruefenListe,
     OffenEintragDto[] OffeneBelege,
+    SkontoUebersichtDto Skonto,
     PreisaenderungDto[] Preisaenderungen,
     VorsteuerDto? Vorsteuer,
     DiVerbrauchDto DiVerbrauch);
@@ -54,6 +55,22 @@ public sealed record OffenEintragDto(
     decimal? Brutto,
     DateOnly? Faelligkeitsdatum,
     bool Ueberfaellig);
+
+/// <summary>
+/// Offene Rechnungen in EUR, deren Skontofrist heute oder später endet, über alle Jahre. <see cref="Ersparnis"/> summiert
+/// die möglichen Abzüge; <see cref="Eintraege"/> sind die nächsten Fristen.
+/// </summary>
+public sealed record SkontoUebersichtDto(int Anzahl, decimal Ersparnis, SkontoEintragDto[] Eintraege);
+
+/// <summary>Offene Rechnung mit laufender Skontofrist; <see cref="Bis"/> ist der letzte Tag mit Abzug.</summary>
+public sealed record SkontoEintragDto(
+    Guid BelegId,
+    string? Korrespondent,
+    string? Rechnungsnummer,
+    decimal? Brutto,
+    decimal Prozent,
+    DateOnly Bis,
+    decimal? Betrag);
 
 public sealed record PreisaenderungDto(
     Guid Id,

@@ -29,6 +29,7 @@ public sealed class AuswertungsDienst(BiberDbContext db, IEinstellungen einstell
     private const int AnzahlTopKorrespondenten = 5;
     private const int AnzahlZuPruefen = 5;
     private const int AnzahlOffeneBelege = 4;
+    private const int AnzahlSkonto = 4;
     private const int AnzahlPreisaenderungen = 5;
 
     private static readonly string[] Monatsnamen =
@@ -65,6 +66,7 @@ public sealed class AuswertungsDienst(BiberDbContext db, IEinstellungen einstell
             TopKorrespondenten: await TopKorrespondentenAsync(jahr, ct),
             ZuPruefenListe: await ZuPruefenListeAsync(ct),
             OffeneBelege: await OffeneBelegeAsync(heute, ct),
+            Skonto: await SkontoAsync(heute, ct),
             Preisaenderungen: await PreisaenderungenAsync(jahr, ct),
             Vorsteuer: await VorsteuerAsync(tage, jahr, ct),
             DiVerbrauch: await DiVerbrauchAsync(heute, ct));
@@ -330,6 +332,29 @@ public sealed class AuswertungsDienst(BiberDbContext db, IEinstellungen einstell
         return belege
             .Select(b => new OffenEintragDto(b.Id, b.Korrespondent, b.Rechnungsnummer, b.Brutto, b.Faelligkeitsdatum, b.Faelligkeitsdatum < heute))
             .ToArray();
+    }
+
+    /// <summary>Offene Rechnungen, deren Skontofrist heute oder später endet; die nächsten Fristen zuerst.</summary>
+    private async Task<SkontoUebersichtDto> SkontoAsync(DateOnly heute, CancellationToken ct)
+    {
+        var mitSkonto = OffeneRechnungen().Where(b => b.SkontoProzent != null && b.SkontoBis >= heute);
+        var summe = await mitSkonto
+            .GroupBy(_ => 1)
+            .Select(g => new { Anzahl = g.Count(), Ersparnis = g.Sum(b => b.SkontoBetrag ?? 0) })
+            .FirstOrDefaultAsync(ct);
+        var eintraege = await mitSkonto
+            .OrderBy(b => b.SkontoBis).ThenBy(b => b.Id)
+            .Take(AnzahlSkonto)
+            .Select(b => new SkontoEintragDto(
+                b.Id,
+                b.Korrespondent == null ? null : b.Korrespondent.Name,
+                b.Rechnungsnummer,
+                b.Brutto,
+                b.SkontoProzent!.Value,
+                b.SkontoBis!.Value,
+                b.SkontoBetrag))
+            .ToArrayAsync(ct);
+        return new SkontoUebersichtDto(summe?.Anzahl ?? 0, summe?.Ersparnis ?? 0, eintraege);
     }
 
     /// <summary>Größte prozentuale Änderung des Einzelpreises zwischen erstem und letztem Kauf im Jahr.</summary>

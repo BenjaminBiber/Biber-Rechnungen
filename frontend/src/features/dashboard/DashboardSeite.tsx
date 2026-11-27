@@ -7,6 +7,7 @@ import { Kennzahlen } from './Kennzahlen'
 import { KostenProMonat } from './KostenProMonat'
 import { OffenKarte } from './OffenKarte'
 import { PreisaenderungenKarte } from './PreisaenderungenKarte'
+import { SkontoKarte } from './SkontoKarte'
 import { SystemKarte } from './SystemKarte'
 import { TopKorrespondenten } from './TopKorrespondenten'
 import { VorsteuerKarte } from './VorsteuerKarte'
@@ -120,6 +121,7 @@ export function DashboardSeite({
               ueberfaellig={dashboard.data.ueberfaellig}
               eintraege={dashboard.data.offeneBelege}
             />
+            <SkontoKarte skonto={dashboard.data.skonto} heute={heute} />
             <SystemKarte />
             <PreisaenderungenKarte eintraege={dashboard.data.preisaenderungen} />
             <VorsteuerKarte vorsteuer={dashboard.data.vorsteuer} jahr={jahr} />

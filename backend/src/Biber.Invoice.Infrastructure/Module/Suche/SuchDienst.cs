@@ -8,6 +8,7 @@ using Biber.Invoice.Contracts.Dto.Korrespondenten;
 using Biber.Invoice.Contracts.Dto.Sonstiges;
 using Biber.Invoice.Domain.Entitaeten;
 using Biber.Invoice.Domain.Enums;
+using Biber.Invoice.Infrastructure.Module.Skonto;
 using Biber.Invoice.Infrastructure.Persistenz;
 using Biber.Invoice.Infrastructure.Persistenz.Konfiguration;
 using Microsoft.EntityFrameworkCore;
@@ -78,6 +79,9 @@ public sealed partial class SuchDienst(BiberDbContext db, TimeProvider zeit) : I
                 b.Quelle,
                 b.DiKonfidenz,
                 b.Leistungsdatum,
+                b.SkontoProzent,
+                b.SkontoBis,
+                b.SkontoBetrag,
                 b.DuplikatVonId,
                 Tags = b.Tags
                     .Select(t => new TagKurzDto(t.Tag!.Id, t.Tag.Name, t.Tag.Farbe, t.Tag.IstInbox, t.Tag.IstZahlungsTag, t.Tag.IstSystem))
@@ -121,7 +125,8 @@ public sealed partial class SuchDienst(BiberDbContext db, TimeProvider zeit) : I
                     : null,
                 z.DuplikatVonId is not null,
                 z.DiKonfidenz,
-                z.Leistungsdatum);
+                z.Leistungsdatum,
+                SkontoAnzeige.Erzeugen(z.SkontoProzent, z.SkontoBis, z.SkontoBetrag, heute));
         }).ToArray();
     }
 

@@ -2,10 +2,10 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useState, type ComponentProps } from 'react'
 import { belegeKeys } from '@/api/belege'
 import { api, daten } from '@/api/client'
-import type { BelegListeneintrag, TagKurz } from '@/api/typen'
+import type { BelegListeneintrag, Skonto, TagKurz } from '@/api/typen'
 import { Chip, type ChipTon } from '@/components/Chip'
 import { Icon } from '@/components/Icon'
-import { formatDatum } from '@/lib/format'
+import { formatDatum, formatEuro, formatZahl } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
 /** Knopfgruppe mit Akzent-Rahmen (`.grp` im Design). */
@@ -80,6 +80,25 @@ export function faelligText(beleg: BelegListeneintrag): string {
   if (!beleg.faelligkeitsdatum) return '–'
   const datum = formatDatum(beleg.faelligkeitsdatum)
   return beleg.ueberfaellig ? `${datum} · überfällig` : datum
+}
+
+/**
+ * Skonto einer offenen Rechnung, dessen Frist heute oder später endet; sonst `null`. Bezahlte, überfällige und
+ * doppelte Belege zeigen ihre normale Fälligkeit.
+ */
+export function laufendesSkonto(beleg: BelegListeneintrag): (Skonto & { bis: string }) | null {
+  const skonto = beleg.skonto
+  if (!skonto?.bis || skonto.abgelaufen || beleg.ueberfaellig || beleg.istDublette) return null
+  if (beleg.tags.some((t) => t.istZahlungsTag)) return null
+  return { ...skonto, bis: skonto.bis }
+}
+
+/** „2 % Skonto bis 03.12.2026, spart 3,72 €. Ohne Skonto fällig am 17.12.2026.“ */
+export function skontoHinweis(beleg: BelegListeneintrag, skonto: Skonto & { bis: string }): string {
+  const ersparnis =
+    skonto.betrag !== null && skonto.betrag !== undefined ? `, spart ${formatEuro(skonto.betrag, beleg.waehrung)}` : ''
+  const ziel = beleg.faelligkeitsdatum ? ` Ohne Skonto fällig am ${formatDatum(beleg.faelligkeitsdatum)}.` : ''
+  return `${formatZahl(skonto.prozent)} % Skonto bis ${formatDatum(skonto.bis)}${ersparnis}.${ziel}`
 }
 
 /** „<Korrespondent> <Nr.> auswählen“ für die Auswahlbox. */

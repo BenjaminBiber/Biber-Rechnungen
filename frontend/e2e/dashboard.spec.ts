@@ -4,6 +4,7 @@ const karten = [
   'Gesamtkosten pro Monat',
   'Top-Korrespondenten 2026',
   'Offen & überfällig',
+  'Skonto',
   'Ablage & Sicherung',
   'Größte Preisänderungen',
 ]

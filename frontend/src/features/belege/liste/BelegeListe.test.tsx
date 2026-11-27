@@ -450,6 +450,28 @@ describe('Belegliste', () => {
     expect(within(puenktlich).queryByText(/überfällig/)).not.toBeInTheDocument()
   })
 
+  it('zeigt eine laufende Skontofrist als Fälligkeit mit ⓘ-Hinweis', async () => {
+    renderBelege()
+    await tabelleGeladen()
+    const mitSkonto = screen.getByRole('row', { name: /HW-2026-11-0381/ })
+    expect(within(mitSkonto).getByText('27.11.2026')).toBeInTheDocument()
+    expect(within(mitSkonto).queryByText('04.12.2026')).not.toBeInTheDocument()
+    expect(
+      within(mitSkonto).getByRole('button', {
+        name: /^Skonto: 2 % Skonto bis 27\.11\.2026, spart 9,78\s€\. Ohne Skonto fällig am 04\.12\.2026\.$/,
+      }),
+    ).toBeInTheDocument()
+    // Abgelaufenes Skonto (HP-2026-342) und bezahlte Rechnung (7004 1182 3391): normale Fälligkeit, kein Hinweis.
+    for (const [nummer, faellig] of [
+      [/HP-2026-342/, '24.11.2026'],
+      [/7004 1182 3391/, '30.11.2026'],
+    ] as const) {
+      const zeile = screen.getByRole('row', { name: nummer })
+      expect(within(zeile).getByText(faellig)).toBeInTheDocument()
+      expect(within(zeile).queryByRole('button', { name: /^Skonto:/ })).not.toBeInTheDocument()
+    }
+  })
+
   it('Titel verlinkt ins Detail', async () => {
     const { nutzer, router } = renderBelege()
     await tabelleGeladen()

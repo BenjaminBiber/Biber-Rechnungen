@@ -6,6 +6,7 @@ using Biber.Invoice.Contracts.Dto.Belege;
 using Biber.Invoice.Contracts.Dto.Korrespondenten;
 using Biber.Invoice.Domain.Entitaeten;
 using Biber.Invoice.Domain.Enums;
+using Biber.Invoice.Infrastructure.Module.Skonto;
 using Biber.Invoice.Infrastructure.Persistenz;
 using Microsoft.EntityFrameworkCore;
 
@@ -427,6 +428,9 @@ public sealed class KorrespondentDienst(BiberDbContext db, TimeProvider zeit) : 
                 b.DuplikatVonId,
                 b.DiKonfidenz,
                 b.Leistungsdatum,
+                b.SkontoProzent,
+                b.SkontoBis,
+                b.SkontoBetrag,
             })
             .ToListAsync(ct);
 
@@ -458,7 +462,8 @@ public sealed class KorrespondentDienst(BiberDbContext db, TimeProvider zeit) : 
                     b.Rollen.Contains(DateiRolle.Vorschau) ? ApiRouten.Belege.Vorschau.Replace("{id}", b.Id.ToString(), StringComparison.Ordinal) : null,
                     b.DuplikatVonId != null,
                     b.DiKonfidenz,
-                    b.Leistungsdatum);
+                    b.Leistungsdatum,
+                    SkontoAnzeige.Erzeugen(b.SkontoProzent, b.SkontoBis, b.SkontoBetrag, heute));
             }),
         ];
     }

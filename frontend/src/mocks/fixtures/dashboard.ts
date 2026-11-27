@@ -180,6 +180,8 @@ export const dashboard: Dashboard = {
       ueberfaellig: false,
     },
   ],
+  // Rechnet der Handler aus den Belegen (`skonto` im Detail), damit Bezahlen oder Ändern die Kachel mitzieht.
+  skonto: { anzahl: 0, ersparnis: 0, eintraege: [] },
   preisaenderungen: [
     {
       id: artikelIds.a4,

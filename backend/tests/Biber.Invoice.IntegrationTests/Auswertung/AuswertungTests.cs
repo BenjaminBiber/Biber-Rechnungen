@@ -189,6 +189,20 @@ public sealed class AuswertungTests(ApiFabrik fabrik) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Skonto_nur_offene_EUR_Rechnungen_mit_laufender_Frist()
+    {
+        var skonto = (await DashboardAsync("Monat")).Skonto;
+
+        skonto.Anzahl.ShouldBe(2);
+        skonto.Ersparnis.ShouldBe(6.40m);
+        skonto.Eintraege.ShouldBe(
+        [
+            new SkontoEintragDto(_offen.Id, "Alpha GmbH", _offen.Rechnungsnummer, 200m, 2m, new DateOnly(2026, 11, 23), 4.00m),
+            new SkontoEintragDto(_altUeberfaellig.Id, "Beta AG", _altUeberfaellig.Rechnungsnummer, 80m, 3m, new DateOnly(2026, 11, 30), 2.40m),
+        ]);
+    }
+
+    [Fact]
     public async Task Preisaenderungen_mit_Vorzeichen()
     {
         var liste = (await DashboardAsync("Monat")).Preisaenderungen;
@@ -415,6 +429,13 @@ public sealed class AuswertungTests(ApiFabrik fabrik) : IAsyncLifetime
         var alphaDez2025 = Beleg(_alpha, null, new(2025, 12, 10), 100m, bezahlt: true);
         _altUeberfaellig = Beleg(_beta, null, new(2025, 6, 1), 80m, faellig: new(2025, 7, 1));
 
+        // Skonto: Frist heute und in einer Woche zählen; abgelaufen, bezahlt und USD nicht.
+        Skonto(_offen, 2m, new(2026, 11, 23), 4.00m);
+        Skonto(_altUeberfaellig, 3m, new(2026, 11, 30), 2.40m);
+        Skonto(_ueberfaellig, 3m, new(2026, 11, 22), 3.00m);
+        Skonto(_bezahltTrotzFaelligkeit, 2m, new(2026, 12, 1), 1.00m);
+        Skonto(usd, 2m, new(2026, 12, 1), 15.54m);
+
         // Preise 2026: Papier 5,00 → 5,50; Toner 80 → 60 → 70; Kaffee 10,00 → 10,20; Lizenz nur einmal.
         Kauf(zetaJanuar, _papier, 5.00m);
         Kauf(_ueberfaellig, _papier, 5.50m);
@@ -460,6 +481,13 @@ public sealed class AuswertungTests(ApiFabrik fabrik) : IAsyncLifetime
         }
 
         return beleg;
+    }
+
+    private static void Skonto(Beleg beleg, decimal prozent, DateOnly bis, decimal betrag)
+    {
+        beleg.SkontoProzent = prozent;
+        beleg.SkontoBis = bis;
+        beleg.SkontoBetrag = betrag;
     }
 
     private Artikel Artikel(string name, string einheit) => new()

@@ -10,7 +10,10 @@ public sealed record BelegListeDto(
     int Seitengroesse,
     decimal SummeBrutto);
 
-/// <summary>Ein Beleg in Liste, Karte, Suche und Dubletten. <see cref="Format"/>: „XRechnung“, „ZUGFeRD“, „PDF“ oder „Scan“.</summary>
+/// <summary>
+/// Ein Beleg in Liste, Karte, Suche und Dubletten. <see cref="Format"/>: „XRechnung“, „ZUGFeRD“, „PDF“ oder „Scan“;
+/// <see cref="Skonto"/> ist <c>null</c>, wenn kein Skonto bekannt ist.
+/// </summary>
 public sealed record BelegListeneintragDto(
     Guid Id,
     string? Rechnungsnummer,
@@ -32,7 +35,8 @@ public sealed record BelegListeneintragDto(
     string? VorschauUrl,
     bool IstDublette,
     decimal? Konfidenz,
-    DateOnly? Leistungsdatum);
+    DateOnly? Leistungsdatum,
+    SkontoDto? Skonto);
 
 public sealed record BelegZaehlerDto(int Alle, int Inbox, int ZuPruefen, int Offen, int Ueberfaellig);
 

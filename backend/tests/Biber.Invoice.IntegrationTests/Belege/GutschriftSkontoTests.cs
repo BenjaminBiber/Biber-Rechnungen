@@ -165,6 +165,21 @@ public sealed class GutschriftSkontoTests(ApiFabrik fabrik) : IAsyncLifetime
         meldungen[0].Text.ShouldBe("Rechnung RE-BALD von Bürowelt Krämer KG: 2 % Skonto (spart 2,38 EUR) nur noch bis 28.11.2026.");
     }
 
+    [Fact]
+    public async Task Liste_traegt_das_Skonto_mit_Frist_und_Ablauf()
+    {
+        var laufend = await BelegAsync(b => { b.SkontoProzent = 2m; b.SkontoBis = new DateOnly(2026, 11, 26); b.SkontoBetrag = 2.38m; });
+        var abgelaufen = await BelegAsync(b => { b.SkontoProzent = 3m; b.SkontoBis = new DateOnly(2026, 11, 25); });
+        var ohne = await BelegAsync();
+
+        var liste = (await fabrik.ErzeugeClient(Rolle.Benutzer).GetJsonAsync<BelegListeDto>(ApiRouten.Belege.Liste))!;
+
+        var skonto = liste.Eintraege.ToDictionary(e => e.Id, e => e.Skonto);
+        skonto[laufend.Id].ShouldBe(new SkontoDto(2m, new DateOnly(2026, 11, 26), 2.38m, Abgelaufen: false));
+        skonto[abgelaufen.Id].ShouldBe(new SkontoDto(3m, new DateOnly(2026, 11, 25), null, Abgelaufen: true));
+        skonto[ohne.Id].ShouldBeNull();
+    }
+
     private async Task JobAsync()
     {
         using var scope = fabrik.ErzeugeScope();
